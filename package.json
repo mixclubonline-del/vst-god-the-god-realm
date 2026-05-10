@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "generate:archive": "node scripts/generate-divine-archive-manifest.mjs",
+    "validate:archive": "node scripts/validate-divine-archive-manifest.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
