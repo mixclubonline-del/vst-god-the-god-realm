@@ -25,6 +25,12 @@ export interface LibraryManifest {
   categories: Record<string, SampleInfo[]>;
 }
 
+export interface SamplePreviewController {
+  path: string;
+  stop: () => void;
+  finished: Promise<void>;
+}
+
 function generateSyntheticIR(ctx: AudioContext, duration = 2.0, decay = 3.0): AudioBuffer {
   const length = Math.floor(ctx.sampleRate * duration);
   const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
@@ -353,6 +359,8 @@ export class GodRealmSamplerEngine {
   private lastParams: Record<string, any> = {};
   private subOscNode: OscillatorNode | null = null;
   private subGainNode: GainNode | null = null;
+  private activePreview: AudioBufferSourceNode | null = null;
+  private finishActivePreview: (() => void) | null = null;
   
   // Multi-808 Infrastructure
   private m808SubOsc: OscillatorNode | null = null;
@@ -617,30 +625,103 @@ export class GodRealmSamplerEngine {
     }
   }
 
-  public async previewSample(path: string): Promise<void> {
-    if (!this.ctx) return;
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
-    
+  public stopPreview(): void {
+    const source = this.activePreview;
+    if (!source) return;
+
+    this.activePreview = null;
+    const finish = this.finishActivePreview;
+    this.finishActivePreview = null;
+
     try {
+      source.stop();
+    } catch (_e) {
+      // Source may already be stopped.
+    }
+
+    try {
+      source.disconnect();
+    } catch (_e) {
+      // Source may already be disconnected.
+    }
+
+    finish?.();
+  }
+
+  public async previewSample(path: string): Promise<SamplePreviewController | null> {
+    const ctx = this.ctx;
+    const masterGain = this.masterGain;
+    if (!ctx || !masterGain) return null;
+
+    try {
+      if (ctx.state === 'suspended') await ctx.resume();
+      this.stopPreview();
+
       const response = await fetch(path);
+      if (!response.ok) throw new Error(`Failed to preview sample at ${path}`);
       const arrayBuffer = await response.arrayBuffer();
-      const buffer = await this.ctx.decodeAudioData(arrayBuffer);
+      const buffer = await ctx.decodeAudioData(arrayBuffer);
       
-      const source = this.ctx.createBufferSource();
+      const source = ctx.createBufferSource();
       source.buffer = buffer;
-      
-      // Connect to master gain for auditioning
-      source.connect(this.masterGain!);
+
+      let settle: () => void = () => {};
+      let settled = false;
+      const finished = new Promise<void>((resolve) => {
+        settle = () => {
+          if (settled) return;
+          settled = true;
+
+          try {
+            source.disconnect();
+          } catch (_e) {
+            // Source may already be disconnected.
+          }
+
+          if (this.activePreview === source) {
+            this.activePreview = null;
+          }
+          if (this.finishActivePreview === settle) {
+            this.finishActivePreview = null;
+          }
+
+          resolve();
+        };
+      });
+
+      const stop = () => {
+        if (settled) return;
+
+        try {
+          source.stop();
+        } catch (_e) {
+          // Source may already be stopped.
+        }
+
+        settle();
+      };
+
+      source.onended = settle;
+      source.connect(masterGain);
       source.start(0);
-      
-      // Auto-disconnect after playback
-      source.onended = () => source.disconnect();
+
+      this.activePreview = source;
+      this.finishActivePreview = settle;
+
+      return {
+        path,
+        stop,
+        finished,
+      };
     } catch (err) {
       console.error('Audition Failed:', err);
+      return null;
     }
   }
 
   dispose(): void {
+    this.stopPreview();
+
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
