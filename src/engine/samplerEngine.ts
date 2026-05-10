@@ -361,6 +361,8 @@ export class GodRealmSamplerEngine {
   private subGainNode: GainNode | null = null;
   private activePreview: AudioBufferSourceNode | null = null;
   private finishActivePreview: (() => void) | null = null;
+  private previewGeneration = 0;
+  private previewAbortController: AbortController | null = null;
   
   // Multi-808 Infrastructure
   private m808SubOsc: OscillatorNode | null = null;
@@ -626,6 +628,10 @@ export class GodRealmSamplerEngine {
   }
 
   public stopPreview(): void {
+    this.previewGeneration++;
+    this.previewAbortController?.abort();
+    this.previewAbortController = null;
+
     const source = this.activePreview;
     if (!source) return;
 
@@ -652,15 +658,47 @@ export class GodRealmSamplerEngine {
     const ctx = this.ctx;
     const masterGain = this.masterGain;
     if (!ctx || !masterGain) return null;
+    const generation = ++this.previewGeneration;
+    this.previewAbortController?.abort();
+    const previewAbortController = new AbortController();
+    this.previewAbortController = previewAbortController;
 
     try {
       if (ctx.state === 'suspended') await ctx.resume();
-      this.stopPreview();
+      if (generation !== this.previewGeneration || previewAbortController.signal.aborted || this.ctx !== ctx) {
+        return null;
+      }
 
-      const response = await fetch(path);
+      const sourceToStop = this.activePreview;
+      this.activePreview = null;
+      const finish = this.finishActivePreview;
+      this.finishActivePreview = null;
+
+      try {
+        sourceToStop?.stop();
+      } catch (_e) {
+        // Source may already be stopped.
+      }
+
+      try {
+        sourceToStop?.disconnect();
+      } catch (_e) {
+        // Source may already be disconnected.
+      }
+
+      finish?.();
+
+      const response = await fetch(path, { signal: previewAbortController.signal });
       if (!response.ok) throw new Error(`Failed to preview sample at ${path}`);
       const arrayBuffer = await response.arrayBuffer();
+      if (generation !== this.previewGeneration || previewAbortController.signal.aborted || this.ctx !== ctx) {
+        return null;
+      }
+
       const buffer = await ctx.decodeAudioData(arrayBuffer);
+      if (generation !== this.previewGeneration || previewAbortController.signal.aborted || this.ctx !== ctx) {
+        return null;
+      }
       
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -684,6 +722,9 @@ export class GodRealmSamplerEngine {
           if (this.finishActivePreview === settle) {
             this.finishActivePreview = null;
           }
+          if (this.previewAbortController === previewAbortController) {
+            this.previewAbortController = null;
+          }
 
           resolve();
         };
@@ -703,6 +744,11 @@ export class GodRealmSamplerEngine {
 
       source.onended = settle;
       source.connect(masterGain);
+      if (generation !== this.previewGeneration || previewAbortController.signal.aborted || this.ctx !== ctx) {
+        settle();
+        return null;
+      }
+
       source.start(0);
 
       this.activePreview = source;
@@ -713,7 +759,11 @@ export class GodRealmSamplerEngine {
         stop,
         finished,
       };
-    } catch (err) {
+    } catch (err: any) {
+      if (this.previewAbortController === previewAbortController) {
+        this.previewAbortController = null;
+      }
+      if (err?.name === 'AbortError') return null;
       console.error('Audition Failed:', err);
       return null;
     }
