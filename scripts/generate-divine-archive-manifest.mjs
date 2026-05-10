@@ -98,8 +98,6 @@ const slugify = (value) =>
 const stableHash = (value, length = 12) =>
   createHash('sha256').update(value).digest('hex').slice(0, length);
 
-const readJson = (filePath) => JSON.parse(readFileSync(filePath, 'utf8'));
-
 const flattenSamples = (manifest) => {
   if (!manifest.categories || typeof manifest.categories !== 'object') {
     throw new Error('library_manifest.json must contain a categories object.');
@@ -153,7 +151,8 @@ const weightFor = (sample, roomId) => {
 };
 
 const buildArchiveManifest = () => {
-  const sourceManifest = readJson(sourceManifestPath);
+  const sourceManifestRaw = readFileSync(sourceManifestPath, 'utf8');
+  const sourceManifest = JSON.parse(sourceManifestRaw);
   const samples = flattenSamples(sourceManifest);
   const relics = samples.map((sample) => {
     if (!sample.name || !sample.path) {
@@ -187,8 +186,8 @@ const buildArchiveManifest = () => {
   return {
     name: 'Divine Archive Hall of Records',
     version: '1.0.0',
-    generatedAt: new Date().toISOString(),
     sourceManifest: 'public/library_manifest.json',
+    sourceManifestHash: stableHash(sourceManifestRaw, 16),
     sourceTotalSamples: sourceManifest.totalSamples,
     totalRelics: relics.length,
     rooms: ROOM_DEFINITIONS.map((room) => ({

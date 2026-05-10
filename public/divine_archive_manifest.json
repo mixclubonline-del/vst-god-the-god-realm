@@ -1,8 +1,8 @@
 {
   "name": "Divine Archive Hall of Records",
   "version": "1.0.0",
-  "generatedAt": "2026-05-10T21:44:37.692Z",
   "sourceManifest": "public/library_manifest.json",
+  "sourceManifestHash": "20a901d2886c34a0",
   "sourceTotalSamples": 713,
   "totalRelics": 713,
   "rooms": [
