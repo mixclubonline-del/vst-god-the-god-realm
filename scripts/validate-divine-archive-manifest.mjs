@@ -141,7 +141,7 @@ for (const room of archiveManifest.rooms) {
     fail('Every archive room must contain id and name.');
   }
 
-  if (room.relicCount !== relicRoomCounts.get(room.id)) {
+  if (room.relicCount !== (relicRoomCounts.get(room.id) ?? 0)) {
     fail(`Room ${room.id} relicCount ${room.relicCount} does not match assigned relics.`);
   }
 }
