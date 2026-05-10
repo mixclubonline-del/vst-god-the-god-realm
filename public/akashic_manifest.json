@@ -1,0 +1,2036 @@
+{
+  "name": "The Hall of Records - VSTGOD",
+  "version": "2.0.0",
+  "categories": {
+    "Accents": [],
+    "Analog": [
+      {
+        "id": "57cb736b-02e5-4d27-ad59-07eebe01fe7a",
+        "name": "80s Baby",
+        "file": "80s Baby.wav",
+        "path": "/samples/Analog/80s Baby.wav",
+        "semanticTags": [
+          "analog",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "f1460416-69ec-4fb6-8cde-8be54988d6aa",
+        "name": "Juno",
+        "file": "Juno.wav",
+        "path": "/samples/Analog/Juno.wav",
+        "semanticTags": [
+          "analog",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "19266a9f-74f5-40d8-8816-3ccfb484da03",
+        "name": "Napolean",
+        "file": "Napolean.wav",
+        "path": "/samples/Analog/Napolean.wav",
+        "semanticTags": [
+          "analog",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "e03b27fa-31f9-4b9b-864c-b42ff40e70a5",
+        "name": "Qulited",
+        "file": "Qulited.wav",
+        "path": "/samples/Analog/Qulited.wav",
+        "semanticTags": [
+          "analog",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "24128583-b538-4177-a1d8-4251bff3fc41",
+        "name": "Stinger",
+        "file": "Stinger.wav",
+        "path": "/samples/Analog/Stinger.wav",
+        "semanticTags": [
+          "analog",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Bass": [
+      {
+        "id": "1b6a8d77-c159-4b32-8c23-288e893d0929",
+        "name": "Detroit",
+        "file": "Detroit.wav",
+        "path": "/samples/Bass/Detroit.wav",
+        "semanticTags": [
+          "short",
+          "bass",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "a33e78cd-eb74-46b8-998e-629a53621a8d",
+        "name": "Dope Man",
+        "file": "Dope Man.wav",
+        "path": "/samples/Bass/Dope Man.wav",
+        "semanticTags": [
+          "short",
+          "bass",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "eb7eb63b-bdf4-4b84-86f6-d3bd683610d7",
+        "name": "Fatal",
+        "file": "Fatal.wav",
+        "path": "/samples/Bass/Fatal.wav",
+        "semanticTags": [
+          "short",
+          "bass",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "951e199a-48f6-41f2-b260-15a8435c853c",
+        "name": "Grand",
+        "file": "Grand.wav",
+        "path": "/samples/Bass/Grand.wav",
+        "semanticTags": [
+          "short",
+          "bass",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Bell": [
+      {
+        "id": "60b4fdd0-d33f-42ca-b6b5-0ada7e2149f6",
+        "name": "Ball Game",
+        "file": "Ball Game.wav",
+        "path": "/samples/Bell/Ball Game.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ff87700d-f054-4e59-b9ad-55d8d104f1ca",
+        "name": "Golden",
+        "file": "Golden.wav",
+        "path": "/samples/Bell/Golden.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "aab20dcb-9db3-42da-9e21-1020e88c03af",
+        "name": "Granulada",
+        "file": "Granulada.wav",
+        "path": "/samples/Bell/Granulada.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "1e400271-d516-4a2e-840f-ddd34aa49d1c",
+        "name": "Hour Glass",
+        "file": "Hour Glass.wav",
+        "path": "/samples/Bell/Hour Glass.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "4fc2c74c-9c06-4b21-b640-64d74dd7c8e1",
+        "name": "Jelly",
+        "file": "Jelly.wav",
+        "path": "/samples/Bell/Jelly.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "723455d9-7dd2-4bcc-9147-bdaa4d6abe96",
+        "name": "Lofi",
+        "file": "Lofi.wav",
+        "path": "/samples/Bell/Lofi.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "387d9483-e0d9-4ecb-b80c-c8435f76aac4",
+        "name": "Mirada",
+        "file": "Mirada.wav",
+        "path": "/samples/Bell/Mirada.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "d85e12bd-da15-4311-a749-557120e83cb3",
+        "name": "Real",
+        "file": "Real.wav",
+        "path": "/samples/Bell/Real.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ee4ff171-3587-4f94-b03a-cd6e733c03aa",
+        "name": "Sola",
+        "file": "Sola.wav",
+        "path": "/samples/Bell/Sola.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "15241a63-70a8-405e-929a-33b2ef34b62b",
+        "name": "Vintage",
+        "file": "Vintage.wav",
+        "path": "/samples/Bell/Vintage.wav",
+        "semanticTags": [
+          "short",
+          "bell",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Ethnic": [
+      {
+        "id": "7a449099-cca6-439c-9b4c-d4887d137533",
+        "name": "Duk Duk",
+        "file": "Duk Duk.wav",
+        "path": "/samples/Ethnic/Duk Duk.wav",
+        "semanticTags": [
+          "ethnic",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "FX": [
+      {
+        "id": "eb3be94c-b937-4d57-bc44-becfb2bef192",
+        "name": "Candy",
+        "file": "Candy.wav",
+        "path": "/samples/FX/Candy.wav",
+        "semanticTags": [
+          "fx",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "93a5013a-5869-4ca8-b4a9-2e122adea0f7",
+        "name": "Sun",
+        "file": "Sun.wav",
+        "path": "/samples/FX/Sun.wav",
+        "semanticTags": [
+          "fx",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Guitar": [],
+    "Keys": [
+      {
+        "id": "b71837e7-bda4-4b46-a453-b39ef63a74ed",
+        "name": "Ariel",
+        "file": "Ariel.wav",
+        "path": "/samples/Keys/Ariel.wav",
+        "semanticTags": [
+          "keys",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ea01f3fa-eb08-483d-9fb2-1519924eedb4",
+        "name": "Easy",
+        "file": "Easy.wav",
+        "path": "/samples/Keys/Easy.wav",
+        "semanticTags": [
+          "keys",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "8048a809-803e-4a05-8b94-3d2c44c47725",
+        "name": "Old Mcdonald",
+        "file": "Old Mcdonald.wav",
+        "path": "/samples/Keys/Old Mcdonald.wav",
+        "semanticTags": [
+          "keys",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "706e935b-00a8-48a8-89b5-42c691166f2a",
+        "name": "Spacetrack",
+        "file": "Spacetrack.wav",
+        "path": "/samples/Keys/Spacetrack.wav",
+        "semanticTags": [
+          "keys",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "b99a9033-71d6-41b9-9541-ec889ad8ff8f",
+        "name": "Wonder",
+        "file": "Wonder.wav",
+        "path": "/samples/Keys/Wonder.wav",
+        "semanticTags": [
+          "keys",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Leads": [],
+    "Modulated": [
+      {
+        "id": "fc5d2c56-c7cd-49a3-9af5-7bfd8678889a",
+        "name": "Bee Sting",
+        "file": "Bee Sting.wav",
+        "path": "/samples/Modulated/Bee Sting.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "4de24886-688e-4800-99ba-fa55991dcd92",
+        "name": "Lost Sunset - Part_1",
+        "file": "Lost Sunset - Part_1.wav",
+        "path": "/samples/Modulated/Lost Sunset - Part_1.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "e261cbfa-9bce-4390-ab6f-b1f869f03344",
+        "name": "Lost Sunset",
+        "file": "Lost Sunset.wav",
+        "path": "/samples/Modulated/Lost Sunset.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ca092da2-6f05-44b3-919d-79f49dc7f6e7",
+        "name": "R2D2",
+        "file": "R2D2.wav",
+        "path": "/samples/Modulated/R2D2.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "2550484d-97e0-4940-a1fc-d53cb843eac5",
+        "name": "Saturn",
+        "file": "Saturn.wav",
+        "path": "/samples/Modulated/Saturn.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "15d04807-17ba-4d6b-8fc4-42ece5f0f2fb",
+        "name": "Surgery",
+        "file": "Surgery.wav",
+        "path": "/samples/Modulated/Surgery.wav",
+        "semanticTags": [
+          "modulated",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Organ": [
+      {
+        "id": "74fbdfde-db9f-4330-b26a-059a49a3878c",
+        "name": "Drunk in Church",
+        "file": "Drunk in Church.wav",
+        "path": "/samples/Organ/Drunk in Church.wav",
+        "semanticTags": [
+          "short",
+          "organ",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Pads": [
+      {
+        "id": "5bff130d-9c07-4d66-8b9b-924fc4ea5d77",
+        "name": "Mercury",
+        "file": "Mercury.wav",
+        "path": "/samples/Pads/Mercury.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "aee68b5e-61ff-44fa-8bba-857008557dd4",
+        "name": "Mountain Springs",
+        "file": "Mountain Springs.wav",
+        "path": "/samples/Pads/Mountain Springs.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "2353ef5d-e45a-426f-a69e-3bd0f238b306",
+        "name": "Ocean Eyes",
+        "file": "Ocean Eyes.wav",
+        "path": "/samples/Pads/Ocean Eyes.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "b47ebb17-84ab-4921-8ba2-73f1f1edbda2",
+        "name": "Racing",
+        "file": "Racing.wav",
+        "path": "/samples/Pads/Racing.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "398d6e93-5c21-48fd-abab-a3e1edffbf4e",
+        "name": "Suprise",
+        "file": "Suprise.wav",
+        "path": "/samples/Pads/Suprise.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "e1544f7a-78a9-4828-828b-4201924b87b1",
+        "name": "The Mummy",
+        "file": "The Mummy.wav",
+        "path": "/samples/Pads/The Mummy.wav",
+        "semanticTags": [
+          "short",
+          "pads",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Pluck": [],
+    "Real Brass": [
+      {
+        "id": "d15aca94-0be1-4a83-a702-2925ca45de6e",
+        "name": "Bankroll",
+        "file": "Bankroll.wav",
+        "path": "/samples/Real Brass/Bankroll.wav",
+        "semanticTags": [
+          "real brass",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "456b1f9e-c8cd-4efe-987c-0821e165ba22",
+        "name": "Brass Lead",
+        "file": "Brass Lead.wav",
+        "path": "/samples/Real Brass/Brass Lead.wav",
+        "semanticTags": [
+          "real brass",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "e72893b3-7343-406f-aa5e-f386f465743e",
+        "name": "Commas",
+        "file": "Commas.wav",
+        "path": "/samples/Real Brass/Commas.wav",
+        "semanticTags": [
+          "real brass",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "cffe64d1-d0bc-44c9-a06e-48d27f57f992",
+        "name": "Countdown",
+        "file": "Countdown.wav",
+        "path": "/samples/Real Brass/Countdown.wav",
+        "semanticTags": [
+          "real brass",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "dc22e6aa-6a00-4c6f-a9d9-06246538f7e3",
+        "name": "Krusty Krew Anthem",
+        "file": "Krusty Krew Anthem.wav",
+        "path": "/samples/Real Brass/Krusty Krew Anthem.wav",
+        "semanticTags": [
+          "real brass",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Strings": [
+      {
+        "id": "6219184b-eb6e-4912-bbbd-5bbf118628bf",
+        "name": "Armed & Dangerous",
+        "file": "Armed & Dangerous.wav",
+        "path": "/samples/Strings/Armed & Dangerous.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "f893a170-a04a-4fca-956e-769935b717c7",
+        "name": "Eightve",
+        "file": "Eightve.wav",
+        "path": "/samples/Strings/Eightve.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "d9552f46-cc33-4448-aad8-d3e5948ec83b",
+        "name": "Epic",
+        "file": "Epic.wav",
+        "path": "/samples/Strings/Epic.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "e5673ea8-c44c-4f68-991b-dee06fd35bfa",
+        "name": "Moded",
+        "file": "Moded.wav",
+        "path": "/samples/Strings/Moded.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "dc9a54de-c5da-4e7c-9098-40bc4e172048",
+        "name": "Money longer",
+        "file": "Money longer.wav",
+        "path": "/samples/Strings/Money longer.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "1012e481-ee43-4303-8e34-ce31c7d8ae5b",
+        "name": "Movie",
+        "file": "Movie.wav",
+        "path": "/samples/Strings/Movie.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "de27b837-6e09-4e1c-95a8-a2c77abd9dee",
+        "name": "Quartet",
+        "file": "Quartet.wav",
+        "path": "/samples/Strings/Quartet.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "0d1b6aef-ff47-4778-8a6a-4e37a6a1564f",
+        "name": "The Real",
+        "file": "The Real.wav",
+        "path": "/samples/Strings/The Real.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "f8cadf54-9944-4067-868a-08c2de4e86e3",
+        "name": "Too Many Nights",
+        "file": "Too Many Nights.wav",
+        "path": "/samples/Strings/Too Many Nights.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "77348425-d985-4dfe-b488-0a103e864d8d",
+        "name": "Yayli",
+        "file": "Yayli.wav",
+        "path": "/samples/Strings/Yayli.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "9b4052d5-a77e-4fd0-8101-e927fb55e573",
+        "name": "lush string",
+        "file": "lush string.wav",
+        "path": "/samples/Strings/lush string.wav",
+        "semanticTags": [
+          "strings",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Synth": [
+      {
+        "id": "199d582b-2d0a-45e9-8a7a-4fa1ebdf72f3",
+        "name": "Sauce Alert",
+        "file": "Sauce Alert.wav",
+        "path": "/samples/Synth/Sauce Alert.wav",
+        "semanticTags": [
+          "synth",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "9335fe91-4fdd-4d6e-b6c3-0b7162417188",
+        "name": "Warning",
+        "file": "Warning.wav",
+        "path": "/samples/Synth/Warning.wav",
+        "semanticTags": [
+          "synth",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Synth Brass": [],
+    "Texture": [
+      {
+        "id": "264c4589-e605-430b-a4d8-8893f9a74040",
+        "name": "ASMR",
+        "file": "ASMR.wav",
+        "path": "/samples/Texture/ASMR.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "218c17bf-871f-4546-bae1-4742cecb24d1",
+        "name": "ATMOS",
+        "file": "ATMOS.wav",
+        "path": "/samples/Texture/ATMOS.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "cec98e4a-d9d0-468e-b7ef-a685fecb942c",
+        "name": "Atmosphere",
+        "file": "Atmosphere.wav",
+        "path": "/samples/Texture/Atmosphere.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "6b7e0153-1001-4b15-9798-9a12dfcac879",
+        "name": "Campfire",
+        "file": "Campfire.wav",
+        "path": "/samples/Texture/Campfire.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "bdb65bf9-6764-4ef7-a5af-559402212ca4",
+        "name": "DKVPZ",
+        "file": "DKVPZ.wav",
+        "path": "/samples/Texture/DKVPZ.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "5482e139-2f85-40ad-a6d8-174e17358031",
+        "name": "Favorite Texture",
+        "file": "Favorite Texture.wav",
+        "path": "/samples/Texture/Favorite Texture.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "8bec34d3-0949-471a-834f-241e10ef2d2e",
+        "name": "Ice dropping",
+        "file": "Ice dropping.wav",
+        "path": "/samples/Texture/Ice dropping.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "266f796e-fbb6-4f1f-bd83-4a582bd31b96",
+        "name": "JUNGLE",
+        "file": "JUNGLE.wav",
+        "path": "/samples/Texture/JUNGLE.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "17e218ec-ef5d-4f07-beb4-bcd9a8b1955c",
+        "name": "Palos",
+        "file": "Palos.wav",
+        "path": "/samples/Texture/Palos.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "a326002b-c720-4960-9b2a-b635f6afcdf6",
+        "name": "RESTREAT",
+        "file": "RESTREAT.wav",
+        "path": "/samples/Texture/RESTREAT.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "6ed8a59a-4476-4dd1-8db1-6dc370a542b8",
+        "name": "RIOT",
+        "file": "RIOT.wav",
+        "path": "/samples/Texture/RIOT.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "d8b27c68-7215-464d-a32a-a5367cdce4fa",
+        "name": "Redman",
+        "file": "Redman.wav",
+        "path": "/samples/Texture/Redman.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "343bb74c-748b-4cc1-8527-fa52f785b13c",
+        "name": "Reels",
+        "file": "Reels.wav",
+        "path": "/samples/Texture/Reels.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "1dadb6b5-a13a-4140-8cb6-35605048a074",
+        "name": "Voltage Venom",
+        "file": "Voltage Venom.wav",
+        "path": "/samples/Texture/Voltage Venom.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "3d876476-5953-4aa1-8bb8-059b1b883f1e",
+        "name": "helix texture",
+        "file": "helix texture.wav",
+        "path": "/samples/Texture/helix texture.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "386d30d7-177e-451e-9714-ebb77c08b05a",
+        "name": "rule",
+        "file": "rule.wav",
+        "path": "/samples/Texture/rule.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "17f14ced-e978-4456-85ee-323e82643106",
+        "name": "texture - chimes",
+        "file": "texture - chimes.wav",
+        "path": "/samples/Texture/texture - chimes.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ca5c8edf-c38c-4300-b3c9-0003e54691c1",
+        "name": "worried",
+        "file": "worried.wav",
+        "path": "/samples/Texture/worried.wav",
+        "semanticTags": [
+          "short",
+          "texture",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Vox": [
+      {
+        "id": "3deabd89-e168-4265-b5ff-321bcf2ee1e1",
+        "name": "Bring it back",
+        "file": "Bring it back.wav",
+        "path": "/samples/Vox/Bring it back.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "0f8319ea-34da-46d8-8264-94e76ecdd263",
+        "name": "Godspeed",
+        "file": "Godspeed.wav",
+        "path": "/samples/Vox/Godspeed.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "7d79a13b-a178-4d68-9936-e23c607dfcb5",
+        "name": "Haunted House",
+        "file": "Haunted House.wav",
+        "path": "/samples/Vox/Haunted House.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "9eb94097-4aaf-46ed-97f3-57a65f7c193a",
+        "name": "Hey There",
+        "file": "Hey There.wav",
+        "path": "/samples/Vox/Hey There.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "4ebcc34e-b3a5-4590-a2e4-c85cf86c9314",
+        "name": "Hoowayyy",
+        "file": "Hoowayyy.wav",
+        "path": "/samples/Vox/Hoowayyy.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "2d59ef20-c69f-4259-b27a-9caf0e484085",
+        "name": "Just Breath",
+        "file": "Just Breath.wav",
+        "path": "/samples/Vox/Just Breath.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "5731eb22-a705-4048-88f5-90648632fb1a",
+        "name": "Mf think he a cow",
+        "file": "Mf think he a cow.wav",
+        "path": "/samples/Vox/Mf think he a cow.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "7abb2349-3e17-41c5-82dc-4bf77af9de59",
+        "name": "Mrph",
+        "file": "Mrph.wav",
+        "path": "/samples/Vox/Mrph.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "de795b2e-0847-4ed2-971b-bf2942010fdd",
+        "name": "Oohhh shiiiii",
+        "file": "Oohhh shiiiii.wav",
+        "path": "/samples/Vox/Oohhh shiiiii.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "b857c250-5efc-4ed1-a4e7-f1e17c469126",
+        "name": "Scribble",
+        "file": "Scribble.wav",
+        "path": "/samples/Vox/Scribble.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "b3060547-35c0-42da-9e1e-003a8f7215b3",
+        "name": "Strept",
+        "file": "Strept.wav",
+        "path": "/samples/Vox/Strept.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "72a2f6be-8ce0-4d5d-a863-5bee0860287e",
+        "name": "Super Ahh Femalwe",
+        "file": "Super Ahh Femalwe.wav",
+        "path": "/samples/Vox/Super Ahh Femalwe.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "c44cbc74-6a30-4fcf-bd87-fa6e5bf033a6",
+        "name": "Unda Da Sea",
+        "file": "Unda Da Sea.wav",
+        "path": "/samples/Vox/Unda Da Sea.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "355fd72b-2cae-41c6-b225-1e1d91d98613",
+        "name": "casper",
+        "file": "casper.wav",
+        "path": "/samples/Vox/casper.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "0eb56a4e-d5bd-49c9-a83c-64603d528987",
+        "name": "dhummm",
+        "file": "dhummm.wav",
+        "path": "/samples/Vox/dhummm.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "c3fd4acd-6d12-459f-86ac-d095ca836dd1",
+        "name": "yhhhayyy",
+        "file": "yhhhayyy.wav",
+        "path": "/samples/Vox/yhhhayyy.wav",
+        "semanticTags": [
+          "vox",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ],
+    "Wind": [
+      {
+        "id": "c00448ee-43a8-4bd0-9889-2ee9556e9a97",
+        "name": "Bop",
+        "file": "Bop.wav",
+        "path": "/samples/Wind/Bop.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "8ef74c1d-4db1-4505-9228-a3da2e886dd4",
+        "name": "Ethnic Flute",
+        "file": "Ethnic Flute.wav",
+        "path": "/samples/Wind/Ethnic Flute.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "652e2d76-988d-4bdb-9a39-a395f37f3a72",
+        "name": "Fukumean",
+        "file": "Fukumean.wav",
+        "path": "/samples/Wind/Fukumean.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "4208bb8c-ca74-4eb6-93e3-f1120bc74dfa",
+        "name": "Lust",
+        "file": "Lust.wav",
+        "path": "/samples/Wind/Lust.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "7b2e0013-c05f-4908-af5b-54aaeece8b7b",
+        "name": "Praise The Lord",
+        "file": "Praise The Lord.wav",
+        "path": "/samples/Wind/Praise The Lord.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "87ff8957-ab44-4a3b-84e7-9a87ae85ffe9",
+        "name": "Real Flute",
+        "file": "Real Flute.wav",
+        "path": "/samples/Wind/Real Flute.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "472aef1d-e6a9-4347-9a01-67193c5fb952",
+        "name": "Vibes Flute",
+        "file": "Vibes Flute.wav",
+        "path": "/samples/Wind/Vibes Flute.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "72f431a5-ea61-41d2-87f3-5a922b385eea",
+        "name": "Whistle",
+        "file": "Whistle.wav",
+        "path": "/samples/Wind/Whistle.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "06754adf-1fb9-4103-bd15-33da3bae7e3d",
+        "name": "X - Flute",
+        "file": "X - Flute.wav",
+        "path": "/samples/Wind/X - Flute.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "aca6b60b-3654-454c-83c1-eb4b9503506e",
+        "name": "YOSEMITE",
+        "file": "YOSEMITE.wav",
+        "path": "/samples/Wind/YOSEMITE.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "890163e1-1f1d-4744-bfde-bdea47bd0dc5",
+        "name": "Yale",
+        "file": "Yale.wav",
+        "path": "/samples/Wind/Yale.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "ca8b0150-24cd-48d2-9fce-93a857ffab96",
+        "name": "flutter",
+        "file": "flutter.wav",
+        "path": "/samples/Wind/flutter.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      },
+      {
+        "id": "18c755ff-f288-4fb7-8698-d80aa2e1704c",
+        "name": "walzy",
+        "file": "walzy.wav",
+        "path": "/samples/Wind/walzy.wav",
+        "semanticTags": [
+          "wind",
+          "short",
+          "tight"
+        ],
+        "acousticProfile": {
+          "energy": 50,
+          "fundamentalFreq": 0.0,
+          "harmonicDensity": 0.5,
+          "decayTime": 0.5,
+          "peakFrequency": 1000.0
+        },
+        "relationships": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,441 @@
+{
+  "plugin": {
+    "name": "VST GOD — The God Realm",
+    "manufacturer": "VST GOD / Sauce Land",
+    "category": "Sampler / Preset Manager / Kit Exporter",
+    "version": "1.0.0"
+  },
+  "parameters": [
+    {
+      "id": "tuneSemitones",
+      "name": "tune",
+      "label": "TUNE",
+      "group": "Master",
+      "min": -24,
+      "max": 24,
+      "default": 0,
+      "unit": "semitones",
+      "curve": "linear",
+      "automatable": true
+    },
+    {
+      "id": "masterVolume",
+      "name": "master_volume",
+      "label": "VOLUME",
+      "group": "Master",
+      "min": -60,
+      "max": 6,
+      "default": 0,
+      "unit": "dB",
+      "curve": "logarithmic",
+      "automatable": true
+    },
+    {
+      "id": "categoryDropdown",
+      "name": "category_filter",
+      "label": "All Categories",
+      "group": "Preset Library",
+      "min": 0,
+      "max": 12,
+      "default": 0,
+      "unit": "",
+      "curve": "linear",
+      "automatable": false
+    },
+    { "id": "fx_eq_cutoff", "name": "eq_cutoff", "label": "Cutoff", "group": "FX Chain", "min": 0, "max": 100, "default": 50 },
+    { "id": "fx_eq_resonance", "name": "eq_resonance", "label": "Resonance", "group": "FX Chain", "min": 0, "max": 100, "default": 30 },
+    { "id": "fx_compressor_threshold", "name": "comp_threshold", "label": "Threshold", "group": "FX Chain", "min": 0, "max": 100, "default": 70 },
+    { "id": "fx_compressor_ratio", "name": "comp_ratio", "label": "Ratio", "group": "FX Chain", "min": 0, "max": 100, "default": 40 },
+    { "id": "fx_compressor_attack", "name": "comp_attack", "label": "Attack", "group": "FX Chain", "min": 0, "max": 100, "default": 10 },
+    { "id": "fx_compressor_release", "name": "comp_release", "label": "Release", "group": "FX Chain", "min": 0, "max": 100, "default": 50 },
+    { "id": "fx_distortion_drive", "name": "dist_drive", "label": "Drive", "group": "FX Chain", "min": 0, "max": 100, "default": 20 },
+    { "id": "fx_distortion_mix", "name": "dist_mix", "label": "Mix", "group": "FX Chain", "min": 0, "max": 100, "default": 50 },
+    { "id": "fx_chorus_rate", "name": "chorus_rate", "label": "Rate", "group": "FX Chain", "min": 0, "max": 100, "default": 20 },
+    { "id": "fx_chorus_depth", "name": "chorus_depth", "label": "Depth", "group": "FX Chain", "min": 0, "max": 100, "default": 40 },
+    { "id": "fx_delay_time", "name": "delay_time", "label": "Time", "group": "FX Chain", "min": 0, "max": 100, "default": 50 },
+    { "id": "fx_delay_feedback", "name": "delay_feedback", "label": "Feedback", "group": "FX Chain", "min": 0, "max": 100, "default": 40 },
+    { "id": "fx_delay_mix", "name": "delay_mix", "label": "Mix", "group": "FX Chain", "min": 0, "max": 100, "default": 30 },
+    { "id": "fx_reverb_size", "name": "reverb_size", "label": "Size", "group": "FX Chain", "min": 0, "max": 100, "default": 60 },
+    { "id": "fx_reverb_damping", "name": "reverb_damping", "label": "Damping", "group": "FX Chain", "min": 0, "max": 100, "default": 40 },
+    { "id": "fx_reverb_mix", "name": "reverb_mix", "label": "Mix", "group": "FX Chain", "min": 0, "max": 100, "default": 40 },
+    { "id": "fx_limiter_ceiling", "name": "limiter_ceiling", "label": "Ceiling", "group": "FX Chain", "min": 0, "max": 100, "default": 95 }
+  ],
+  "audioProcessing": {
+    "inputChannels": 2,
+    "outputChannels": 2,
+    "algorithm": "sampler / preset manager / kit exporter_processor",
+    "routingChain": [
+      { "instanceId": "eq_1", "type": "eq", "index": 1, "bypassed": false },
+      { "instanceId": "comp_1", "type": "compressor", "index": 1, "bypassed": false },
+      { "instanceId": "dist_1", "type": "distortion", "index": 1, "bypassed": false },
+      { "instanceId": "chorus_1", "type": "chorus", "index": 1, "bypassed": false },
+      { "instanceId": "delay_1", "type": "delay", "index": 1, "bypassed": false },
+      { "instanceId": "reverb_1", "type": "reverb", "index": 1, "bypassed": false },
+      { "instanceId": "limiter_1", "type": "limiter", "index": 1, "bypassed": false }
+    ]
+  },
+  "ui": {
+    "width": 1536,
+    "height": 1024,
+    "tabs": [
+      {
+        "name": "Multi-Realm",
+        "icon": "🎹",
+        "groups": [
+          "Sampler"
+        ]
+      },
+      {
+        "name": "Sample Chopper",
+        "icon": "✂️",
+        "groups": [
+          "Chopper"
+        ]
+      },
+      {
+        "name": "Effects",
+        "icon": "⚡",
+        "groups": [
+          "FX Chain"
+        ]
+      },
+      {
+        "name": "Preset Vault",
+        "icon": "🔑",
+        "groups": [
+          "Preset Library",
+          "Kit Export"
+        ]
+      }
+    ],
+    "controls": [
+      {
+        "id": "tabMultiRealm",
+        "type": "tab",
+        "label": "MULTI-REALM",
+        "group": "Navigation",
+        "parameterId": "tabMultiRealm",
+        "position": {
+          "x": 3,
+          "y": 9,
+          "width": 8,
+          "height": 3
+        }
+      },
+      {
+        "id": "tabSampleChopper",
+        "type": "tab",
+        "label": "SAMPLE CHOPPER",
+        "group": "Navigation",
+        "parameterId": "tabSampleChopper",
+        "position": {
+          "x": 12,
+          "y": 9,
+          "width": 9,
+          "height": 3
+        }
+      },
+      {
+        "id": "tabEffects",
+        "type": "tab",
+        "label": "EFFECTS",
+        "group": "Navigation",
+        "parameterId": "tabEffects",
+        "position": {
+          "x": 22,
+          "y": 9,
+          "width": 6,
+          "height": 3
+        }
+      },
+      {
+        "id": "tabPresetVault",
+        "type": "tab",
+        "label": "PRESET VAULT",
+        "group": "Navigation",
+        "parameterId": "tabPresetVault",
+        "position": {
+          "x": 30,
+          "y": 9,
+          "width": 9,
+          "height": 3
+        }
+      },
+      {
+        "id": "globalBpm",
+        "type": "display",
+        "label": "140.00 Hz",
+        "group": "Master",
+        "parameterId": "globalBpm",
+        "position": {
+          "x": 70,
+          "y": 3,
+          "width": 7,
+          "height": 3
+        }
+      },
+      {
+        "id": "tuneSemitones",
+        "type": "knob",
+        "label": "TUNE",
+        "group": "Master",
+        "parameterId": "tuneSemitones",
+        "position": {
+          "x": 78,
+          "y": 2,
+          "width": 4,
+          "height": 4
+        }
+      },
+      {
+        "id": "masterVolume",
+        "type": "knob",
+        "label": "VOLUME",
+        "group": "Master",
+        "parameterId": "masterVolume",
+        "position": {
+          "x": 88,
+          "y": 1.5,
+          "width": 5,
+          "height": 6
+        }
+      },
+      {
+        "id": "presetSearch",
+        "type": "text_field",
+        "label": "Search presets...",
+        "group": "Preset Library",
+        "parameterId": "presetSearch",
+        "position": {
+          "x": 1,
+          "y": 17,
+          "width": 12,
+          "height": 3
+        }
+      },
+      {
+        "id": "categoryDropdown",
+        "type": "dropdown",
+        "label": "All Categories",
+        "group": "Preset Library",
+        "parameterId": "categoryDropdown",
+        "position": {
+          "x": 1,
+          "y": 24,
+          "width": 12,
+          "height": 3
+        },
+        "options": [
+          "All Presets",
+          "Favorites",
+          "User Presets",
+          "Bass",
+          "Lead",
+          "Pad",
+          "Arp",
+          "Pluck",
+          "Keys",
+          "FX",
+          "Percussion",
+          "Vocal",
+          "Textures"
+        ]
+      },
+      {
+        "id": "presetList",
+        "type": "list",
+        "label": "PRESETS (512)",
+        "group": "Preset Library",
+        "parameterId": "presetList",
+        "position": {
+          "x": 14,
+          "y": 17,
+          "width": 29,
+          "height": 55
+        }
+      },
+      {
+        "id": "btnLoad",
+        "type": "button",
+        "label": "LOAD",
+        "group": "Preset Actions",
+        "parameterId": "btnLoad",
+        "position": {
+          "x": 14,
+          "y": 73,
+          "width": 6,
+          "height": 3
+        }
+      },
+      {
+        "id": "btnSave",
+        "type": "button",
+        "label": "SAVE",
+        "group": "Preset Actions",
+        "parameterId": "btnSave",
+        "position": {
+          "x": 21,
+          "y": 73,
+          "width": 6,
+          "height": 3
+        }
+      },
+      {
+        "id": "btnSaveAs",
+        "type": "button",
+        "label": "SAVE AS...",
+        "group": "Preset Actions",
+        "parameterId": "btnSaveAs",
+        "position": {
+          "x": 28,
+          "y": 73,
+          "width": 7,
+          "height": 3
+        }
+      },
+      {
+        "id": "btnDelete",
+        "type": "button",
+        "label": "DELETE",
+        "group": "Preset Actions",
+        "parameterId": "btnDelete",
+        "position": {
+          "x": 36,
+          "y": 73,
+          "width": 6,
+          "height": 3
+        }
+      },
+      {
+        "id": "kitName",
+        "type": "text_field",
+        "label": "Kit Name",
+        "group": "Kit Export",
+        "parameterId": "kitName",
+        "position": {
+          "x": 65,
+          "y": 18,
+          "width": 20,
+          "height": 3
+        }
+      },
+      {
+        "id": "kitAuthor",
+        "type": "text_field",
+        "label": "Author",
+        "group": "Kit Export",
+        "parameterId": "kitAuthor",
+        "position": {
+          "x": 65,
+          "y": 26,
+          "width": 20,
+          "height": 3
+        }
+      },
+      {
+        "id": "kitArtwork",
+        "type": "image_slot",
+        "label": "ARTWORK",
+        "group": "Kit Export",
+        "parameterId": "kitArtwork",
+        "position": {
+          "x": 65,
+          "y": 48,
+          "width": 12,
+          "height": 15
+        }
+      },
+      {
+        "id": "btnChangeArtwork",
+        "type": "button",
+        "label": "CHANGE ARTWORK",
+        "group": "Kit Export",
+        "parameterId": "btnChangeArtwork",
+        "position": {
+          "x": 65,
+          "y": 64,
+          "width": 12,
+          "height": 3
+        }
+      },
+      {
+        "id": "btnExportKit",
+        "type": "button",
+        "label": "EXPORT KIT",
+        "group": "Kit Export",
+        "parameterId": "btnExportKit",
+        "position": {
+          "x": 80,
+          "y": 73,
+          "width": 18,
+          "height": 4
+        }
+      },
+      {
+        "id": "btnImportPreset",
+        "type": "button",
+        "label": "IMPORT PRESET",
+        "group": "Footer",
+        "parameterId": "btnImportPreset",
+        "position": {
+          "x": 1,
+          "y": 95,
+          "width": 7,
+          "height": 4
+        }
+      },
+      {
+        "id": "btnExportPreset",
+        "type": "button",
+        "label": "EXPORT PRESET",
+        "group": "Footer",
+        "parameterId": "btnExportPreset",
+        "position": {
+          "x": 9,
+          "y": 95,
+          "width": 7,
+          "height": 4
+        }
+      },
+      {
+        "id": "btnBackupVault",
+        "type": "button",
+        "label": "BACKUP VAULT",
+        "group": "Footer",
+        "parameterId": "btnBackupVault",
+        "position": {
+          "x": 17,
+          "y": 95,
+          "width": 7,
+          "height": 4
+        }
+      },
+      {
+        "id": "btnCloudSync",
+        "type": "button",
+        "label": "CLOUD SYNC",
+        "group": "Footer",
+        "parameterId": "btnCloudSync",
+        "position": {
+          "x": 38,
+          "y": 95,
+          "width": 8,
+          "height": 4
+        }
+      },
+      {
+        "id": "btnNewPreset",
+        "type": "button",
+        "label": "+ NEW PRESET",
+        "group": "Preset Library",
+        "parameterId": "btnNewPreset",
+        "position": {
+          "x": 1,
+          "y": 76,
+          "width": 12,
+          "height": 3
+        }
+      }
+    ]
+  }
+}

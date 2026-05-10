@@ -1,0 +1,361 @@
+/* Celestial Forge V2 Styles - Midnight Ember & Tactile Glass */
+
+.vg-celestial-forge {
+  --god-primary: #ff6600;
+  --god-primary-glow: rgba(255, 102, 0, 0.4);
+  --god-secondary: #c29623;
+  --god-obsidian: #080504;
+  --god-stone-bg: #1d100a;
+  
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: var(--god-obsidian);
+  color: #f8ddd2;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Weathered Obsidian Stone Background */
+.vg-forge-stone {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.05) 0%, transparent 60%),
+    url('https://www.transparenttextures.com/patterns/dark-matter.png');
+  opacity: 0.9;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ancient Glyphs Overlay */
+.vg-forge-glyphs {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+  opacity: 0.15;
+  mix-blend-mode: color-dodge;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.vg-forge-header {
+  height: 60px;
+  border-bottom: 1px solid rgba(255, 102, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  background: linear-gradient(180deg, rgba(20, 10, 5, 0.8) 0%, rgba(5, 2, 0, 0.4) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.vg-forge-title {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  background: linear-gradient(90deg, #fff, var(--god-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.9;
+}
+
+.vg-forge-main {
+  flex: 1;
+  display: flex;
+  padding: 32px 40px;
+  gap: 40px;
+  z-index: 5;
+  position: relative;
+}
+
+.vg-forge-rail {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 10;
+}
+
+.vg-forge-viz-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.4) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Sun Disk Styles */
+.vg-sun-disk-wrap {
+  position: relative;
+  width: 440px;
+  height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vg-sun-disk-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 24px var(--god-primary-glow));
+}
+
+.vg-sun-disk-core {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #3a2a20 0%, #050200 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.1), 0 12px 30px rgba(0,0,0,0.8), 0 0 40px rgba(255, 102, 0, 0.1);
+  border: 1px solid rgba(255, 102, 0, 0.2);
+}
+
+.vg-sun-active-gem {
+  width: 14px;
+  height: 14px;
+  background: #ff6600;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  margin-bottom: 10px;
+  box-shadow: 0 0 16px #ff6600, inset 0 0 4px #fff;
+}
+
+.vg-sun-label {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: white;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.vg-sun-sublabel {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--god-primary);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* Aether Saturation Styles */
+.vg-aether-section {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 680px;
+    background: linear-gradient(135deg, rgba(20, 10, 5, 0.8), rgba(5, 2, 0, 0.9));
+    border: 1px solid rgba(255, 102, 0, 0.15);
+    border-radius: 20px;
+    padding: 24px 32px;
+    display: flex;
+    gap: 32px;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.vg-aether-viz {
+    flex: 1;
+    height: 100px;
+    background: #020100;
+    border: 1px solid rgba(255, 102, 0, 0.1);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+.animate-scanline {
+  animation: scanline 3s linear infinite;
+}
+
+/* Anchor Orbits */
+.vg-anchor-label {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.vg-anchor-label.body { top: 20px; left: 20px; }
+.vg-anchor-label.air { top: 20px; right: 20px; }
+.vg-anchor-label.soul { bottom: 20px; left: 20px; }
+.vg-anchor-label.silk { bottom: 20px; right: 20px; }
+
+.vg-anchor-name {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    color: var(--god-secondary);
+    text-shadow: 0 0 10px rgba(194, 150, 35, 0.5);
+}
+
+.vg-anchor-freq {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 2px;
+}
+
+/* Typography Utilities */
+.text-data-md {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+.text-label-xs {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+/* ─── Hall of Records (Ancient Library) ─────────────────────────────────── */
+
+.vg-hall-of-records {
+  --shelf-wood: #2a1810;
+  --shelf-gold: #c29623;
+  --shelf-nebula: #1a0a20;
+  
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 20px;
+  perspective: 1000px;
+}
+
+.vg-library-shelf {
+  position: relative;
+  min-height: 200px;
+  background: linear-gradient(90deg, rgba(42, 24, 16, 0.4), rgba(42, 24, 16, 0.1) 50%, rgba(42, 24, 16, 0.4));
+  border-bottom: 4px solid var(--shelf-wood);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 -2px 10px rgba(194, 150, 35, 0.2);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 20px 4px;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.vg-library-shelf::after {
+  align-items: end;
+  position: relative;
+}
+
+.vg-tome {
+  /* Dark Mahogany to Obsidian */
+  background: linear-gradient(180deg, #2a111a 0%, #0d060a 100%);
+  border: 1px solid rgba(194, 150, 35, 0.15);
+  border-radius: 2px 8px 0 0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: bottom center;
+  box-shadow: inset 2px 0 5px rgba(0,0,0,0.5), -2px 0 10px rgba(0,0,0,0.4);
+}
+
+.vg-tome:hover {
+  transform: scale(1.1) translateY(-10px);
+  z-index: 10;
+  background: linear-gradient(180deg, #4a1c2a 0%, #1a0812 100%);
+  border-color: rgba(194, 150, 35, 0.6);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.9), 0 0 25px rgba(194, 150, 35, 0.3);
+}
+
+.vg-tome-spine {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 10px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.vg-tome:hover .vg-tome-spine {
+  opacity: 0;
+}
+
+.vg-tome-content {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  transition: opacity 0.3s 0.1s;
+}
+
+.vg-tome:hover .vg-tome-content {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.vg-tome-aura {
+  height: 80px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 4px;
+  margin-top: auto;
+  border: 1px solid rgba(194, 150, 35, 0.2);
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(4px);
+}
+
+.vg-runes {
+  color: var(--shelf-gold);
+  font-size: 18px;
+  opacity: 0.5;
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.vg-shelf-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: radial-gradient(ellipse at bottom, rgba(194, 150, 35, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: pulse-gold 4s infinite ease-in-out;
+}
+

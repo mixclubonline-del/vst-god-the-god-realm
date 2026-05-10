@@ -1,0 +1,3614 @@
+{
+  "name": "VST God \u2014 God Of Oneshots",
+  "version": "1.0.0",
+  "author": "Just Dre Productions",
+  "description": "713 divine oneshot sounds across 20 categories \u2014 from analog warmth to celestial textures.",
+  "totalSamples": 713,
+  "categories": {
+    "Accents": [
+      {
+        "name": "67",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/67.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Airlock",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Airlock.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Allawn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Allawn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Alto Flute Legato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Alto Flute Legato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "BATTLE",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/BATTLE.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Blurry Particles",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Blurry Particles.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Brooding Bass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Brooding Bass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Calling Seq.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Calling Seq.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Carousel",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Carousel.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Cello Trills & Trems",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Cello Trills & Trems.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Chords Staccatos",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Chords Staccatos.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Cliffhangers",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Cliffhangers.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Disturbing News",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Disturbing News.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Drift Pluck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Drift Pluck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dry",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Dry.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Emotional Cello Shorts",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Emotional Cello Shorts.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Emotional Viola",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Emotional Viola.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Everlasting Electric",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Everlasting Electric.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Falls",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Falls.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fancy Robot Party",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Fancy Robot Party.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Flutter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Flutter.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Guitopia - Suspense",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Guitopia - Suspense.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Gushing codine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Gushing codine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "High Strings Marcato.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/High Strings Marcato.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "High Strings Spiccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/High Strings Spiccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "High Strings Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/High Strings Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Inbetween The Walls",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Inbetween The Walls.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Intimate Violin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Intimate Violin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lead - Hit Felt Piano",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Lead - Hit Felt Piano.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Leaking Oxygen 2",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Leaking Oxygen 2.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Leaking Oxygen",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Leaking Oxygen.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Low Brass Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Low Brass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mariner's Song",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Mariner's Song.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Medieval Lute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Medieval Lute.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Morin Khuur",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Morin Khuur.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Motion Through Devotion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Motion Through Devotion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Musicbox",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Musicbox.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Muted",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Muted.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Nature",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Nature.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Orchestral Harp",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Orchestral Harp.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Scattered",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Scattered.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sheperds",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Sheperds.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Showtime",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Showtime.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Speed Chase",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Speed Chase.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Staccatissimo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Staccatissimo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Steel Revolution",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Steel Revolution.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "TRP",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/TRP.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpets Muted Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/Trumpets Muted Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "phrygian",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Accents/phrygian.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Analog": [
+      {
+        "name": "70's Solo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/70's Solo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "80s Baby",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/80s Baby.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Acid Blomp",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Acid Blomp.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Angelification",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Angelification.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "BP Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/BP Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Big Synthy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Big Synthy.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Burn The House",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Burn The House.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Euro Noise",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Euro Noise.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Heavy Blaster",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Heavy Blaster.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Iapetus",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Iapetus.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Juno",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Juno.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Main Techniques",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Main Techniques.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Muddied Up",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Muddied Up.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "NURS",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/NURS.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Napolean",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Napolean.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Poly Scythe",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Poly Scythe.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Qulited",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Qulited.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Short Pizzicato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Short Pizzicato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Space Jams",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Space Jams.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Space Organ",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Space Organ.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Speci",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Speci.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Stack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Stack.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Stinger",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Stinger.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Switzerland",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Switzerland.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Unikaraine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Unikaraine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vocal Soup",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Analog/Vocal Soup.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Bass": [
+      {
+        "name": "A Sine From Above",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/A Sine From Above.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bassic Grinder.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Bassic Grinder.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Detroit",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Detroit.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Dope Man",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Dope Man.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Fatal",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Fatal.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Game Bass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Game Bass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Grand",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Grand.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Heavy Bottom",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Heavy Bottom.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Low Brass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mosaic Bass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Mosaic Bass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Reese Bass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Reese Bass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SYMPHONIC DEPTHS",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/SYMPHONIC DEPTHS.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SYNTH HYBRID",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/SYNTH HYBRID.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SYNTHETIC ORCHESTRA",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/SYNTHETIC ORCHESTRA.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Screamy Mother",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Screamy Mother.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "TIGHT SYNTHETIC",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/TIGHT SYNTHETIC.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "TRACTOR BEAM",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/TRACTOR BEAM.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tri Saw Sub",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Tri Saw Sub.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "UNSETTLED",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/UNSETTLED.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "WILDFIRE",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/WILDFIRE.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Way Down Deep",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Way Down Deep.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Wow",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Wow.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Yin And Yang",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bass/Yin And Yang.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Bell": [
+      {
+        "name": "Ball Game",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Ball Game.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Chatter Octaves",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Chatter Octaves.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Frost",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Frost.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Glimmer Of Nope",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Glimmer Of Nope.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Golden",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Golden.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Granulada",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Granulada.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Heavy Handed",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Heavy Handed.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hedwig",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Hedwig.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hour Glass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Hour Glass.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Jelly",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Jelly.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Lofi",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Lofi.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Long",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Long.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Luz Del Sol Vibes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Luz Del Sol Vibes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Malleto",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Malleto.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Marimba Shimmer",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Marimba Shimmer.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mirada",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Mirada.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Motor",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Motor.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Permafrost",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Permafrost.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Real",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Real.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Rremolo Bowed",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Rremolo Bowed.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Senza T Drum",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Senza T Drum.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sola",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Sola.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Sous Marin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Sous Marin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Swirling Bells",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Swirling Bells.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Transistor Belly",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Transistor Belly.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tremolo Fast",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Tremolo Fast.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tremolo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Tremolo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tronish Vibes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Tronish Vibes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vintage",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Bell/Vintage.wav",
+        "format": "wav"
+      }
+    ],
+    "Ethnic": [
+      {
+        "name": "Bazouki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Bazouki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bellows",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Bellows.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Big Money",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Big Money.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Blocarooey",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Blocarooey.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celtic Harp",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Celtic Harp.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ceremony",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Ceremony.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Deeper Tape.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Deeper Tape.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "DreamMallets",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/DreamMallets.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Duk Duk",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Duk Duk.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Gaohachet",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Gaohachet.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Kalimba",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Kalimba.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Main Techniques",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Main Techniques.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Nightshade",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Nightshade.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "No Age",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/No Age.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Prima Domra",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Prima Domra.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Su Gzheng",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Su Gzheng.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Swarm",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Swarm.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sweetness",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Sweetness.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tagelharpa",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Tagelharpa.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Weary Traveller",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Weary Traveller.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Welcome Home Rico",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Ethnic/Welcome Home Rico.ogg",
+        "format": "ogg"
+      }
+    ],
+    "FX": [
+      {
+        "name": "Arctic Terns",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Arctic Terns.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Audio Rate Entertainment",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Audio Rate Entertainment.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bird Invasion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Bird Invasion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Boiling Anger",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Boiling Anger.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Candy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Candy.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Car Crush",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Car Crush.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Coarse Echoes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Coarse Echoes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Crescendi",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Crescendi.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Distant Factory",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Distant Factory.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Don't Worry Bout It",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Don't Worry Bout It.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Easter Island",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Easter Island.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Furious Road",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Furious Road.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Gentle Cry",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Gentle Cry.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ghostly",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Ghostly.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Manx Attack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Manx Attack.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mindhaunter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Mindhaunter.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mysterious Quarks",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Mysterious Quarks.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "NoZ",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/NoZ.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Noise 2 Meet U",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Noise 2 Meet U.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Penguin Acid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Penguin Acid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Reaper",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Reaper.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Rises",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Rises.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Scrape The Bone",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Scrape The Bone.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Scratching the Surface",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Scratching the Surface.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Slowdowns",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Slowdowns.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SpaceMuffin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/SpaceMuffin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sun",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Sun.wav",
+        "format": "wav"
+      },
+      {
+        "name": "The End Game",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/The End Game.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tuned Ambience",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Tuned Ambience.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Up & Down",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Up & Down.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vertigo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Vertigo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vox Flux",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/FX/Vox Flux.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Guitar": [
+      {
+        "name": "Aircraft",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Aircraft.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Alternative Ray",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Alternative Ray.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "American Tape",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/American Tape.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "American Trem",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/American Trem.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Angry Airwaves",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Angry Airwaves.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Arp Land",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Arp Land.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celtic Castle",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Celtic Castle.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Classic Jazz Chorus",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Classic Jazz Chorus.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Falling Leaves",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Falling Leaves.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fretty Krueger",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Fretty Krueger.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fullerton",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Fullerton.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Funk Flight",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Funk Flight.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Funky Fare",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Funky Fare.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Growl",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Growl.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Guitar Euphoria",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Guitar Euphoria.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Harmonico",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Harmonico.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hey You",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Hey You.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hold and Reverse",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Hold and Reverse.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Humpback",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Humpback.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Indie Rock Guitar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Indie Rock Guitar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Jazzyone",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Jazzyone.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Live or Pool",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Live or Pool.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mahayana",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Mahayana.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mellow EDM",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Mellow EDM.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mint Pop",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Mint Pop.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Motor",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Motor.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Neo Funk",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Neo Funk.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Night Ride",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Night Ride.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal Combo 2",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Pedal Combo 2.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal Combo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Pedal Combo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Plucked",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Plucked.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Post Rock Guitar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Post Rock Guitar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Renaxxance II",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Renaxxance II.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Soft Nylon Guitar 2",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Soft Nylon Guitar 2.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Soft Nylon Guitar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Soft Nylon Guitar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Space Mint",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Space Mint.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Suspicious",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Suspicious.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sweet Slides",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Sweet Slides.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Synthar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Synthar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tek Guitar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Tek Guitar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Through the Night",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Through the Night.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tomorrow",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Tomorrow.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tread Lightly",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Tread Lightly.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tremolang",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Tremolang.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Underwater Skatepark",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Underwater Skatepark.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Veil Industries",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Veil Industries.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "What Do I Know",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/What Do I Know.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Wobbly Harmonics",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/Wobbly Harmonics.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "in it",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/in it.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "the 16th",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Guitar/the 16th.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Keys": [
+      {
+        "name": "1960",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/1960.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "1968",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/1968.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "4ths",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/4ths.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Airplane Window Sunrise",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Airplane Window Sunrise.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Apathy Atrophied",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Apathy Atrophied.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ariel",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Ariel.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Bedtime Story",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Bedtime Story.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Beloved",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Beloved.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bouquet",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Bouquet.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Cinematic Mellow",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Cinematic Mellow.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dark",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Dark.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Easy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Easy.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Echo of the Abyss",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Echo of the Abyss.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Felt Piano",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Felt Piano.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Freaky Fair",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Freaky Fair.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Harrison",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Harrison.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Humble Beginnings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Humble Beginnings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hybrid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Hybrid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ignition Keys",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Ignition Keys.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Isolation",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Isolation.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "KeyslnTime",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/KeyslnTime.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Kimbre",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Kimbre.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lettemin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Lettemin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "MistyFM",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/MistyFM.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Old Mcdonald",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Old Mcdonald.wav",
+        "format": "wav"
+      },
+      {
+        "name": "PN Wind",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/PN Wind.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "PN Zebrano",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/PN Zebrano.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Piano On Tape 5",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Piano On Tape 5.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Piano On Tape",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Piano On Tape.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Play High.nksf",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Play High.nksf.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pulses",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Pulses.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Spacetrack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Spacetrack.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Summer Rain",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Summer Rain.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sway",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Sway.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "THE FAMOUS",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/THE FAMOUS.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tapper.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Tapper.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Return",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/The Return.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vibra",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Vibra.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Winter Taiga",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Winter Taiga.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Wonder",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Keys/Wonder.wav",
+        "format": "wav"
+      }
+    ],
+    "Leads": [
+      {
+        "name": "2000",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/2000.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Angry Reso",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Angry Reso.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Anthem",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Anthem.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Aquamarine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Aquamarine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fill It",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Fill It.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Good 1",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Good 1.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Good 3.nksf",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Good 3.nksf.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "HP Lead",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/HP Lead.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Junk FM",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Junk FM.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mosaic",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Mosaic.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Old Games",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Old Games.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Plain.nksf",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Plain.nksf.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Play Weak",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Play Weak.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Rash",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Rash.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Saturation",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Saturation.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Speak Up",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Speak Up.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Underground",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Leads/Underground.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Modulated": [
+      {
+        "name": "3D Bell",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/3D Bell.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Almost Not There",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Almost Not There.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Analog Popcorn Pluck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Analog Popcorn Pluck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Animated Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Animated Flute.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ascending Gemini",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Ascending Gemini.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bee Sting",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Bee Sting.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Broken Tape",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Broken Tape.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Buzz Bye",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Buzz Bye.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Chukchi",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Chukchi.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Circuit Bent Bells",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Circuit Bent Bells.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Cyber Tokyo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Cyber Tokyo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Disintegration",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Disintegration.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Down and Back and Forth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Down and Back and Forth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Emo Pulse",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Emo Pulse.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Enchanting Bells",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Enchanting Bells.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Expansion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Expansion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Forever Pluck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Forever Pluck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Formant Motion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Formant Motion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Friendship",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Friendship.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fuzzy Signal",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Fuzzy Signal.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Galatea",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Galatea.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Getaway Pluck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Getaway Pluck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hello Mellow.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Hello Mellow.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hydraulic Oscillation",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Hydraulic Oscillation.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "In Charge",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/In Charge.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Infinity Attack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Infinity Attack.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "It_s All Rushing Back",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/It_s All Rushing Back.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lost Sunset - Part_1",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Lost Sunset - Part_1.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Lost Sunset",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Lost Sunset.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Lost in Space",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Lost in Space.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Missed Call",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Missed Call.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "My Only Relflection",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/My Only Relflection.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mysticist",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Mysticist.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Night Glider Ride",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Night Glider Ride.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Nothing Into Everything",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Nothing Into Everything.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "OREN AMBARCHI - Cloud Drop",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/OREN AMBARCHI - Cloud Drop.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "OREN AMBARCHI - Glitch Cloud II",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/OREN AMBARCHI - Glitch Cloud II.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Qlwx -  Major Keyssss",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Qlwx -  Major Keyssss.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Qlwx - Smokers Room",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Qlwx - Smokers Room.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "R2D2",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/R2D2.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Saturn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Saturn.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Short Fizzer",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Short Fizzer.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Slot Machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Slot Machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Summer Pluck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Summer Pluck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Surgery",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Surgery.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Triplicator",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Triplicator.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tripulsing",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Tripulsing.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vibraphone Pulse",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Vibraphone Pulse.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "WAVE",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/WAVE.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Wavey",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Wavey.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Worker Bee",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Modulated/Worker Bee.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Organ": [
+      {
+        "name": "3 Sling TI",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/3 Sling TI.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bee Trees",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Bee Trees.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celestial Organs",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Celestial Organs.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Chopped Up Organs",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Chopped Up Organs.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Disca Queen",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Disca Queen.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Drunk in Church",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Drunk in Church.wav",
+        "format": "wav"
+      },
+      {
+        "name": "DxJx Organ",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/DxJx Organ.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "HoreGaine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/HoreGaine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "KEY Organ 1",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/KEY Organ 1.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "KEY Organ 2",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/KEY Organ 2.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Organik",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Organik.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Orions",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Orions.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Picky Lead",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Picky Lead.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Rhodes Sling",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Rhodes Sling.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sandman Dream",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Sandman Dream.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Stolen Moments",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Stolen Moments.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Velour",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Organ/Velour.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Pads": [
+      {
+        "name": "Aeolian Whispers",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Aeolian Whispers.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Androids Dream",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Androids Dream.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Angle Grinder",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Angle Grinder.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Beyond The Wall",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Beyond The Wall.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bright Daze",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Bright Daze.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Broken Circuits",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Broken Circuits.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Compfluter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Compfluter.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Conifer Pine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Conifer Pine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Crystal Earth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Crystal Earth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Death Knell",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Death Knell.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Deep Space",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Deep Space.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dew Drops",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Dew Drops.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Distant Factory",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Distant Factory.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dont Let Go",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Dont Let Go.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dwarven Ruins",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Dwarven Ruins.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Early Birds",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Early Birds.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Favorite Color Tan",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Favorite Color Tan.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Flow State",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Flow State.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Gentle Shores",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Gentle Shores.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Glory Days",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Glory Days.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Granular Glaciers",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Granular Glaciers.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Insert Coin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Insert Coin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Jackrabbit",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Jackrabbit.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Jupiters Tears",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Jupiters Tears.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Laser Whips",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Laser Whips.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lava Flow",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Lava Flow.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mercury",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Mercury.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Mountain Springs",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Mountain Springs.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ocean Eyes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Ocean Eyes.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Pick Up Your Phone",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Pick Up Your Phone.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pulsar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Pulsar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Racing",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Racing.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Rebellion Hope Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Rebellion Hope Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Resonant Fleet Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Resonant Fleet Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Retro Ghosts",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Retro Ghosts.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SEM Goodness",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/SEM Goodness.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Shimmering Mirage",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Shimmering Mirage.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Slight Buzz",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Slight Buzz.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Smoking Flue",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Smoking Flue.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Smooth Reflections",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Smooth Reflections.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Snowfall Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Snowfall Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Space Whale Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Space Whale Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Speaking In Tongues",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Speaking In Tongues.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Speed Limit",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Speed Limit.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Stumble",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Stumble.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sunset Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Sunset Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Suprise",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Suprise.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Swoop Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Swoop Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Dead Rise",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/The Dead Rise.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Force Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/The Force Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Mariana Trench",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/The Mariana Trench.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Mummy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/The Mummy.wav",
+        "format": "wav"
+      },
+      {
+        "name": "This Came From Pluto",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/This Came From Pluto.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Uncertain Space",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Uncertain Space.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Underwater",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Underwater.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Unwritten Bio",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Unwritten Bio.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Valley Sunrise",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Valley Sunrise.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Watery Pad",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Watery Pad.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Yawn.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Yawn.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Yellow Warbler",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pads/Yellow Warbler.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Pluck": [
+      {
+        "name": "Aggressive Kats",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Aggressive Kats.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Barry Is Back",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Barry Is Back.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bedtime Stories",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Bedtime Stories.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Big Hair Energy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Big Hair Energy.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bread Hammond",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Bread Hammond.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Brown Bag Vibes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Brown Bag Vibes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Callous Tips",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Callous Tips.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Chuckster",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Chuckster.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Collection Plate",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Collection Plate.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Cotton Mouth Keys",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Cotton Mouth Keys.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dennis Roadman",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Dennis Roadman.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dirty Danza.",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Dirty Danza..ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Distant Winds",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Distant Winds.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dreamy Axxe",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Dreamy Axxe.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Eclipsed Passion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Eclipsed Passion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Faulter Reed",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Faulter Reed.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Faux Bando",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Faux Bando.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fluffy Frets",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Fluffy Frets.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Free Lovin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Free Lovin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Funkees",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Funkees.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Girls Night Out",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Girls Night Out.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Give Em Butterflies",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Give Em Butterflies.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Glass Road",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Glass Road.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Greasy Keys",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Greasy Keys.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Gucci Piano",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Gucci Piano.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Jah Roam",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Jah Roam.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Keep It Toro",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Keep It Toro.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Liquid Lover",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Liquid Lover.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Make A Wish",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Make A Wish.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Molded Roads",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Molded Roads.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Oh It's Be Eight",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Oh It's Be Eight.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "PL Ring My Bell",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/PL Ring My Bell.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "PL Squarehack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/PL Squarehack.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "PL Voxtrot",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/PL Voxtrot.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Press Pads",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Press Pads.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Prohibition Grand",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Prohibition Grand.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Quadro Suave",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Quadro Suave.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Rain Brows Lite",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Rain Brows Lite.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Reel Flack",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Reel Flack.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ribbon Clav",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Ribbon Clav.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ring Keys",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Ring Keys.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Rodgers Entrance",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Rodgers Entrance.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Roundabout",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Roundabout.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sauce Neck",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Sauce Neck.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Seaside Views",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Seaside Views.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sheeno Bee",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Sheeno Bee.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Shortcut Keys",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Shortcut Keys.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sky Ribbon Reel",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Sky Ribbon Reel.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Slammed Upright",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Slammed Upright.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Smokey Drips",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Pluck/Smokey Drips.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Real Brass": [
+      {
+        "name": "Bankroll",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Bankroll.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Brass Lead",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Brass Lead.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Brass Mid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Brass Mid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Brass Section",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Brass Section.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Breathiness",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Breathiness.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Commas",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Commas.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Countdown",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Countdown.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Degraded Bone",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Degraded Bone.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Detached",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Detached.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Europa",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Europa.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fluttertongue",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Fluttertongue.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "French Horns Muted Sustain",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/French Horns Muted Sustain.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "French Horns Sustain",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/French Horns Sustain.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a3 Marcato Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a3 Marcato Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a3 Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a3 Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a3 Swell Long",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a3 Swell Long.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a3 Swell Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a3 Swell Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a3",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a3.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Horns a4 - Legato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Horns a4 - Legato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Krusty Krew Anthem",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Krusty Krew Anthem.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Legato WIP",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Legato WIP.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass Marcato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Low Brass Marcato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass Shards Grid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Low Brass Shards Grid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Low Brass Sustain",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Low Brass Sustain.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Momentum Grid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Momentum Grid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Morin Khuur",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Morin Khuur.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Multitongue",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Multitongue.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "QPass.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/QPass.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Short Sfz",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Short Sfz.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Short Staccatissimo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Short Staccatissimo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Time Machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Time Machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpet Solo - Legato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpet Solo - Legato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpet Solo - Long Flutter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpet Solo - Long Flutter.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpet Solo - Long",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpet Solo - Long.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpet Solo - Rip",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpet Solo - Rip.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpets a4 Marcato Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpets a4 Marcato Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Trumpets a4 Staccatissimo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Trumpets a4 Staccatissimo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Tuba",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Tuba.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Woods",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/Woods.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "a3 Marcato Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/a3 Marcato Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "a3 Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Real Brass/a3 Staccato.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Strings": [
+      {
+        "name": "1st Violins - Pizzicato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/1st Violins - Pizzicato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "1st Violins",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/1st Violins.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Antelope",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Antelope.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Antimatter Strings.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Antimatter Strings.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Armed & Dangerous",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Armed & Dangerous.wav",
+        "format": "wav"
+      },
+      {
+        "name": "B Time machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/B Time machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bartok Pizzicato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Bartok Pizzicato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bladerunner Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Bladerunner Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bright Big Sky",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Bright Big Sky.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celesta Mutation",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Celesta Mutation.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celli Grid - Time Madness",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Celli Grid - Time Madness.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Celli Shards Grid",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Celli Shards Grid.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "D Time Machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/D Time Machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Deckard's Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Deckard's Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Duplets",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Duplets.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Economic",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Economic.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Eightve",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Eightve.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Energetic Shorts",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Energetic Shorts.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ensemble of Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Ensemble of Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ensemble",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Ensemble.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Epic",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Epic.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Guarneri Violin Shorts",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Guarneri Violin Shorts.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Guarneri Violin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Guarneri Violin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "High Spiccato Blurred",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/High Spiccato Blurred.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Intimate Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Intimate Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lush70'sFade",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Lush70'sFade.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "MW - Stutter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/MW - Stutter.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Marcato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Marcato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Miami Skyline",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Miami Skyline.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Moded",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Moded.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Money longer",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Money longer.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Movie",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Movie.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ostinatum (Spic)",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Ostinatum (Spic).ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pulsing Momentum",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Pulsing Momentum.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Quartet",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Quartet.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Short Octave",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Short Octave.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Spiccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Spiccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Strings High",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Strings High.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sunrise Comet",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Sunrise Comet.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Real",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/The Real.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Time machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Time machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Too Many Nights",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Too Many Nights.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Tremolo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Tremolo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Umbriel",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Umbriel.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Verso Swell",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Verso Swell.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Violins Tone",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Violins Tone.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Warm Cinematic Strings",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Warm Cinematic Strings.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Woods High - Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Woods High - Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Yayli",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/Yayli.wav",
+        "format": "wav"
+      },
+      {
+        "name": "lush string",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Strings/lush string.wav",
+        "format": "wav"
+      }
+    ],
+    "Synth": [
+      {
+        "name": "A False Future",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/A False Future.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "After The Storm",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/After The Storm.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Akwar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Akwar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Allarms",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Allarms.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Au Revoir",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Au Revoir.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Azimuth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Azimuth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Before Sunset",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Before Sunset.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Black Butterfly",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Black Butterfly.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bronze Bomber",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Bronze Bomber.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Counting Stars",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Counting Stars.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dew Drops",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Dew Drops.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dirty Shakin",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Dirty Shakin.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Dope or Dopey",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Dope or Dopey.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fatigue",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Fatigue.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Finjo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Finjo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fire Inside",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Fire Inside.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fragile Feedback",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Fragile Feedback.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Glisten",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Glisten.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Going into Orbit",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Going into Orbit.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hard Choice",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Hard Choice.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Herd.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Herd.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Hoover 1",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Hoover 1.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "In Contrast",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/In Contrast.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Knife's Edge",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Knife's Edge.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Leader",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Leader.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Love Synth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Love Synth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Matra",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Matra.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mouth Accordion",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Mouth Accordion.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Musical Telemetry",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Musical Telemetry.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Neverending",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Neverending.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Old String Synth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Old String Synth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pacmon",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Pacmon.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ringing Synth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Ringing Synth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SY Nyom.nksf",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/SY Nyom.nksf.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SY Republica.nksf",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/SY Republica.nksf.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SY Tragic Kingdom",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/SY Tragic Kingdom.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SY Tribal Dance",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/SY Tribal Dance.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sau",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Sau.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Sauce Alert",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Sauce Alert.wav",
+        "format": "wav"
+      },
+      {
+        "name": "She Came At Night To Feed On The Weak",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/She Came At Night To Feed On The Weak.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Spoke up",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Spoke up.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Staticocity Cinematica",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Staticocity Cinematica.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Synth Braams",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Synth Braams.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Talking Synth",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Talking Synth.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Takers",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/The Takers.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Thrasher",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Thrasher.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "ULTRON LEAD",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/ULTRON LEAD.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Uneasy Approach",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Uneasy Approach.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Warning",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Warning.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Wooden Saw",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth/Wooden Saw.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Synth Brass": [
+      {
+        "name": "Brass",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Brass.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Janus",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Janus.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Long Octaves",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Long Octaves.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Long Pulses",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Long Pulses.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mimas",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Mimas.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Oberon",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Oberon.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Short Staccatissimo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/Short Staccatissimo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "a4 Marcato Short",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/a4 Marcato Short.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "a4 Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/a4 Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "a4 Sustains",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Synth Brass/a4 Sustains.ogg",
+        "format": "ogg"
+      }
+    ],
+    "Texture": [
+      {
+        "name": "ASMR",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/ASMR.wav",
+        "format": "wav"
+      },
+      {
+        "name": "ATMOS",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/ATMOS.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Atmosphere",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Atmosphere.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Campfire",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Campfire.wav",
+        "format": "wav"
+      },
+      {
+        "name": "DKVPZ",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/DKVPZ.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Favorite Texture",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Favorite Texture.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ice dropping",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Ice dropping.wav",
+        "format": "wav"
+      },
+      {
+        "name": "JUNGLE",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/JUNGLE.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ocean Floor",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Ocean Floor.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Palos",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Palos.wav",
+        "format": "wav"
+      },
+      {
+        "name": "RESTREAT",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/RESTREAT.wav",
+        "format": "wav"
+      },
+      {
+        "name": "RIOT",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/RIOT.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Redman",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Redman.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Reels",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Reels.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Terrifying Night",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Terrifying Night.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Voltage Venom",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/Voltage Venom.wav",
+        "format": "wav"
+      },
+      {
+        "name": "helix texture",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/helix texture.wav",
+        "format": "wav"
+      },
+      {
+        "name": "rule",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/rule.wav",
+        "format": "wav"
+      },
+      {
+        "name": "texture - chimes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/texture - chimes.wav",
+        "format": "wav"
+      },
+      {
+        "name": "worried",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Texture/worried.wav",
+        "format": "wav"
+      }
+    ],
+    "Vox": [
+      {
+        "name": "3 Over 2.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/3 Over 2.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Acacia.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Acacia.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Ah Ee Oo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Ah Ee Oo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Aliens.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Aliens.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bend Ha Up",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Bend Ha Up.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bending The Suspense",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Bending The Suspense.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bop Scotch.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Bop Scotch.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bring it back",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Bring it back.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Casual Choirs.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Casual Choirs.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "DooWah.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/DooWah.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Eye Yee.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Eye Yee.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fly High LoFi.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Fly High LoFi.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Godspeed",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Godspeed.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Haunted House",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Haunted House.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Hey There",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Hey There.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Hoowayyy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Hoowayyy.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Just Breath",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Just Breath.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Liminal.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Liminal.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lo Feezey.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Lo Feezey.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Long Natural Oh",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Long Natural Oh.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Meloncoly.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Meloncoly.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mf think he a cow",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Mf think he a cow.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Mitotic Division.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Mitotic Division.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Motor",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Motor.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mrph",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Mrph.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Nerai Sh.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Nerai Sh.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Oohhh shiiiii",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Oohhh shiiiii.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ooozzz.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Ooozzz.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Outta Breath.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Outta Breath.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal 01.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Pedal 01.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal 02.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Pedal 02.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal 03.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Pedal 03.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal 05.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Pedal 05.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Pedal 06.nki",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Pedal 06.nki.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Phrases",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Phrases.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Plavalaguna",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Plavalaguna.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Scribble",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Scribble.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Shift Beauty",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Shift Beauty.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Shorts",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Shorts.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Soul Choirs",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Soul Choirs.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Strept",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Strept.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Super Ahh Femalwe",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Super Ahh Femalwe.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Swell EhAh",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Swell EhAh.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "The Awakening.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/The Awakening.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Transcendence.nksn",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Transcendence.nksn.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Unda Da Sea",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Unda Da Sea.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Under The Radar",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/Under The Radar.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "casper",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/casper.wav",
+        "format": "wav"
+      },
+      {
+        "name": "dhummm",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/dhummm.wav",
+        "format": "wav"
+      },
+      {
+        "name": "yhhhayyy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Vox/yhhhayyy.wav",
+        "format": "wav"
+      }
+    ],
+    "Wind": [
+      {
+        "name": "Alto Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Alto Flute.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Bop",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Bop.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Ethnic Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Ethnic Flute.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Flute Fix",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Flute Fix.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Fukumean",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Fukumean.wav",
+        "format": "wav"
+      },
+      {
+        "name": "LoFi Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/LoFi Flute.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Lust",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Lust.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Mellow Flutes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Mellow Flutes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Mountain Origins",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Mountain Origins.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Praise The Lord",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Praise The Lord.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Real Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Real Flute.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Short Marcato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Short Marcato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Short Staccatissimo",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Short Staccatissimo.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Short Staccato",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Short Staccato.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "SoftFlutes",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/SoftFlutes.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Time machine",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Time machine.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Vibes Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Vibes Flute.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Waterwheel",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Waterwheel.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "Whistle",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Whistle.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Woodwind Quartet",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Woodwind Quartet.ogg",
+        "format": "ogg"
+      },
+      {
+        "name": "X - Flute",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/X - Flute.wav",
+        "format": "wav"
+      },
+      {
+        "name": "YOSEMITE",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/YOSEMITE.wav",
+        "format": "wav"
+      },
+      {
+        "name": "Yale",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/Yale.wav",
+        "format": "wav"
+      },
+      {
+        "name": "flutter",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/flutter.wav",
+        "format": "wav"
+      },
+      {
+        "name": "walzy",
+        "path": "/kits/VSTGOD-God-Of-Oneshots/Wind/walzy.wav",
+        "format": "wav"
+      }
+    ]
+  }
+}

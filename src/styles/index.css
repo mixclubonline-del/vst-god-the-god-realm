@@ -1,0 +1,329 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --ember-50: 20 100% 95%;
+    --ember-100: 20 100% 90%;
+    --ember-200: 20 100% 80%;
+    --ember-300: 20 100% 70%;
+    --ember-400: 20 100% 60%;
+    --ember-500: 20 100% 50%; /* Primary Ember */
+    --ember-600: 20 100% 40%;
+    --ember-700: 20 100% 30%;
+    --ember-800: 20 100% 20%;
+    --ember-900: 20 100% 10%;
+    
+    --midnight-bg: 240 10% 3.9%;
+    --midnight-panel: 240 10% 6%;
+  }
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.9);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 87, 34, 0.1);
+}
+
+.ember-glow {
+  box-shadow: 0 0 30px rgba(255, 87, 34, 0.15);
+}
+
+.ember-glow:hover {
+  box-shadow: 0 0 50px rgba(255, 87, 34, 0.3);
+}
+
+/* Animations */
+@keyframes pulse-ember {
+  0%, 100% { opacity: 0.4; filter: brightness(1) blur(0px); }
+  50% { opacity: 1; filter: brightness(1.8) blur(1px); }
+}
+
+@keyframes forge-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes forge-beam {
+  0% { transform: translateX(-100%) skewX(-45deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(250%) skewX(-45deg); opacity: 0; }
+}
+
+@keyframes neural-pulse {
+  0% { transform: scale(0.95); opacity: 0.3; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(0.95); opacity: 0.3; }
+}
+
+@keyframes heat-pulse {
+  0%, 100% { filter: contrast(1.1) brightness(1) drop-shadow(0 0 5px rgba(255, 87, 34, 0.2)); transform: scale(1); }
+  50% { filter: contrast(1.4) brightness(1.2) drop-shadow(0 0 20px rgba(255, 87, 34, 0.5)); transform: scale(1.02); }
+}
+
+@keyframes data-flow {
+  0% { background-position: 0% 0%; opacity: 0.1; }
+  50% { opacity: 0.3; }
+  100% { background-position: 100% 100%; opacity: 0.1; }
+}
+
+@keyframes seal-lock {
+  0% { transform: rotate(0deg) scale(1); opacity: 0; border-color: rgba(255, 87, 34, 0); }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 1; border-color: rgba(255, 87, 34, 0.5); }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.8; border-color: rgba(255, 87, 34, 0.2); }
+}
+
+.animate-heat-pulse {
+  animation: heat-pulse 3s infinite ease-in-out;
+}
+
+.animate-data-flow {
+  background-image: radial-gradient(circle, rgba(255, 87, 34, 0.1) 1px, transparent 1px);
+  background-size: 10px 10px;
+  animation: data-flow 20s infinite linear;
+}
+
+.animate-seal-lock {
+  animation: seal-lock 2s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-pulse-ember {
+  animation: pulse-ember 4s infinite ease-in-out;
+}
+
+.animate-forge-scan {
+  animation: forge-scan 4s infinite linear;
+}
+
+.animate-forge-beam {
+  animation: forge-beam 3s infinite ease-in-out;
+}
+
+.animate-neural-pulse {
+  animation: neural-pulse 2s infinite ease-in-out;
+}
+
+.forge-grid {
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 87, 34, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 87, 34, 0.05) 1px, transparent 1px);
+  mask-image: radial-gradient(circle at center, black 30%, transparent 90%);
+}
+
+.ember-border {
+  border: 1px solid rgba(255, 87, 34, 0.2);
+  box-shadow: inset 0 0 10px rgba(255, 87, 34, 0.05);
+}
+
+.ember-border:hover {
+  border-color: rgba(255, 87, 34, 0.5);
+  box-shadow: inset 0 0 20px rgba(255, 87, 34, 0.1), 0 0 15px rgba(255, 87, 34, 0.2);
+}
+
+/* Custom Scrollbar for Glassmorphism */
+.glass-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.glass-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.glass-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 87, 34, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 87, 34, 0.1);
+}
+
+.glass-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 87, 34, 0.4);
+}
+
+/* ═══════════ DIVINE ARCHIVE ═══════════ */
+
+/* Scrollbar alias */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 87, 34, 0.2); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 87, 34, 0.4); }
+
+/* Now-Playing Equalizer Bars */
+.da-eq-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  padding: 0 2px;
+}
+
+.da-eq-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: #ff6600;
+  animation: da-eq-bounce 0.8s ease-in-out infinite alternate;
+}
+
+.da-eq-bar:nth-child(1) { animation-delay: 0s; height: 40%; }
+.da-eq-bar:nth-child(2) { animation-delay: 0.15s; height: 70%; }
+.da-eq-bar:nth-child(3) { animation-delay: 0.3s; height: 50%; }
+.da-eq-bar:nth-child(4) { animation-delay: 0.1s; height: 85%; }
+
+@keyframes da-eq-bounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+/* Playing Row Glow */
+.da-row-playing {
+  background: rgba(255, 102, 0, 0.06) !important;
+  border-color: rgba(255, 102, 0, 0.25) !important;
+  box-shadow: inset 0 0 20px rgba(255, 102, 0, 0.04), 0 0 12px rgba(255, 102, 0, 0.08);
+}
+
+/* Category Active Left-Border Glow */
+.da-cat-active {
+  border-left: 3px solid #ff6600 !important;
+  background: linear-gradient(90deg, rgba(255, 102, 0, 0.12), transparent) !important;
+  box-shadow: inset 3px 0 12px -4px rgba(255, 102, 0, 0.3);
+}
+
+/* Skeleton Loader */
+.da-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 102, 0, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
+  background-size: 200% 100%;
+  animation: da-shimmer 1.5s infinite ease-in-out;
+  border-radius: 8px;
+}
+
+@keyframes da-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Archive Header Divider */
+.da-header-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 102, 0, 0.4), rgba(255, 68, 0, 0.6), rgba(255, 102, 0, 0.4), transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.da-header-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.8), transparent);
+  animation: da-line-sweep 3s infinite ease-in-out;
+}
+
+@keyframes da-line-sweep {
+  0% { left: -60%; }
+  100% { left: 100%; }
+}
+
+/* Format Badge */
+.da-format-badge {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Favorite Heart */
+.da-fav-btn {
+  opacity: 0;
+  transition: all 0.2s;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 14px;
+  padding: 2px;
+  line-height: 1;
+}
+
+.da-fav-btn.is-fav {
+  opacity: 1;
+  color: #ff6600;
+  text-shadow: 0 0 8px rgba(255, 102, 0, 0.5);
+}
+
+*:hover > .da-fav-btn,
+.da-fav-btn:focus {
+  opacity: 1;
+}
+
+/* Grid Card Hover */
+.da-grid-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.da-grid-card:hover {
+  border-color: rgba(255, 102, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 102, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.da-grid-action {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.da-grid-card:hover .da-grid-action {
+  transform: translateY(0);
+}
+
+/* Now-Playing Mini Display */
+.da-now-playing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(255, 102, 0, 0.08);
+  border: 1px solid rgba(255, 102, 0, 0.15);
+  border-radius: 20px;
+  animation: da-np-glow 2s infinite ease-in-out;
+}
+
+@keyframes da-np-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 102, 0, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(255, 102, 0, 0.2); }
+}
+
+/* Row alternating */
+.da-row-alt:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+}
