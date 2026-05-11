@@ -5,6 +5,8 @@ import { Lock, Link2 } from 'lucide-react';
 interface SoundSlotProps {
   id: number;
   name: string;
+  room?: string;
+  category?: string;
   isActive: boolean;
   onSelect: () => void;
   onToggle: (active: boolean) => void;
@@ -20,6 +22,8 @@ interface SoundSlotProps {
 export const SoundSlot: React.FC<SoundSlotProps> = ({
   id,
   name,
+  room,
+  category,
   isActive,
   onSelect,
   onToggle,
@@ -66,7 +70,14 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
             />
           )}
         </div>
-        <div className="vg-slot-name" title={name}>{name || 'EMPTY SLOT'}</div>
+        <div className="vg-slot-title" title={name}>
+          <div className="vg-slot-name">{name || 'EMPTY SLOT'}</div>
+          {(room || category) && (
+            <div className="vg-slot-meta">
+              {[room, category].filter(Boolean).join(' / ')}
+            </div>
+          )}
+        </div>
         <div className="text-[8px] text-white/20 font-bold">●</div>
       </div>
 

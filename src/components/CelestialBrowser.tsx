@@ -25,7 +25,7 @@ import type { SamplePreviewController } from '@/engine/samplerEngine';
 
 interface CelestialBrowserProps {
   engineRef: React.MutableRefObject<any>;
-  onLoadToPad?: (samplePath: string, padIndex: number) => void;
+  onLoadToPad?: (samplePath: string, padIndex: number, relic: DivineRelic) => void;
   activePad: number;
 }
 
@@ -255,7 +255,7 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   const handleRecall = useCallback((relic: DivineRelic) => {
     setSelectedRelic(relic);
     engineRef.current?.loadSampleByPath(relic.path, activePad);
-    onLoadToPad?.(relic.path, activePad);
+    onLoadToPad?.(relic.path, activePad, relic);
     setRecentRecalls((current) => [
       relic,
       ...current.filter((item) => item.path !== relic.path),

@@ -39,6 +39,11 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
   engineRef
 }) => {
   const activePad = parameterValues.activePad || 0;
+  const activeSlots = SLOT_NAMES.map((fallbackName, i) => ({
+    name: parameterValues[`slotName_${i}`] || fallbackName,
+    room: parameterValues[`slotRoom_${i}`],
+    category: parameterValues[`slotCategory_${i}`],
+  }));
 
   return (
     <div className="vg-panel vg-multirealm overflow-y-auto pr-2 h-full flex flex-col">
@@ -68,11 +73,13 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
 
       {/* ── 6-Slot Sound Stack ── */}
       <div className="vg-realm-stack shrink-0">
-        {SLOT_NAMES.map((name, i) => (
+        {activeSlots.map((slot, i) => (
           <SoundSlot 
             key={i}
             id={i}
-            name={name}
+            name={slot.name}
+            room={slot.room}
+            category={slot.category}
             isActive={activePad === i}
             onSelect={() => update('activePad', i)}
             onToggle={(active) => {
@@ -109,7 +116,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
       <NeuralSuggestPanel 
         isOpen={isNeuralPanelOpen}
         onClose={onCloseNeuralPanel}
-        activeSlots={SLOT_NAMES.map(name => ({ name, enabled: true }))}
+        activeSlots={activeSlots.map(slot => ({ name: slot.name, enabled: true }))}
         onApplySuggestion={onApplyNeuralSuggestion}
       />
     </div>

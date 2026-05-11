@@ -20,6 +20,7 @@ import { SamplerEngine } from './SamplerEngine';
 import { KitExporter } from './KitExporter';
 import { PresetLibrarySidebar } from './PresetLibrarySidebar';
 import { CelestialBrowser } from './CelestialBrowser';
+import type { DivineRelic } from '@/archive/divineArchive';
 
 interface VstgodthegodrealmPluginProps {
   isOpen: boolean;
@@ -241,6 +242,16 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     setVaultMessage(msg);
     setTimeout(() => setVaultMessage(''), 3000);
   };
+
+  const handleArchiveRecall = useCallback((samplePath: string, padIndex: number, relic: DivineRelic) => {
+    update(`slotName_${padIndex}`, relic.name);
+    update(`slotRoom_${padIndex}`, relic.roomName);
+    update(`slotCategory_${padIndex}`, relic.sourceCategory);
+    update(`slotPath_${padIndex}`, samplePath);
+    update(`slotFormat_${padIndex}`, relic.format.toUpperCase());
+    update('lastArchiveRecall', `${relic.name} -> Pad ${padIndex + 1}`);
+    showMessage(`Recalled ${relic.name} to Pad ${padIndex + 1}`);
+  }, [update]);
 
   const handleLoadPreset = useCallback(() => {
     const p = presets[selectedPreset];
@@ -577,6 +588,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <CelestialBrowser 
               engineRef={engineRef}
               activePad={activePad}
+              onLoadToPad={handleArchiveRecall}
             />
           </div>
         )}
