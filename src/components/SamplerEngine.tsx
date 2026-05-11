@@ -14,7 +14,6 @@ interface SamplerEngineProps {
   isNeuralPanelOpen: boolean;
   onCloseNeuralPanel: () => void;
   onApplyNeuralSuggestion: (suggestion: any) => void;
-  engineRef: any;
 }
 
 const SLOT_NAMES = [
@@ -35,8 +34,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
   onNeuralForge,
   isNeuralPanelOpen,
   onCloseNeuralPanel,
-  onApplyNeuralSuggestion,
-  engineRef
+  onApplyNeuralSuggestion
 }) => {
   const activePad = parameterValues.activePad || 0;
   const activeSlots = SLOT_NAMES.map((fallbackName, i) => ({
@@ -100,7 +98,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
           update={update}
           currentStep={arpStep}
           vortexAnchors={vortexAnchors}
-          onSaveVortexAnchor={(x, y, name) => engineRef.current?.saveVortexAnchor(x, y, name)}
+          onSaveVortexAnchor={(x, y, name) => { /* TODO: Implement Native Backend Vortex Save */ }}
         />
       </div>
 

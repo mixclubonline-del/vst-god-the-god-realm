@@ -1,0 +1,112 @@
+.fluid-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  min-width: 120px;
+}
+
+.fluid-slider-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: hsla(20, 100%, 80%, 0.6);
+  text-transform: uppercase;
+}
+
+.fluid-slider-track-wrapper {
+  position: relative;
+  height: 200px;
+  width: 40px;
+  margin: 0 auto;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.fluid-slider-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.fluid-slider-glass-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, 0.1) 80%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border-radius: 20px;
+  z-index: 2;
+}
+
+.fluid-content {
+  width: 100%;
+  background: linear-gradient(to top, hsl(var(--ember-600)), hsl(var(--ember-400)));
+  position: relative;
+  transition: height 0.1s ease-out;
+}
+
+.fluid-surface {
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: #fff;
+  filter: blur(4px);
+  opacity: 0.8;
+  border-radius: 50%;
+  box-shadow: 0 0 20px hsl(var(--ember-400));
+}
+
+.fluid-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, hsla(var(--ember-500), 0.4), transparent);
+  mix-blend-mode: screen;
+  animation: fluid-pulse 2s infinite ease-in-out;
+}
+
+.fluid-slider-value {
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: hsl(var(--ember-500));
+  opacity: 0.8;
+}
+
+@keyframes fluid-pulse {
+  0%, 100% { opacity: 0.3; filter: brightness(1); }
+  50% { opacity: 0.7; filter: brightness(1.5); }
+}
+
+.fluid-slider-thumb {
+  position: absolute;
+  left: -10px;
+  width: 60px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 15px hsl(var(--ember-500));
+  border-radius: 2px;
+  z-index: 3;
+  pointer-events: none;
+}

@@ -1,18 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { GodRealmSamplerEngine } from '@/engine/samplerEngine';
 
 interface GodRealmSampleChopperProps {
   activePad: number;
   parameterValues: Record<string, any>;
   update: (id: string, val: any) => void;
-  engineRef: React.MutableRefObject<GodRealmSamplerEngine | null>;
 }
 
 export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
   activePad,
   parameterValues,
-  update,
-  engineRef
+  update
 }) => {
   const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
@@ -39,25 +36,18 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    const buffer = engineRef.current?.getBuffer(activePad);
 
-    if (!canvas || !ctx || !buffer) return;
+    if (!canvas || !ctx) return;
 
     let animationFrameId: number;
 
     const width = canvas.width;
     const height = canvas.height;
-    const data = buffer.getChannelData(0);
-    const step = Math.floor(data.length / width);
     
-    // Pre-calculate peaks for performance
+    // Mock peaks for visuals since native buffer sharing isn't built yet
     const peaks = new Float32Array(width);
     for (let i = 0; i < width; i++) {
-      let peak = 0;
-      for (let j = 0; j < step; j++) {
-        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
-      }
-      peaks[i] = peak;
+      peaks[i] = Math.random() * 0.5 + 0.1; // random base level
     }
 
     const renderWaveform = () => {
@@ -114,7 +104,7 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
     renderWaveform();
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [activePad, engineRef.current]);
+  }, [activePad]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (draggingMarker === null || !waveformRef.current) return;
@@ -123,27 +113,12 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
     const x = e.clientX - rect.left;
     let pos = Math.max(0, Math.min(1, x / rect.width));
     
-    if (snapToTransient && engineRef.current) {
-      // Find nearest transient logic
-      const transients = engineRef.current.getTransients(activePad);
-      if (transients && transients.length > 0) {
-        let nearest = transients[0];
-        let minDiff = Math.abs(pos - nearest);
-        for (const t of transients) {
-          const diff = Math.abs(pos - t);
-          if (diff < minDiff) {
-            minDiff = diff;
-            nearest = t;
-          }
-        }
-        if (minDiff < 0.05) pos = nearest; // Snap threshold
-      }
-    }
+    // TODO: Implement snap to transient with native backend
     
     const nextMarkers = [...chopMarkers];
     nextMarkers[draggingMarker] = pos;
     update('chopMarkers', nextMarkers);
-  }, [draggingMarker, chopMarkers, snapToTransient, activePad, update, engineRef]);
+  }, [draggingMarker, chopMarkers, snapToTransient, activePad, update]);
 
   const handleMouseUp = useCallback(() => {
     setDraggingMarker(null);

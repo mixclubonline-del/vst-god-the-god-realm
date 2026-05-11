@@ -20,11 +20,10 @@ import {
   getRoomCount,
   pickSelectedRelic,
   roomAccent,
+  roomImage,
 } from '@/archive/divineArchive';
-import type { SamplePreviewController } from '@/engine/samplerEngine';
 
 interface CelestialBrowserProps {
-  engineRef: React.MutableRefObject<any>;
   onLoadToPad?: (samplePath: string, padIndex: number, relic: DivineRelic) => void;
   activePad: number;
 }
@@ -44,6 +43,7 @@ const FAVORITES_KEY = 'vst-god-favorites';
 
 const cssVarsForRoom = (roomId: string): CSSProperties => ({
   '--room-accent': roomAccent(roomId),
+  '--room-image': `url(${roomImage(roomId)})`,
 } as CSSProperties);
 
 const loadFavorites = (): Set<string> => {
@@ -89,8 +89,10 @@ const RelicInspector = ({
   onToggleFavorite,
 }: RelicInspectorProps) => (
   <div className="da-inspector-card" style={cssVarsForRoom(relic.room)}>
-    <div className="da-inspector-orb">
-      <Eye size={22} />
+    <div className="da-inspector-header">
+      <div className="da-inspector-orb">
+        <Eye size={22} />
+      </div>
     </div>
     <span className="da-kicker">{relic.roomName}</span>
     <h3>{relic.name}</h3>
@@ -136,7 +138,6 @@ const RelicInspector = ({
 );
 
 export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
-  engineRef,
   onLoadToPad,
   activePad,
 }) => {
@@ -151,7 +152,6 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   const [recentRecalls, setRecentRecalls] = useState<DivineRelic[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const previewRef = useRef<SamplePreviewController | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -178,11 +178,6 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
     return () => {
       mounted = false;
     };
-  }, []);
-
-  useEffect(() => () => {
-    previewRef.current?.stop();
-    previewRef.current = null;
   }, []);
 
   const rooms = useMemo(() => {
@@ -226,41 +221,25 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
     setPreviewErrorPath(null);
 
     if (playingPath === relic.path) {
-      previewRef.current?.stop();
-      previewRef.current = null;
       setPlayingPath(null);
+      // TODO: Tell native host to stop preview
       return;
     }
 
-    previewRef.current?.stop();
-    previewRef.current = null;
     setPlayingPath(relic.path);
-
-    const controller = await engineRef.current?.previewSample(relic.path);
-    if (!controller) {
-      setPlayingPath((current) => (current === relic.path ? null : current));
-      setPreviewErrorPath(relic.path);
-      return;
-    }
-
-    previewRef.current = controller;
-    controller.finished.then(() => {
-      setPlayingPath((current) => (current === relic.path ? null : current));
-      if (previewRef.current?.path === relic.path) {
-        previewRef.current = null;
-      }
-    });
-  }, [engineRef, playingPath]);
+    // TODO: Tell native host to play preview
+    
+  }, [playingPath]);
 
   const handleRecall = useCallback((relic: DivineRelic) => {
     setSelectedRelic(relic);
-    engineRef.current?.loadSampleByPath(relic.path, activePad);
+    // TODO: Tell native host to load sample
     onLoadToPad?.(relic.path, activePad, relic);
     setRecentRecalls((current) => [
       relic,
       ...current.filter((item) => item.path !== relic.path),
     ].slice(0, 6));
-  }, [activePad, engineRef, onLoadToPad]);
+  }, [activePad, onLoadToPad]);
 
   if (loading) {
     return <LoadingRecords />;
@@ -277,7 +256,8 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   }
 
   return (
-    <div className="da-hall-shell">
+    <div className="da-hall-shell" style={cssVarsForRoom(selectedRoom)}>
+      <div className="da-bg-overlay" />
       <aside className="da-room-nav">
         <div className="da-room-title">
           <span>Divine Archive</span>
@@ -301,6 +281,7 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
                 style={cssVarsForRoom(room.id)}
                 onClick={() => setSelectedRoom(room.id)}
               >
+                <div className="da-room-bg" />
                 <span className="da-room-name">{room.name}</span>
                 <span className="da-room-tone">{room.tone}</span>
                 <span className="da-room-count">{count}</span>

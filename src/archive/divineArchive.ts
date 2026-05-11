@@ -4,6 +4,7 @@ export interface DivineRoom {
   tone: string;
   keywords?: string[];
   relicCount?: number;
+  image?: string;
 }
 
 export interface DivineRelic {
@@ -99,4 +100,23 @@ export const roomAccent = (roomId: string): string => {
   };
 
   return accents[roomId] ?? '#ff6600';
+};
+
+export const roomImage = (roomId: string): string => {
+  const images: Record<string, string> = {
+    olympus: '/images/archive/room_olympus.png',
+    underworld: '/images/archive/room_underworld.png',
+    'sun-disk': '/images/archive/room_sun_disk.png',
+    void: '/images/archive/room_void.png',
+    temple: '/images/archive/room_temple.png',
+    storm: '/images/archive/room_storm.png',
+    'celestial-choir': '/images/archive/room_celestial_choir.png',
+    forge: '/images/archive/room_forge.png',
+    abyss: '/images/archive/room_abyss.png',
+    eden: '/images/archive/room_eden.png',
+    favorites: '/images/archive/section_vault.png',
+    all: '/images/archive/hall_of_records_bg.png',
+  };
+
+  return images[roomId] ?? '/images/archive/room_generic.png';
 };

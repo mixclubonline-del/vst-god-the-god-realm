@@ -9,7 +9,6 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/VSTGODTheGodRealm-theme.css';
 import type { DSPChainModule } from '@/services/types';
-import { GodRealmSamplerEngine } from '@/engine/samplerEngine';
 import { SoundSlot } from './SoundSlot';
 import { MultiControlPanel } from './MultiControlPanel';
 import { RealmDashboard } from './RealmDashboard';
@@ -20,6 +19,9 @@ import { SamplerEngine } from './SamplerEngine';
 import { KitExporter } from './KitExporter';
 import { PresetLibrarySidebar } from './PresetLibrarySidebar';
 import { CelestialBrowser } from './CelestialBrowser';
+import { SpectralRadarPanner } from './SpectralRadarPanner';
+import { NebulaXYPad } from './NebulaXYPad';
+import { FluidSlider } from './FluidSlider';
 import type { DivineRelic } from '@/archive/divineArchive';
 
 interface VstgodthegodrealmPluginProps {
@@ -115,55 +117,12 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const [isNeuralPanelOpen, setIsNeuralPanelOpen] = useState(false);
   const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<GodRealmSamplerEngine | null>(null);
-
-  useEffect(() => {
-    const engine = new GodRealmSamplerEngine();
-    engineRef.current = engine;
-    engine.init().then(() => {
-      const pantheonChain: DSPChainModule[] = [
-        { instanceId: 'zeus', type: 'compressor', index: 1, bypassed: false },
-        { instanceId: 'ra', type: 'eq', index: 1, bypassed: false },
-        { instanceId: 'agni', type: 'distortion', index: 1, bypassed: false },
-        { instanceId: 'anubis', type: 'multi808', index: 1, bypassed: false },
-        { instanceId: 'loki', type: 'delay', index: 1, bypassed: false },
-        { instanceId: 'poseidon', type: 'reverb', index: 1, bypassed: false },
-        { instanceId: 'artemis', type: 'celestialKeys', index: 1, bypassed: false },
-        { instanceId: 'odin', type: 'limiter', index: 1, bypassed: false }
-      ];
-      engine.buildGraph(pantheonChain);
-      // Sync initial parameters
-      engine.updateFromParameters(parameterValues);
-    });
-
-    return () => {
-      engine.dispose();
-      engineRef.current = null;
-    };
-  }, []);
-
+  // Engine state is now driven by JUCE backend via parameterValues
   const [slotLevels, setSlotLevels] = useState<number[]>(new Array(6).fill(0));
   const [arpStep, setArpStep] = useState<number>(0);
   const [moduleLevels, setModuleLevels] = useState<Record<string, number>>({});
   const [vortexAnchors, setVortexAnchors] = useState<Array<{x: number, y: number, name: string}>>([]);
 
-  useEffect(() => {
-    let animId: number;
-    const poll = () => {
-      if (engineRef.current) {
-        setModuleLevels(engineRef.current.getModuleLevels());
-        setSlotLevels(engineRef.current.getSlotLevels());
-        setArpStep(engineRef.current.getArpStep());
-        setVortexAnchors(engineRef.current.getVortexAnchors());
-        
-        // Auto-Mixing logic (Phase 5)
-        engineRef.current.applyNeuralOrchestration();
-      }
-      animId = requestAnimationFrame(poll);
-    };
-    poll();
-    return () => cancelAnimationFrame(animId);
-  }, []);
 
   const [presets, setPresets] = useState(() => {
     const saved = localStorage.getItem('vst-god-realm-presets');
@@ -216,13 +175,8 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   // --- Neural Morph Logic (Phase 5) ---
   useEffect(() => {
-    if (engineRef.current && parameterValues.morphFactor !== undefined && parameterValues.morphFactor > 0) {
-      const heavenPreset = presets[selectedPreset];
-      const hellPreset = presets.find((p: any) => p.name === "Hades Depth") || presets[1] || presets[0];
-      
-      if (heavenPreset?.state && hellPreset?.state) {
-        engineRef.current.morphPresets(heavenPreset.state, hellPreset.state, parameterValues.morphFactor / 100);
-      }
+    if (parameterValues.morphFactor !== undefined && parameterValues.morphFactor > 0) {
+      // Morph logic now handled in JUCE backend
     }
   }, [parameterValues.morphFactor, selectedPreset, presets]);
 
@@ -257,21 +211,18 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     const p = presets[selectedPreset];
     if (!p) return;
     
-    if (p.state && engineRef.current) {
-      engineRef.current.setState(p.state);
-      if (p.state.params) {
-        Object.entries(p.state.params).forEach(([id, val]) => {
-          update(id, val);
-        });
-      }
+    // State logic is delegated to the host
+    if (p.state && p.state.params) {
+      Object.entries(p.state.params).forEach(([id, val]) => {
+        update(id, val);
+      });
     }
     update('currentPresetName', p.name);
     showMessage(`Loaded: ${p.name}`);
   }, [presets, selectedPreset, update]);
 
   const handleSavePreset = useCallback(() => {
-    if (!engineRef.current) return;
-    const currentState = engineRef.current.getState();
+    const currentState = { params: parameterValues };
     const nextPresets = [...presets];
     if (nextPresets[selectedPreset]) {
       nextPresets[selectedPreset] = {
@@ -281,14 +232,13 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       setPresets(nextPresets);
       showMessage(`Saved: ${nextPresets[selectedPreset].name}`);
     }
-  }, [presets, selectedPreset]);
+  }, [presets, selectedPreset, parameterValues]);
 
   const handleSaveAsPreset = useCallback(() => {
-    if (!engineRef.current) return;
     const name = prompt('Enter Preset Name:', `New Preset ${presets.length + 1}`);
     if (!name) return;
 
-    const currentState = engineRef.current.getState();
+    const currentState = { params: parameterValues };
     const newPreset = {
       name,
       type: 'User',
@@ -302,7 +252,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     update('selectedPreset', presets.length);
     update('currentPresetName', name);
     showMessage(`Created: ${name}`);
-  }, [presets, update]);
+  }, [presets, update, parameterValues]);
 
   const handleDeletePreset = useCallback(() => {
     if (presets.length <= 1) return;
@@ -448,7 +398,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   if (!isOpen) return null;
 
-  const tabs = ['Multi-Realm', 'Divine Archive', 'Sample Chopper', 'Effects', 'Mastering', 'Preset Vault'] as const;
+  const tabs = ['Multi-Realm', 'Divine Archive', 'Sample Chopper', 'Effects', 'Mastering', 'Performance', 'Preset Vault'] as const;
   const wrapperClassName = embedded
     ? 'relative flex h-full w-full items-center justify-center'
     : 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
@@ -578,7 +528,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             isNeuralPanelOpen={isNeuralPanelOpen}
             onCloseNeuralPanel={() => setIsNeuralPanelOpen(false)}
             onApplyNeuralSuggestion={handleApplyNeuralSuggestion}
-            engineRef={engineRef}
           />
         )}
 
@@ -586,7 +535,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         {activeTab === 'Divine Archive' && (
           <div className="vg-panel vg-archive h-full overflow-hidden">
             <CelestialBrowser 
-              engineRef={engineRef}
               activePad={activePad}
               onLoadToPad={handleArchiveRecall}
             />
@@ -599,7 +547,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             activePad={activePad}
             parameterValues={parameterValues}
             update={update}
-            engineRef={engineRef}
           />
         )}
 
@@ -625,9 +572,11 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           const divinePower = Math.round(totalInvoke / GODS.length);
 
           return (
-          <div className="vg-panel vg-effects vg-pantheon">
+          <div className="vg-panel vg-effects vg-pantheon flex gap-8 items-start">
+            <SpectralRadarPanner />
+            
             {/* ── Constellation Area ── */}
-            <div className="vg-constellation-wrap">
+            <div className="vg-constellation-wrap flex-1">
               <div className="vg-constellation-inner" style={{ position: 'relative', height: '100%', width: '100%', maxWidth: 'calc(100vh * (480/380))', maxHeight: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg className="vg-constellation-svg" viewBox="0 0 480 380" preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
                   <defs>
@@ -878,6 +827,57 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             update={update}
             moduleLevels={moduleLevels}
           />
+        )}
+
+        {/* ─── PERFORMANCE TAB (Advanced Performance Controls) ─── */}
+        {activeTab === 'Performance' && (
+          <div className="vg-panel h-full p-8 flex gap-8">
+            <div className="flex-1 flex flex-col gap-8">
+              <div className="flex-1">
+                <SpectralRadarPanner />
+              </div>
+              <div className="h-[300px]">
+                <NebulaXYPad 
+                  label="COSMIC MODULATION" 
+                  // TODO: Native backend integration
+                  onPositionChange={(x, y) => {
+                    update('modX', x);
+                    update('modY', y);
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="w-[300px] flex flex-col gap-6">
+              <FluidSlider 
+                label="DIVINE GAIN"
+                defaultValue={parameterValues.masterVolume !== undefined ? (parameterValues.masterVolume + 60) / 66 : 0.5}
+                engineRef={engineRef}
+                onChange={(val) => {
+                  const db = val * 66 - 60;
+                  update('masterVolume', db);
+                }}
+              />
+              
+              <FluidSlider 
+                label="GHOST REVERB"
+                defaultValue={0.3}
+                onChange={(val) => {
+                  update('reverbMix', val);
+                }}
+              />
+
+              <div className="flex-1 glass-panel p-6 bg-orange-500/5 flex flex-col justify-center items-center text-center">
+                <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 mb-4 flex items-center justify-center animate-pulse">
+                  <span className="text-orange-500 text-xl">✦</span>
+                </div>
+                <h4 className="text-sm font-black text-white uppercase tracking-widest mb-2">Macro Control</h4>
+                <p className="text-[10px] text-white/40 font-bold">
+                  These high-fidelity controls are linked directly to the God Realm's neural core.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ─── PRESET VAULT TAB ─── */}

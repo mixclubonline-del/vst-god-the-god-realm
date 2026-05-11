@@ -331,17 +331,34 @@
 /* Hall of Records shell */
 .da-hall-shell {
   --room-accent: #ff6600;
+  --room-image: none;
   height: 100%;
   min-height: 0;
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr) 300px;
   grid-template-rows: minmax(0, 1fr) 54px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255, 102, 0, 0.14), transparent 34%),
-    radial-gradient(circle at 78% 28%, rgba(155, 92, 255, 0.11), transparent 28%),
-    linear-gradient(180deg, #0c0908, #040405 62%);
+  background: #040405;
   color: #f8ddd2;
   overflow: hidden;
+  position: relative;
+}
+
+.da-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: var(--room-image);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.15;
+  filter: blur(40px) saturate(1.5);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.da-hall-shell > * {
+  position: relative;
+  z-index: 1;
 }
 
 .da-hall-state {
@@ -449,23 +466,52 @@
 
 .da-room {
   --room-accent: #ff6600;
+  --room-image: none;
   position: relative;
   min-height: 54px;
-  padding: 9px 38px 9px 11px;
+  padding: 12px 38px 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.055);
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.02);
   color: rgba(248, 221, 210, 0.72);
   text-align: left;
   border-radius: 8px;
-  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.da-room-bg {
+  position: absolute;
+  inset: 0;
+  background-image: var(--room-image);
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  filter: grayscale(1) brightness(0.5);
+  transition: all 0.4s ease;
+  z-index: 0;
+}
+
+.da-room:hover .da-room-bg,
+.da-room.is-active .da-room-bg {
+  opacity: 0.15;
+  filter: grayscale(0) brightness(0.8);
+}
+
+.da-room > span {
+  position: relative;
+  z-index: 1;
 }
 
 .da-room:hover,
 .da-room.is-active {
   border-color: color-mix(in srgb, var(--room-accent) 58%, transparent);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--room-accent) 14%, transparent), rgba(255, 255, 255, 0.02));
-  box-shadow: inset 3px 0 0 var(--room-accent), 0 0 18px color-mix(in srgb, var(--room-accent) 18%, transparent);
+  background: rgba(10, 10, 12, 0.6);
+  box-shadow: 
+    inset 3px 0 0 var(--room-accent), 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 15px color-mix(in srgb, var(--room-accent) 15%, transparent);
   color: #fff2d8;
+  transform: translateX(4px);
 }
 
 .da-room-name,
@@ -774,19 +820,47 @@
 
 .da-inspector-card {
   --room-accent: #ff6600;
+  --room-image: none;
   height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 13px;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--room-accent) 32%, transparent);
-  border-radius: 10px;
-  background:
-    radial-gradient(circle at 50% 10%, color-mix(in srgb, var(--room-accent) 14%, transparent), transparent 40%),
-    rgba(0, 0, 0, 0.28);
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(10, 10, 12, 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+}
+
+.da-inspector-header {
+  height: 140px;
+  position: relative;
+  background-image: var(--room-image);
+  background-size: cover;
+  background-position: center;
+  display: grid;
+  place-items: center;
+}
+
+.da-inspector-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(10, 10, 12, 1));
+}
+
+.da-inspector-card > *:not(.da-inspector-header) {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.da-inspector-card h3 {
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
 }
 
 .da-inspector-orb,

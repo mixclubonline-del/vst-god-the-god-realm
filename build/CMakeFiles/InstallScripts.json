@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/cmake_install.cmake",
+		"/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-build/cmake_install.cmake",
+		"/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-build/modules/cmake_install.cmake",
+		"/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-build/extras/Build/cmake_install.cmake",
+		"/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-build/extras/Build/juceaide/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
