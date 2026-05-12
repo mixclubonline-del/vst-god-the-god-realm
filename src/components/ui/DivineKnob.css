@@ -1,0 +1,427 @@
+.divine-knob-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  user-select: none;
+  cursor: grab;
+}
+
+.divine-knob-container:active {
+  cursor: grabbing;
+}
+
+.divine-knob-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.size-sm .divine-knob-wrapper { width: 48px; height: 48px; }
+.size-md .divine-knob-wrapper { width: 80px; height: 80px; }
+.size-lg .divine-knob-wrapper { width: 120px; height: 120px; }
+.size-xl .divine-knob-wrapper { width: 180px; height: 180px; }
+
+/* Divine Halo */
+.divine-knob-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--mixx-accent-glow) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* SVG Track */
+.divine-knob-track {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-140deg);
+  z-index: 1;
+}
+
+.track-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 220 360; /* Approx 280 degrees */
+}
+
+.track-fill {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 220 360;
+  transition: stroke 0.3s ease;
+}
+
+/* Main Knob Face */
+.divine-knob-face {
+  position: relative;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  box-shadow: 
+    0 10px 25px rgba(0,0,0,0.6),
+    inset 0 2px 5px rgba(255,255,255,0.1);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.divine-knob-machined-texture {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: 
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255,255,255,0.03) 0deg 1deg,
+      transparent 1deg 2deg
+    ),
+    radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.4) 100%);
+  opacity: 0.7;
+}
+
+.divine-knob-heat {
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  filter: blur(15px);
+  z-index: 1;
+}
+
+.divine-knob-cap {
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, transparent 60%);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.7);
+  z-index: 3;
+}
+
+.divine-knob-indicator-line {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  width: 3px;
+  height: 25%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  box-shadow: 0 0 12px var(--mixx-accent);
+  z-index: 4;
+}
+
+/* Readout Above */
+.divine-knob-readout {
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  height: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.divine-knob-readout.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.divine-knob-readout .unit {
+  font-size: 8px;
+  opacity: 0.5;
+}
+
+/* Footer & Labels */
+.divine-knob-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.divine-knob-triple-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+  opacity: 0.4;
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+
+.divine-knob-center-value {
+  position: absolute;
+  z-index: 10;
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: white;
+  text-shadow: 0 0 20px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+
+.divine-knob-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--god-text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ── Glass Reflection (Universal) ── */
+.divine-knob-face::after {
+  content: '';
+  position: absolute;
+  top: 5%;
+  left: 15%;
+  width: 50%;
+  height: 35%;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── Variants ── */
+
+/* ═══ OBSIDIAN (Default) — Dark volcanic glass with ember core ═══ */
+.variant-default .divine-knob-face {
+  background:
+    radial-gradient(circle at 35% 30%, #2a2a2c 0%, #0d0d0e 80%),
+    linear-gradient(135deg, #1c1c1c 0%, #0a0a0a 100%);
+  border-color: rgba(255, 102, 0, 0.06);
+}
+.variant-default .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255,255,255,0.03) 0deg 1deg,
+      transparent 1deg 2deg
+    ),
+    radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+}
+
+/* ═══ CELESTIAL GOLD — Brushed gold with warm divine light ═══ */
+.variant-celestial .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.25) 0%,
+    rgba(218, 165, 32, 0.08) 50%,
+    transparent 75%
+  );
+}
+.variant-celestial .divine-knob-face {
+  background:
+    radial-gradient(circle at 40% 25%, #3d3420 0%, #1a1508 60%),
+    linear-gradient(160deg, #28220e 0%, #0c0a04 100%);
+  border-color: rgba(255, 215, 0, 0.12);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(255, 215, 0, 0.12),
+    inset 0 -1px 3px rgba(255, 200, 0, 0.05),
+    0 0 25px rgba(255, 215, 0, 0.04);
+}
+.variant-celestial .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255, 215, 0, 0.04) 0deg 1.5deg,
+      transparent 1.5deg 3deg
+    ),
+    radial-gradient(circle at 35% 30%, rgba(255,215,0,0.06) 0%, transparent 60%);
+  opacity: 0.8;
+}
+.variant-celestial .divine-knob-cap {
+  background: radial-gradient(circle at 30% 30%, rgba(255,215,0,0.1) 0%, transparent 50%);
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,215,0,0.06);
+}
+.variant-celestial .divine-knob-indicator-line {
+  background: linear-gradient(180deg, #ffd700, #ffaa00) !important;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.3);
+}
+.variant-celestial .track-bg {
+  stroke: rgba(255, 215, 0, 0.08);
+}
+.variant-celestial .track-fill {
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+.variant-celestial .divine-knob-label {
+  color: rgba(255, 215, 0, 0.55);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+}
+.variant-celestial .divine-knob-readout {
+  color: #ffd700;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+.variant-celestial .divine-knob-face::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 230, 150, 0.1) 0%,
+    rgba(255, 215, 0, 0.03) 50%,
+    transparent 100%
+  );
+}
+
+/* ═══ VOID CRYSTAL — Deep blue-black with internal light refraction ═══ */
+.variant-mystical .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(80, 120, 255, 0.2) 0%,
+    rgba(0, 100, 200, 0.08) 50%,
+    transparent 80%
+  );
+}
+.variant-mystical .divine-knob-face {
+  background:
+    radial-gradient(circle at 55% 45%, rgba(30, 60, 120, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 35% 30%, #0a1628 0%, #020810 80%);
+  border-color: rgba(80, 140, 255, 0.1);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.8),
+    inset 0 1px 3px rgba(80, 160, 255, 0.1),
+    inset 0 0 20px rgba(0, 60, 180, 0.05),
+    0 0 20px rgba(0, 100, 255, 0.03);
+}
+.variant-mystical .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(80, 160, 255, 0.02) 0deg 2deg,
+      transparent 2deg 4deg
+    ),
+    radial-gradient(circle at 60% 40%, rgba(0,150,255,0.06) 0%, transparent 50%);
+  opacity: 0.6;
+}
+.variant-mystical .divine-knob-cap {
+  background:
+    radial-gradient(circle at 55% 45%, rgba(80,180,255,0.08) 0%, transparent 40%),
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.7), inset 0 1px 0 rgba(80,160,255,0.05);
+}
+.variant-mystical .divine-knob-indicator-line {
+  background: linear-gradient(180deg, #60a5fa, #3b82f6) !important;
+  box-shadow: 0 0 12px rgba(80, 160, 255, 0.8), 0 0 25px rgba(0, 100, 255, 0.3);
+}
+.variant-mystical .track-bg {
+  stroke: rgba(80, 160, 255, 0.06);
+}
+.variant-mystical .track-fill {
+  filter: drop-shadow(0 0 8px rgba(60, 130, 255, 0.5));
+}
+.variant-mystical .divine-knob-label {
+  color: rgba(100, 180, 255, 0.55);
+  text-shadow: 0 0 6px rgba(60, 130, 255, 0.15);
+}
+.variant-mystical .divine-knob-readout {
+  color: #60a5fa;
+  text-shadow: 0 0 12px rgba(60, 130, 255, 0.4);
+}
+.variant-mystical .divine-knob-face::after {
+  background: linear-gradient(
+    180deg,
+    rgba(120, 180, 255, 0.08) 0%,
+    rgba(60, 130, 255, 0.02) 50%,
+    transparent 100%
+  );
+}
+
+/* ═══ INFERNAL EMBER — Red-hot core with smoke wisps ═══ */
+.variant-infernal .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(255, 30, 0, 0.25) 0%,
+    rgba(200, 0, 0, 0.08) 50%,
+    transparent 75%
+  );
+}
+.variant-infernal .divine-knob-face {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(80, 10, 0, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 35% 30%, #2d0a0a 0%, #0a0000 80%);
+  border-color: rgba(255, 50, 0, 0.12);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.8),
+    inset 0 1px 3px rgba(255, 50, 0, 0.1),
+    inset 0 0 20px rgba(200, 0, 0, 0.06),
+    0 0 25px rgba(255, 0, 0, 0.04);
+}
+.variant-infernal .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255, 50, 0, 0.03) 0deg 1deg,
+      transparent 1deg 2.5deg
+    ),
+    radial-gradient(circle at 50% 50%, rgba(255,0,0,0.06) 0%, transparent 60%);
+  opacity: 0.7;
+}
+.variant-infernal .divine-knob-cap {
+  background: radial-gradient(circle at 50% 50%, rgba(255,80,0,0.08) 0%, transparent 50%);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.7), inset 0 0 10px rgba(200,0,0,0.04);
+}
+.variant-infernal .divine-knob-indicator-line {
+  background: linear-gradient(180deg, #ff4400, #cc2200) !important;
+  box-shadow: 0 0 18px rgba(255, 50, 0, 0.9), 0 0 35px rgba(255, 0, 0, 0.4);
+}
+.variant-infernal .track-fill {
+  filter: drop-shadow(0 0 14px rgba(255, 30, 0, 0.6));
+}
+.variant-infernal .track-bg {
+  stroke: rgba(255, 50, 0, 0.06);
+}
+.variant-infernal .divine-knob-label {
+  color: rgba(255, 80, 50, 0.55);
+  text-shadow: 0 0 6px rgba(255, 30, 0, 0.15);
+}
+.variant-infernal .divine-knob-readout {
+  color: #ff4444;
+  text-shadow: 0 0 12px rgba(255, 50, 0, 0.5);
+}
+.variant-infernal .divine-knob-face::after {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 100, 50, 0.06) 0%,
+    rgba(255, 30, 0, 0.02) 50%,
+    transparent 100%
+  );
+}
+
+/* ═══ Variant Hover Intensification (all) ═══ */
+.divine-knob-container:hover .divine-knob-halo {
+  filter: brightness(1.3);
+}
+.divine-knob-container:hover .divine-knob-face {
+  border-color: rgba(255,255,255,0.08);
+}
+.divine-knob-container.is-dragging .divine-knob-indicator-line {
+  filter: brightness(1.4);
+}
+
+

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Link2 } from 'lucide-react';
+import { Lock, Link2, Power } from 'lucide-react';
+import { DivineKnob } from './ui/DivineKnob';
 
 interface SoundSlotProps {
   id: number;
@@ -40,20 +41,18 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
 
   return (
     <div 
-      className={`vg-sound-slot ${isActive ? 'vg-sound-slot-active' : ''} relative overflow-hidden`}
+      className={`vg-sound-slot ${isActive ? 'vg-sound-slot-active' : ''} relative overflow-hidden group`}
       onClick={onSelect}
     >
-      {/* Spectral Glow Overlay */}
-      {level > 0.05 && (
-        <div 
-          className="absolute inset-0 bg-red-500/10 pointer-events-none transition-opacity duration-75 mix-blend-screen" 
-          style={{ opacity: level * 0.4, filter: 'blur(30px)' }}
-        />
-      )}
+      {/* Divine Aura Background */}
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-br from-mixx-accent/5 to-transparent pointer-events-none"
+        animate={{ opacity: isPowered ? (0.1 + level * 0.5) : 0 }}
+      />
 
-      <div className="vg-slot-header relative z-10">
+      <div className="vg-slot-header relative z-10 p-3">
         <div 
-          className={`vg-slot-power ${isPowered ? 'vg-slot-power-on' : ''}`}
+          className={`cursor-pointer transition-all duration-300 ${isPowered ? 'text-mixx-accent' : 'text-white/20'}`}
           onClick={(e) => {
             e.stopPropagation();
             const next = !isPowered;
@@ -61,40 +60,39 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
             onToggle(next);
           }}
         >
-          {isPowered && level > 0.05 && (
-            <motion.div 
-              className="absolute inset-[-4px] border border-red-500/40 rounded-full"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1.5, opacity: 0 }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeOut' }}
-            />
-          )}
+          <Power size={14} fill={isPowered ? "currentColor" : "none"} />
         </div>
-        <div className="vg-slot-title" title={name}>
-          <div className="vg-slot-name">{name || 'EMPTY SLOT'}</div>
+        
+        <div className="vg-slot-title ml-3" title={name}>
+          <div className="vg-slot-name text-[11px] font-black tracking-tighter text-white/90 uppercase">{name || 'EMPTY SLOT'}</div>
           {(room || category) && (
-            <div className="vg-slot-meta">
-              {[room, category].filter(Boolean).join(' / ')}
+            <div className="vg-slot-meta text-[8px] font-bold text-white/30 uppercase tracking-widest">
+              {[room, category].filter(Boolean).join(' // ')}
             </div>
           )}
         </div>
-        <div className="text-[8px] text-white/20 font-bold">●</div>
+        
+        <div className="ml-auto flex gap-2">
+           <div className={`w-1 h-1 rounded-full ${isPowered ? 'bg-mixx-accent animate-pulse' : 'bg-white/10'}`} />
+        </div>
       </div>
 
-      <div className="vg-slot-viz">
-         {/* High-fidelity wave simulation driven by level */}
-         <div className="flex items-end gap-[1px] h-3/4">
-           {Array.from({ length: 24 }).map((_, i) => {
-             const baseH = Math.abs(Math.sin(i * 0.8 + id)) * 30;
-             const h = 5 + (level * 90) + (level > 0.05 ? baseH : 0);
+      {/* Visualizer Area */}
+      <div className="vg-slot-viz h-24 flex items-center justify-center relative">
+         <div className="flex items-end gap-[2px] h-12">
+           {Array.from({ length: 32 }).map((_, i) => {
+             const baseH = Math.abs(Math.sin(i * 0.4 + id)) * 40;
+             const h = 5 + (level * 80) + (level > 0.05 ? baseH : 0);
              return (
-               <div 
+               <motion.div 
                  key={i}
-                 className="w-[2px] rounded-full bg-gradient-to-t from-red-500/60 to-transparent transition-all duration-75"
+                 className="w-[2px] rounded-full bg-mixx-accent/40"
+                 animate={{ 
+                    height: isPowered ? `${h}%` : '4%',
+                    opacity: isPowered ? (0.2 + level * 0.8) : 0.05,
+                 }}
                  style={{ 
-                   height: `${isPowered ? h : 4}%`,
-                   opacity: isPowered ? (0.3 + level * 0.7) : 0.1,
-                   boxShadow: level > 0.1 ? `0 0 ${level * 20}px rgba(255,102,0,0.3)` : 'none'
+                    boxShadow: level > 0.1 ? `0 0 10px var(--mixx-accent-glow)` : 'none'
                  }}
                />
              );
@@ -102,114 +100,62 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
          </div>
       </div>
 
-      <div className="vg-slot-knobs">
-        <div className="flex flex-col items-center gap-1 group/knob relative">
-          <span className="text-[7px] font-bold text-white/30 uppercase">Vol</span>
-          <div 
-            className="w-8 h-8 rounded-full border border-white/10 relative bg-black/20 cursor-ns-resize"
-            onDoubleClick={() => update(`slotVol_${id}`, 75)}
-          >
-             <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-red-500/80 rounded-full" 
-                  style={{ transformOrigin: 'bottom', transform: `rotate(${(vol/100)*270 - 135}deg)` }} />
-             <input 
-               type="range" 
-               className="absolute inset-0 opacity-0 cursor-pointer"
-               value={vol}
-               onChange={(e) => update(`slotVol_${id}`, +e.target.value)}
-             />
-             <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-[8px] px-1 rounded opacity-0 group-hover/knob:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
-                {vol === 0 ? '-INF' : `${((vol/100)*6 - 6).toFixed(1)} dB`}
-             </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1 group/knob relative">
-          <span className="text-[7px] font-bold text-white/30 uppercase">Pan</span>
-          <div 
-            className="w-8 h-8 rounded-full border border-white/10 relative bg-black/20 cursor-ns-resize"
-            onDoubleClick={() => update(`slotPan_${id}`, 50)}
-          >
-             <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-white/40 rounded-full" 
-                  style={{ transformOrigin: 'bottom', transform: `rotate(${(pan/100)*270 - 135}deg)` }} />
-             <input 
-               type="range" 
-               className="absolute inset-0 opacity-0 cursor-pointer"
-               value={pan}
-               onChange={(e) => update(`slotPan_${id}`, +e.target.value)}
-             />
-             <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-[8px] px-1 rounded opacity-0 group-hover/knob:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
-                {pan === 50 ? 'C' : (pan < 50 ? `L${Math.round((50-pan)*2)}` : `R${Math.round((pan-50)*2)}`)}
-             </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1 group/knob relative">
-          <span className="text-[7px] font-bold text-white/30 uppercase">Tune</span>
-          <div 
-            className="w-8 h-8 rounded-full border border-white/10 relative bg-black/20 cursor-ns-resize"
-            onDoubleClick={() => update(`slotTune_${id}`, 50)}
-          >
-             <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-orange-400/60 rounded-full" 
-                  style={{ transformOrigin: 'bottom', transform: `rotate(${(tune/100)*270 - 135}deg)` }} />
-             <input 
-               type="range" 
-               className="absolute inset-0 opacity-0 cursor-pointer"
-               value={tune}
-               onChange={(e) => update(`slotTune_${id}`, +e.target.value)}
-             />
-             <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-[8px] px-1 rounded opacity-0 group-hover/knob:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
-                {Math.round((tune/100)*24 - 12)} ST
-             </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1 group/knob relative">
-          <span className="text-[7px] font-bold text-red-500/60 uppercase">Texture</span>
-          <div 
-            className="w-8 h-8 rounded-full border border-red-500/20 relative bg-red-500/5 group cursor-ns-resize"
-            onDoubleClick={() => update(`slotTexture_${id}`, 40)}
-          >
-             <div className="absolute inset-1 rounded-full border border-red-500/10 group-hover:border-red-500/40 transition-colors" />
-             <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-red-500 rounded-full" 
-                  style={{ transformOrigin: 'bottom', transform: `rotate(${(texture/100)*270 - 135}deg)` }} />
-             <input 
-               type="range" 
-               className="absolute inset-0 opacity-0 cursor-pointer"
-               value={texture}
-               onChange={(e) => update(`slotTexture_${id}`, +e.target.value)}
-             />
-             <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-[8px] px-1 rounded opacity-0 group-hover/knob:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">
-                DRIVE: {Math.round(texture)}
-             </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-[7px] font-bold text-white/30 uppercase">Fine</span>
-          <div className="w-8 h-8 rounded-full border border-white/10 relative bg-black/20">
-             <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-white/10 rounded-full" 
-                  style={{ transformOrigin: 'bottom', transform: `rotate(${(fine/100)*270 - 135}deg)` }} />
-             <input 
-               type="range" 
-               className="absolute inset-0 opacity-0 cursor-pointer"
-               value={fine}
-               onChange={(e) => update(`slotFine_${id}`, +e.target.value)}
-             />
-          </div>
-        </div>
+      {/* Divine Control Suite */}
+      <div className="vg-slot-knobs grid grid-cols-5 gap-1 p-3 bg-black/40 backdrop-blur-md border-t border-white/5">
+        <DivineKnob 
+          label="Vol" 
+          size="sm" 
+          value={vol} 
+          onChange={(v) => update(`slotVol_${id}`, v)} 
+          suffix="dB"
+          color="var(--mixx-accent)"
+        />
+        <DivineKnob 
+          label="Pan" 
+          size="sm" 
+          value={pan} 
+          onChange={(v) => update(`slotPan_${id}`, v)} 
+          color="#ffffff"
+        />
+        <DivineKnob 
+          label="Tune" 
+          size="sm" 
+          value={tune} 
+          onChange={(v) => update(`slotTune_${id}`, v)} 
+          color="#fbbf24"
+        />
+        <DivineKnob 
+          label="Txture" 
+          size="sm" 
+          value={texture} 
+          onChange={(v) => update(`slotTexture_${id}`, v)} 
+          color="#ef4444"
+        />
+        <DivineKnob 
+          label="Fine" 
+          size="sm" 
+          value={fine} 
+          onChange={(v) => update(`slotFine_${id}`, v)} 
+          color="rgba(255,255,255,0.4)"
+        />
       </div>
 
-      <div className="vg-slot-actions">
-        <button className="vg-slot-btn">S</button>
-        <button className="vg-slot-btn">M</button>
-        <button className="vg-slot-btn vg-slot-btn-active"><Link2 size={10} /></button>
-        <button className="vg-slot-btn"><Lock size={10} /></button>
-      </div>
+      <div className="vg-slot-actions flex items-center justify-between px-3 py-2 bg-black/60 border-t border-white/5">
+        <div className="flex gap-1">
+          <button className="vg-slot-btn w-6 h-6 rounded bg-white/5 text-[9px] font-bold text-white/40 hover:bg-white/10 transition-colors">S</button>
+          <button className="vg-slot-btn w-6 h-6 rounded bg-white/5 text-[9px] font-bold text-white/40 hover:bg-white/10 transition-colors">M</button>
+        </div>
+        
+        <div className="flex gap-2 text-white/20">
+           <Link2 size={10} className={parameterValues[`slotLinked_${id}`] ? 'text-mixx-accent' : ''} />
+           <Lock size={10} className={parameterValues[`slotLocked_${id}`] ? 'text-mixx-accent' : ''} />
+        </div>
 
-      <div className="vg-slot-keys">
-         <span className="vg-key-range">C-2</span>
-         <div className="flex-1 flex gap-[1px] items-end h-3 px-2">
+        <div className="vg-slot-keys flex-1 flex gap-[1px] items-end h-3 px-4 opacity-30">
             {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className={`flex-1 h-full rounded-t-[1px] ${[1,3,6,8,10].includes(i) ? 'bg-white/5 h-2/3' : 'bg-white/20'}`} />
+              <div key={i} className={`flex-1 h-full rounded-t-[1px] ${[1,3,6,8,10].includes(i) ? 'bg-white/20 h-2/3' : 'bg-white/40'}`} />
             ))}
-         </div>
-         <span className="vg-key-range">G#1</span>
+        </div>
       </div>
     </div>
   );

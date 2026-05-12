@@ -1,0 +1,108 @@
+.vortex-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  background: var(--god-glass);
+  border: 1px solid var(--god-glass-border);
+  border-radius: var(--god-radius-lg);
+  backdrop-filter: var(--god-blur);
+  overflow: hidden;
+  position: relative;
+}
+
+.vortex-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--god-glass-border);
+}
+
+.vortex-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--god-text-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.vortex-surface {
+  flex: 1;
+  position: relative;
+  cursor: crosshair;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.vortex-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vortex-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 102, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 102, 0, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.3;
+}
+
+.vortex-node {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #fff, 0 0 40px var(--god-primary);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.vortex-aura {
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(circle, var(--god-primary-glow) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* Procedural Vortex Effect */
+.vortex-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.vortex-anchor {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  transition: all 0.2s ease;
+}
+
+.vortex-anchor:hover {
+  background: var(--god-primary);
+  box-shadow: 0 0 10px var(--god-primary);
+  scale: 1.5;
+}
+
+.vortex-anchor-label {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 800;
+  color: var(--god-text-muted);
+  white-space: nowrap;
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/CelestialForge.css';
 
@@ -62,15 +62,15 @@ export const GodKnobV2: React.FC<GodKnobV2Props> = ({
         </svg>
 
         {/* Knob Body with Brushed Metal Effect */}
-        <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#2a2a2a] to-[#050505] shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] border border-white/5 flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#333333] via-[#1a1a1a] to-[#050505] shadow-[0_12px_24px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.15),inset_0_-2px_4px_rgba(0,0,0,0.5)] border border-white/10 flex items-center justify-center overflow-hidden">
           {/* Circular Grain Overlay */}
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_transparent_0%,_black_100%)] mix-blend-overlay" />
+          <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_transparent_0%,_black_100%)] mix-blend-overlay" />
           
           {/* Glowing Indicator Line */}
           <motion.div 
-            className="absolute top-1.5 w-1 rounded-full shadow-[0_0_12px_rgba(255,102,0,0.9)]"
+            className="absolute top-[6px] w-1.5 rounded-full shadow-[0_0_15px_rgba(255,102,0,1)]"
             style={{ 
-                height: size === 'sm' ? 6 : 10,
+                height: size === 'sm' ? 8 : 12,
                 backgroundColor: color,
                 rotate: rotation,
                 transformOrigin: '50% 400%' // Adjusted for rotation center
@@ -82,10 +82,10 @@ export const GodKnobV2: React.FC<GodKnobV2Props> = ({
             className="w-1/2 h-1/2 rounded-full blur-xl"
             style={{ backgroundColor: color }}
             animate={{ 
-                opacity: [0.1, 0.2, 0.1],
-                scale: [0.8, 1.2, 0.8]
+                opacity: [0.15, 0.25, 0.15],
+                scale: [0.85, 1.15, 0.85]
             }}
-            transition={{ duration: 3, repeat: Infinity }}
+            transition={{ duration: 4, repeat: Infinity }}
           />
         </div>
 
@@ -124,64 +124,73 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
       <motion.div 
         className="absolute inset-0 rounded-full"
         animate={{ 
-            scale: [1, 1.08, 1],
-            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.05, 1],
+            opacity: [0.2, 0.4, 0.2],
             rotate: [0, 180, 360]
         }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
         style={{ 
-            background: 'radial-gradient(circle, var(--god-primary) 0%, transparent 75%)',
-            filter: 'blur(60px)',
+            background: 'radial-gradient(circle, var(--god-primary) 0%, transparent 70%)',
+            filter: 'blur(70px)',
+            zIndex: 0
+        }}
+      />
+      <div 
+        className="absolute inset-0 rounded-full mix-blend-screen pointer-events-none"
+        style={{ 
+            background: 'radial-gradient(circle, rgba(255, 200, 100, 0.1) 0%, transparent 60%)',
+            filter: 'blur(40px)',
             zIndex: 0
         }}
       />
 
       <svg className="vg-sun-disk-svg relative z-1" viewBox="0 0 400 400">
         {/* Fractal Corona Effect (Simulated with multiple paths) */}
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 8 }).map((_, i) => (
             <motion.circle 
                 key={i}
-                cx="200" cy="200" r={160 + Math.random() * 20}
+                cx="200" cy="200" r={165 + Math.random() * 15}
                 fill="none"
                 stroke="var(--god-primary)"
                 strokeWidth={0.5}
-                strokeDasharray="5,15"
+                strokeDasharray="2,8"
                 animate={{ 
                     rotate: [0, 360],
-                    opacity: [0.1, 0.4, 0.1],
-                    scale: [1, 1.05, 1]
+                    opacity: [0.1, 0.3, 0.1],
+                    scale: [1, 1.02, 1]
                 }}
-                transition={{ duration: 2 + i, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 3 + i, repeat: Infinity, ease: 'linear' }}
             />
         ))}
 
         {/* Outer Circular Bounds */}
-        <circle cx="200" cy="200" r="185" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        <circle cx="200" cy="200" r="185" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
         
         {/* High-Precision Peak Meter (Top Arcs) */}
         <path 
           d="M 40 200 A 160 160 0 0 1 360 200" 
           fill="none" 
-          stroke="rgba(255,255,255,0.02)" 
+          stroke="rgba(255,255,255,0.03)" 
           strokeWidth="16" 
           strokeLinecap="round" 
         />
         <motion.path 
           d="M 40 200 A 160 160 0 0 1 360 200" 
           fill="none" 
-          stroke="var(--god-primary)" 
+          stroke="url(#peak-gradient)" 
           strokeWidth="16" 
           strokeLinecap="round" 
           strokeDasharray="503"
-          strokeDashoffset={503 - (503 * levels.peak)}
-          style={{ filter: 'drop-shadow(0 0 12px var(--god-primary))' }}
+          animate={{ strokeDashoffset: 503 - (503 * Math.min(Math.max(levels.peak, 0), 1)) }}
+          transition={{ type: "spring", bounce: 0, duration: 0.1 }}
+          style={{ filter: 'drop-shadow(0 0 16px var(--god-primary))' }}
         />
 
         {/* RMS Meter (Inner Bottom Arcs) */}
         <path 
           d="M 70 200 A 130 130 0 0 0 330 200" 
           fill="none" 
-          stroke="rgba(255,255,255,0.02)" 
+          stroke="rgba(255,255,255,0.03)" 
           strokeWidth="10" 
           strokeLinecap="round" 
         />
@@ -192,8 +201,10 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
           strokeWidth="10" 
           strokeLinecap="round" 
           strokeDasharray="408"
-          strokeDashoffset={408 - (408 * levels.rms)}
-          className="opacity-80"
+          animate={{ strokeDashoffset: 408 - (408 * Math.min(Math.max(levels.rms, 0), 1)) }}
+          transition={{ type: "tween", ease: "linear", duration: 0.15 }}
+          className="opacity-90"
+          style={{ filter: 'drop-shadow(0 0 8px var(--god-secondary-glow))' }}
         />
 
         {/* Level Ticks */}
@@ -203,8 +214,16 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
             const y1 = 200 + 175 * Math.sin((angle * Math.PI) / 180);
             const x2 = 200 + 185 * Math.cos((angle * Math.PI) / 180);
             const y2 = 200 + 185 * Math.sin((angle * Math.PI) / 180);
-            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />;
+            return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />;
         })}
+
+        <defs>
+          <linearGradient id="peak-gradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#ff4400" />
+            <stop offset="50%" stopColor="#ffaa00" />
+            <stop offset="100%" stopColor="#ff2200" />
+          </linearGradient>
+        </defs>
       </svg>
 
       {/* Sun Core */}
@@ -212,20 +231,20 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
         <motion.div 
           className="vg-sun-active-gem"
           animate={{ 
-              opacity: levels.reduction > 0.05 ? [0.4, 1, 0.4] : 0.2,
-              scale: levels.reduction > 0.05 ? [1, 1.3, 1] : 1,
+              opacity: levels.reduction > 0.05 ? [0.6, 1, 0.6] : 0.3,
+              scale: levels.reduction > 0.05 ? [1, 1.2, 1] : 1,
               rotate: [45, 405]
           }}
-          transition={{ duration: 0.3, repeat: levels.reduction > 0.05 ? Infinity : 0 }}
+          transition={{ duration: 0.5, repeat: levels.reduction > 0.05 ? Infinity : 0 }}
           style={{ 
-              boxShadow: levels.reduction > 0.05 ? '0 0 20px #ff6600' : 'none',
-              backgroundColor: levels.reduction > 0.05 ? '#ff9900' : '#444'
+              boxShadow: levels.reduction > 0.05 ? '0 0 24px #ff6600, inset 0 0 8px #fff' : 'none',
+              backgroundColor: levels.reduction > 0.05 ? '#ffaa00' : '#333'
           }}
         />
         <span className="vg-sun-label">ACTIVE</span>
         <span className="vg-sun-sublabel">FINAL OUTPUT LEVEL</span>
-        <div className="mt-2 font-mono text-[14px] text-white font-black">
-            {Math.round((levels.peak * 24 - 24) * 10) / 10} <span className="text-[8px] opacity-40">dB</span>
+        <div className="mt-2 font-mono text-[14px] text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+            {Math.round((Math.max(levels.peak, 0.001) * 24 - 24) * 10) / 10} <span className="text-[8px] opacity-50">dB</span>
         </div>
       </div>
     </div>
@@ -233,64 +252,103 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
 };
 
 const AetherSaturationMatrix: React.FC<{ drive: number; tone: number }> = ({ drive, tone }) => {
+  const [isInteracting, setIsInteracting] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Trigger interaction state on prop change
+  useEffect(() => {
+    setIsInteracting(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setIsInteracting(false);
+    }, 1500);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [drive, tone]);
+
   return (
-    <div className="vg-aether-section">
-      <div className="flex flex-col justify-center gap-6 pr-6 border-r border-white/5">
+    <div className="vg-aether-section glass-panel">
+      <div className="flex flex-col justify-center gap-6 pr-6 border-r border-white/10">
         <div className="flex flex-col items-center">
-            <span className="text-data-md text-white font-black">{Math.round(drive)}%</span>
-            <span className="text-[7px] font-bold text-orange-500/60 uppercase tracking-widest mt-1">Aether Drive</span>
+            <span className="text-data-md text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{Math.round(drive)}%</span>
+            <span className="text-[7px] font-bold text-orange-500/80 uppercase tracking-widest mt-1">Aether Drive</span>
         </div>
         <div className="flex flex-col items-center">
-            <span className="text-data-md text-white font-black">{Math.round(tone)}%</span>
-            <span className="text-[7px] font-bold text-orange-500/60 uppercase tracking-widest mt-1">Harmonic Tone</span>
+            <span className="text-data-md text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{Math.round(tone)}%</span>
+            <span className="text-[7px] font-bold text-orange-500/80 uppercase tracking-widest mt-1">Harmonic Tone</span>
         </div>
       </div>
 
       <div className="vg-aether-viz group">
         {/* Grid Background */}
-        <div className="absolute inset-0 opacity-10" 
-             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        <div className="absolute inset-0 opacity-20" 
+             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="laser-grad" x1="0" y1="1" x2="1" y2="0">
               <stop offset="0%" stopColor="var(--god-primary)" stopOpacity="0" />
-              <stop offset="50%" stopColor="var(--god-primary)" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="var(--god-primary)" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="var(--god-primary)" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#ffcc00" stopOpacity="1" />
             </linearGradient>
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
           </defs>
 
           {/* Dynamic Laser Transfer Curves */}
-          {Array.from({ length: 4 }).map((_, i) => {
+          {Array.from({ length: 3 }).map((_, i) => {
             const intensity = (drive / 100);
             const bend = (tone / 100) * 40 - 20;
-            const path = `M 0 100 Q ${30 + i * 10 + bend} ${80 - intensity * 60} 100 0`;
+            // The curves react dynamically but only visually pulse when interacting
+            const path = `M 0 100 Q ${30 + i * 15 + bend} ${80 - intensity * 60} 100 0`;
             
             return (
               <motion.path 
                 key={i}
-                d={path}
+                animate={{ d: path, opacity: isInteracting ? [0.4, 1, 0.4] : 0.7 }}
+                transition={{ 
+                  d: { type: "spring", bounce: 0, duration: 0.5 },
+                  opacity: isInteracting ? { duration: 0.5 + i * 0.2, repeat: Infinity } : { duration: 0.5 }
+                }}
                 fill="none"
                 stroke="url(#laser-grad)"
-                strokeWidth={0.5 + intensity * 2}
-                className="drop-shadow-[0_0_8px_var(--god-primary-glow)]"
-                animate={{ opacity: [0.1, 0.4, 0.1] }}
-                transition={{ duration: 1 + i * 0.5, repeat: Infinity }}
+                strokeWidth={1 + intensity * 1.5}
+                filter="url(#glow)"
               />
             );
           })}
         </svg>
 
-        {/* Scanline Effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent h-4 animate-scanline pointer-events-none" />
+        {/* Scanline Effect - Only visible/active during interaction */}
+        <AnimatePresence>
+            {isInteracting && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent h-4 animate-scanline pointer-events-none" 
+                />
+            )}
+        </AnimatePresence>
       </div>
 
       <div className="flex flex-col justify-center pl-6">
-          <h3 className="text-label-xs text-white/60 mb-2">SATURATION CURVE</h3>
+          <h3 className="text-label-xs text-white/80 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">SATURATION CURVE</h3>
           <div className="flex gap-2">
-              <div className="w-1 h-8 bg-orange-500 shadow-[0_0_8px_#ff6600]" />
-              <div className="w-1 h-8 bg-white/10" />
-              <div className="w-1 h-8 bg-white/10" />
+              <motion.div 
+                  className="w-1.5 h-8 bg-orange-500 shadow-[0_0_12px_#ff6600] rounded-full" 
+                  animate={{ height: isInteracting ? [32, 40, 32] : 32 }}
+                  transition={{ duration: 0.5, repeat: isInteracting ? Infinity : 0 }}
+              />
+              <div className="w-1 h-8 bg-white/20 rounded-full" />
+              <div className="w-1 h-8 bg-white/20 rounded-full" />
           </div>
       </div>
     </div>
@@ -299,26 +357,43 @@ const AetherSaturationMatrix: React.FC<{ drive: number; tone: number }> = ({ dri
 
 const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) => {
   const anchors = [
-    { name: 'BODY', freq: '20Hz-200Hz', class: 'body', val: levels.bodyLevel || 0.3 },
-    { name: 'AIR', freq: '10kHz-20kHz', class: 'air', val: levels.airLevel || 0.4 },
-    { name: 'SOUL', freq: '200Hz-2kHz', class: 'soul', val: levels.soulLevel || 0.5 },
-    { name: 'SILK', freq: '2kHz-10kHz', class: 'silk', val: levels.silkLevel || 0.2 }
+    { name: 'BODY', freq: '20Hz-200Hz', class: 'body', val: levels.bodyLevel || 0.3, color: '#ff4400' },
+    { name: 'AIR', freq: '10kHz-20kHz', class: 'air', val: levels.airLevel || 0.4, color: '#00ccff' },
+    { name: 'SOUL', freq: '200Hz-2kHz', class: 'soul', val: levels.soulLevel || 0.5, color: '#ffaa00' },
+    { name: 'SILK', freq: '2kHz-10kHz', class: 'silk', val: levels.silkLevel || 0.2, color: '#cc00ff' }
   ];
 
   return (
     <>
-      {anchors.map(a => (
+      {anchors.map((a, index) => (
         <div key={a.name} className={`vg-anchor-label ${a.class}`}>
           <span className="vg-anchor-name">{a.name}</span>
           <span className="vg-anchor-freq">{a.freq}</span>
-          <motion.div 
-            className="w-16 h-16 absolute -z-1 rounded-full border border-orange-500/10"
-            animate={{ 
-                scale: [1, 1 + a.val * 1.5, 1],
-                opacity: [0.1, 0.4, 0.1]
-            }}
-            transition={{ duration: 0.5 + Math.random(), repeat: Infinity }}
-          />
+          
+          <div className="absolute -z-1 w-20 h-20 flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                {/* Orbital Rings */}
+                <motion.circle 
+                    cx="50" cy="50" r={30 + (a.val * 15)}
+                    fill="none"
+                    stroke={a.color}
+                    strokeWidth="1.5"
+                    strokeDasharray="10 5 2 5"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 10 + index * 2, repeat: Infinity, ease: "linear" }}
+                    style={{ opacity: 0.3 + a.val * 0.5, filter: `drop-shadow(0 0 8px ${a.color})` }}
+                />
+                <motion.circle 
+                    cx="50" cy="50" r={40 + (a.val * 10)}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth="0.5"
+                    strokeDasharray="1 4"
+                    animate={{ rotate: [360, 0] }}
+                    transition={{ duration: 15 + index, repeat: Infinity, ease: "linear" }}
+                />
+            </svg>
+          </div>
         </div>
       ))}
     </>
@@ -337,38 +412,39 @@ export const CelestialForge: React.FC<{
       
       <header className="vg-forge-header">
         <div className="flex items-center gap-6">
-            <span className="text-[10px] font-black text-white/20 tracking-widest">AURA / DIVINE AUDIO</span>
-            <div className="w-0.5 h-4 bg-white/10" />
+            <span className="text-[10px] font-black text-white/40 tracking-widest">AURA / DIVINE AUDIO</span>
+            <div className="w-0.5 h-4 bg-white/20" />
             <span className="vg-forge-title">Mastering Section</span>
         </div>
         
         <div className="flex items-center gap-4">
            <div className="flex flex-col items-end">
-              <span className="text-[8px] text-white/40 font-bold tracking-widest">PRESET</span>
-              <span className="text-[10px] text-orange-500 font-black">DEEP EMBER</span>
+              <span className="text-[8px] text-white/50 font-bold tracking-widest">PRESET</span>
+              <span className="text-[10px] text-orange-500 font-black drop-shadow-[0_0_8px_rgba(255,102,0,0.5)]">DEEP EMBER</span>
            </div>
-           <div className="w-1 h-8 bg-orange-500/20" />
+           <div className="w-1 h-8 bg-orange-500/30 rounded-full" />
            <div className="flex flex-col">
-              <span className="text-[8px] text-white/40 font-bold tracking-widest">ENGINE</span>
-              <span className="text-[10px] text-white font-black">CELESTIAL FORGE v2</span>
+              <span className="text-[8px] text-white/50 font-bold tracking-widest">ENGINE</span>
+              <span className="text-[10px] text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CELESTIAL FORGE v2</span>
            </div>
         </div>
 
-        <div className="text-[10px] font-black text-white/20 tracking-widest">DIVINE AUDIO</div>
+        <div className="text-[10px] font-black text-white/40 tracking-widest">DIVINE AUDIO</div>
       </header>
 
       <div className="vg-forge-main">
         {/* Left Rail */}
         <aside className="vg-forge-rail">
-          <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain || 0} min={-12} max={12} unit="dB" update={update} />
-          <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive || 75} unit="%" update={update} />
-          <GodKnobV2 label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt || 45} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={update} />
+          {/* Calibrated Defaults */}
+          <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={update} />
+          <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={update} />
+          <GodKnobV2 label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt ?? 50} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={update} />
           
-          <div className="mt-auto p-6 glass-panel rounded-xl border border-white/5">
-             <span className="text-label-xs text-white/30 mb-4 block text-center">Dynamics</span>
+          <div className="mt-auto p-6 glass-panel rounded-2xl">
+             <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Dynamics</span>
              <div className="flex gap-4">
-                <GodKnobV2 size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold || -18.4} min={-60} max={0} update={update} />
-                <GodKnobV2 size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio || 2.5} min={1} max={10} update={update} />
+                <GodKnobV2 size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold ?? -12} min={-60} max={0} unit="dB" update={update} />
+                <GodKnobV2 size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio ?? 2.0} min={1} max={10} unit=":1" update={update} />
              </div>
           </div>
         </aside>
@@ -383,44 +459,47 @@ export const CelestialForge: React.FC<{
           
           <AnchorOrbits levels={moduleLevels} />
           
-          <AetherSaturationMatrix 
-            drive={parameterValues.masterDrive || 75} 
-            tone={parameterValues.masterColorTilt || 45} 
-          />
+          <div className="absolute bottom-16">
+              <AetherSaturationMatrix 
+                drive={parameterValues.masterDrive ?? 20} 
+                tone={parameterValues.masterColorTilt ?? 50} 
+              />
+          </div>
           
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-30">
-             <div className="text-[24px] font-black text-white italic tracking-tighter">AURA</div>
-             <div className="text-[8px] font-bold text-orange-500">Mastering</div>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 mix-blend-screen pointer-events-none">
+             <div className="text-[28px] font-black text-white italic tracking-tighter drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]">AURA</div>
+             <div className="text-[9px] font-bold text-orange-500 uppercase tracking-[0.3em]">Mastering</div>
           </div>
         </div>
 
         {/* Right Rail */}
         <aside className="vg-forge-rail items-end">
-          <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension || 45} min={0} max={100} unit="%" update={update} />
+          <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={update} color="#00ccff" />
           <div className="flex flex-col items-center">
-              <span className="text-label-xs text-white/30 mb-2">CEILING</span>
-              <GodKnobV2 label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling || 0} min={-12} max={12} unit="dB" update={update} />
+              <span className="text-label-xs text-white/50 mb-2 drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">CEILING</span>
+              <GodKnobV2 label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling ?? -0.1} min={-12} max={12} unit="dB" update={update} color="#ff2200" />
           </div>
           
-          <div className="p-6 glass-panel rounded-xl border border-white/5 w-full">
+          <div className="p-6 glass-panel rounded-2xl w-full">
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack || 12} min={1} max={100} unit="ms" update={update} />
-                <GodKnobV2 size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease || 250} min={10} max={1000} unit="ms" update={update} />
+                <GodKnobV2 size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack ?? 30} min={1} max={100} unit="ms" update={update} />
+                <GodKnobV2 size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease ?? 100} min={10} max={1000} unit="ms" update={update} />
              </div>
           </div>
 
-          <div className="p-6 glass-panel rounded-xl border border-white/5 w-full">
-             <span className="text-label-xs text-white/30 mb-4 block text-center">Stereo Field</span>
+          <div className="p-6 glass-panel rounded-2xl w-full">
+             <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Stereo Field</span>
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth || 120} min={0} max={200} unit="%" update={update} />
-                <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager || 0} min={-1} max={1} update={update} />
+                <GodKnobV2 size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth ?? 100} min={0} max={200} unit="%" update={update} color="#cc00ff" />
+                <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={update} color="#cc00ff" />
              </div>
           </div>
         </aside>
       </div>
 
       {/* Floating Polish Effects */}
-      <div className="fixed top-0 right-0 w-1/3 h-1/3 bg-orange-500/5 blur-[120px] pointer-events-none" />
+      <div className="fixed top-0 right-0 w-1/3 h-1/3 bg-orange-500/10 blur-[150px] pointer-events-none mix-blend-screen" />
+      <div className="fixed bottom-0 left-0 w-1/4 h-1/4 bg-blue-500/10 blur-[120px] pointer-events-none mix-blend-screen" />
     </div>
   );
 };

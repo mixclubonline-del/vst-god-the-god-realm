@@ -1,0 +1,90 @@
+.sacred-switch-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.sacred-switch-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--god-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.sacred-switch-housing {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #111 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  outline: none;
+  overflow: hidden;
+}
+
+.size-sm .sacred-switch-housing {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.sacred-switch-machined-texture {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 2px);
+  opacity: 0.5;
+}
+
+.sacred-switch-indicator {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  z-index: 2;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.size-sm .sacred-switch-indicator {
+  width: 10px;
+  height: 10px;
+}
+
+.sacred-switch-glow-core {
+  position: absolute;
+  inset: 20%;
+  background: white;
+  filter: blur(4px);
+  border-radius: 50%;
+}
+
+.sacred-switch-bezel {
+  position: absolute;
+  inset: 20%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+}
+
+/* Variant Solo/Mute specific colors if needed */
+.variant-solo.is-on .sacred-switch-indicator {
+  background-color: #00ff88;
+  box-shadow: 0 0 15px #00ff88;
+}
+
+.variant-mute.is-on .sacred-switch-indicator {
+  background-color: #ff3300;
+  box-shadow: 0 0 15px #ff3300;
+}

@@ -50,7 +50,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
         <div className="vg-divine-rays" />
         <div className="vg-light-leak" />
         <img 
-          src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop" 
+          src="/images/archive/hero_forge.png" 
           className="vg-hero-canvas" 
           alt="The God Realm"
         />

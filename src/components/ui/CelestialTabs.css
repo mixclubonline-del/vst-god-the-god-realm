@@ -1,0 +1,66 @@
+.celestial-tabs-container {
+  display: flex;
+  background: var(--god-glass-light);
+  backdrop-filter: blur(10px);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 4px;
+}
+
+.celestial-tab {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  color: var(--god-text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+  outline: none;
+}
+
+.celestial-tab:hover {
+  color: white;
+}
+
+.celestial-tab.active {
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.active-glow-underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  z-index: 1;
+}
+
+.tab-hover-aura {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.celestial-tab:hover .tab-hover-aura {
+  opacity: 0.05;
+}
+
+.tab-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}

@@ -5,25 +5,57 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  /* ═══ Core Palette ═══ */
   --god-primary: #ff6600;
   --god-primary-glow: rgba(255,102,0,0.25);
+  --god-primary-intense: rgba(255,102,0,0.6);
   --god-accent: #ff8800;
+  --god-gold: #c29623;
+  --god-gold-glow: rgba(194,150,35,0.4);
   --god-bg: #0a0a0a;
   --god-surface: #121214;
+  --god-obsidian: #080504;
   --god-glass: rgba(255, 255, 255, 0.03);
   --god-glass-heavy: rgba(0, 0, 0, 0.65);
   --god-glass-border: rgba(255, 255, 255, 0.08);
+  --god-glass-border-hot: rgba(255, 102, 0, 0.15);
   --god-text: #ffffff;
   --god-text-dim: #a0a0a0;
   --god-text-muted: #555555;
   --god-danger: #ef4444;
   --god-ember: #ff6600;
-  --god-radius: 12px;
+
+  /* ═══ Machined Panel ═══ */
+  --god-machined-bg: linear-gradient(135deg, rgba(20,16,14,0.95) 0%, rgba(8,5,4,0.98) 100%);
+  --god-machined-border: 1px solid rgba(255,255,255,0.06);
+  --god-machined-shadow:
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 -1px 0 rgba(0,0,0,0.8) inset,
+    0 8px 24px rgba(0,0,0,0.6);
+
+  /* ═══ God-Knob v2 Lighting ═══ */
+  --god-knob-rim: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.4) 50%, rgba(255,255,255,0.06) 100%);
+  --god-knob-face: radial-gradient(circle at 35% 30%, #2a2a2c 0%, #0a0a0a 70%, #000 100%);
+  --god-knob-ember-base: radial-gradient(circle at 50% 90%, rgba(255,102,0,0.3) 0%, transparent 60%);
+  --god-knob-shadow:
+    0 2px 4px rgba(0,0,0,0.8),
+    0 6px 16px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  /* ═══ Spacing & Shape ═══ */
+  --god-radius: 4px;
+  --god-radius-lg: 8px;
+  --god-radius-pill: 20px;
   --god-blur: blur(24px);
   --god-glow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
   --god-glow-hard: 0 0 50px rgba(255, 102, 0, 0.15);
-  
-  /* Deity Auras */
+
+  /* ═══ Spring Physics ═══ */
+  --god-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --god-spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --god-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+
+  /* ═══ Deity Auras ═══ */
   --aura-zeus: #60A5FA;
   --aura-ra: #F5B041;
   --aura-agni: #E74C3C;
@@ -36,19 +68,27 @@
 
 /* ─── Glassify Utility ─── */
 .vg-glassify {
-  background: var(--god-glass);
-  backdrop-filter: var(--god-blur);
-  -webkit-backdrop-filter: var(--god-blur);
-  border: 1px solid var(--god-glass-border);
-  box-shadow: var(--god-glow-soft);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.3) 100%);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-left: 1px solid rgba(255,255,255,0.06);
+  border-right: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(0,0,0,0.4);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
 }
 
 /* ─── Plugin Window ─── */
 .vg-plugin {
   position: relative;
-  background: linear-gradient(180deg, #121214 0%, #080809 100%);
-  border: 1px solid var(--god-glass-border);
-  box-shadow: inset 0 0 120px rgba(0,0,0,0.6);
+  background: linear-gradient(180deg, #0e0e10 0%, var(--god-obsidian) 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow:
+    inset 0 0 120px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.03);
   overflow: hidden;
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--god-text);
@@ -147,7 +187,7 @@
   color: #666;
   font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--god-spring);
   margin-left: 16px;
 }
 
@@ -191,17 +231,60 @@
 /* ─── Knob ─── */
 .vg-knob-group { display: flex; gap: 12px; }
 .vg-knob-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
-.vg-knob-ring-sm { width: 32px; height: 32px; border-radius: 50%; background: #111; border: 1px solid var(--god-glass-border); position: relative; }
-.vg-knob-ring-lg { width: 44px; height: 44px; border-radius: 50%; background: #111; border: 1px solid var(--god-glass-border); position: relative; }
-.vg-knob-dot { position: absolute; top: 4px; left: 50%; width: 4px; height: 4px; margin-left: -2px; background: var(--god-primary); border-radius: 50%; box-shadow: 0 0 8px var(--god-primary); }
-.vg-knob-label { font-size: 8px; font-weight: 700; color: var(--god-text-muted); letter-spacing: 0.1em; }
-.vg-knob-val { font-size: 8px; color: var(--god-primary); font-family: 'JetBrains Mono', monospace; }
-.vg-knob-slider { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.vg-knob-ring-sm {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--god-knob-face);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  position: relative;
+  box-shadow: var(--god-knob-shadow);
+  transition: border-color 0.2s var(--god-spring), box-shadow 0.3s var(--god-spring);
+}
+.vg-knob-ring-sm::before {
+  content: ''; position: absolute; inset: -2px; border-radius: 50%;
+  background: var(--god-knob-rim); pointer-events: none; z-index: -1;
+}
+.vg-knob-ring-sm::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--god-knob-ember-base); pointer-events: none; opacity: 0;
+  transition: opacity 0.3s;
+}
+.vg-knob-ring-sm:hover { border-color: rgba(255,102,0,0.3); }
+.vg-knob-ring-sm:hover::after { opacity: 1; }
+
+.vg-knob-ring-lg {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--god-knob-face);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  position: relative;
+  box-shadow: var(--god-knob-shadow);
+  transition: border-color 0.2s var(--god-spring), box-shadow 0.3s var(--god-spring);
+}
+.vg-knob-ring-lg::before {
+  content: ''; position: absolute; inset: -2px; border-radius: 50%;
+  background: var(--god-knob-rim); pointer-events: none; z-index: -1;
+}
+.vg-knob-ring-lg::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--god-knob-ember-base); pointer-events: none; opacity: 0;
+  transition: opacity 0.3s;
+}
+.vg-knob-ring-lg:hover { border-color: rgba(255,102,0,0.3); }
+.vg-knob-ring-lg:hover::after { opacity: 1; }
+
+.vg-knob-dot {
+  position: absolute; top: 4px; left: 50%; width: 3px; height: 8px; margin-left: -1.5px;
+  background: var(--god-primary); border-radius: 1.5px;
+  box-shadow: 0 0 8px var(--god-primary), 0 0 16px var(--god-primary-glow);
+}
+.vg-knob-label { font-size: 7px; font-weight: 800; color: var(--god-text-muted); letter-spacing: 0.12em; text-transform: uppercase; }
+.vg-knob-val { font-size: 8px; color: var(--god-primary); font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 6px var(--god-primary-glow); }
+.vg-knob-slider { position: absolute; inset: 0; opacity: 0; cursor: ns-resize; }
 
 /* ─── Tabs ─── */
 .vg-tab-bar {
   height: 40px;
-  background: rgba(255,255,255,0.01);
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--god-glass-border);
   display: flex; justify-content: center; gap: 40px;
   position: relative; z-index: 10;
@@ -209,16 +292,24 @@
 .vg-tab {
   background: none; border: none;
   color: var(--god-text-muted); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.1em; cursor: pointer; position: relative;
-  transition: color 0.2s;
+  letter-spacing: 0.15em; cursor: pointer; position: relative;
+  transition: color 0.3s var(--god-spring), text-shadow 0.3s var(--god-spring);
   z-index: 11; pointer-events: auto;
   padding: 0 4px;
+  text-transform: uppercase;
 }
-.vg-tab:hover { color: var(--god-text-dim); }
-.vg-tab-active { color: var(--god-primary); }
+.vg-tab:hover { color: var(--god-text-dim); text-shadow: 0 0 8px rgba(255,255,255,0.1); }
+.vg-tab-active { color: var(--god-primary); text-shadow: 0 0 12px var(--god-primary-glow); }
 .vg-tab-active::after {
   content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-  height: 2px; background: var(--god-primary); box-shadow: 0 0 10px var(--god-primary);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--god-primary), transparent);
+  box-shadow: 0 0 12px var(--god-primary), 0 2px 20px var(--god-primary-glow);
+  animation: vgTabGlow 2s ease-in-out infinite;
+}
+@keyframes vgTabGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
 /* ─── Main ─── */
@@ -227,11 +318,88 @@
   flex: 1; 
   display: flex; 
   flex-direction: column; 
-  animation: vgFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+  animation: vgTabEnter 0.5s var(--god-spring); 
   position: relative;
   z-index: 1;
 }
-@keyframes vgFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes vgTabEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* ═══════════ REALM BACKGROUND SYSTEM ═══════════ */
+.vg-main {
+  position: relative;
+  overflow: hidden;
+}
+
+.vg-main::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  transform: translate(var(--parallax-x, 0px), var(--parallax-y, 0px));
+  will-change: transform;
+}
+
+/* Dark vignette overlay to keep controls readable */
+.vg-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+}
+
+/* Ensure content sits above backgrounds */
+.vg-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Per-Realm Backgrounds ── */
+.vg-main[data-realm="Multi-Realm"]::before {
+  background-image: url('/plugins/backgrounds/multi-realm.png');
+  opacity: 0.3;
+}
+
+.vg-main[data-realm="Effects"]::before {
+  background-image: url('/plugins/backgrounds/pantheon.png');
+  opacity: 0.35;
+}
+
+.vg-main[data-realm="Sample Chopper"]::before {
+  background-image: url('/plugins/backgrounds/chopper.png');
+  opacity: 0.25;
+}
+
+.vg-main[data-realm="Divine Archive"]::before {
+  background-image: url('/plugins/backgrounds/archive.png');
+  opacity: 0.3;
+}
+
+.vg-main[data-realm="Mastering"]::before {
+  background-image: url('/plugins/backgrounds/celestial-forge.png');
+  opacity: 0.3;
+}
+
+.vg-main[data-realm="Performance"]::before {
+  background-image: url('/plugins/backgrounds/sequencer.png');
+  opacity: 0.25;
+}
+
+.vg-main[data-realm="Preset Vault"]::before {
+  background-image: url('/plugins/backgrounds/preset-vault.png');
+  opacity: 0.3;
+}
+
 
 .vg-section-head {
   font-size: 11px; font-weight: 800; color: var(--god-text-dim);
@@ -305,7 +473,45 @@
    THE PANTHEON — Constellation Layout
    ══════════════════════════════════════ */
 
-.vg-pantheon { display: flex; flex-direction: column; gap: 0; overflow: hidden; }
+.vg-pantheon {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch !important;
+  flex-wrap: nowrap;
+  gap: 0 !important;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(ellipse at 50% 30%, rgba(20,15,30,0.6) 0%, transparent 60%);
+}
+/* Starfield */
+.vg-pantheon::before {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 50%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.45) 0%, transparent 100%),
+    radial-gradient(2px 2px at 45% 45%, rgba(255,200,100,0.2) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+  animation: vgTwinkle 8s ease-in-out infinite alternate;
+}
+@keyframes vgTwinkle {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+/* Central nebula glow */
+.vg-pantheon::after {
+  content: ''; position: absolute;
+  top: 30%; left: 50%; transform: translate(-50%, -50%);
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,102,0,0.06) 0%, rgba(100,60,200,0.03) 40%, transparent 70%);
+  pointer-events: none; z-index: 0;
+  filter: blur(40px);
+}
 
 /* ── Constellation Wrapper ── */
 .vg-constellation-wrap {
@@ -339,23 +545,27 @@
 .vg-orbit-group-3 { animation: vgOrbitRotate 90s linear infinite; }
 
 @keyframes vgSignalFlowEdge {
-  0% { stroke-dashoffset: 100; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
+  0% { stroke-dashoffset: 105; opacity: 0; }
+  5% { opacity: 0.9; }
+  85% { opacity: 0.9; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 .vg-signal-flow-edge {
-  animation: vgSignalFlowEdge 3s linear infinite;
+  animation: vgSignalFlowEdge 2.5s linear infinite;
+  stroke-dasharray: 8 97;
+  stroke-linecap: round;
 }
 
 @keyframes vgSignalFlowCore {
-  0% { stroke-dashoffset: 100; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
+  0% { stroke-dashoffset: 103; opacity: 0; }
+  8% { opacity: 1; }
+  80% { opacity: 0.8; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 .vg-signal-flow-core {
-  animation: vgSignalFlowCore 2s ease-in infinite;
+  animation: vgSignalFlowCore 1.8s ease-in infinite;
+  stroke-dasharray: 5 98;
+  stroke-linecap: round;
 }
 
 /* ── Constellation Nodes ── */
@@ -365,30 +575,83 @@
 .vg-cnode {
   position: absolute; transform: translate(-50%, -50%);
   width: 52px; height: 52px;
-  background: #080808; border: 1.5px solid var(--god-c);
+  background: radial-gradient(circle at 35% 30%, #1a1a1c 0%, #080808 100%);
+  border: 1.5px solid var(--god-c);
   border-radius: 50%; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   pointer-events: auto; padding: 0;
-  transition: all 0.3s ease;
+  transition: all 0.35s var(--god-spring);
   z-index: 5;
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
+
+/* Outer ring — breathing pulse */
+.vg-cnode::before {
+  content: ''; position: absolute; inset: -8px;
+  border-radius: 50%; border: 1px solid var(--god-c);
+  opacity: 0.15; pointer-events: none;
+  animation: vgNodeRing 3s ease-in-out infinite;
+}
+@keyframes vgNodeRing {
+  0%, 100% { transform: scale(1); opacity: 0.1; }
+  50% { transform: scale(1.1); opacity: 0.25; }
+}
+
+/* Aura glow — appears on hover with radial wash */
 .vg-cnode::after {
-  content: ''; position: absolute; inset: -6px;
+  content: ''; position: absolute; inset: -18px;
   border-radius: 50%;
   background: radial-gradient(circle, var(--god-c-glow), transparent 70%);
-  opacity: 0; transition: opacity 0.3s;
+  opacity: 0; transition: opacity 0.4s ease, inset 0.4s ease;
   pointer-events: none; z-index: -1;
 }
-.vg-cnode:hover { transform: translate(-50%, -50%) scale(1.15); }
-.vg-cnode:hover::after { opacity: 1; }
+
+/* ── God Node Hover Portal ── */
+.vg-cnode:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.8),
+    0 0 20px var(--god-c-glow),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  border-color: var(--god-c);
+}
+.vg-cnode:hover::before {
+  opacity: 0.4;
+  animation: vgNodeHoverSigil 1.5s linear infinite;
+  border-width: 1.5px;
+  inset: -12px;
+}
+@keyframes vgNodeHoverSigil {
+  0% { transform: scale(1) rotate(0deg); opacity: 0.3; }
+  50% { transform: scale(1.15) rotate(180deg); opacity: 0.5; }
+  100% { transform: scale(1) rotate(360deg); opacity: 0.3; }
+}
+.vg-cnode:hover::after {
+  opacity: 0.7;
+  inset: -30px;
+}
+
+/* ── Active God State ── */
 .vg-cnode-active {
   border-color: var(--god-c) !important;
-  box-shadow: 0 0 20px var(--god-c-glow), 0 0 40px var(--god-c-glow);
-  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow:
+    0 0 15px var(--god-c-glow),
+    0 0 30px var(--god-c-glow),
+    0 0 60px color-mix(in srgb, var(--god-c-glow) 40%, transparent),
+    inset 0 0 10px var(--god-c-glow);
+  transform: translate(-50%, -50%) scale(1.25);
+  animation: vgActiveNodePulse 2s ease-in-out infinite;
 }
-.vg-cnode-active::after { opacity: 1; }
-.vg-cnode-sleep { opacity: 0.3; filter: grayscale(0.8); }
-.vg-cnode-sleep:hover { opacity: 0.6; }
+@keyframes vgActiveNodePulse {
+  0%, 100% { box-shadow: 0 0 15px var(--god-c-glow), 0 0 30px var(--god-c-glow), inset 0 0 10px var(--god-c-glow); }
+  50% { box-shadow: 0 0 20px var(--god-c-glow), 0 0 45px var(--god-c-glow), 0 0 70px color-mix(in srgb, var(--god-c-glow) 30%, transparent), inset 0 0 15px var(--god-c-glow); }
+}
+.vg-cnode-active::before { opacity: 0.5; animation: vgNodeHoverSigil 2s linear infinite; }
+.vg-cnode-active::after { opacity: 0.8; inset: -25px; }
+.vg-cnode-sleep { opacity: 0.2; filter: grayscale(0.9) brightness(0.6); }
+.vg-cnode-sleep:hover { opacity: 0.5; filter: grayscale(0.4); }
 
 .vg-cnode-img {
   width: 36px; height: 36px; border-radius: 50%;
@@ -405,7 +668,7 @@
   position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
   font-size: 7px; font-weight: 900; letter-spacing: 0.15em;
   color: var(--god-c); white-space: nowrap;
-  text-shadow: 0 0 6px var(--god-c-glow);
+  text-shadow: 0 0 8px var(--god-c-glow), 0 0 16px color-mix(in srgb, var(--god-c-glow) 30%, transparent);
 }
 .vg-cnode-domain {
   position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
@@ -414,12 +677,25 @@
   text-transform: uppercase;
 }
 
+/* ── Divine Core Heartbeat ── */
+@keyframes vgDivineCoreHeartbeat {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px var(--god-ember), 0 0 40px var(--god-ember); }
+  15% { transform: scale(1.08); box-shadow: 0 0 30px var(--god-ember), 0 0 60px var(--god-ember), 0 0 90px color-mix(in srgb, var(--god-ember) 40%, transparent); }
+  30% { transform: scale(1.02); }
+  45% { transform: scale(1.06); box-shadow: 0 0 25px var(--god-ember), 0 0 50px var(--god-ember); }
+  60% { transform: scale(1); }
+}
+.vg-divine-core {
+  animation: vgDivineCoreHeartbeat 2s ease-in-out infinite;
+}
+
 /* ── Deity Detail Panel (expanded on select) ── */
 .vg-deity-panel {
   background: linear-gradient(180deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3));
   border-top: 1px solid var(--god-c);
   padding: 12px 16px; animation: vgSlideUp 0.3s ease;
   box-shadow: 0 -4px 20px var(--god-c-glow);
+  flex-shrink: 0; width: 100%;
 }
 @keyframes vgSlideUp {
   from { opacity: 0; transform: translateY(10px); }
@@ -591,6 +867,7 @@
 .vg-pantheon-hint {
   display: flex; align-items: center; justify-content: center;
   padding: 14px; border-top: 1px solid rgba(255,255,255,0.04);
+  flex-shrink: 0; width: 100%;
 }
 .vg-pantheon-hint span {
   font-size: 9px; font-weight: 700; letter-spacing: 0.3em;
@@ -713,7 +990,7 @@
 .vg-kit-card { width: 180px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; }
 .vg-kit-thumb { height: 180px; background: #111; border-radius: 8px; border: 1px solid var(--god-glass-border); overflow: hidden; }
 .vg-kit-thumb-inner { height: 100%; overflow: hidden; }
-.vg-kit-thumb-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+.vg-kit-thumb-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s var(--god-spring); }
 .vg-kit-card:hover .vg-kit-thumb-img { transform: scale(1.05); }
 .vg-kit-name { font-size: 13px; font-weight: 700; color: #fff; }
 .vg-kit-meta { font-size: 10px; color: var(--god-text-muted); }
@@ -908,15 +1185,18 @@
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.2em;
-  color: var(--god-text-dim);
+  color: var(--god-gold);
   text-transform: uppercase;
+  text-shadow: 0 0 10px var(--god-gold-glow);
 }
 
 .vg-anchor-freq {
   font-size: 8px;
   font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
   color: var(--god-primary);
-  opacity: 0.4;
+  opacity: 0.6;
+  text-shadow: 0 0 6px var(--god-primary-glow);
 }
 
 .vg-anchor-label.body { top: 40px; left: 40px; text-align: left; align-items: flex-start; }
@@ -953,10 +1233,15 @@
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 102, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 102, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(255, 102, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 102, 0, 0.08) 1px, transparent 1px);
   background-size: 20px 20px;
   pointer-events: none;
+  animation: vgGridPulse 4s ease-in-out infinite;
+}
+@keyframes vgGridPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 .vg-aether-svg {
@@ -1023,29 +1308,43 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #0f0f11;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--god-knob-rim);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: ns-resize;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.02);
-  transition: border-color 0.2s;
+  box-shadow: var(--god-knob-shadow);
+  transition: border-color 0.2s var(--god-spring), box-shadow 0.3s var(--god-spring);
 }
 
 .vg-knob-outer:hover {
-  border-color: rgba(255, 102, 0, 0.4);
+  border-color: rgba(255, 102, 0, 0.3);
+  box-shadow:
+    var(--god-knob-shadow),
+    0 0 15px var(--god-primary-glow);
 }
 
 .vg-knob-inner {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #2a2a2c 0%, #000 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--god-knob-face);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
-  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.8);
+  box-shadow:
+    2px 4px 8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+/* Ember glow at base of knob */
+.vg-knob-inner::after {
+  content: ''; position: absolute;
+  bottom: 0; left: 10%; right: 10%; height: 40%;
+  background: var(--god-knob-ember-base);
+  border-radius: 0 0 50% 50%;
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 .vg-knob-indicator {
@@ -1152,22 +1451,49 @@
 }
 
 .vg-sound-slot {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--god-glass-border);
-  border-radius: 8px;
+  background: var(--god-machined-bg);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-left: 1px solid rgba(255,255,255,0.05);
+  border-right: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(0,0,0,0.6);
+  border-radius: var(--god-radius-lg);
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: all 0.3s ease;
+  transition: all 0.35s var(--god-spring);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--god-machined-shadow);
+}
+.vg-sound-slot::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 40%);
+  pointer-events: none; border-radius: inherit;
+}
+.vg-sound-slot:hover {
+  border-color: rgba(255,102,0,0.12);
+  box-shadow:
+    var(--god-machined-shadow),
+    0 0 20px rgba(255,102,0,0.05);
 }
 
 .vg-sound-slot-active {
-  border-color: var(--god-primary);
-  box-shadow: 0 0 20px var(--god-primary-glow);
-  background: rgba(255,102,0,0.05);
+  border-color: rgba(255,102,0,0.25) !important;
+  box-shadow:
+    0 0 20px var(--god-primary-glow),
+    0 8px 24px rgba(0,0,0,0.6),
+    inset 0 0 30px rgba(255,102,0,0.05);
+}
+.vg-sound-slot-active::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: inherit; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,102,0,0.08) 0%, transparent 60%);
+  animation: vgSlotEmber 3s ease-in-out infinite;
+}
+@keyframes vgSlotEmber {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .vg-slot-header {
@@ -1223,14 +1549,29 @@
 
 .vg-slot-viz {
   height: 60px;
-  background: rgba(0,0,0,0.4);
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.05);
+  background: #050404;
+  border-radius: var(--god-radius);
+  border: 1px solid rgba(255,255,255,0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+}
+/* Waveform scanline overlay */
+.vg-slot-viz::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,102,0,0.15), transparent);
+  animation: vgWaveScan 4s linear infinite;
+  pointer-events: none;
+}
+@keyframes vgWaveScan {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(60px); opacity: 0; }
 }
 
 .vg-slot-knobs {
@@ -1456,4 +1797,712 @@
   animation: lightLeak 8s ease-in-out infinite;
   pointer-events: none;
   z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHASE 5 — DIVINE ARCHIVE | Midnight Ember Overhaul
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Shell: Forge the container ─── */
+.da-hall-shell {
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(255,102,0,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(255,138,61,0.02) 0%, transparent 50%),
+    linear-gradient(180deg, #050506 0%, #030304 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Background overlay: deeper immersion */
+.da-bg-overlay {
+  opacity: 0.08;
+  filter: blur(60px) saturate(2) brightness(0.6);
+  mix-blend-mode: screen;
+}
+
+/* ─── Room Navigation: Machined Sidebar ─── */
+.da-room-nav {
+  background:
+    var(--god-machined-bg),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  border-right: 1px solid rgba(255,102,0,0.10);
+  box-shadow:
+    inset -1px 0 0 rgba(255,255,255,0.03),
+    4px 0 20px rgba(0,0,0,0.4);
+}
+
+/* Room title: Celestial Gold accent */
+.da-room-title span {
+  color: var(--god-gold);
+  text-shadow: 0 0 12px var(--god-gold-glow);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.28em;
+}
+
+.da-room-title strong {
+  color: #fff2d8;
+  text-shadow: 0 0 20px rgba(255,102,0,0.18), 0 2px 8px rgba(0,0,0,0.6);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ─── Room Cards: Machined buttons with ember borders ─── */
+.da-room {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.15) 100%);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.3);
+  transition:
+    border-color 0.3s var(--god-spring),
+    box-shadow 0.4s var(--god-spring),
+    transform 0.3s var(--god-spring),
+    background 0.3s ease;
+  animation: vgRoomEntry 0.5s var(--god-spring) both;
+}
+
+/* Stagger entry animation */
+.da-room:nth-child(1) { animation-delay: 0.05s; }
+.da-room:nth-child(2) { animation-delay: 0.10s; }
+.da-room:nth-child(3) { animation-delay: 0.15s; }
+.da-room:nth-child(4) { animation-delay: 0.20s; }
+.da-room:nth-child(5) { animation-delay: 0.25s; }
+.da-room:nth-child(6) { animation-delay: 0.30s; }
+.da-room:nth-child(7) { animation-delay: 0.35s; }
+.da-room:nth-child(8) { animation-delay: 0.40s; }
+.da-room:nth-child(9) { animation-delay: 0.45s; }
+.da-room:nth-child(10) { animation-delay: 0.50s; }
+
+@keyframes vgRoomEntry {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.96);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Room hover & active: ember ignition */
+.da-room:hover,
+.da-room.is-active {
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.06) 0%, rgba(0,0,0,0.25) 100%);
+  border-color: color-mix(in srgb, var(--room-accent) 45%, transparent);
+  box-shadow:
+    inset 3px 0 0 var(--room-accent),
+    inset 0 0 20px color-mix(in srgb, var(--room-accent) 6%, transparent),
+    0 4px 20px rgba(0,0,0,0.4),
+    0 0 24px color-mix(in srgb, var(--room-accent) 10%, transparent);
+  transform: translateX(4px);
+}
+
+.da-room.is-active {
+  border-color: color-mix(in srgb, var(--room-accent) 60%, transparent);
+  box-shadow:
+    inset 3px 0 0 var(--room-accent),
+    inset 0 0 30px color-mix(in srgb, var(--room-accent) 8%, transparent),
+    0 4px 24px rgba(0,0,0,0.5),
+    0 0 30px color-mix(in srgb, var(--room-accent) 14%, transparent);
+}
+
+/* Room background image reveal */
+.da-room .da-room-bg {
+  filter: grayscale(1) brightness(0.3);
+  transition: all 0.5s var(--god-spring);
+}
+
+.da-room:hover .da-room-bg,
+.da-room.is-active .da-room-bg {
+  opacity: 0.18;
+  filter: grayscale(0.3) brightness(0.6) saturate(1.4);
+}
+
+/* Room name styling */
+.da-room-name {
+  font-family: 'Inter', system-ui, sans-serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+.da-room-tone {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+
+.da-room-count {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--room-accent) 40%, transparent);
+}
+
+/* ─── Records Header: Elevated ─── */
+.da-records-header {
+  background:
+    linear-gradient(180deg, rgba(14,12,11,0.95) 0%, rgba(5,5,6,0.85) 100%);
+  border-bottom: 1px solid rgba(255,102,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.da-records-header h2 {
+  text-shadow: 0 0 24px rgba(255,228,180,0.15), 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.da-kicker {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--god-gold) !important;
+  text-shadow: 0 0 10px var(--god-gold-glow);
+}
+
+/* ─── Search Bar: Glassmorphism + Ember Focus ─── */
+.da-search {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.3) 100%);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-top-color: rgba(255,255,255,0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 16px rgba(0,0,0,0.3);
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.4s ease,
+    background 0.3s ease;
+}
+
+.da-search:focus-within {
+  border-color: rgba(255,102,0,0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 0 16px rgba(255,102,0,0.04),
+    0 0 0 1px rgba(255,102,0,0.15),
+    0 0 20px rgba(255,102,0,0.08),
+    0 4px 20px rgba(0,0,0,0.4);
+  background:
+    linear-gradient(135deg, rgba(255,102,0,0.03) 0%, rgba(0,0,0,0.35) 100%);
+}
+
+.da-search input {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.da-search input::placeholder {
+  color: rgba(255,204,128,0.18);
+  font-style: italic;
+}
+
+/* Search tool buttons: machined micro-buttons */
+.da-search-tools > button {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.2) 100%);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.25s var(--god-spring);
+}
+
+.da-search-tools > button:hover {
+  border-color: rgba(255,102,0,0.25);
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.08) 0%, rgba(0,0,0,0.25) 100%);
+  color: #ffb86b;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 12px rgba(255,102,0,0.08);
+}
+
+.da-search-tools > button.is-active {
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.15) 0%, rgba(255,68,0,0.08) 100%);
+  border-color: rgba(255,102,0,0.35);
+  box-shadow:
+    inset 0 0 12px rgba(255,102,0,0.08),
+    0 0 16px rgba(255,102,0,0.12);
+}
+
+/* ─── Relic Cards: Machined Obsidian Surfaces ─── */
+.da-relic {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.2) 100%),
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--room-accent) 8%, transparent), transparent 50%);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-top-color: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.4),
+    0 4px 12px rgba(0,0,0,0.3);
+  transition:
+    border-color 0.25s var(--god-spring),
+    box-shadow 0.3s var(--god-spring),
+    transform 0.25s var(--god-spring),
+    background 0.25s ease;
+  position: relative;
+}
+
+/* Waveform placeholder slot (pseudo-element) */
+.da-relic::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,102,0,0.04) 0px,
+      rgba(255,102,0,0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  border-top: 1px solid rgba(255,255,255,0.03);
+  opacity: 0;
+  transition: opacity 0.3s var(--god-spring);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 0 0 7px 7px;
+}
+
+.da-relic:hover::before {
+  opacity: 1;
+}
+
+/* List view relics skip waveform slot */
+.da-relic-list .da-relic::before {
+  display: none;
+}
+
+/* Relic hover: ember ignition */
+.da-relic:hover {
+  border-color: color-mix(in srgb, var(--room-accent) 40%, transparent);
+  border-top-color: color-mix(in srgb, var(--room-accent) 25%, transparent);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.18) 100%),
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--room-accent) 12%, transparent), transparent 50%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 0 20px color-mix(in srgb, var(--room-accent) 4%, transparent),
+    0 8px 24px rgba(0,0,0,0.4),
+    0 0 20px color-mix(in srgb, var(--room-accent) 10%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Selected relic: sustained ember */
+.da-relic.is-selected {
+  border-color: color-mix(in srgb, var(--room-accent) 50%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 0 24px color-mix(in srgb, var(--room-accent) 6%, transparent),
+    0 8px 28px rgba(0,0,0,0.4),
+    0 0 24px color-mix(in srgb, var(--room-accent) 12%, transparent);
+}
+
+/* Playing relic: pulsing ember */
+.da-relic.is-playing {
+  border-color: color-mix(in srgb, var(--room-accent) 55%, transparent);
+  animation: vgRelicPulse 2s ease-in-out infinite;
+}
+
+@keyframes vgRelicPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 16px color-mix(in srgb, var(--room-accent) 5%, transparent),
+      0 0 16px color-mix(in srgb, var(--room-accent) 8%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 24px color-mix(in srgb, var(--room-accent) 10%, transparent),
+      0 0 30px color-mix(in srgb, var(--room-accent) 16%, transparent);
+  }
+}
+
+/* Relic orb: glowing ember sphere */
+.da-relic-orb {
+  background:
+    radial-gradient(circle at 40% 35%,
+      color-mix(in srgb, var(--room-accent) 20%, rgba(0,0,0,0.5)),
+      color-mix(in srgb, var(--room-accent) 6%, rgba(0,0,0,0.8))
+    );
+  border: 1px solid color-mix(in srgb, var(--room-accent) 20%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 12px color-mix(in srgb, var(--room-accent) 12%, transparent);
+  transition: box-shadow 0.3s var(--god-spring);
+}
+
+.da-relic:hover .da-relic-orb {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 0 18px color-mix(in srgb, var(--room-accent) 20%, transparent);
+}
+
+/* Relic copy typography */
+.da-relic-copy strong {
+  font-family: 'Inter', system-ui, sans-serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.da-relic-copy small {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Tags: micro-pills with subtle ember tint */
+.da-relic-tags em,
+.da-tag-cloud span {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.06);
+  transition: all 0.2s var(--god-spring);
+}
+
+.da-relic:hover .da-relic-tags em {
+  border-color: color-mix(in srgb, var(--room-accent) 20%, transparent);
+  color: rgba(255,204,128,0.5);
+}
+
+/* ─── Inspector Panel: Deep Machined Column ─── */
+.da-inspector {
+  background:
+    var(--god-machined-bg),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,0.008) 0px,
+      rgba(255,255,255,0.008) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  border-left: 1px solid rgba(255,102,0,0.10);
+  box-shadow:
+    inset 1px 0 0 rgba(255,255,255,0.03),
+    -4px 0 20px rgba(0,0,0,0.4);
+}
+
+/* Inspector card: premium glass container */
+.da-inspector-card {
+  background:
+    linear-gradient(180deg, rgba(12,10,10,0.9) 0%, rgba(5,5,6,0.95) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-top-color: rgba(255,255,255,0.10);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    0 12px 40px rgba(0,0,0,0.6),
+    0 0 30px rgba(0,0,0,0.3);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* Inspector header: gradient fade with depth */
+.da-inspector-header {
+  border-radius: 9px 9px 0 0;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+}
+
+.da-inspector-header::after {
+  background:
+    linear-gradient(to bottom,
+      transparent 20%,
+      rgba(10,10,12,0.4) 60%,
+      rgba(10,10,12,1) 100%
+    );
+}
+
+/* Inspector orb: glowing deity marker */
+.da-inspector-orb {
+  background:
+    radial-gradient(circle at 40% 35%,
+      color-mix(in srgb, var(--room-accent) 25%, rgba(0,0,0,0.3)),
+      color-mix(in srgb, var(--room-accent) 8%, rgba(0,0,0,0.7))
+    );
+  border: 1px solid color-mix(in srgb, var(--room-accent) 30%, transparent);
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--room-accent) 20%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  z-index: 1;
+  position: relative;
+}
+
+/* Inspector title */
+.da-inspector-card h3 {
+  text-shadow: 0 0 16px rgba(255,242,216,0.12), 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* Aura ring: glowing resonance indicator */
+.da-aura-ring {
+  background:
+    radial-gradient(circle,
+      color-mix(in srgb, var(--room-accent) 4%, transparent) 0%,
+      transparent 70%
+    );
+  animation: vgAuraBreath 3s ease-in-out infinite;
+}
+
+@keyframes vgAuraBreath {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 24px color-mix(in srgb, var(--room-accent) 8%, transparent),
+      0 0 16px color-mix(in srgb, var(--room-accent) 10%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 36px color-mix(in srgb, var(--room-accent) 14%, transparent),
+      0 0 28px color-mix(in srgb, var(--room-accent) 18%, transparent);
+  }
+}
+
+/* Inspector definition list: refined dividers */
+.da-inspector-card dl div {
+  border-bottom-color: rgba(255,255,255,0.04);
+}
+
+.da-inspector-card dt {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.da-inspector-card dd {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Inspector action buttons: forged buttons */
+.da-inspector-actions button {
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.14) 0%, rgba(255,68,0,0.06) 100%);
+  border: 1px solid rgba(255,102,0,0.20);
+  border-top-color: rgba(255,138,61,0.28);
+  font-family: 'Inter', system-ui, sans-serif;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.25s var(--god-spring);
+}
+
+.da-inspector-actions button:hover {
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.22) 0%, rgba(255,68,0,0.12) 100%);
+  border-color: rgba(255,184,107,0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 16px rgba(255,102,0,0.12),
+    0 4px 12px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+
+/* Inspector empty state */
+.da-inspector-empty {
+  color: rgba(255,204,128,0.18);
+}
+
+.da-inspector-empty svg {
+  filter: drop-shadow(0 0 8px rgba(255,102,0,0.1));
+}
+
+/* ─── Recall Strip: Elevated Footer ─── */
+.da-recall-strip {
+  background:
+    linear-gradient(180deg, rgba(8,6,5,0.97) 0%, rgba(3,3,4,0.99) 100%);
+  border-top: 1px solid rgba(255,102,0,0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    0 -4px 16px rgba(0,0,0,0.3);
+}
+
+.da-recall-strip span {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--god-gold);
+  text-shadow: 0 0 8px var(--god-gold-glow);
+}
+
+.da-recall-strip button {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.15) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-family: 'Inter', system-ui, sans-serif;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s var(--god-spring);
+}
+
+.da-recall-strip button:hover {
+  border-color: rgba(255,102,0,0.30);
+  background:
+    linear-gradient(145deg, rgba(255,102,0,0.10) 0%, rgba(0,0,0,0.2) 100%);
+  box-shadow:
+    0 0 12px rgba(255,102,0,0.08),
+    0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ─── Empty Records: Atmospheric ─── */
+.da-empty-records {
+  color: rgba(255,204,128,0.16);
+}
+
+.da-empty-records svg {
+  filter: drop-shadow(0 0 12px rgba(255,102,0,0.08));
+}
+
+.da-empty-records h3 {
+  color: rgba(255,228,180,0.5);
+  text-shadow: 0 0 16px rgba(255,102,0,0.1);
+}
+
+/* ─── Scrollbar Refinement ─── */
+.da-room-list::-webkit-scrollbar-track,
+.da-relic-shelf::-webkit-scrollbar-track,
+.da-relic-list::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+  border-radius: 999px;
+}
+
+.da-room-list::-webkit-scrollbar-thumb,
+.da-relic-shelf::-webkit-scrollbar-thumb,
+.da-relic-list::-webkit-scrollbar-thumb {
+  background: rgba(255,102,0,0.18);
+  border-radius: 999px;
+  border: 1px solid rgba(255,102,0,0.08);
+}
+
+.da-room-list::-webkit-scrollbar-thumb:hover,
+.da-relic-shelf::-webkit-scrollbar-thumb:hover,
+.da-relic-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,102,0,0.35);
+}
+
+/* ─── Shelf Grid Spacing ─── */
+.da-relic-shelf {
+  padding: 16px;
+  gap: 14px;
+}
+
+/* ─── Responsive Override ─── */
+@media (max-width: 1100px) {
+  .da-room-nav {
+    box-shadow: none;
+  }
+
+  .da-inspector {
+    box-shadow: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHASE 7 — GLOBAL POLISH | Unified Micro-Details
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Global Scrollbars: Ember-tinted thin scrollbars ─── */
+.vg-plugin ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.vg-plugin ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+}
+
+.vg-plugin ::-webkit-scrollbar-thumb {
+  background: rgba(255, 102, 0, 0.16);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 102, 0, 0.06);
+}
+
+.vg-plugin ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 102, 0, 0.32);
+}
+
+.vg-plugin ::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 102, 0, 0.45);
+}
+
+/* Firefox scrollbar support */
+.vg-plugin * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 102, 0, 0.16) rgba(0, 0, 0, 0.15);
+}
+
+/* ─── Selection Highlight: Ember Accent ─── */
+.vg-plugin ::selection {
+  background: rgba(255, 102, 0, 0.3);
+  color: #fff2d8;
+  text-shadow: none;
+}
+
+.vg-plugin ::-moz-selection {
+  background: rgba(255, 102, 0, 0.3);
+  color: #fff2d8;
+  text-shadow: none;
+}
+
+/* ─── Focus Outlines: Ember Ring (keyboard accessibility) ─── */
+.vg-plugin *:focus-visible {
+  outline: 2px solid rgba(255, 102, 0, 0.5);
+  outline-offset: 2px;
+  border-radius: var(--god-radius);
+  box-shadow:
+    0 0 0 4px rgba(255, 102, 0, 0.08),
+    0 0 12px rgba(255, 102, 0, 0.12);
+}
+
+/* Remove default outline for mouse clicks */
+.vg-plugin *:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Focus rings for specific interactive elements */
+.vg-plugin button:focus-visible,
+.vg-plugin input:focus-visible,
+.vg-plugin select:focus-visible,
+.vg-plugin [role="button"]:focus-visible,
+.vg-plugin [role="tab"]:focus-visible {
+  outline: 2px solid rgba(255, 102, 0, 0.6);
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 4px rgba(255, 102, 0, 0.1),
+    0 0 16px rgba(255, 102, 0, 0.15);
+}
+
+/* Suppress focus ring for knobs/sliders (continuous drag elements) */
+.vg-plugin .vg-knob-ring-sm:focus-visible,
+.vg-plugin .vg-knob-ring-lg:focus-visible,
+.vg-plugin .fluid-slider:focus-visible,
+.vg-plugin .nebula-xy-pad:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(255, 102, 0, 0.2),
+    0 0 8px rgba(255, 102, 0, 0.1);
+}
+
+/* ─── Cursor: Premium crosshair for drag surfaces ─── */
+.vg-plugin .nebula-xy-pad {
+  cursor: crosshair;
+}
+
+.vg-plugin .fluid-slider {
+  cursor: ew-resize;
+}
+
+/* ─── Smooth text rendering ─── */
+.vg-plugin {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }

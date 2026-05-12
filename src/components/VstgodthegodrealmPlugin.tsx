@@ -13,6 +13,10 @@ import { SoundSlot } from './SoundSlot';
 import { MultiControlPanel } from './MultiControlPanel';
 import { RealmDashboard } from './RealmDashboard';
 import { NeuralSuggestPanel } from './NeuralSuggestPanel';
+import { CelestialTabs } from './ui/CelestialTabs';
+import { GodKnob } from './ui/GodKnob';
+import { DivineKnob } from './ui/DivineKnob';
+import { DivineSlider } from './ui/DivineSlider';
 import { CelestialForge } from './CelestialForge';
 import { GodRealmSampleChopper } from './GodRealmSampleChopper';
 import { SamplerEngine } from './SamplerEngine';
@@ -22,6 +26,8 @@ import { CelestialBrowser } from './CelestialBrowser';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
 import { FluidSlider } from './FluidSlider';
+import { RealmParticleCanvas } from './RealmParticleCanvas';
+import { RealmPortalTransition } from './RealmPortalTransition';
 import type { DivineRelic } from '@/archive/divineArchive';
 
 interface VstgodthegodrealmPluginProps {
@@ -103,6 +109,37 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   parameterValues = {},
 }) => {
   const activeTab = parameterValues.activeTab || 'Preset Vault';
+
+  /* ─── Phase 4: Realm Transition State ─── */
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [displayedTab, setDisplayedTab] = useState(activeTab);
+  const prevTabRef = useRef(activeTab);
+
+  // Sync displayedTab if activeTab changes externally (e.g. prop-driven)
+  useEffect(() => {
+    if (!isTransitioning && activeTab !== prevTabRef.current) {
+      setDisplayedTab(activeTab);
+      prevTabRef.current = activeTab;
+    }
+  }, [activeTab, isTransitioning]);
+
+  const handleRealmTransition = useCallback((newTab: string) => {
+    if (newTab === displayedTab) return;
+    setPendingTab(newTab);
+    setIsTransitioning(true);
+    // Update the parameter so tab bar highlights immediately
+    update('activeTab', newTab);
+  }, [displayedTab, update]);
+
+  const handleTransitionComplete = useCallback(() => {
+    if (pendingTab) {
+      setDisplayedTab(pendingTab);
+      prevTabRef.current = pendingTab;
+    }
+    setPendingTab(null);
+    setIsTransitioning(false);
+  }, [pendingTab]);
   const selectedPreset = parameterValues.selectedPreset || 0;
   const selectedCategory = parameterValues.selectedCategory || 'All Presets';
   const presetSearch = parameterValues.presetSearch || '';
@@ -398,7 +435,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   if (!isOpen) return null;
 
-  const tabs = ['Multi-Realm', 'Divine Archive', 'Sample Chopper', 'Effects', 'Mastering', 'Performance', 'Preset Vault'] as const;
   const wrapperClassName = embedded
     ? 'relative flex h-full w-full items-center justify-center'
     : 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
@@ -474,24 +510,24 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <span className="vg-display-label">TEMPO</span>
           </div>
           <div className="vg-knob-group">
-            <div className="vg-knob-mini">
-              <div className="vg-knob-ring-sm">
-                <div className="vg-knob-dot" style={{ transform: `rotate(${-135 + ((tuneSemitones + 24) / 48) * 270}deg)` }} />
-              </div>
-              <span className="vg-knob-label">TUNE</span>
-              <span className="vg-knob-val">{tuneSemitones} ST</span>
-              <input type="range" className="vg-knob-slider" min={-24} max={24} step={1}
-                value={tuneSemitones} onChange={e => { update('tuneSemitones', +e.target.value); }} />
-            </div>
-            <div className="vg-knob-mini">
-              <div className="vg-knob-ring-lg">
-                <div className="vg-knob-dot" style={{ transform: `rotate(${-135 + ((masterVolume + 60) / 66) * 270}deg)` }} />
-              </div>
-              <span className="vg-knob-label">VOLUME</span>
-              <span className="vg-knob-val">{masterVolume.toFixed(1)} dB</span>
-              <input type="range" className="vg-knob-slider" min={-60} max={6} step={0.1}
-                value={masterVolume} onChange={e => { update('masterVolume', +e.target.value); }} />
-            </div>
+            <GodKnob 
+              label="TUNE"
+              min={-24}
+              max={24}
+              value={tuneSemitones}
+              onChange={(v) => update('tuneSemitones', v)}
+              size="sm"
+              suffix=" ST"
+            />
+            <GodKnob 
+              label="VOLUME"
+              min={-60}
+              max={6}
+              value={masterVolume}
+              onChange={(v) => update('masterVolume', v)}
+              size="sm"
+              suffix=" dB"
+            />
           </div>
           
           <button className="vg-header-close" onClick={onClose} aria-label="Close Plugin">
@@ -501,23 +537,53 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       </header>
 
       {/* ═══════════ TAB BAR ═══════════ */}
-      <nav className="vg-tab-bar">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            className={`vg-tab ${activeTab === tab ? 'vg-tab-active' : ''}`}
-            onClick={() => { update('activeTab', tab); update(`tab${tab.replace(/\s/g, '')}`, true); }}
-          >
-            {tab.toUpperCase()}
-          </button>
-        ))}
-      </nav>
+        <CelestialTabs 
+          tabs={[
+            { id: 'Multi-Realm', label: 'MULTI-REALM' },
+            { id: 'Effects', label: 'THE PANTHEON' },
+            { id: 'Sample Chopper', label: 'CHOPPER' },
+            { id: 'Divine Archive', label: 'ARCHIVE' },
+            { id: 'Mastering', label: 'CELESTIAL FORGE' },
+            { id: 'Performance', label: 'SEQUENCER' },
+            { id: 'Preset Vault', label: 'PRESET VAULT' },
+          ]}
+          activeTab={activeTab}
+          onTabChange={handleRealmTransition}
+        />
 
       {/* ═══════════ MAIN CONTENT ═══════════ */}
-      <main className="vg-main">
+      <main
+        className="vg-main"
+        data-realm={displayedTab}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const px = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+          const py = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+          e.currentTarget.style.setProperty('--parallax-x', `${px * -4}px`);
+          e.currentTarget.style.setProperty('--parallax-y', `${py * -4}px`);
+        }}
+      >
+        {/* Living Atmosphere Particle Layer */}
+        <RealmParticleCanvas realm={displayedTab as any} />
+
+        {/* Phase 4: Realm Portal Transition Overlay */}
+        <RealmPortalTransition
+          isTransitioning={isTransitioning}
+          targetRealm={pendingTab || displayedTab}
+          onTransitionComplete={handleTransitionComplete}
+        />
 
         {/* ─── MULTI-REALM TAB (THE GOD FORGE) ─── */}
-        {activeTab === 'Multi-Realm' && (
+        <AnimatePresence mode="wait">
+        <motion.div
+          key={displayedTab}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.02 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          style={{ display: 'contents' }}
+        >
+        {displayedTab === 'Multi-Realm' && (
           <SamplerEngine
             parameterValues={parameterValues}
             update={update}
@@ -532,7 +598,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── DIVINE ARCHIVE TAB (NEW) ─── */}
-        {activeTab === 'Divine Archive' && (
+        {displayedTab === 'Divine Archive' && (
           <div className="vg-panel vg-archive h-full overflow-hidden">
             <CelestialBrowser 
               activePad={activePad}
@@ -542,7 +608,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── SAMPLE CHOPPER TAB (Phase 6 Polish) ─── */}
-        {activeTab === 'Sample Chopper' && (
+        {displayedTab === 'Sample Chopper' && (
           <GodRealmSampleChopper
             activePad={activePad}
             parameterValues={parameterValues}
@@ -551,7 +617,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── THE PANTHEON (EFFECTS) TAB ─── */}
-        {activeTab === 'Effects' && (() => {
+        {displayedTab === 'Effects' && (() => {
           const GODS = [
             { god: 'Zeus', origin: 'Greek', domain: 'Transients', icon: '⚡', color: '#60A5FA', avatar: '/plugins/gods/zeus.png', params: ['Attack', 'Sustain', 'Punch', 'Threshold'] },
             { god: 'Ra', origin: 'Egyptian', domain: 'Harmonics', icon: '☀️', color: '#F5B041', avatar: '/plugins/gods/ra.png', params: ['Low', 'Mid', 'High', 'Presence'] },
@@ -572,15 +638,15 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           const divinePower = Math.round(totalInvoke / GODS.length);
 
           return (
-          <div className="vg-panel vg-effects vg-pantheon flex gap-8 items-start">
-            <SpectralRadarPanner />
+          <div className="vg-panel vg-effects flex gap-4 items-stretch p-0" style={{ overflow: 'hidden', flexDirection: 'row' }}>
             
-            {/* ── Constellation Area ── */}
-            <div className="vg-constellation-wrap flex-1">
-              <div className="vg-constellation-inner" style={{ position: 'relative', height: '100%', width: '100%', maxWidth: 'calc(100vh * (480/380))', maxHeight: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg className="vg-constellation-svg" viewBox="0 0 480 380" preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
-                  <defs>
-                  <radialGradient id="coreGlow"><stop offset="0%" stopColor="rgba(255,102,0,0.25)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
+            {/* ── Constellation Area (Main) ── */}
+            <div className="vg-pantheon flex-1 relative" style={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="vg-constellation-wrap w-full flex-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+                <div className="vg-constellation-inner" style={{ position: 'relative', height: '100%', width: '100%', maxWidth: 'calc(100vh * (480/380))', maxHeight: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg className="vg-constellation-svg" viewBox="0 0 480 380" preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
+                    <defs>
+                    <radialGradient id="coreGlow"><stop offset="0%" stopColor="rgba(255,102,0,0.25)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
                   <filter id="godGlow"><feGaussianBlur stdDeviation="3" /><feColorMatrix type="saturate" values="2" /></filter>
                 </defs>
 
@@ -654,19 +720,21 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                   );
                 })}
 
-                {/* Divine Core (center) */}
-                <circle cx={CX} cy={CY} r="40" fill="url(#coreGlow)" />
-                <circle cx={CX} cy={CY} r="28" fill="rgba(0,0,0,0.6)" stroke="rgba(255,102,0,0.4)" strokeWidth="1.5" />
-                {/* Core invoke ring */}
-                <circle cx={CX} cy={CY} r="24" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
-                <circle cx={CX} cy={CY} r="24" fill="none" stroke="#ff6600" strokeWidth="2"
-                  strokeDasharray={`${divinePower * 1.5} ${150 - divinePower * 1.5}`}
-                  strokeDashoffset="37.5" strokeLinecap="round"
-                  style={{ filter: 'drop-shadow(0 0 6px rgba(255,102,0,0.6))' }}
-                />
-                <text x={CX} y={CY - 6} textAnchor="middle" className="vg-core-number">{divinePower}</text>
-                <text x={CX} y={CY + 8} textAnchor="middle" className="vg-core-label">DIVINE</text>
-                <text x={CX} y={CY + 18} textAnchor="middle" className="vg-core-label">POWER</text>
+                {/* Divine Core (center) — heartbeat animation */}
+                <g className="vg-divine-core" style={{ transformOrigin: `${CX}px ${CY}px` }}>
+                  <circle cx={CX} cy={CY} r="40" fill="url(#coreGlow)" />
+                  <circle cx={CX} cy={CY} r="28" fill="rgba(0,0,0,0.6)" stroke="rgba(255,102,0,0.4)" strokeWidth="1.5" />
+                  {/* Core invoke ring */}
+                  <circle cx={CX} cy={CY} r="24" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
+                  <circle cx={CX} cy={CY} r="24" fill="none" stroke="#ff6600" strokeWidth="2"
+                    strokeDasharray={`${divinePower * 1.5} ${150 - divinePower * 1.5}`}
+                    strokeDashoffset="37.5" strokeLinecap="round"
+                    style={{ filter: 'drop-shadow(0 0 8px rgba(255,102,0,0.7))' }}
+                  />
+                  <text x={CX} y={CY - 6} textAnchor="middle" className="vg-core-number">{divinePower}</text>
+                  <text x={CX} y={CY + 8} textAnchor="middle" className="vg-core-label">DIVINE</text>
+                  <text x={CX} y={CY + 18} textAnchor="middle" className="vg-core-label">POWER</text>
+                </g>
 
                 {/* God Nodes via foreignObject */}
                 {GODS.map((god, i) => {
@@ -749,13 +817,12 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                   {/* Invoke (main intensity) */}
                   <div className="vg-deity-invoke-row">
                     <span className="vg-deity-invoke-label">INVOKE</span>
-                    <div className="vg-deity-invoke-track">
-                      <div className="vg-deity-invoke-fill"
-                        style={{ width: `${parameterValues[`god_${sel.god.toLowerCase()}_invoke`] ?? 50}%` }} />
-                      <input type="range" min="0" max="100"
+                    <div className="flex-1 px-4">
+                      <DivineSlider
                         value={parameterValues[`god_${sel.god.toLowerCase()}_invoke`] ?? 50}
-                        className="vg-deity-invoke-input"
-                        onChange={(e) => update(`god_${sel.god.toLowerCase()}_invoke`, parseFloat(e.target.value))}
+                        onChange={(v) => update(`god_${sel.god.toLowerCase()}_invoke`, v)}
+                        color={sel.color}
+                        showLabel={false}
                       />
                     </div>
                     <span className="vg-deity-invoke-val">
@@ -771,15 +838,14 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                       const paramId = `god_${sel.god.toLowerCase()}_${p.toLowerCase()}`;
                       const val = parameterValues[paramId] !== undefined ? (parameterValues[paramId] as number) : 50;
                       return (
-                        <div key={p} className="vg-deity-param">
-                          <span className="vg-deity-param-name">{p}</span>
-                          <div className="vg-deity-param-track">
-                            <div className="vg-deity-param-fill" style={{ width: `${val}%` }} />
-                            <input type="range" min="0" max="100" value={val}
-                              className="vg-deity-param-input"
-                              onChange={(e) => update(paramId, parseFloat(e.target.value))} />
-                          </div>
-                          <span className="vg-deity-param-val">{val}</span>
+                        <div key={p} className="vg-deity-param flex flex-col items-center">
+                          <DivineKnob
+                            label={p.toUpperCase()}
+                            value={val}
+                            onChange={(v) => update(paramId, v)}
+                            color={sel.color}
+                            size="sm"
+                          />
                         </div>
                       );
                     })}
@@ -816,12 +882,44 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                 <span>SELECT A DEITY TO INVOKE THEIR POWER</span>
               </div>
             )}
+            </div>
+
+            {/* ── Advanced Modulation Side Panel ── */}
+            <div className="vg-advanced-modulation flex flex-col gap-4 w-[340px] p-4 bg-black/40 border-l border-white/5 relative z-10 shrink-0 overflow-y-auto custom-scrollbar">
+              <div className="vg-section-title text-xs tracking-[0.2em] text-white/40 mb-2">ADVANCED MODULATION</div>
+              
+              <div className="flex-none h-[280px] bg-black/50 rounded-xl overflow-hidden border border-white/5">
+                <SpectralRadarPanner />
+              </div>
+              
+              <div className="flex-none h-[250px] bg-black/50 rounded-xl overflow-hidden border border-white/5">
+                <NebulaXYPad 
+                  label="NEBULA PAD"
+                  onPositionChange={(x, y) => {
+                    update('modX', x);
+                    update('modY', y);
+                  }}
+                />
+              </div>
+              
+              <div className="flex-none h-[120px] bg-black/50 rounded-xl overflow-hidden border border-white/5 flex flex-col p-4 justify-center">
+                <span className="text-[10px] text-white/50 tracking-wider mb-4 text-center">FLUID DYNAMICS</span>
+                <div className="px-2">
+                  <FluidSlider 
+                    defaultValue={(parameterValues.fluidMod as number) || 50}
+                    min={0}
+                    max={100}
+                    onChange={(val) => update('fluidMod', val)}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           );
         })()}
 
         {/* ─── MASTERING TAB (Celestial Forge Design) ─── */}
-        {activeTab === 'Mastering' && (
+        {displayedTab === 'Mastering' && (
           <CelestialForge 
             parameterValues={parameterValues}
             update={update}
@@ -830,7 +928,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── PERFORMANCE TAB (Advanced Performance Controls) ─── */}
-        {activeTab === 'Performance' && (
+        {displayedTab === 'Performance' && (
           <div className="vg-panel h-full p-8 flex gap-8">
             <div className="flex-1 flex flex-col gap-8">
               <div className="flex-1">
@@ -852,7 +950,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               <FluidSlider 
                 label="DIVINE GAIN"
                 defaultValue={parameterValues.masterVolume !== undefined ? (parameterValues.masterVolume + 60) / 66 : 0.5}
-                engineRef={engineRef}
                 onChange={(val) => {
                   const db = val * 66 - 60;
                   update('masterVolume', db);
@@ -881,7 +978,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── PRESET VAULT TAB ─── */}
-        {activeTab === 'Preset Vault' && (
+        {displayedTab === 'Preset Vault' && (
           <div className="vg-panel vg-vault flex gap-1 h-full overflow-hidden p-1">
             {/* ── LEFT: PRESET LIBRARY ── */}
             <PresetLibrarySidebar 
@@ -952,6 +1049,26 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                        <p className="text-[10px] text-white/40 leading-relaxed font-bold">
                         Morph between the current preset and the "Hades Depth" anchor to create divine hybrids.
                        </p>
+                       <div className="flex gap-4">
+                        <GodKnob 
+                          label="TUNE"
+                          min={-12}
+                          max={12}
+                          value={parameterValues.tune || 0}
+                          onChange={(v) => update('tune', v)}
+                          size="md"
+                          suffix=" ST"
+                        />
+                        <GodKnob 
+                          label="VOLUME"
+                          min={0}
+                          max={100}
+                          value={parameterValues.volume || 75}
+                          onChange={(v) => update('volume', v)}
+                          size="md"
+                          suffix="%"
+                        />
+                      </div>
                        <div className="space-y-2">
                           <div className="flex justify-between text-[9px] font-black text-orange-500 uppercase">
                             <span>Heaven</span>
@@ -971,7 +1088,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                 <div className="space-y-6">
                   <div className="glass-panel p-6 bg-white/5 border border-white/10 rounded-2xl h-full relative overflow-hidden group">
                     <img 
-                      src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop" 
+                      src="/images/archive/hero_vault.png" 
                       className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity duration-700" 
                       alt="Art"
                     />

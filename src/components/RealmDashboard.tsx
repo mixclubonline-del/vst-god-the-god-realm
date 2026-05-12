@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Wind, Zap, Waves, Disc } from 'lucide-react';
+import { DivineKnob } from './ui/DivineKnob';
 
 interface RealmDashboardProps {
   parameterValues: Record<string, any>;
@@ -29,6 +30,14 @@ export const RealmDashboard: React.FC<RealmDashboardProps> = ({
           { name: 'DIVINE DISTORTION', icon: <Disc size={14} />, param: 'DRIVE', val: '42%', percent: 42, color: '#ff3333' },
         ].map(fx => (
           <div key={fx.name} className="vg-fx-card group cursor-pointer hover:bg-white/5 transition-all border-white/5 hover:border-red-500/20 relative overflow-hidden">
+             {/* Divine Glow Background */}
+             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div 
+                  className="absolute -inset-2 opacity-20 blur-2xl"
+                  style={{ background: `radial-gradient(circle at center, ${fx.color}, transparent)` }}
+                />
+             </div>
+
              {/* Theme-specific background animations */}
              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none">
                 {fx.name.includes('REVERB') && (
@@ -79,31 +88,27 @@ export const RealmDashboard: React.FC<RealmDashboardProps> = ({
       <div className="flex gap-8 mt-8 items-end">
          <div className="flex-1 flex flex-col">
             <div className="vg-section-head text-white/20 border-white/5">MASTER</div>
-            <div className="flex gap-10 p-5 bg-black/40 rounded-2xl border border-white/5 shadow-2xl">
+            <div className="flex gap-10 p-6 bg-black/40 rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden">
+               {/* Subtle background glow for the master stage */}
+               <div className="absolute -top-24 -left-24 w-48 h-48 bg-red-500/5 blur-[100px] pointer-events-none" />
+               
                {[
                  { label: 'ATTACK', key: 'masterAttack', val: parameterValues.masterAttack || 10, unit: 'ms', reset: 10 },
                  { label: 'DECAY', key: 'masterDecay', val: parameterValues.masterDecay || 65, unit: 'ms', reset: 65 },
                  { label: 'SUSTAIN', key: 'masterSustain', val: parameterValues.masterSustain || 78, unit: '%', reset: 78 },
                  { label: 'RELEASE', key: 'masterRelease', val: parameterValues.masterRelease || 40, unit: 'ms', reset: 40 }
                ].map(l => (
-                 <div key={l.label} className="flex flex-col items-center gap-2 group/knob cursor-pointer relative">
-                    <div 
-                      className="w-10 h-10 rounded-full border border-white/10 relative bg-black/20 group-hover/knob:border-red-500/40 transition-colors cursor-ns-resize"
-                      onDoubleClick={() => update(l.key, l.reset)}
-                    >
-                       <div className="absolute top-1 left-1/2 -ml-[0.5px] w-[1.5px] h-2.5 bg-red-500/40 rounded-full group-hover/knob:bg-red-500/80" 
-                            style={{ transform: `rotate(${(l.val/100)*270 - 135}deg)`, transformOrigin: 'bottom' }} />
-                       <input 
-                         type="range"
-                         className="absolute inset-0 opacity-0 cursor-pointer"
-                         value={l.val}
-                         onChange={(e) => update(l.key, +e.target.value)}
-                       />
-                    </div>
-                    <span className="text-[7px] font-bold text-white/30 uppercase tracking-tighter group-hover/knob:text-white/60 transition-colors">{l.label}</span>
-                    <span className="text-[8px] font-mono text-orange-500/60 font-bold">
-                       {l.unit === 'ms' ? `${Math.round((l.val/100)*5000)}` : Math.round(l.val)}{l.unit}
-                    </span>
+                 <div key={l.label} className="flex flex-col items-center">
+                    <DivineKnob
+                      label={l.label}
+                      value={l.val}
+                      onChange={(v) => update(l.key, v)}
+                      color="#ff4444"
+                      size="md"
+                      variant="infernal"
+                      showValue={true}
+                      valueDisplay={l.unit === 'ms' ? `${Math.round((l.val/100)*5000)}ms` : `${Math.round(l.val)}%`}
+                    />
                  </div>
                ))}
                <div className="flex-1 flex items-center justify-end">

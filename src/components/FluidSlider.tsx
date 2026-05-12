@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useSpring, useMotionValue, useTransform } from 'framer-motion';
-import { GodRealmSamplerEngine } from '../engine/samplerEngine';
+import { motion, useSpring } from 'framer-motion';
 import './FluidSlider.css';
 
 interface FluidSliderProps {
@@ -8,8 +7,8 @@ interface FluidSliderProps {
   min?: number;
   max?: number;
   defaultValue?: number;
-  engineRef?: React.RefObject<GodRealmSamplerEngine>;
   onChange?: (value: number) => void;
+  variant?: 'default' | 'mystical' | 'infernal' | 'celestial';
 }
 
 export const FluidSlider: React.FC<FluidSliderProps> = ({
@@ -17,8 +16,8 @@ export const FluidSlider: React.FC<FluidSliderProps> = ({
   min = 0,
   max = 1,
   defaultValue = 0.5,
-  engineRef,
-  onChange
+  onChange,
+  variant = 'default'
 }) => {
   const [value, setValue] = useState(defaultValue);
   const [rms, setRms] = useState(0);
@@ -27,19 +26,21 @@ export const FluidSlider: React.FC<FluidSliderProps> = ({
   // Spring for smooth value transitions
   const springValue = useSpring(defaultValue, { stiffness: 120, damping: 20 });
   
-  // Audio reactivity loop
+  // Audio reactivity loop (Mocked for now)
   useEffect(() => {
     let rafId: number;
+    let frame = 0;
     const update = () => {
-      if (engineRef?.current) {
-        // Smoothly follow the RMS level for the glow effect
-        setRms(prev => prev * 0.85 + engineRef.current!.getRMSLevel() * 0.15);
-      }
+      frame++;
+      // Subtle pulse to simulate life
+      const mockLevel = (Math.sin(frame * 0.05) * 0.5 + 0.5) * 0.1;
+      setRms(prev => prev * 0.9 + mockLevel * 0.1);
+      
       rafId = requestAnimationFrame(update);
     };
     rafId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(rafId);
-  }, [engineRef]);
+  }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     handlePointerMove(e);
@@ -60,7 +61,7 @@ export const FluidSlider: React.FC<FluidSliderProps> = ({
   };
 
   return (
-    <div className="fluid-slider-container glass-panel">
+    <div className={`fluid-slider-container glass-panel fluid-variant-${variant}`}>
       <span className="fluid-slider-label">{label}</span>
       
       <div 

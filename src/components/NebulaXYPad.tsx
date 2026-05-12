@@ -1,18 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useSpring } from 'framer-motion';
-import { GodRealmSamplerEngine } from '../engine/samplerEngine';
 import './NebulaXYPad.css';
 
 interface NebulaXYPadProps {
   label?: string;
-  engineRef?: React.RefObject<GodRealmSamplerEngine>;
-  onChange?: (x: number, y: number) => void;
+  onPositionChange?: (x: number, y: number) => void;
 }
 
 export const NebulaXYPad: React.FC<NebulaXYPadProps> = ({ 
   label = "NEBULA MOD", 
-  engineRef,
-  onChange 
+  onPositionChange 
 }) => {
   const [position, setPosition] = useState({ x: 0.5, y: 0.5 });
   const [rms, setRms] = useState(0);
@@ -22,18 +19,20 @@ export const NebulaXYPad: React.FC<NebulaXYPadProps> = ({
   const springX = useSpring(0.5, { stiffness: 80, damping: 15 });
   const springY = useSpring(0.5, { stiffness: 80, damping: 15 });
 
-  // Update internal RMS for visual pulsing
+  // Update internal RMS for visual pulsing (Mocked)
   useEffect(() => {
     let rafId: number;
+    let frame = 0;
     const update = () => {
-      if (engineRef?.current) {
-        setRms(prev => prev * 0.8 + engineRef.current!.getRMSLevel() * 0.2);
-      }
+      frame++;
+      const mockLevel = (Math.sin(frame * 0.03) * 0.5 + 0.5) * 0.15;
+      setRms(prev => prev * 0.8 + mockLevel * 0.2);
+      
       rafId = requestAnimationFrame(update);
     };
     rafId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(rafId);
-  }, [engineRef]);
+  }, []);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!containerRef.current || e.buttons !== 1) return;
@@ -45,7 +44,7 @@ export const NebulaXYPad: React.FC<NebulaXYPadProps> = ({
     setPosition({ x, y });
     springX.set(x);
     springY.set(y);
-    onChange?.(x, y);
+    onPositionChange?.(x, y);
   };
 
   return (
