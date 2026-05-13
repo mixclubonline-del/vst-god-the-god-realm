@@ -41,6 +41,7 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
   onRandomize,
   onClear,
   onOpenStepDetail,
+  onOpenChopper,
   onToggleMute,
   onToggleSolo,
 }) => {

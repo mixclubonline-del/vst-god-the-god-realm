@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/CelestialForge.css';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
 import { MasterMeter } from './ui/MasterMeter';
+import { HardwareScrew } from './ui/HardwareScrew';
 
 interface GodKnobV2Props {
   label: string;
@@ -455,6 +456,12 @@ export const CelestialForge: React.FC<{
       <div className="vg-forge-stone" />
       <div className="vg-forge-glyphs" />
       
+      {/* Corner Screws for the Main Panel */}
+      <HardwareScrew className="absolute top-4 left-4 z-20" size={18} rotation={15} />
+      <HardwareScrew className="absolute top-4 right-4 z-20" size={18} rotation={120} />
+      <HardwareScrew className="absolute bottom-4 left-4 z-20" size={18} rotation={210} />
+      <HardwareScrew className="absolute bottom-4 right-4 z-20" size={18} rotation={315} />
+      
       {/* Ambient Environmental Lighting */}
       <motion.div 
         className="vg-ambient-orb orange"
@@ -514,6 +521,10 @@ export const CelestialForge: React.FC<{
       <div className="vg-forge-main">
         {/* Left Rail */}
         <aside className="vg-forge-rail">
+          {/* Panel Screws */}
+          <HardwareScrew className="absolute top-2 left-2 opacity-60" size={12} rotation={45} />
+          <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={180} />
+
           {/* Calibrated Defaults */}
           <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={update} />
           <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={update} />
@@ -553,6 +564,10 @@ export const CelestialForge: React.FC<{
 
         {/* Right Rail */}
         <aside className="vg-forge-rail items-end">
+          {/* Panel Screws */}
+          <HardwareScrew className="absolute top-2 left-2 opacity-60" size={12} rotation={90} />
+          <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={270} />
+
           <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={update} color="#00ccff" />
           <div className="flex flex-col items-center">
               <span className="text-label-xs text-white/50 mb-2 drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">CEILING</span>

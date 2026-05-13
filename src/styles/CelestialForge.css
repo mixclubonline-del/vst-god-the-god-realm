@@ -31,8 +31,12 @@
   inset: 0;
   background-color: var(--god-bronze-charcoal);
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.08) 0%, transparent 70%),
-    url('https://www.transparenttextures.com/patterns/dark-matter.png');
+    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.15) 0%, transparent 80%),
+    url('/plugins/backgrounds/celestial-forge.png'),
+    url('https://www.transparenttextures.com/patterns/dark-leather.png');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay, normal, multiply;
   opacity: 1;
   z-index: 0;
   pointer-events: none;
@@ -92,6 +96,24 @@
   flex-direction: column;
   gap: 24px;
   z-index: 10;
+  position: relative;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.3) 100%);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  border-right: 1px solid rgba(0,0,0,0.4);
+  padding: 32px 20px;
+  border-radius: 8px;
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.5),
+    5px 0 15px rgba(0,0,0,0.4);
+}
+
+.vg-forge-rail::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 10px;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.1), transparent);
 }
 
 .vg-forge-viz-area {
@@ -105,21 +127,22 @@
 
 /* Glass Panels - Enhanced Premium Tactile Glass */
 .glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(20, 15, 12, 0.8) 100%);
-  backdrop-filter: blur(40px) saturate(200%);
-  -webkit-backdrop-filter: blur(40px) saturate(200%);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(20, 15, 12, 0.85) 100%);
+  backdrop-filter: blur(50px) saturate(220%);
+  -webkit-backdrop-filter: blur(50px) saturate(220%);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.9);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.9);
   box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-  border-radius: 16px;
+    0 35px 70px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(0,0,0,0.5);
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 .glass-panel:hover {
