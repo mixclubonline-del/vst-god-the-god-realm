@@ -141,7 +141,8 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
             
             {/* Marker Handle */}
             <rect 
-              x={`calc(${pos * 100}% - 14px)`} y="calc(100% - 32px)" width="28" height="24" rx="6" 
+              x={pos * 100 + '%'} y="100%" width="28" height="24" rx="6" 
+              transform="translate(-14, -32)"
               fill={draggingMarker === i ? "#ff6600" : "rgba(20,10,40,0.95)"}
               stroke={draggingMarker === i ? "#ffaa00" : "#a855f7"}
               strokeWidth="1.5"
@@ -149,7 +150,7 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
             />
             
             <text 
-              x={`${pos * 100}%`} y="calc(100% - 16px)" textAnchor="middle" 
+              x={`${pos * 100}%`} y="100%" dy="-16" textAnchor="middle" 
               className="text-[12px] font-black fill-white pointer-events-none select-none uppercase tracking-tighter"
             >
               {i + 1}

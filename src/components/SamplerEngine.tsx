@@ -10,6 +10,7 @@ interface SamplerEngineProps {
   slotLevels: number[];
   arpStep: number;
   vortexAnchors: any[];
+  midiActivity?: boolean[];
   onNeuralForge: () => void;
   isNeuralPanelOpen: boolean;
   onCloseNeuralPanel: () => void;
@@ -31,6 +32,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
   slotLevels,
   arpStep,
   vortexAnchors,
+  midiActivity = [],
   onNeuralForge,
   isNeuralPanelOpen,
   onCloseNeuralPanel,
@@ -87,6 +89,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
             parameterValues={parameterValues}
             update={update}
             level={slotLevels[i]}
+            midiActivity={midiActivity[i] || false}
           />
         ))}
       </div>

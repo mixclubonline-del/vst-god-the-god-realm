@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/CelestialForge.css';
+import { useJuceBridge } from '@/hooks/useJuceBridge';
+import { MasterMeter } from './ui/MasterMeter';
 
 interface GodKnobV2Props {
   label: string;
@@ -37,68 +39,79 @@ export const GodKnobV2: React.FC<GodKnobV2Props> = ({
         {Math.round(value * 10) / 10}{unit}
       </div>
 
-      <div 
-        className="relative flex items-center justify-center cursor-ns-resize"
-        style={{ width: sizePx, height: sizePx }}
+      <motion.div 
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="vg-knob-well"
       >
-        {/* Outer Value Ring (SVG) */}
-        <svg className="absolute inset-0 w-full h-full -rotate-90 overflow-visible" viewBox="0 0 100 100">
-          <circle 
-            cx="50" cy="50" r="46" 
-            fill="none" 
-            stroke="rgba(255,255,255,0.03)" 
-            strokeWidth="2" 
-          />
-          <motion.circle 
-            cx="50" cy="50" r="46" 
-            fill="none" 
-            stroke={color} 
-            strokeWidth="3"
-            strokeDasharray="289"
-            strokeDashoffset={289 - (289 * (value - min) / (max - min))}
-            strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 8px ${color}66)` }}
-          />
-        </svg>
+        <div 
+          className="relative flex items-center justify-center cursor-ns-resize"
+          style={{ width: sizePx, height: sizePx }}
+        >
+          {/* Outer Value Ring (SVG) */}
+          <svg className="absolute inset-0 w-full h-full -rotate-90 overflow-visible" viewBox="0 0 100 100">
+            <circle 
+              cx="50" cy="50" r="46" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.03)" 
+              strokeWidth="2" 
+            />
+            <motion.circle 
+              cx="50" cy="50" r="46" 
+              fill="none" 
+              stroke={color} 
+              strokeWidth="3"
+              strokeDasharray="289"
+              strokeDashoffset={289 - (289 * (value - min) / (max - min))}
+              strokeLinecap="round"
+              style={{ filter: `drop-shadow(0 0 8px ${color}66)` }}
+            />
+          </svg>
 
-        {/* Knob Body with Brushed Metal Effect */}
-        <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#333333] via-[#1a1a1a] to-[#050505] shadow-[0_12px_24px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.15),inset_0_-2px_4px_rgba(0,0,0,0.5)] border border-white/10 flex items-center justify-center overflow-hidden">
-          {/* Circular Grain Overlay */}
-          <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_transparent_0%,_black_100%)] mix-blend-overlay" />
-          
-          {/* Glowing Indicator Line */}
-          <motion.div 
-            className="absolute top-[6px] w-1.5 rounded-full shadow-[0_0_15px_rgba(255,102,0,1)]"
-            style={{ 
-                height: size === 'sm' ? 8 : 12,
-                backgroundColor: color,
-                rotate: rotation,
-                transformOrigin: '50% 400%' // Adjusted for rotation center
-            }}
-          />
+          {/* Knob Body with Brushed Obsidian Texture */}
+          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#444444] via-[#1a1816] to-[#0a0807] shadow-[0_12px_24px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.15),inset_0_-2px_4px_rgba(0,0,0,0.5)] border border-white/10 flex items-center justify-center overflow-hidden">
+            <div 
+                className="absolute inset-0 opacity-40 bg-cover bg-center mix-blend-overlay scale-125"
+                style={{ backgroundImage: `url('/Users/mixxclub/.gemini/antigravity/brain/cc31ef20-a16b-45eb-9d6c-007877cf3acc/brushed_obsidian_texture_1778620817722.png')` }} 
+            />
+            
+            {/* Glowing Indicator Orb */}
+            <motion.div 
+              className="absolute top-[8px] w-2 h-2 rounded-full shadow-[0_0_15px_rgba(255,102,0,1),0_0_5px_#fff]"
+              style={{ 
+                  backgroundColor: color,
+                  rotate: rotation,
+                  transformOrigin: `50% ${sizePx/2 - 8}px`
+              }}
+              animate={{ 
+                  boxShadow: [`0 0 15px ${color}`, `0 0 25px ${color}`, `0 0 15px ${color}`]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
 
-          {/* Internal Glow (The Heat) */}
-          <motion.div 
-            className="w-1/2 h-1/2 rounded-full blur-xl"
-            style={{ backgroundColor: color }}
-            animate={{ 
-                opacity: [0.15, 0.25, 0.15],
-                scale: [0.85, 1.15, 0.85]
-            }}
-            transition={{ duration: 4, repeat: Infinity }}
+            {/* Internal Glow (The Heat) */}
+            <motion.div 
+              className="w-1/2 h-1/2 rounded-full blur-xl"
+              style={{ backgroundColor: color }}
+              animate={{ 
+                  opacity: [0.1, 0.3, 0.1],
+                  scale: [0.8, 1.2, 0.8]
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+          </div>
+
+          <input 
+            type="range"
+            min={min}
+            max={max}
+            step="0.1"
+            className="absolute inset-0 opacity-0 cursor-ns-resize"
+            value={value}
+            onChange={(e) => update(id, parseFloat(e.target.value))}
           />
         </div>
-
-        <input 
-          type="range"
-          min={min}
-          max={max}
-          step="0.1"
-          className="absolute inset-0 opacity-0 cursor-ns-resize"
-          value={value}
-          onChange={(e) => update(id, parseFloat(e.target.value))}
-        />
-      </div>
+      </motion.div>
 
       <span className="text-[10px] font-black text-white/40 mt-3 uppercase tracking-[0.2em] group-hover/gknob:text-white/90 transition-colors">{label}</span>
       
@@ -144,7 +157,12 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
         }}
       />
 
-      <svg className="vg-sun-disk-svg relative z-1" viewBox="0 0 400 400">
+      {/* Holographic Scanning Grid Overlay */}
+      <div className="absolute inset-10 rounded-full overflow-hidden opacity-30 mix-blend-overlay pointer-events-none border border-white/5">
+        <div className="vg-scanning-grid" />
+      </div>
+
+      <svg className="vg-sun-disk-svg relative z-1 vg-chromatic-filter" viewBox="0 0 400 400">
         {/* Fractal Corona Effect (Simulated with multiple paths) */}
         {Array.from({ length: 8 }).map((_, i) => (
             <motion.circle 
@@ -312,6 +330,8 @@ const AetherSaturationMatrix: React.FC<{ drive: number; tone: number }> = ({ dri
             return (
               <motion.path 
                 key={i}
+                d={path}
+                initial={false}
                 animate={{ d: path, opacity: isInteracting ? [0.4, 1, 0.4] : 0.7 }}
                 transition={{ 
                   d: { type: "spring", bounce: 0, duration: 0.5 },
@@ -367,11 +387,33 @@ const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) 
     <>
       {anchors.map((a, index) => (
         <div key={a.name} className={`vg-anchor-label ${a.class}`}>
-          <span className="vg-anchor-name">{a.name}</span>
-          <span className="vg-anchor-freq">{a.freq}</span>
+          <motion.div 
+            animate={{ 
+                y: [0, -5, 0],
+                filter: [`drop-shadow(0 0 10px ${a.color}44)`, `drop-shadow(0 0 20px ${a.color}88)`, `drop-shadow(0 0 10px ${a.color}44)`]
+            }}
+            transition={{ duration: 3 + index, repeat: Infinity, ease: "easeInOut" }}
+            className="flex flex-col items-center"
+          >
+            <span className="vg-anchor-name">{a.name}</span>
+            <span className="vg-anchor-freq">{a.freq}</span>
+          </motion.div>
           
-          <div className="absolute -z-1 w-20 h-20 flex items-center justify-center">
+          <div className="absolute -z-1 w-24 h-24 flex items-center justify-center">
             <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                {/* Neural Fluid Orbs / Blobs */}
+                <motion.circle 
+                    cx="50" cy="50" r={25 + (a.val * 20)}
+                    fill="none"
+                    stroke={a.color}
+                    strokeWidth="0.5"
+                    animate={{ 
+                        r: [25 + (a.val * 20), 35 + (a.val * 15), 25 + (a.val * 20)],
+                        opacity: [0.1, 0.3, 0.1]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                />
+                
                 {/* Orbital Rings */}
                 <motion.circle 
                     cx="50" cy="50" r={30 + (a.val * 15)}
@@ -381,7 +423,7 @@ const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) 
                     strokeDasharray="10 5 2 5"
                     animate={{ rotate: [0, 360] }}
                     transition={{ duration: 10 + index * 2, repeat: Infinity, ease: "linear" }}
-                    style={{ opacity: 0.3 + a.val * 0.5, filter: `drop-shadow(0 0 8px ${a.color})` }}
+                    style={{ opacity: 0.3 + a.val * 0.5, filter: `drop-shadow(0 0 12px ${a.color})` }}
                 />
                 <motion.circle 
                     cx="50" cy="50" r={40 + (a.val * 10)}
@@ -405,10 +447,47 @@ export const CelestialForge: React.FC<{
   update: (id: string, val: any) => void;
   moduleLevels: Record<string, number>;
 }> = ({ parameterValues, update, moduleLevels }) => {
+  // Live engine metering from JUCE bridge
+  const bridgeState = useJuceBridge();
+
   return (
     <div className="vg-celestial-forge">
       <div className="vg-forge-stone" />
       <div className="vg-forge-glyphs" />
+      
+      {/* Ambient Environmental Lighting */}
+      <motion.div 
+        className="vg-ambient-orb orange"
+        animate={{ 
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+            opacity: [0.3, 0.5, 0.3]
+        }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        style={{ top: '-10%', left: '-10%' }}
+      />
+      <motion.div 
+        className="vg-ambient-orb blue"
+        animate={{ 
+            x: [0, -150, 100, 0],
+            y: [0, 150, -100, 0],
+            scale: [0.8, 1.1, 0.9, 0.8],
+            opacity: [0.2, 0.4, 0.2]
+        }}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+        style={{ bottom: '-10%', right: '-10%' }}
+      />
+      <motion.div 
+        className="vg-ambient-orb gold"
+        animate={{ 
+            x: [0, 200, -100, 0],
+            y: [0, 50, 150, 0],
+            opacity: [0.1, 0.3, 0.1]
+        }}
+        transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+        style={{ top: '30%', left: '40%' }}
+      />
       
       <header className="vg-forge-header">
         <div className="flex items-center gap-6">
@@ -494,12 +573,36 @@ export const CelestialForge: React.FC<{
                 <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={update} color="#cc00ff" />
              </div>
           </div>
+
+          {/* Master Output Meter */}
+          <div className="mt-auto pt-4">
+            <span className="text-label-xs text-white/50 mb-2 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">OUTPUT</span>
+            <MasterMeter 
+              left={bridgeState.masterPeak.left}
+              right={bridgeState.masterPeak.right}
+              height={140}
+            />
+          </div>
         </aside>
       </div>
 
       {/* Floating Polish Effects */}
       <div className="fixed top-0 right-0 w-1/3 h-1/3 bg-orange-500/10 blur-[150px] pointer-events-none mix-blend-screen" />
       <div className="fixed bottom-0 left-0 w-1/4 h-1/4 bg-blue-500/10 blur-[120px] pointer-events-none mix-blend-screen" />
+
+      {/* SVG Filters for MixxTech GUI Forge */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <filter id="chromatic-aberration">
+            <feOffset in="SourceGraphic" dx="1.5" dy="0" result="offset1" />
+            <feOffset in="SourceGraphic" dx="-1.5" dy="0" result="offset2" />
+            <feColorMatrix in="offset1" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="red" />
+            <feColorMatrix in="offset2" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="cyan" />
+            <feBlend in="red" in2="cyan" mode="screen" result="combined" />
+            <feBlend in="combined" in2="SourceGraphic" mode="screen" />
+          </filter>
+        </defs>
+      </svg>
     </div>
   );
 };

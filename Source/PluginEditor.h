@@ -3,7 +3,11 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class VSTGodTheGodRealmAudioProcessorEditor : public juce::AudioProcessorEditor
+// ═══════════════════════════════════════════════════════════════
+// PluginEditor — WebView + Timer-based State Push to React UI
+// ═══════════════════════════════════════════════════════════════
+class VSTGodTheGodRealmAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                               private juce::Timer
 {
 public:
     VSTGodTheGodRealmAudioProcessorEditor (VSTGodTheGodRealmAudioProcessor&);
@@ -13,8 +17,14 @@ public:
     void resized() override;
 
 private:
+    void timerCallback() override;
+    juce::String buildMeteringJson();
+    juce::String buildTelemetryJson();
+
     VSTGodTheGodRealmAudioProcessor& audioProcessor;
     juce::WebBrowserComponent webComponent;
+
+    int frameCounter = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VSTGodTheGodRealmAudioProcessorEditor)
 };

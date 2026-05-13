@@ -24,6 +24,7 @@ import { usePluginStore } from '@/services/pluginStore';
 import { exportPluginBundle } from '@/services/exportEngine';
 import { ControlMap, ExportBundle, ExportFile, DSPChainModule, DSPModuleType } from '@/services/types';
 import { LiveChainPreview } from './LiveChainPreview';
+import { useJuceBridge } from '@/hooks/useJuceBridge';
 
 const DSP_MODULE_TYPES = new Set<DSPModuleType>([
   'eq',
@@ -70,6 +71,14 @@ export const GodRealmStandalone: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<ExportFile | null>(null);
   const [dspChain, setDspChain] = useState<DSPChainModule[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ─── Live Engine Telemetry ───
+  const bridgeState = useJuceBridge();
+  const cpuPct = bridgeState.telemetry.cpuUsage;
+  const sampleRate = bridgeState.telemetry.sampleRate;
+  const bufferSize = bridgeState.telemetry.bufferSize;
+  const systemStatus = cpuPct > 80 ? 'SYSTEM_HOT' : cpuPct > 60 ? 'SYSTEM_LOAD' : 'SYSTEM_STABLE';
+  const statusColor = cpuPct > 80 ? 'text-red-400' : cpuPct > 60 ? 'text-amber-400' : 'text-white/40';
   
   // Initialize DSP chain from spec
   useEffect(() => {
@@ -610,42 +619,48 @@ export const GodRealmStandalone: React.FC = () => {
               </AnimatePresence>
            </div>
 
-           {/* Metrics Footer */}
+           {/* Metrics Footer — Live Engine Telemetry */}
            <div className="p-6 bg-black/40 border-t border-white/5">
               <div className="flex flex-col gap-4">
                  <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest flex items-center gap-2">
                        <Activity className="w-3.5 h-3.5" /> Engine Metrics
                     </span>
-                    <span className="text-[10px] font-mono font-bold text-orange-400">OPTIMAL</span>
+                    <span className={`text-[10px] font-mono font-bold ${cpuPct > 60 ? 'text-amber-400' : 'text-orange-400'}`}>
+                      {cpuPct > 80 ? 'HOT' : cpuPct > 60 ? 'WARM' : 'OPTIMAL'}
+                    </span>
                  </div>
                  
                  <div className="space-y-3">
                     <div className="space-y-1">
                        <div className="flex justify-between text-[9px] font-bold text-white/20 uppercase">
                           <span>DSP Overhead</span>
-                          <span>1.2%</span>
+                          <span>{cpuPct.toFixed(1)}%</span>
                        </div>
                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: '12%' }}
-                            className="h-full bg-orange-500 shadow-[0_0_10px_rgba(255,102,0,0.5)]"
+                            animate={{ width: `${Math.min(100, cpuPct * 10)}%` }}
+                            transition={{ duration: 0.15, ease: 'linear' }}
+                            className={`h-full ${cpuPct > 80 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : cpuPct > 60 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(255,102,0,0.5)]'}`}
                           />
                        </div>
                     </div>
                     <div className="space-y-1">
                        <div className="flex justify-between text-[9px] font-bold text-white/20 uppercase">
-                          <span>Memory Usage</span>
-                          <span>42.8 MB</span>
+                          <span>Buffer</span>
+                          <span>{bufferSize} smp</span>
                        </div>
                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: '42%' }}
+                            animate={{ width: `${Math.min(100, (bufferSize / 2048) * 100)}%` }}
+                            transition={{ duration: 0.3 }}
                             className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                           />
                        </div>
+                    </div>
+                    <div className="flex justify-between text-[9px] font-bold text-white/20 uppercase">
+                       <span>Sample Rate</span>
+                       <span className="text-white/40">{(sampleRate / 1000).toFixed(1)} kHz</span>
                     </div>
                  </div>
               </div>
@@ -653,15 +668,16 @@ export const GodRealmStandalone: React.FC = () => {
         </aside>
       </main>
 
-      {/* ── Global Footer ── */}
+      {/* ── Global Footer — Live Status ── */}
       <footer className="h-10 flex items-center justify-between px-8 bg-[#09090b] border-t border-white/5 text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">
         <div className="flex gap-8">
           <span className="flex items-center gap-2">ANTIGRAVITY_CORE::CONNECTED</span>
           <span className="flex items-center gap-2 text-orange-400/60">STANDALONE_MODE::ENABLED</span>
         </div>
         <div className="flex gap-8">
+          <span className="text-white/30">{(sampleRate / 1000).toFixed(1)}kHz / {bufferSize}smp</span>
           <span>{new Date().toISOString().split('T')[0]}</span>
-          <span className="text-white/40">SYSTEM_STABLE</span>
+          <span className={statusColor}>{systemStatus}</span>
         </div>
       </footer>
     </div>

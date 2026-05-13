@@ -97,11 +97,14 @@ export const RealmPortalTransition: React.FC<RealmPortalTransitionProps> = ({
     }
 
     // ── Central vortex core ──
-    const coreSize = phase === 'collapse' 
+    let coreSizeRaw = phase === 'collapse' 
       ? 5 + eased * 60 
       : 65 - eased * 60;
     
-    const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize);
+    if (!isFinite(coreSizeRaw)) coreSizeRaw = 1;
+    const coreSize = Math.max(1, coreSizeRaw);
+    
+    const coreGlow = ctx.createRadialGradient(cx, cy, 0.0001, cx, cy, coreSize);
     coreGlow.addColorStop(0, colors.secondary);
     coreGlow.addColorStop(0.4, colors.primary);
     coreGlow.addColorStop(1, 'transparent');

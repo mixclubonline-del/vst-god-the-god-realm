@@ -14,6 +14,7 @@ interface SoundSlotProps {
   parameterValues: Record<string, any>;
   update: (id: string, val: any) => void;
   level?: number;
+  midiActivity?: boolean;
 }
 
 /**
@@ -30,7 +31,8 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
   onToggle,
   parameterValues,
   update,
-  level = 0
+  level = 0,
+  midiActivity = false
 }) => {
   const isPowered = parameterValues[`slotPower_${id}`] !== false;
   const vol = parameterValues[`slotVol_${id}`] || 75;
@@ -49,6 +51,20 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
         className="absolute inset-0 bg-gradient-to-br from-mixx-accent/5 to-transparent pointer-events-none"
         animate={{ opacity: isPowered ? (0.1 + level * 0.5) : 0 }}
       />
+
+      {/* MIDI 2.0 Note-On Flash */}
+      {midiActivity && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-20"
+          initial={{ opacity: 0.7 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(245,176,65,0.35) 0%, transparent 70%)',
+            boxShadow: 'inset 0 0 20px rgba(245,176,65,0.2)'
+          }}
+        />
+      )}
 
       <div className="vg-slot-header relative z-10 p-3">
         <div 

@@ -5,13 +5,19 @@
   --god-primary-glow: rgba(255, 102, 0, 0.4);
   --god-secondary: #c29623;
   --god-secondary-glow: rgba(194, 150, 35, 0.4);
-  --god-obsidian: #080504;
+  --god-obsidian: #12100e;
+  --god-bronze-charcoal: #1c1917;
   --god-stone-bg: #1d100a;
+  --mixx-accent-glow: rgba(255, 102, 0, 0.6);
+  --mixx-system-blue: rgba(0, 204, 255, 0.5);
   
   position: relative;
   width: 100%;
   height: 100%;
   background-color: var(--god-obsidian);
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(255, 102, 0, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(0, 204, 255, 0.03) 0%, transparent 50%);
   color: #f8ddd2;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
@@ -23,10 +29,11 @@
 .vg-forge-stone {
   position: absolute;
   inset: 0;
+  background-color: var(--god-bronze-charcoal);
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.08) 0%, transparent 70%),
     url('https://www.transparenttextures.com/patterns/dark-matter.png');
-  opacity: 0.9;
+  opacity: 1;
   z-index: 0;
   pointer-events: none;
 }
@@ -44,16 +51,19 @@
 
 .vg-forge-header {
   height: 60px;
-  border-bottom: 1px solid rgba(255, 102, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 102, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  background: linear-gradient(180deg, rgba(20, 10, 5, 0.8) 0%, rgba(5, 2, 0, 0.4) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgba(30, 20, 15, 0.9) 0%, rgba(15, 10, 5, 0.6) 100%);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
   z-index: 10;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
 .vg-forge-title {
@@ -95,18 +105,44 @@
 
 /* Glass Panels - Enhanced Premium Tactile Glass */
 .glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0.6) 100%);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(20, 15, 12, 0.8) 100%);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.9);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 30px 60px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
     inset 0 -1px 0 rgba(0, 0, 0, 0.5);
   border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 40px 80px rgba(0, 0, 0, 0.9),
+    0 0 30px rgba(255, 102, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 55%, transparent 60%);
+  pointer-events: none;
+  transform: translateX(-100%);
+  animation: vgGlassSweep 8s infinite ease-in-out;
+}
+
+@keyframes vgGlassSweep {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  20%, 100% { transform: translateX(150%) skewX(-15deg); }
 }
 
 /* Sun Disk Styles */
@@ -130,17 +166,17 @@
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #3a2a20 0%, #050200 100%);
+  background: radial-gradient(circle at 30% 30%, #4a3a2a 0%, #1a120e 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   box-shadow:
-    inset 0 2px 4px rgba(255,255,255,0.15),
-    inset 0 -4px 8px rgba(0,0,0,0.8),
-    0 12px 30px rgba(0,0,0,0.8),
-    0 0 60px rgba(255, 102, 0, 0.15);
-  border: 1px solid rgba(255, 102, 0, 0.3);
+    inset 0 2px 8px rgba(255,255,255,0.2),
+    inset 0 -4px 12px rgba(0,0,0,0.6),
+    0 20px 40px rgba(0,0,0,0.7),
+    0 0 80px rgba(255, 102, 0, 0.2);
+  border: 1px solid rgba(255, 102, 0, 0.4);
   animation: vgCoreBreath 4s ease-in-out infinite;
 }
 @keyframes vgCoreBreath {
@@ -189,12 +225,14 @@
 .vg-aether-viz {
     flex: 1;
     height: 100px;
-    background: #020100;
-    border: 1px solid rgba(255, 102, 0, 0.15);
+    background: rgba(15, 10, 8, 0.8);
+    border: 1px solid rgba(255, 102, 0, 0.25);
     border-radius: 12px;
     position: relative;
     overflow: hidden;
-    box-shadow: inset 0 6px 16px rgba(0, 0, 0, 0.9);
+    box-shadow: 
+        inset 0 6px 16px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(255, 102, 0, 0.05);
 }
 
 @keyframes scanline {
@@ -372,4 +410,77 @@
   background: radial-gradient(ellipse at bottom, rgba(194, 150, 35, 0.1) 0%, transparent 70%);
   pointer-events: none;
   animation: pulse-gold 4s infinite ease-in-out;
+}
+
+/* High-Density Scanning Grid */
+.vg-scanning-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 10px 10px;
+  pointer-events: none;
+  opacity: 0.2;
+  z-index: 2;
+}
+
+.vg-scanning-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 102, 0, 0.05) 50%, transparent 100%);
+  background-size: 100% 200%;
+  animation: vgGridScan 4s linear infinite;
+}
+
+@keyframes vgGridScan {
+  0% { background-position: 0 0%; }
+  100% { background-position: 0 200%; }
+}
+
+/* Deep-Recessed Knob Housing */
+.vg-knob-well {
+  position: relative;
+  border-radius: 50%;
+  background: #0a0807;
+  box-shadow: 
+    inset 0 10px 20px rgba(0,0,0,1),
+    0 1px 0 rgba(255,255,255,0.05),
+    0 0 15px rgba(0,0,0,0.5);
+  padding: 4px;
+}
+
+/* Chromatic Aberration Filter */
+.vg-chromatic-filter {
+  filter: url('#chromatic-aberration');
+}
+
+/* Ambient Light Orbs */
+.vg-ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+}
+
+.vg-ambient-orb.orange {
+  background: radial-gradient(circle, var(--god-primary) 0%, transparent 70%);
+  width: 600px;
+  height: 600px;
+}
+
+.vg-ambient-orb.blue {
+  background: radial-gradient(circle, #0066ff 0%, transparent 70%);
+  width: 500px;
+  height: 500px;
+}
+
+.vg-ambient-orb.gold {
+  background: radial-gradient(circle, var(--god-secondary) 0%, transparent 70%);
+  width: 400px;
+  height: 400px;
 }

@@ -26,9 +26,19 @@ import { CelestialBrowser } from './CelestialBrowser';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
 import { FluidSlider } from './FluidSlider';
+import { SacredSequencer as SacredSequencerV2, useSequencerEngine } from './sequencer';
 import { RealmParticleCanvas } from './RealmParticleCanvas';
 import { RealmPortalTransition } from './RealmPortalTransition';
+import { sampleManager } from './sequencer/SampleManager';
+import { useAudioAnalyser } from '@/hooks/useAudioAnalyser';
+import { DivineSpectrometer } from './ui/DivineSpectrometer';
+import { SacredGeometryBackground } from './ui/SacredGeometryBackground';
+import { HarmonicPantheon } from './HarmonicPantheon';
+import { EternalPresetVault } from './EternalPresetVault';
+import { RitualOfExport } from './RitualOfExport';
 import type { DivineRelic } from '@/archive/divineArchive';
+import { useJuceBridge } from '@/hooks/useJuceBridge';
+import type { Midi2NoteEvent } from '@/native/bridge';
 
 interface VstgodthegodrealmPluginProps {
   isOpen: boolean;
@@ -55,6 +65,17 @@ const CATEGORIES = [
   { name: 'Percussion', count: 25, icon: '🥁' },
   { name: 'Vocal', count: 21, icon: '🎤' },
   { name: 'Textures', count: 18, icon: '🌊' },
+];
+
+const TABS = [
+  { id: 'Multi-Realm', label: 'MULTI-REALM' },
+  { id: 'Pantheon', label: 'HARMONIC PANTHEON' },
+  { id: 'Sample Chopper', label: 'CHOPPER' },
+  { id: 'Divine Archive', label: 'ARCHIVE' },
+  { id: 'Mastering', label: 'CELESTIAL FORGE' },
+  { id: 'Performance', label: 'SEQUENCER' },
+  { id: 'Preset Vault', label: 'PRESET VAULT' },
+  { id: 'The Ritual', label: 'THE RITUAL' },
 ];
 
 /* ─── Initial Data ─── */
@@ -124,14 +145,6 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     }
   }, [activeTab, isTransitioning]);
 
-  const handleRealmTransition = useCallback((newTab: string) => {
-    if (newTab === displayedTab) return;
-    setPendingTab(newTab);
-    setIsTransitioning(true);
-    // Update the parameter so tab bar highlights immediately
-    update('activeTab', newTab);
-  }, [displayedTab, update]);
-
   const handleTransitionComplete = useCallback(() => {
     if (pendingTab) {
       setDisplayedTab(pendingTab);
@@ -154,16 +167,66 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const [isNeuralPanelOpen, setIsNeuralPanelOpen] = useState(false);
   const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
-  // Engine state is now driven by JUCE backend via parameterValues
-  const [slotLevels, setSlotLevels] = useState<number[]>(new Array(6).fill(0));
-  const [arpStep, setArpStep] = useState<number>(0);
-  const [moduleLevels, setModuleLevels] = useState<Record<string, number>>({});
+
+  /* ─── Phase 5: Oracle’s Vision (Audio Engine) ─── */
+  const engine = useSequencerEngine();
+  const { masterChain } = engine;
+  
+  // Connect the analyser to the design system CSS variables
+  useAudioAnalyser(masterChain.current?.analyser || null);
+  
+  const [buffers, setBuffers] = useState<Record<number, AudioBuffer>>({});
+  const [isBuffersLoaded, setIsBuffersLoaded] = useState(false);
+
+  // Load Samples globally
+  useEffect(() => {
+    if (!engine.audioCtx.current || isBuffersLoaded) return;
+    
+    const loadSamples = async () => {
+      try {
+        const loadedBuffers = await sampleManager.loadKit(engine.audioCtx.current!);
+        setBuffers(loadedBuffers);
+        setIsBuffersLoaded(true);
+        console.log('Sacred Samples Loaded Globally');
+      } catch (err) {
+        console.error('Failed to load sacred samples', err);
+      }
+    };
+
+    loadSamples();
+  }, [engine.audioCtx, isBuffersLoaded]);
+  // ─── JUCE ↔ WebView Bidirectional State Bridge ───
+  const bridgeState = useJuceBridge();
+  const slotLevels = bridgeState.slotLevels;
+  const arpStep = bridgeState.arpStep;
+  const moduleLevels: Record<string, number> = {};
   const [vortexAnchors, setVortexAnchors] = useState<Array<{x: number, y: number, name: string}>>([]);
+  const activeMidiNotes = bridgeState.midiNotes;
+  const masterPeak = bridgeState.masterPeak;
+
+  // Derive per-slot MIDI activity: slot i ↔ MIDI channel i
+  const midiActivity = useMemo(() => {
+    const activity = new Array(6).fill(false);
+    for (const note of activeMidiNotes) {
+      if (note.channel >= 0 && note.channel < 6 && note.velocity16 > 0) {
+        activity[note.channel] = true;
+      }
+    }
+    return activity;
+  }, [activeMidiNotes]);
 
 
   const [presets, setPresets] = useState(() => {
     const saved = localStorage.getItem('vst-god-realm-presets');
-    return saved ? JSON.parse(saved) : DEFAULT_PRESETS;
+    const base = saved ? JSON.parse(saved) : DEFAULT_PRESETS;
+    // Map to new interface if needed
+    return base.map((p: any, i: number) => ({
+      ...p,
+      id: p.id || `preset-${i}`,
+      tags: p.tags || [p.type, 'Sacred', 'Ancient'],
+      lastModified: p.lastModified || new Date().toISOString(),
+      energyLevel: p.energyLevel || (40 + Math.random() * 60)
+    }));
   });
 
   const includedPresets = useMemo(() => {
@@ -220,6 +283,14 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const update = useCallback((id: string, val: any) => {
     if (onParameterChange) onParameterChange(id, val);
   }, [onParameterChange]);
+
+  const handleRealmTransition = useCallback((newTab: string) => {
+    if (newTab === displayedTab) return;
+    setPendingTab(newTab);
+    setIsTransitioning(true);
+    // Update the parameter so tab bar highlights immediately
+    update('activeTab', newTab);
+  }, [displayedTab, update]);
 
   const handleApplyNeuralSuggestion = useCallback((suggestion: any) => {
     if (!suggestion || !suggestion.params) return;
@@ -478,6 +549,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             />
           ))}
         </div>
+        
+        {/* Sacred Geometry Reactivity */}
+        <SacredGeometryBackground activeTab={displayedTab} />
 
       {/* ═══════════ HEADER BAR ═══════════ */}
       <header className="vg-header">
@@ -538,15 +612,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
       {/* ═══════════ TAB BAR ═══════════ */}
         <CelestialTabs 
-          tabs={[
-            { id: 'Multi-Realm', label: 'MULTI-REALM' },
-            { id: 'Effects', label: 'THE PANTHEON' },
-            { id: 'Sample Chopper', label: 'CHOPPER' },
-            { id: 'Divine Archive', label: 'ARCHIVE' },
-            { id: 'Mastering', label: 'CELESTIAL FORGE' },
-            { id: 'Performance', label: 'SEQUENCER' },
-            { id: 'Preset Vault', label: 'PRESET VAULT' },
-          ]}
+          tabs={TABS}
           activeTab={activeTab}
           onTabChange={handleRealmTransition}
         />
@@ -590,6 +656,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             slotLevels={slotLevels}
             arpStep={arpStep}
             vortexAnchors={vortexAnchors}
+            midiActivity={midiActivity}
             onNeuralForge={() => setIsNeuralPanelOpen(true)}
             isNeuralPanelOpen={isNeuralPanelOpen}
             onCloseNeuralPanel={() => setIsNeuralPanelOpen(false)}
@@ -617,306 +684,13 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
 
         {/* ─── THE PANTHEON (EFFECTS) TAB ─── */}
-        {displayedTab === 'Effects' && (() => {
-          const GODS = [
-            { god: 'Zeus', origin: 'Greek', domain: 'Transients', icon: '⚡', color: '#60A5FA', avatar: '/plugins/gods/zeus.png', params: ['Attack', 'Sustain', 'Punch', 'Threshold'] },
-            { god: 'Ra', origin: 'Egyptian', domain: 'Harmonics', icon: '☀️', color: '#F5B041', avatar: '/plugins/gods/ra.png', params: ['Low', 'Mid', 'High', 'Presence'] },
-            { god: 'Agni', origin: 'Hindu', domain: 'Saturation', icon: '🔥', color: '#E74C3C', avatar: '/plugins/gods/agni.png', params: ['Drive', 'Warmth', 'Mix'] },
-            { god: 'Anubis', origin: 'Egyptian', domain: 'Multi-808', icon: '💀', color: '#27AE60', avatar: '/plugins/gods/anubis.png', params: ['Sub', 'Mid', 'Click', 'Phase', 'Drive'] },
-            { god: 'Loki', origin: 'Norse', domain: 'Delay', icon: '🌀', color: '#9B59B6', avatar: '/plugins/gods/loki.png', params: ['Time', 'Feedback', 'Chaos'] },
-            { god: 'Poseidon', origin: 'Greek', domain: 'Reverb', icon: '🌊', color: '#1ABC9C', avatar: '/plugins/gods/poseidon.png', params: ['Size', 'Depth', 'Tide'] },
-            { god: 'Artemis', origin: 'Greek', domain: 'Celestial Keys', icon: '🌙', color: '#BB8FCE', avatar: '/plugins/gods/artemis.png', params: ['Tines', 'Hammer', 'Drift', 'Luster'] },
-            { god: 'Odin', origin: 'Norse', domain: 'Limiter', icon: '🛡️', color: '#85929E', avatar: '/plugins/gods/odin.png', params: ['Ceiling', 'Wisdom'] },
-          ];
-          const selectedGod = (parameterValues.selectedGod as string) || '';
-          const sel = GODS.find(g => g.god === selectedGod);
-          const CX = 240; const CY = 190; const R = 145;
-          const totalInvoke = GODS.reduce((sum, g) => {
-            const v = parameterValues[`god_${g.god.toLowerCase()}_invoke`];
-            return sum + (v !== undefined ? (v as number) : 50);
-          }, 0);
-          const divinePower = Math.round(totalInvoke / GODS.length);
-
-          return (
-          <div className="vg-panel vg-effects flex gap-4 items-stretch p-0" style={{ overflow: 'hidden', flexDirection: 'row' }}>
-            
-            {/* ── Constellation Area (Main) ── */}
-            <div className="vg-pantheon flex-1 relative" style={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="vg-constellation-wrap w-full flex-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-                <div className="vg-constellation-inner" style={{ position: 'relative', height: '100%', width: '100%', maxWidth: 'calc(100vh * (480/380))', maxHeight: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg className="vg-constellation-svg" viewBox="0 0 480 380" preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible', width: '100%', height: '100%' }}>
-                    <defs>
-                    <radialGradient id="coreGlow"><stop offset="0%" stopColor="rgba(255,102,0,0.25)" /><stop offset="100%" stopColor="transparent" /></radialGradient>
-                  <filter id="godGlow"><feGaussianBlur stdDeviation="3" /><feColorMatrix type="saturate" values="2" /></filter>
-                </defs>
-
-                {/* Ambient orbit rings */}
-                <g className="vg-orbit-group-1" style={{ transformOrigin: `${CX}px ${CY}px` }}>
-                  <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" strokeDasharray="4 6" />
-                </g>
-                <g className="vg-orbit-group-2" style={{ transformOrigin: `${CX}px ${CY}px` }}>
-                  <circle cx={CX} cy={CY} r={R - 30} fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="0.5" strokeDasharray="10 20" />
-                </g>
-                <g className="vg-orbit-group-3" style={{ transformOrigin: `${CX}px ${CY}px` }}>
-                  <circle cx={CX} cy={CY} r={R + 20} fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="0.5" strokeDasharray="2 8" />
-                </g>
-
-                {/* Signal flow lines between consecutive gods */}
-                {GODS.map((g, i) => {
-                  const next = GODS[(i + 1) % GODS.length];
-                  const a1 = (i / GODS.length) * Math.PI * 2 - Math.PI / 2;
-                  const a2 = ((i + 1) / GODS.length) * Math.PI * 2 - Math.PI / 2;
-                  const x1 = CX + Math.cos(a1) * R; const y1 = CY + Math.sin(a1) * R;
-                  const x2 = CX + Math.cos(a2) * R; const y2 = CY + Math.sin(a2) * R;
-                  const bypassed1 = parameterValues[`god_${g.god.toLowerCase()}_bypass`] === true;
-                  const bypassed2 = parameterValues[`god_${next.god.toLowerCase()}_bypass`] === true;
-                  return (
-                    <g key={`flow-${i}`}>
-                      <path d={`M ${x1} ${y1} L ${x2} ${y2}`}
-                        fill="none"
-                        stroke={(bypassed1 || bypassed2) ? 'rgba(255,255,255,0.03)' : `${g.color}30`}
-                        strokeWidth="2.5" strokeDasharray={bypassed1 ? '2 4' : 'none'}
-                      />
-                      {!(bypassed1 || bypassed2) && (
-                        <path d={`M ${x1} ${y1} L ${x2} ${y2}`}
-                          fill="none"
-                          stroke={g.color}
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeDasharray="5 100"
-                          pathLength="100"
-                          className="vg-signal-flow-edge"
-                          style={{ filter: 'url(#godGlow)', animationDelay: `${i * -0.4}s` }}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-
-                {/* Lines from each god to center */}
-                {GODS.map((g, i) => {
-                  const angle = (i / GODS.length) * Math.PI * 2 - Math.PI / 2;
-                  const x = CX + Math.cos(angle) * R; const y = CY + Math.sin(angle) * R;
-                  const inv = parameterValues[`god_${g.god.toLowerCase()}_invoke`] as number ?? 50;
-                  const bypassed = parameterValues[`god_${g.god.toLowerCase()}_bypass`] === true;
-                  return (
-                    <g key={`core-${i}`}>
-                      <line x1={x} y1={y} x2={CX} y2={CY}
-                        stroke={`${g.color}${Math.round(inv * 0.2 + 5).toString(16).padStart(2, '0')}`}
-                        strokeWidth="0.5" strokeDasharray="2 8"
-                      />
-                      {!bypassed && inv > 10 && (
-                        <line x1={x} y1={y} x2={CX} y2={CY}
-                          stroke={g.color}
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeDasharray="3 100"
-                          pathLength="100"
-                          className="vg-signal-flow-core"
-                          style={{ filter: 'url(#godGlow)', animationDelay: `${i * -0.2}s`, animationDuration: `${3 - (inv / 50)}s` }}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-
-                {/* Divine Core (center) — heartbeat animation */}
-                <g className="vg-divine-core" style={{ transformOrigin: `${CX}px ${CY}px` }}>
-                  <circle cx={CX} cy={CY} r="40" fill="url(#coreGlow)" />
-                  <circle cx={CX} cy={CY} r="28" fill="rgba(0,0,0,0.6)" stroke="rgba(255,102,0,0.4)" strokeWidth="1.5" />
-                  {/* Core invoke ring */}
-                  <circle cx={CX} cy={CY} r="24" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
-                  <circle cx={CX} cy={CY} r="24" fill="none" stroke="#ff6600" strokeWidth="2"
-                    strokeDasharray={`${divinePower * 1.5} ${150 - divinePower * 1.5}`}
-                    strokeDashoffset="37.5" strokeLinecap="round"
-                    style={{ filter: 'drop-shadow(0 0 8px rgba(255,102,0,0.7))' }}
-                  />
-                  <text x={CX} y={CY - 6} textAnchor="middle" className="vg-core-number">{divinePower}</text>
-                  <text x={CX} y={CY + 8} textAnchor="middle" className="vg-core-label">DIVINE</text>
-                  <text x={CX} y={CY + 18} textAnchor="middle" className="vg-core-label">POWER</text>
-                </g>
-
-                {/* God Nodes via foreignObject */}
-                {GODS.map((god, i) => {
-                  const angle = (i / GODS.length) * Math.PI * 2 - Math.PI / 2;
-                  const x = CX + Math.cos(angle) * R;
-                  const y = CY + Math.sin(angle) * R;
-                  const invokeId = `god_${god.god.toLowerCase()}_invoke`;
-                  const invokeVal = parameterValues[invokeId] !== undefined ? (parameterValues[invokeId] as number) : 50;
-                  const bypassed = parameterValues[`god_${god.god.toLowerCase()}_bypass`] === true;
-                  const isSelected = selectedGod === god.god;
-                  const peakLevel = moduleLevels[god.god.toLowerCase()] || 0;
-
-                  return (
-                    <foreignObject 
-                      key={god.god} 
-                      x={x - 60} 
-                      y={y - 60} 
-                      width="120" 
-                      height="120" 
-                      style={{ overflow: 'visible' }}
-                    >
-                      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                        <button
-                          className={`vg-cnode ${bypassed ? 'vg-cnode-sleep' : ''} ${isSelected ? 'vg-cnode-active' : ''}`}
-                          style={{
-                            '--god-c': god.color, 
-                            '--god-c-glow': `${god.color}${Math.round(peakLevel * 100).toString(16).padStart(2, '0')}`,
-                            '--god-peak': `${1 + peakLevel * 0.2}`,
-                            left: '50%', top: '50%', position: 'absolute', transform: `translate(-50%, -50%) scale(${1 + peakLevel * 0.1})`
-                          } as any}
-                          onClick={() => update('selectedGod', isSelected ? '' : god.god)}
-                        >
-                          <img src={god.avatar} alt={god.god} className="vg-cnode-img" />
-                          <svg viewBox="0 0 44 44" className="vg-cnode-ring">
-                            <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
-                            <circle cx="22" cy="22" r="20" fill="none" stroke={god.color} strokeWidth="2"
-                              strokeDasharray={`${invokeVal * 1.26} ${126 - invokeVal * 1.26}`}
-                              strokeDashoffset="31.5" strokeLinecap="round"
-                              style={{ filter: `drop-shadow(0 0 ${4 + peakLevel * 10}px ${god.color})`, transition: 'stroke-dasharray 0.3s' }}
-                            />
-                          </svg>
-                          <span className="vg-cnode-name">{god.god.toUpperCase()}</span>
-                          <span className="vg-cnode-domain">{god.domain}</span>
-                        </button>
-                      </div>
-                    </foreignObject>
-                  );
-                })}
-              </svg>
-            </div>
-            </div>
-
-            {/* ── Selected God Detail Panel ── */}
-            {sel && (
-              <div className="vg-deity-panel" style={{ '--god-c': sel.color, '--god-c-glow': `${sel.color}40` } as any}>
-                <div className="vg-deity-header">
-                  <div className="vg-deity-id">
-                    <img src={sel.avatar} alt={sel.god} className="vg-deity-thumb" />
-                    <div>
-                      <div className="vg-deity-title">
-                        <span className="vg-deity-icon">{sel.icon}</span>
-                        <span className="vg-deity-name">{sel.god.toUpperCase()}</span>
-                        <span className="vg-god-origin">{sel.origin}</span>
-                      </div>
-                      <span className="vg-deity-domain">{sel.domain}</span>
-                    </div>
-                  </div>
-                  <div className="vg-deity-actions">
-                    <button className="vg-deity-bypass-btn"
-                      onClick={() => update(`god_${sel.god.toLowerCase()}_bypass`,
-                        !(parameterValues[`god_${sel.god.toLowerCase()}_bypass`] === true)
-                      )}
-                    >
-                      {parameterValues[`god_${sel.god.toLowerCase()}_bypass`] === true ? '💤 SLEEPING' : '✦ ACTIVE'}
-                    </button>
-                    <button className="vg-deity-close" onClick={() => update('selectedGod', '')}>✕</button>
-                  </div>
-                </div>
-                <div className="vg-deity-controls">
-                  {/* Invoke (main intensity) */}
-                  <div className="vg-deity-invoke-row">
-                    <span className="vg-deity-invoke-label">INVOKE</span>
-                    <div className="flex-1 px-4">
-                      <DivineSlider
-                        value={parameterValues[`god_${sel.god.toLowerCase()}_invoke`] ?? 50}
-                        onChange={(v) => update(`god_${sel.god.toLowerCase()}_invoke`, v)}
-                        color={sel.color}
-                        showLabel={false}
-                      />
-                    </div>
-                    <span className="vg-deity-invoke-val">
-                      {(() => {
-                        const v = (parameterValues[`god_${sel.god.toLowerCase()}_invoke`] as number) ?? 50;
-                        return v < 20 ? 'MORTAL' : v < 50 ? 'DEMIGOD' : v < 80 ? 'GOD' : 'DEITY';
-                      })()}
-                    </span>
-                  </div>
-                  {/* DSP Parameters */}
-                  <div className="vg-deity-params-grid">
-                    {sel.params.map(p => {
-                      const paramId = `god_${sel.god.toLowerCase()}_${p.toLowerCase()}`;
-                      const val = parameterValues[paramId] !== undefined ? (parameterValues[paramId] as number) : 50;
-                      return (
-                        <div key={p} className="vg-deity-param flex flex-col items-center">
-                          <DivineKnob
-                            label={p.toUpperCase()}
-                            value={val}
-                            onChange={(v) => update(paramId, v)}
-                            color={sel.color}
-                            size="sm"
-                          />
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Specialized Multi-808 Actions */}
-                    {sel.god === 'Anubis' && (
-                      <div className="vg-deity-extra-actions">
-                        <button className="vg-phase-align-btn" 
-                          onClick={() => {
-                            // Phase Align logic: suggest 180 or 0
-                            const current = (parameterValues.god_anubis_phase as number) || 0;
-                            const next = current > 50 ? 0 : 80; // Toggle between common sweet spots
-                            update('god_anubis_phase', next);
-                            showMessage('PHASE ALIGNED');
-                          }}
-                        >
-                          <span className="vg-btn-glow" />
-                          PHASE ALIGN
-                        </button>
-                        <div className="vg-808-viz">
-                          <div className="vg-808-wave-layer sub" style={{ opacity: (parameterValues.god_anubis_sub as number || 50) / 100 }} />
-                          <div className="vg-808-wave-layer mid" style={{ opacity: (parameterValues.god_anubis_mid as number || 50) / 100 }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Prompt when nothing selected */}
-            {!sel && (
-              <div className="vg-pantheon-hint">
-                <span>SELECT A DEITY TO INVOKE THEIR POWER</span>
-              </div>
-            )}
-            </div>
-
-            {/* ── Advanced Modulation Side Panel ── */}
-            <div className="vg-advanced-modulation flex flex-col gap-4 w-[340px] p-4 bg-black/40 border-l border-white/5 relative z-10 shrink-0 overflow-y-auto custom-scrollbar">
-              <div className="vg-section-title text-xs tracking-[0.2em] text-white/40 mb-2">ADVANCED MODULATION</div>
-              
-              <div className="flex-none h-[280px] bg-black/50 rounded-xl overflow-hidden border border-white/5">
-                <SpectralRadarPanner />
-              </div>
-              
-              <div className="flex-none h-[250px] bg-black/50 rounded-xl overflow-hidden border border-white/5">
-                <NebulaXYPad 
-                  label="NEBULA PAD"
-                  onPositionChange={(x, y) => {
-                    update('modX', x);
-                    update('modY', y);
-                  }}
-                />
-              </div>
-              
-              <div className="flex-none h-[120px] bg-black/50 rounded-xl overflow-hidden border border-white/5 flex flex-col p-4 justify-center">
-                <span className="text-[10px] text-white/50 tracking-wider mb-4 text-center">FLUID DYNAMICS</span>
-                <div className="px-2">
-                  <FluidSlider 
-                    defaultValue={(parameterValues.fluidMod as number) || 50}
-                    min={0}
-                    max={100}
-                    onChange={(val) => update('fluidMod', val)}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          );
-        })()}
+        {displayedTab === 'Pantheon' && (
+          <HarmonicPantheon 
+            parameterValues={parameterValues}
+            update={update}
+            moduleLevels={moduleLevels}
+          />
+        )}
 
         {/* ─── MASTERING TAB (Celestial Forge Design) ─── */}
         {displayedTab === 'Mastering' && (
@@ -924,200 +698,45 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             parameterValues={parameterValues}
             update={update}
             moduleLevels={moduleLevels}
+            analyser={masterChain.current?.analyser || null}
           />
         )}
 
-        {/* ─── PERFORMANCE TAB (Advanced Performance Controls) ─── */}
+        {/* ─── PERFORMANCE TAB (The Sacred Sequencer) ─── */}
         {displayedTab === 'Performance' && (
-          <div className="vg-panel h-full p-8 flex gap-8">
-            <div className="flex-1 flex flex-col gap-8">
-              <div className="flex-1">
-                <SpectralRadarPanner />
-              </div>
-              <div className="h-[300px]">
-                <NebulaXYPad 
-                  label="COSMIC MODULATION" 
-                  // TODO: Native backend integration
-                  onPositionChange={(x, y) => {
-                    update('modX', x);
-                    update('modY', y);
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div className="w-[300px] flex flex-col gap-6">
-              <FluidSlider 
-                label="DIVINE GAIN"
-                defaultValue={parameterValues.masterVolume !== undefined ? (parameterValues.masterVolume + 60) / 66 : 0.5}
-                onChange={(val) => {
-                  const db = val * 66 - 60;
-                  update('masterVolume', db);
-                }}
-              />
-              
-              <FluidSlider 
-                label="GHOST REVERB"
-                defaultValue={0.3}
-                onChange={(val) => {
-                  update('reverbMix', val);
-                }}
-              />
-
-              <div className="flex-1 glass-panel p-6 bg-orange-500/5 flex flex-col justify-center items-center text-center">
-                <div className="w-12 h-12 rounded-full border-2 border-orange-500/20 mb-4 flex items-center justify-center animate-pulse">
-                  <span className="text-orange-500 text-xl">✦</span>
-                </div>
-                <h4 className="text-sm font-black text-white uppercase tracking-widest mb-2">Macro Control</h4>
-                <p className="text-[10px] text-white/40 font-bold">
-                  These high-fidelity controls are linked directly to the God Realm's neural core.
-                </p>
-              </div>
-            </div>
-          </div>
+          <SacredSequencerV2
+            parameterValues={parameterValues}
+            update={update}
+            engine={engine}
+            buffers={buffers}
+          />
         )}
 
         {/* ─── PRESET VAULT TAB ─── */}
         {displayedTab === 'Preset Vault' && (
-          <div className="vg-panel vg-vault flex gap-1 h-full overflow-hidden p-1">
-            {/* ── LEFT: PRESET LIBRARY ── */}
-            <PresetLibrarySidebar 
-              categories={CATEGORIES}
-              selectedCategory={selectedCategory}
-              onSelectCategory={(name) => update('selectedCategory', name)}
-              presetSearch={presetSearch}
-              onSearchChange={(val) => update('presetSearch', val)}
-              filteredPresets={filteredPresets}
-              selectedPreset={selectedPreset}
-              onSelectPreset={(idx) => update('selectedPreset', idx)}
-              onToggleFavorite={(idx) => {
-                const nextPresets = [...presets];
-                nextPresets[idx] = { ...nextPresets[idx], fav: !nextPresets[idx].fav };
-                setPresets(nextPresets);
-              }}
-            />
-
-            {/* ── CENTER: ACTION HUB ── */}
-            <div className="flex-1 flex flex-col glass-panel bg-black/20 overflow-hidden relative">
-              <div className="vg-ambient-glow opacity-30" />
-              
-              {/* Active Preset Header */}
-              <div className="p-8 border-b border-white/5 bg-gradient-to-b from-orange-500/5 to-transparent">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-2 block">Current Selection</span>
-                    <h2 className="text-5xl font-black text-white tracking-tighter mb-2">{presets[selectedPreset]?.name || 'Unknown'}</h2>
-                    <div className="flex items-center gap-4 text-xs font-bold text-white/40 uppercase">
-                      <span>{presets[selectedPreset]?.type}</span>
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
-                      <span>{presets[selectedPreset]?.author}</span>
-                      <span className="w-1 h-1 rounded-full bg-white/20" />
-                      <Stars count={presets[selectedPreset]?.rating || 0} />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="vg-btn vg-btn-primary px-8" onClick={handleLoadPreset}>LOAD PRESET</button>
-                    <button className="vg-btn px-6" onClick={handleSavePreset}>OVERWRITE</button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Central Action Grid */}
-              <div className="flex-1 p-8 grid grid-cols-2 gap-8 overflow-y-auto">
-                <div className="space-y-6">
-                  <div className="glass-panel p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Library Management</h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      <button className="vg-btn vg-btn-ghost text-left justify-start gap-3" onClick={handleSaveAsPreset}>
-                        <span className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-[10px]">+</span>
-                        CREATE NEW PRESET
-                      </button>
-                      <button className="vg-btn vg-btn-ghost text-left justify-start gap-3" onClick={handleDeletePreset}>
-                        <span className="w-6 h-6 rounded bg-red-500/20 text-red-400 flex items-center justify-center text-[10px]">✕</span>
-                        DELETE SELECTED
-                      </button>
-                      <button className="vg-btn vg-btn-ghost text-left justify-start gap-3" onClick={handleRestoreDefaults}>
-                        <span className="w-6 h-6 rounded bg-orange-500/20 text-orange-400 flex items-center justify-center text-[10px]">↺</span>
-                        RESTORE FACTORY DEFAULTS
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="glass-panel p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Neural Morphing</h3>
-                    <div className="space-y-4">
-                       <p className="text-[10px] text-white/40 leading-relaxed font-bold">
-                        Morph between the current preset and the "Hades Depth" anchor to create divine hybrids.
-                       </p>
-                       <div className="flex gap-4">
-                        <GodKnob 
-                          label="TUNE"
-                          min={-12}
-                          max={12}
-                          value={parameterValues.tune || 0}
-                          onChange={(v) => update('tune', v)}
-                          size="md"
-                          suffix=" ST"
-                        />
-                        <GodKnob 
-                          label="VOLUME"
-                          min={0}
-                          max={100}
-                          value={parameterValues.volume || 75}
-                          onChange={(v) => update('volume', v)}
-                          size="md"
-                          suffix="%"
-                        />
-                      </div>
-                       <div className="space-y-2">
-                          <div className="flex justify-between text-[9px] font-black text-orange-500 uppercase">
-                            <span>Heaven</span>
-                            <span>Hell</span>
-                          </div>
-                          <input 
-                            type="range" 
-                            className="w-full accent-orange-500"
-                            value={parameterValues.morphFactor || 0}
-                            onChange={(e) => update('morphFactor', parseFloat(e.target.value))}
-                          />
-                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="glass-panel p-6 bg-white/5 border border-white/10 rounded-2xl h-full relative overflow-hidden group">
-                    <img 
-                      src="/images/archive/hero_vault.png" 
-                      className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity duration-700" 
-                      alt="Art"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                    <div className="relative h-full flex flex-col justify-end">
-                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] mb-2">Divine Collection</span>
-                      <h4 className="text-2xl font-black text-white mb-2">THE GOD KIT</h4>
-                      <p className="text-[10px] text-white/60 leading-relaxed font-bold mb-6">
-                        Bundle your favorite presets into a single distributor-ready asset. 
-                        Includes custom metadata and cloud-sync capability.
-                      </p>
-                      <button className="vg-btn vg-btn-accent w-full" onClick={() => update('kitName', 'My Divine Kit')}>
-                        CONFIGURE EXPORT
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Bar */}
-              {vaultMessage && (
-                <motion.div 
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-orange-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-[0_0_30px_rgba(255,102,0,0.4)] z-50"
-                >
-                  {vaultMessage}
-                </motion.div>
-              )}
+          <div className="flex h-full overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <EternalPresetVault 
+                presets={presets}
+                selectedPresetIndex={selectedPreset}
+                onSelectPreset={(idx) => update('selectedPreset', idx)}
+                onToggleFavorite={(idx) => {
+                  const next = [...presets];
+                  next[idx] = { ...next[idx], fav: !next[idx].fav };
+                  setPresets(next);
+                }}
+                onSavePreset={handleSavePreset}
+                onSaveAsPreset={handleSaveAsPreset}
+                onDeletePreset={() => {
+                  if (confirm('Banish this ritual from the vault forever?')) {
+                    const next = presets.filter((_, i) => i !== selectedPreset);
+                    setPresets(next);
+                    if (selectedPreset >= next.length) update('selectedPreset', Math.max(0, next.length - 1));
+                  }
+                }}
+                onCloudSync={handleCloudSync}
+                isSyncing={isSyncing}
+              />
             </div>
 
             {/* ── RIGHT: KIT EXPORTER ── */}
@@ -1137,6 +756,19 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             />
           </div>
         )}
+        {/* ─── THE RITUAL (EXPORT) TAB ─── */}
+        {displayedTab === 'The Ritual' && (
+          <RitualOfExport 
+            parameterValues={parameterValues}
+            update={update}
+            analyser={masterChain.current?.analyser || null}
+            engine={engine}
+            buffers={buffers}
+            onExportComplete={() => showMessage('RITUAL EXPORT COMPLETE')}
+          />
+        )}
+        </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* ═══════════ FOOTER BAR ═══════════ */}

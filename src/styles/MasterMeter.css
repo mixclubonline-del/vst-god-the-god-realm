@@ -1,0 +1,200 @@
+/* ═══════════════════════════════════════════════════════════════
+   MasterMeter — Stereo VU Meter with Peak Hold & Clipping
+   Designed for the Celestial Forge mastering output section.
+   ═══════════════════════════════════════════════════════════════ */
+
+.master-meter {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  padding: 12px 8px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(10,8,6,0.8) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.master-meter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,102,0,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ─── Channel Strip ─── */
+.meter-channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.meter-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+/* ─── Bar Track ─── */
+.meter-track {
+  position: relative;
+  width: 14px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ─── Fill (bottom-up) ─── */
+.meter-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 2px;
+  transition: height 33ms linear;
+  will-change: height;
+}
+
+.meter-fill-l {
+  background: linear-gradient(
+    to top,
+    #10b981 0%,
+    #22c55e 30%,
+    #eab308 65%,
+    #f59e0b 80%,
+    #ef4444 95%
+  );
+}
+
+.meter-fill-r {
+  background: linear-gradient(
+    to top,
+    #10b981 0%,
+    #22c55e 30%,
+    #eab308 65%,
+    #f59e0b 80%,
+    #ef4444 95%
+  );
+}
+
+/* Glow intensifies with level */
+.meter-fill[data-hot="true"] {
+  box-shadow: 
+    0 0 12px rgba(245,158,11,0.4),
+    inset 0 0 6px rgba(255,255,255,0.1);
+}
+
+.meter-fill[data-clip="true"] {
+  box-shadow: 
+    0 0 20px rgba(239,68,68,0.6),
+    inset 0 0 8px rgba(255,255,255,0.2);
+}
+
+/* ─── Peak Hold Line ─── */
+.meter-peak-hold {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 2px;
+  border-radius: 1px;
+  transition: bottom 50ms ease-out;
+  will-change: bottom;
+  z-index: 2;
+}
+
+.meter-peak-hold-l {
+  background: #f5b041;
+  box-shadow: 0 0 6px rgba(245,176,65,0.6);
+}
+
+.meter-peak-hold-r {
+  background: #f5b041;
+  box-shadow: 0 0 6px rgba(245,176,65,0.6);
+}
+
+/* ─── Clip Indicator ─── */
+.meter-clip {
+  width: 14px;
+  height: 6px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 150ms ease;
+}
+
+.meter-clip[data-clipping="true"] {
+  background: #ef4444;
+  box-shadow: 0 0 12px rgba(239,68,68,0.8), 0 0 4px #fff;
+  border-color: #ef4444;
+}
+
+/* ─── dB Scale ─── */
+.meter-scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 2px;
+  height: 100%;
+}
+
+.meter-scale-mark {
+  font-size: 7px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  color: rgba(255,255,255,0.15);
+  line-height: 1;
+  text-align: right;
+  min-width: 18px;
+}
+
+.meter-scale-mark[data-db="0"] {
+  color: rgba(239,68,68,0.5);
+}
+
+/* ─── RMS Readout ─── */
+.meter-readout {
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  min-width: 40px;
+  padding: 2px 0;
+  letter-spacing: 0.05em;
+}
+
+.meter-readout[data-hot="true"] {
+  color: #f59e0b;
+}
+
+.meter-readout[data-clip="true"] {
+  color: #ef4444;
+  text-shadow: 0 0 8px rgba(239,68,68,0.5);
+}
+
+/* ─── Subtle scanning line animation ─── */
+@keyframes meter-scan {
+  0% { transform: translateY(100%); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(0%); opacity: 0; }
+}
+
+.meter-track::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  animation: meter-scan 3s ease-in-out infinite;
+  z-index: 3;
+  pointer-events: none;
+}
