@@ -2,11 +2,22 @@
  * useSequencerEngine — Web Audio Lookahead Scheduler
  * Sample-accurate step sequencer timing via AudioContext clock.
  * Uses the "two clocks" pattern: JS timer for scheduling, AudioContext for playback.
+ *
+ * Sacred Sequence Ascension — Universal Track Architecture
+ * Supports sample, synth, and bus track types with dynamic add/remove (up to 16).
  */
 import { useReducer, useRef, useCallback, useEffect } from 'react';
 import { MasterChain, MasterParams } from '../../audio/VelvetCurveEngine';
+import type { ElectricPantheonGodId } from '../../data/electricPantheonGods';
+
+/* ═══ Constants ═══ */
+export const MAX_TRACKS = 16;
+export const MIN_TRACKS = 1;
 
 /* ═══ Types ═══ */
+export type TrackSourceType = 'sample' | 'synth' | 'bus';
+export type VoiceMode = 'poly' | 'mono' | 'legato';
+
 export interface StepState {
   enabled: boolean;
   velocity: number;       // 0-127
@@ -21,6 +32,25 @@ export interface StepState {
   sliceIndex: number;     // Index of the slice to play (0 = full sample or slice 1)
 }
 
+export interface SynthTrackConfig {
+  godId: ElectricPantheonGodId;
+  octave: number;               // -2 to +2
+  voiceMode: VoiceMode;
+  macros: { energy: number; divinity: number; width: number; realm: number };
+  noteMap: number[];            // per-step MIDI note (60 = C4), length = MAX_STEPS
+}
+
+export interface BusTrackConfig {
+  inputTrackIds: string[];
+}
+
+export interface FXSendState {
+  reverb: number;    // 0-100
+  chorus: number;
+  delay: number;
+  saturation: number;
+}
+
 export interface TrackState {
   id: string;
   name: string;
@@ -32,6 +62,10 @@ export interface TrackState {
   polymetricLength: number;
   patternA: StepState[];
   patternB: StepState[];
+  sourceType: TrackSourceType;
+  synthConfig?: SynthTrackConfig;
+  busConfig?: BusTrackConfig;
+  fxSends: FXSendState;
   sampleParams: {
     start: number;
     end: number;
@@ -39,7 +73,7 @@ export interface TrackState {
     loop: boolean;
     loopStart: number;
     loopEnd: number;
-    slices: { start: number; end: number; reverse?: boolean; loop?: boolean }[];
+    slices: { start: number; end: number; reverse?: boolean; loop?: boolean; volume?: number }[];
   };
 }
 
@@ -53,23 +87,26 @@ export interface SequencerState {
   isRecording: boolean;
   isFillMode: boolean;
   activePattern: 'A' | 'B';
-  activeGraphMode: 'velocity' | 'pitch' | 'pan' | 'decay' | 'probability';
+  activeGraphMode: 'velocity' | 'pitch' | 'pan' | 'decay' | 'probability' | 'note';
   selectedTrack: number;
   tracks: TrackState[];
   cycleCount: number;
   master: MasterParams;
+  playbackMode: 'pattern' | 'song';
 }
 
 /* ═══ Default Data ═══ */
-const DEFAULT_TRACKS: { name: string; color: string; icon: string }[] = [
-  { name: 'KICK',     color: '#ff6600', icon: '💥' },
-  { name: 'SNARE',    color: '#60A5FA', icon: '🥁' },
-  { name: 'HI-HAT',   color: '#F5B041', icon: '🔔' },
-  { name: 'OPEN HAT',  color: '#E74C3C', icon: '🔶' },
-  { name: 'PERC 1',   color: '#9B59B6', icon: '✦' },
-  { name: 'PERC 2',   color: '#1ABC9C', icon: '✧' },
-  { name: '808',      color: '#27AE60', icon: '🌊' },
-  { name: 'FX',       color: '#BB8FCE', icon: '⚡' },
+const DEFAULT_TRACKS: { name: string; color: string; icon: string; sourceType: TrackSourceType; godId?: ElectricPantheonGodId }[] = [
+  { name: 'KICK',     color: '#FFD700', icon: '💥', sourceType: 'sample' },
+  { name: 'SNARE',    color: '#60A5FA', icon: '🥁', sourceType: 'sample' },
+  { name: 'HI-HAT',   color: '#F5B041', icon: '🔔', sourceType: 'sample' },
+  { name: '808',      color: '#E74C3C', icon: '🔶', sourceType: 'sample' },
+  { name: 'PERC',     color: '#9B59B6', icon: '✦',  sourceType: 'sample' },
+  { name: 'MELODY',   color: '#FFD700', icon: '⚡', sourceType: 'synth', godId: 'olympus' },
+  { name: 'CHORDS',   color: '#A855F7', icon: '⚡', sourceType: 'synth', godId: 'athena' },
+  { name: 'LEAD',     color: '#3B82F6', icon: '⚡', sourceType: 'synth', godId: 'zeus' },
+  { name: 'PAD',      color: '#14B8A6', icon: '⚡', sourceType: 'synth', godId: 'poseidon' },
+  { name: 'FX HIT',   color: '#22C55E', icon: '🌊', sourceType: 'sample' },
 ];
 
 function createDefaultStep(): StepState {
@@ -93,14 +130,41 @@ function createDefaultSampleParams() {
   };
 }
 
-function createDefaultTrack(info: { name: string; color: string; icon: string }, stepCount: number): TrackState {
+function createDefaultFXSends(): FXSendState {
+  return { reverb: 0, chorus: 0, delay: 0, saturation: 0 };
+}
+
+function createDefaultSynthConfig(godId: ElectricPantheonGodId = 'olympus', stepCount: number = 16): SynthTrackConfig {
   return {
-    id: info.name.toLowerCase().replace(/\s+/g, '-'),
+    godId,
+    octave: 0,
+    voiceMode: 'poly',
+    macros: { energy: 50, divinity: 50, width: 50, realm: 50 },
+    noteMap: Array.from({ length: stepCount }, () => 60), // C4 default
+  };
+}
+
+let _trackIdCounter = 0;
+function generateTrackId(): string {
+  return `trk-${Date.now()}-${_trackIdCounter++}`;
+}
+
+function createDefaultTrack(
+  info: { name: string; color: string; icon: string; sourceType?: TrackSourceType; godId?: ElectricPantheonGodId },
+  stepCount: number
+): TrackState {
+  const sourceType = info.sourceType || 'sample';
+  return {
+    id: generateTrackId(),
     name: info.name, color: info.color, icon: info.icon,
     muted: false, soloed: false, volume: 0.8,
     polymetricLength: stepCount,
     patternA: Array.from({ length: stepCount }, () => createDefaultStep()),
     patternB: Array.from({ length: stepCount }, () => createDefaultStep()),
+    sourceType,
+    synthConfig: sourceType === 'synth' ? createDefaultSynthConfig(info.godId || 'olympus', stepCount) : undefined,
+    busConfig: sourceType === 'bus' ? { inputTrackIds: [] } : undefined,
+    fxSends: createDefaultFXSends(),
     sampleParams: createDefaultSampleParams(),
   };
 }
@@ -138,6 +202,7 @@ function createInitialState(): SequencerState {
       ceiling: -0.1,
       volume: 1.0,
     },
+    playbackMode: 'pattern',
   };
 }
 
@@ -168,7 +233,21 @@ type SeqAction =
   | { type: 'COPY_PATTERN'; from: 'A' | 'B'; to: 'A' | 'B' }
   | { type: 'SET_MASTER_PARAM'; param: keyof MasterParams; value: number }
   | { type: 'SET_SAMPLE_PARAM'; trackIndex: number; param: string; value: any }
-  | { type: 'LOAD_PATTERN'; tracks: TrackState[] };
+  | { type: 'LOAD_PATTERN'; tracks: TrackState[] }
+  /* ─── Sacred Sequence Ascension: Dynamic Track Management ─── */
+  | { type: 'ADD_TRACK'; sourceType: TrackSourceType; name?: string; godId?: ElectricPantheonGodId }
+  | { type: 'REMOVE_TRACK'; trackId: string }
+  | { type: 'REORDER_TRACKS'; fromIndex: number; toIndex: number }
+  | { type: 'SET_TRACK_SOURCE'; trackIndex: number; sourceType: TrackSourceType; godId?: ElectricPantheonGodId }
+  | { type: 'SET_SYNTH_GOD'; trackIndex: number; godId: ElectricPantheonGodId }
+  | { type: 'SET_SYNTH_OCTAVE'; trackIndex: number; octave: number }
+  | { type: 'SET_SYNTH_VOICE_MODE'; trackIndex: number; voiceMode: VoiceMode }
+  | { type: 'SET_SYNTH_MACRO'; trackIndex: number; macro: keyof SynthTrackConfig['macros']; value: number }
+  | { type: 'SET_NOTE_MAP'; trackIndex: number; stepIndex: number; note: number }
+  | { type: 'SET_FX_SEND'; trackIndex: number; fx: keyof FXSendState; value: number }
+  | { type: 'RENAME_TRACK'; trackIndex: number; name: string }
+  | { type: 'SET_TRACK_COLOR'; trackIndex: number; color: string }
+  | { type: 'SET_PLAYBACK_MODE'; mode: 'pattern' | 'song' };
 
 function getActivePattern(track: TrackState, pattern: 'A' | 'B'): StepState[] {
   return pattern === 'A' ? track.patternA : track.patternB;
@@ -319,6 +398,127 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
     }
     case 'LOAD_PATTERN':
       return { ...state, tracks: action.tracks };
+
+    /* ─── Sacred Sequence Ascension: Dynamic Track Actions ─── */
+    case 'ADD_TRACK': {
+      if (state.tracks.length >= MAX_TRACKS) return state;
+      const sourceIcons: Record<TrackSourceType, string> = { sample: '🎵', synth: '⚡', bus: '🔊' };
+      const sourceColors: Record<TrackSourceType, string> = { sample: '#60A5FA', synth: '#FFD700', bus: '#F97316' };
+      const newTrack = createDefaultTrack({
+        name: action.name || `TRACK ${state.tracks.length + 1}`,
+        color: sourceColors[action.sourceType],
+        icon: sourceIcons[action.sourceType],
+        sourceType: action.sourceType,
+        godId: action.godId,
+      }, state.stepCount);
+      return { ...state, tracks: [...state.tracks, newTrack] };
+    }
+    case 'REMOVE_TRACK': {
+      if (state.tracks.length <= MIN_TRACKS) return state;
+      const filtered = state.tracks.filter(t => t.id !== action.trackId);
+      const newSelected = Math.min(state.selectedTrack, filtered.length - 1);
+      return { ...state, tracks: filtered, selectedTrack: newSelected };
+    }
+    case 'REORDER_TRACKS': {
+      const reordered = [...state.tracks];
+      const [moved] = reordered.splice(action.fromIndex, 1);
+      reordered.splice(action.toIndex, 0, moved);
+      return { ...state, tracks: reordered };
+    }
+    case 'SET_TRACK_SOURCE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      const sourceIcons: Record<TrackSourceType, string> = { sample: '🎵', synth: '⚡', bus: '🔊' };
+      tracks[action.trackIndex] = {
+        ...track,
+        sourceType: action.sourceType,
+        icon: sourceIcons[action.sourceType],
+        synthConfig: action.sourceType === 'synth'
+          ? createDefaultSynthConfig(action.godId || 'olympus', state.stepCount)
+          : undefined,
+        busConfig: action.sourceType === 'bus' ? { inputTrackIds: [] } : undefined,
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_SYNTH_GOD': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: { ...track.synthConfig, godId: action.godId },
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_SYNTH_OCTAVE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: { ...track.synthConfig, octave: Math.max(-2, Math.min(2, action.octave)) },
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_SYNTH_VOICE_MODE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: { ...track.synthConfig, voiceMode: action.voiceMode },
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_SYNTH_MACRO': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: {
+          ...track.synthConfig,
+          macros: { ...track.synthConfig.macros, [action.macro]: Math.max(0, Math.min(100, action.value)) },
+        },
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_NOTE_MAP': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      const noteMap = [...track.synthConfig.noteMap];
+      noteMap[action.stepIndex] = Math.max(24, Math.min(96, action.note)); // C1–C7
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: { ...track.synthConfig, noteMap },
+      };
+      return { ...state, tracks };
+    }
+    case 'SET_FX_SEND': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = {
+        ...tracks[action.trackIndex],
+        fxSends: {
+          ...tracks[action.trackIndex].fxSends,
+          [action.fx]: Math.max(0, Math.min(100, action.value)),
+        },
+      };
+      return { ...state, tracks };
+    }
+    case 'RENAME_TRACK': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], name: action.name };
+      return { ...state, tracks };
+    }
+    case 'SET_TRACK_COLOR': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], color: action.color };
+      return { ...state, tracks };
+    }
+    case 'SET_PLAYBACK_MODE':
+      return { ...state, playbackMode: action.mode };
+
     default:
       return state;
   }

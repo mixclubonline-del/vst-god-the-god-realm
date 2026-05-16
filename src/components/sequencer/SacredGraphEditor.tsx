@@ -22,6 +22,7 @@ const MODES: { id: SequencerState['activeGraphMode']; label: string; min: number
   { id: 'pan',      label: 'PAN', min: -100, max: 100, unit: '%' },
   { id: 'decay',    label: 'DECAY', min: 0, max: 100, unit: '%' },
   { id: 'probability', label: 'PROB', min: 0, max: 100, unit: '%' },
+  { id: 'note',     label: 'NOTE', min: 24, max: 96, unit: '' },
 ];
 
 function getStepValue(step: StepState, mode: SequencerState['activeGraphMode']): number {
@@ -31,6 +32,7 @@ function getStepValue(step: StepState, mode: SequencerState['activeGraphMode']):
     case 'pan': return step.pan * 100;
     case 'decay': return step.decay * 100;
     case 'probability': return step.probability;
+    case 'note': return 60; // Note mode uses piano-roll overlay, bar value is placeholder
   }
 }
 

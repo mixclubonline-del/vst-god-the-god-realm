@@ -123,7 +123,7 @@ export const NeuralSuggestPanel: React.FC<NeuralSuggestPanelProps> = ({
                   {activeSlots.map((s, i) => (
                     <div 
                       key={i} 
-                      className={`h-1 flex-1 rounded-full ${s.enabled ? 'bg-red-500 shadow-[0_0_5px_#ff6600]' : 'bg-white/5'}`} 
+                      className={`h-1 flex-1 rounded-full ${s.enabled ? 'bg-red-500 shadow-[0_0_5px_#FFD700]' : 'bg-white/5'}`} 
                     />
                   ))}
                 </div>
@@ -191,7 +191,7 @@ export const NeuralSuggestPanel: React.FC<NeuralSuggestPanelProps> = ({
                 <button 
                   onClick={handleSuggest}
                   disabled={isAnalyzing || !prompt.trim()}
-                  className="absolute right-3 bottom-3 w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(255,102,0,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale transition-all"
+                  className="absolute right-3 bottom-3 w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale transition-all"
                 >
                   <span className="text-white text-xs">▲</span>
                 </button>

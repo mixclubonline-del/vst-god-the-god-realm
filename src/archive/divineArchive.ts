@@ -92,14 +92,14 @@ export const roomAccent = (roomId: string): string => {
     temple: '#c29623',
     storm: '#ff5c7a',
     'celestial-choir': '#d8b4ff',
-    forge: '#ff6600',
+    forge: '#FFD700',
     abyss: '#7f1d1d',
     eden: '#6ee7b7',
-    favorites: '#ff6600',
+    favorites: '#FFD700',
     all: '#f8ddd2',
   };
 
-  return accents[roomId] ?? '#ff6600';
+  return accents[roomId] ?? '#FFD700';
 };
 
 export const roomImage = (roomId: string): string => {

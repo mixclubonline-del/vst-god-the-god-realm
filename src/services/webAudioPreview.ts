@@ -141,15 +141,35 @@ export class ChainPreviewEngine {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   async init(): Promise<void> {
-    if (this.ctx) return;
+    if (this.ctx) {
+      console.log('[ChainPreview] init() — already initialized, ctx.state:', this.ctx.state);
+      // Resume if suspended (browser autoplay policy)
+      if (this.ctx.state === 'suspended') {
+        console.log('[ChainPreview] Resuming suspended AudioContext...');
+        await this.ctx.resume();
+        console.log('[ChainPreview] AudioContext resumed, state:', this.ctx.state);
+      }
+      return;
+    }
     this.ctx = new AudioContext();
+    console.log('[ChainPreview] init() — new AudioContext created, state:', this.ctx.state, 'sampleRate:', this.ctx.sampleRate);
+    
+    // Resume if suspended (browser autoplay policy)
+    if (this.ctx.state === 'suspended') {
+      console.log('[ChainPreview] Resuming suspended AudioContext...');
+      await this.ctx.resume();
+      console.log('[ChainPreview] AudioContext resumed, state:', this.ctx.state);
+    }
+    
     this.irBuffer = generateSyntheticIR(this.ctx, 2.5, 2.8);
     this.analyserNode = this.ctx.createAnalyser();
     this.analyserNode.fftSize = 2048;
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = this._masterVolume;
+    console.log('[ChainPreview] masterGain value:', this._masterVolume);
     this.masterGain.connect(this.analyserNode);
     this.analyserNode.connect(this.ctx.destination);
+    console.log('[ChainPreview] Signal chain: masterGain → analyser → destination ✓');
   }
 
   dispose(): void {
@@ -184,9 +204,14 @@ export class ChainPreviewEngine {
   // ── Chain Management ──────────────────────────────────────────────────────
 
   buildGraph(chain: DSPChainModule[]): void {
-    if (!this.ctx || !this.masterGain) return;
+    if (!this.ctx || !this.masterGain) {
+      console.warn('[ChainPreview] buildGraph() — ctx or masterGain missing!', { ctx: !!this.ctx, masterGain: !!this.masterGain });
+      return;
+    }
     this.teardownGraph();
     this._chain = chain;
+
+    console.log(`[ChainPreview] buildGraph() — building ${chain.length} modules:`, chain.map(m => `${m.type}(${m.instanceId}, bypassed=${m.bypassed})`));
 
     // Build nodes for each module
     for (const mod of chain) {
@@ -204,6 +229,9 @@ export class ChainPreviewEngine {
     // Last node → master gain
     if (this.moduleNodes.length > 0) {
       this.moduleNodes[this.moduleNodes.length - 1].outputNode.connect(this.masterGain);
+      console.log('[ChainPreview] Graph wired: source → [modules] → masterGain → analyser → destination ✓');
+    } else {
+      console.log('[ChainPreview] No modules — source will connect directly to masterGain');
     }
   }
 
@@ -445,9 +473,16 @@ export class ChainPreviewEngine {
   // ─── Transport ────────────────────────────────────────────────────────────
 
   async loadTestTone(type: TestToneType): Promise<void> {
+    console.log('[ChainPreview] loadTestTone():', type);
     await this.init();
     if (!this.ctx) return;
     this.currentBuffer = createTestToneBuffer(this.ctx, type, 6.0);
+    console.log('[ChainPreview] Test tone buffer created:', {
+      duration: this.currentBuffer.duration.toFixed(2) + 's',
+      channels: this.currentBuffer.numberOfChannels,
+      sampleRate: this.currentBuffer.sampleRate,
+      length: this.currentBuffer.length
+    });
   }
 
   async loadAudioFile(file: File): Promise<void> {
@@ -462,7 +497,29 @@ export class ChainPreviewEngine {
   }
 
   play(): void {
-    if (!this.ctx || !this.currentBuffer || this._isPlaying) return;
+    console.log('[ChainPreview] play() called', {
+      hasCtx: !!this.ctx,
+      ctxState: this.ctx?.state,
+      hasBuffer: !!this.currentBuffer,
+      bufferDuration: this.currentBuffer?.duration,
+      isPlaying: this._isPlaying,
+      moduleCount: this.moduleNodes.length,
+      masterGainValue: this.masterGain?.gain.value
+    });
+
+    if (!this.ctx || !this.currentBuffer || this._isPlaying) {
+      console.warn('[ChainPreview] play() ABORTED —', 
+        !this.ctx ? 'no AudioContext' : 
+        !this.currentBuffer ? 'no buffer loaded' : 
+        'already playing');
+      return;
+    }
+
+    // Ensure context is running
+    if (this.ctx.state === 'suspended') {
+      console.log('[ChainPreview] Resuming suspended context before play...');
+      this.ctx.resume();
+    }
 
     this.sourceNode = this.ctx.createBufferSource();
     this.sourceNode.buffer = this.currentBuffer;
@@ -472,25 +529,34 @@ export class ChainPreviewEngine {
     const chainInput = this.getChainInput();
     if (chainInput) {
       this.sourceNode.connect(chainInput);
+      console.log('[ChainPreview] ✓ Source connected to chain input');
+    } else {
+      console.error('[ChainPreview] ✗ NO chain input available — audio will not be routed!');
     }
 
     this.sourceNode.onended = () => {
+      console.log('[ChainPreview] Source playback ended');
       this._isPlaying = false;
     };
 
     this.sourceNode.start();
     this._isPlaying = true;
+    console.log('[ChainPreview] ▶ Playback started! Context state:', this.ctx.state);
   }
 
   stop(): void {
     if (this.sourceNode) {
       try {
+        // Null out onended BEFORE stopping to prevent stale callbacks
+        // from clobbering _isPlaying after a new source starts
+        this.sourceNode.onended = null;
         this.sourceNode.stop();
         this.sourceNode.disconnect();
       } catch (_e) { /* may already be stopped */ }
       this.sourceNode = null;
     }
     this._isPlaying = false;
+    console.log('[ChainPreview] ⏹ Stopped');
   }
 
   get isPlaying(): boolean {
@@ -671,11 +737,10 @@ export class ChainPreviewEngine {
         this.setParameterByModuleType('limiter', 'threshold', ceiling);
       }
 
-      // Master
+      // Master — value is in dB (matching the knob's -60 to +6 range)
       if (id === 'masterVolume') {
-        // Logarithmic volume mapping: -60dB to +6dB
-        const db = -60 + (value / 100) * 66;
-        const gain = value === 0 ? 0 : Math.pow(10, db / 20);
+        const db = value; // Value IS already in dB from the GodKnob
+        const gain = db <= -60 ? 0 : Math.pow(10, db / 20);
         this._masterVolume = gain;
         if (this.masterGain) {
           // Smooth transition to prevent pops
@@ -703,5 +768,79 @@ export class ChainPreviewEngine {
     if (mn) {
       this.setDistortionDrive(mn.instanceId, driveDb);
     }
+  }
+
+  // ── Debug: probe signal at each stage ────────────────────────────────────
+
+  async debugSignalChain(): Promise<Record<string, unknown>> {
+    if (!this.ctx || !this.analyserNode || !this.masterGain) {
+      return { error: 'Engine not initialized' };
+    }
+
+    const report: Record<string, unknown> = {
+      ctxState: this.ctx.state,
+      sampleRate: this.ctx.sampleRate,
+      isPlaying: this._isPlaying,
+      sourceExists: !!this.sourceNode,
+      sourceLoop: this.sourceNode?.loop,
+      bufferDuration: this.currentBuffer?.duration,
+      masterGainValue: this.masterGain.gain.value,
+      moduleCount: this.moduleNodes.length,
+    };
+
+    // Helper: measure RMS via a temp AnalyserNode connected for 200ms
+    const measureRMS = (node: AudioNode, label: string): Promise<{ rms: number; db: string }> => {
+      return new Promise(resolve => {
+        const a = this.ctx!.createAnalyser();
+        a.fftSize = 2048;
+        node.connect(a);
+        setTimeout(() => {
+          const td = new Uint8Array(a.frequencyBinCount);
+          a.getByteTimeDomainData(td);
+          let sq = 0;
+          for (let i = 0; i < td.length; i++) {
+            const s = (td[i] - 128) / 128;
+            sq += s * s;
+          }
+          const rms = Math.sqrt(sq / td.length);
+          try { node.disconnect(a); } catch (_e) { /* ok */ }
+          resolve({
+            rms: +rms.toFixed(6),
+            db: rms > 0.001 ? (20 * Math.log10(rms)).toFixed(1) + ' dB' : '-∞ dB',
+          });
+        }, 250);
+      });
+    };
+
+    // Probe each stage
+    const stages: { label: string; node: AudioNode }[] = [];
+
+    // Source output
+    if (this.sourceNode) {
+      stages.push({ label: 'source_output', node: this.sourceNode });
+    }
+
+    // Each module input & output
+    for (const mn of this.moduleNodes) {
+      stages.push({ label: `${mn.type}_[${mn.instanceId}]_input`, node: mn.inputNode });
+      stages.push({ label: `${mn.type}_[${mn.instanceId}]_wetGain`, node: mn.wetGain });
+      stages.push({ label: `${mn.type}_[${mn.instanceId}]_output`, node: mn.outputNode });
+    }
+
+    // Master gain output
+    stages.push({ label: 'masterGain_output', node: this.masterGain });
+
+    // Analyser output (final)
+    stages.push({ label: 'analyser_output', node: this.analyserNode });
+
+    const probes: Record<string, { rms: number; db: string }> = {};
+    // Measure sequentially to avoid overloading
+    for (const stage of stages) {
+      probes[stage.label] = await measureRMS(stage.node, stage.label);
+    }
+
+    report.signalProbes = probes;
+    console.log('[ChainPreview] 🔬 Signal Chain Debug Report:', report);
+    return report;
   }
 }

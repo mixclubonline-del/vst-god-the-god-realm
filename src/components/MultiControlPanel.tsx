@@ -105,7 +105,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                                     transition={{ duration: 0.4, ease: 'easeOut' }}
                                   />
                                 </div>
-                                <span className={`text-[9px] font-mono w-6 text-right transition-colors ${r.active ? 'text-orange-500/60' : 'text-white/10'}`}>{r.amt}%</span>
+                                <span className={`text-[9px] font-mono w-6 text-right transition-colors ${r.active ? 'text-yellow-500/60' : 'text-white/10'}`}>{r.amt}%</span>
                               </div>
                            </div>
                         ))}
@@ -143,7 +143,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                            <motion.path 
                              d="M -10 20 C 0 30, 10 30, 20 20 S 40 10, 50 20 S 70 30, 80 20 S 90 10, 100 20" 
                              fill="none" 
-                             stroke="#ff8800" 
+                             stroke="#FFA726" 
                              strokeWidth="0.5"
                              strokeDasharray="2 4"
                              animate={{ x: [10, -10, 10] }}
@@ -192,11 +192,11 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                <svg className="w-full h-full p-2 overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
                    <defs>
                       <linearGradient id="eq-grad" x1="0" y1="1" x2="0" y2="0">
-                         <stop offset="0%" stopColor="rgba(255,102,0,0)" />
-                         <stop offset="100%" stopColor="rgba(255,102,0,0.1)" />
+                         <stop offset="0%" stopColor="rgba(255,215,0,0)" />
+                         <stop offset="100%" stopColor="rgba(255,215,0,0.1)" />
                       </linearGradient>
                       <linearGradient id="freqGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255,102,0,0.1)" />
+                        <stop offset="0%" stopColor="rgba(255,215,0,0.1)" />
                         <stop offset="100%" stopColor="transparent" />
                       </linearGradient>
                    </defs>
@@ -228,14 +228,14 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                       return (
                         <>
                           <path d={path} fill="url(#eq-grad)" />
-                          <path d={strokePath} fill="none" stroke="#ff6600" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(255,102,0,0.4)]" />
+                          <path d={strokePath} fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(255,215,0,0.4)]" />
                           
                           {/* Interaction Nodes */}
                           {[p1, p2, p3, p4].map((p, i) => (
                             <g key={i} className="cursor-pointer">
-                               <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="3" fill="#ff6600" className="drop-shadow-[0_0_8px_#ff6600]" />
+                               <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="3" fill="#FFD700" className="drop-shadow-[0_0_8px_#FFD700]" />
                                {Math.abs(50 - p.y) > 10 && (
-                                 <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="6" fill="transparent" stroke="rgba(255,102,0,0.3)" strokeWidth="1" className="animate-ping" />
+                                 <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="6" fill="transparent" stroke="rgba(255,215,0,0.3)" strokeWidth="1" className="animate-ping" />
                                )}
                             </g>
                           ))}
@@ -299,7 +299,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
             <VortexXYPad 
               x={morphX}
               y={morphY}
-              onChange={(x, y) => {
+              onPositionChange={(x: number, y: number) => {
                 update('morphX', x);
                 update('morphY', y);
                 if (isRecording) {
@@ -310,10 +310,6 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
               onAnchorClick={(anchor) => {
                 update('morphX', anchor.x);
                 update('morphY', anchor.y);
-              }}
-              onSaveAnchor={(x, y) => {
-                const name = prompt('Anchor Name:', `Loop ${vortexAnchors.length + 1}`);
-                if (name && onSaveVortexAnchor) onSaveVortexAnchor(x, y, name);
               }}
             />
          </div>
@@ -335,7 +331,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
           <div className="flex justify-between items-center mb-3">
             <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Arp / Gate</span>
             <SacredSwitch 
-              active={parameterValues.arpEnabled || false}
+              isOn={parameterValues.arpEnabled || false}
               onToggle={() => update('arpEnabled', !parameterValues.arpEnabled)}
               label="ON"
             />
@@ -351,7 +347,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                      key={i} 
                      className={`flex-1 rounded-sm transition-all duration-75 relative group/pill ${
                        isActive 
-                        ? 'bg-red-500 h-full shadow-[0_0_15px_rgba(255,102,0,0.8)]' 
+                        ? 'bg-red-500 h-full shadow-[0_0_15px_rgba(255,215,0,0.8)]' 
                         : (i % 4 === 0 ? 'bg-red-500/30 h-3/4' : 'bg-white/10 h-1/2')
                      }`} 
                    >

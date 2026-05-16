@@ -1,0 +1,1027 @@
+/* ══════════════════════════════════════════
+   Electric Pantheon — Core Layout
+   ══════════════════════════════════════════ */
+
+.ep-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  gap: 4px;
+  padding: 8px;
+}
+
+/* ─── Macros Row ─── */
+.ep-macros {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px 8px 0 0;
+}
+.ep-macros-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+.ep-macro-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ep-macro-icon {
+  font-size: 14px;
+  opacity: 0.5;
+}
+.ep-macro-sub {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  text-align: center;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Body (3-column) ─── */
+.ep-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+}
+
+/* ─── God Selector (Left) ─── */
+.ep-god-selector {
+  width: 160px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 8px;
+  overflow-y: auto;
+}
+.ep-god-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 4px;
+}
+.ep-god-selector-title {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.5);
+}
+.ep-god-selector-count {
+  font-size: 8px;
+  color: rgba(255,255,255,0.25);
+}
+.ep-god-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+/* God Card */
+.ep-god-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+.ep-god-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+.ep-god-card--active {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--god-primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--god-primary) 30%, transparent);
+}
+.ep-god-card-stripe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--god-primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.ep-god-card--active .ep-god-card-stripe { opacity: 1; }
+.ep-god-card-icon { font-size: 16px; flex-shrink: 0; }
+.ep-god-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ep-god-card-name {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.85);
+}
+.ep-god-card-title {
+  font-size: 7px;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ep-god-card-glow {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--god-primary);
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* Morph Button */
+.ep-morph-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(128,0,255,0.15), rgba(0,200,255,0.15));
+  border: 1px solid rgba(128,0,255,0.2);
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  transition: all 0.2s;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+.ep-morph-btn:hover {
+  background: linear-gradient(135deg, rgba(128,0,255,0.25), rgba(0,200,255,0.25));
+  border-color: rgba(128,0,255,0.4);
+}
+.ep-morph-btn-icon { font-size: 14px; }
+
+/* ─── Center Column ─── */
+.ep-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ep-center-bottom {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Hero Panel ─── */
+.ep-hero {
+  position: relative;
+  flex: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 160px;
+}
+.ep-hero-bg {
+  position: absolute;
+  inset: 0;
+}
+.ep-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ep-hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg,
+    rgba(0,0,0,0.95) 0%,
+    rgba(0,0,0,0.5) 40%,
+    rgba(0,0,0,0.2) 100%
+  );
+}
+.ep-hero-rays {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--god-primary) 10%, transparent) 0%, transparent 60%);
+  pointer-events: none;
+}
+.ep-hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  gap: 4px;
+}
+.ep-hero-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid var(--god-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.ep-hero-icon { font-size: 18px; }
+.ep-hero-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+}
+.ep-hero-title {
+  font-size: 11px;
+  color: var(--god-primary);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.ep-hero-purpose {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+}
+.ep-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.ep-hero-chip {
+  font-size: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+.ep-hero-tone-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.ep-hero-tone-tag {
+  font-size: 7px;
+  color: var(--god-accent);
+  letter-spacing: 0.05em;
+}
+
+/* ─── Profile (Right) ─── */
+.ep-profile {
+  width: 170px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+.ep-profile-header {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 4px;
+}
+.ep-profile-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.5);
+}
+.ep-profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ep-profile-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ep-profile-stat-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+.ep-profile-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+.ep-profile-stat-label {
+  font-size: 7px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.15em;
+  font-weight: 700;
+}
+.ep-profile-stat-value {
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
+}
+.ep-profile-section { display: flex; flex-direction: column; gap: 4px; }
+.ep-profile-section-label {
+  font-size: 7px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.2em;
+  font-weight: 800;
+}
+.ep-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.ep-profile-tag {
+  font-size: 7px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--god-primary) 12%, transparent);
+  color: var(--god-primary);
+  border: 1px solid color-mix(in srgb, var(--god-primary) 20%, transparent);
+}
+.ep-profile-behaviors {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ep-profile-behavior {
+  font-size: 8px;
+  color: rgba(255,255,255,0.45);
+  padding-left: 8px;
+  position: relative;
+}
+.ep-profile-behavior::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--god-primary);
+}
+.ep-profile-quote {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  font-style: italic;
+  padding: 8px;
+  border-left: 2px solid var(--god-primary);
+  margin: 0;
+  margin-top: auto;
+}
+.ep-profile-quote-mark {
+  color: var(--god-primary);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+/* ─── Realm FX ─── */
+.ep-realm-fx {
+  flex: 1;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+}
+.ep-realm-fx-header {
+  margin-bottom: 6px;
+}
+.ep-realm-fx-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.4);
+}
+.ep-realm-fx-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.ep-realm-fx-module {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.ep-realm-fx-module--bypassed { opacity: 0.3; }
+.ep-realm-fx-bypass {
+  font-size: 7px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0,255,100,0.15);
+  color: rgba(0,255,100,0.8);
+  border: 1px solid rgba(0,255,100,0.2);
+  cursor: pointer;
+}
+.ep-realm-fx-bypass.active {
+  background: rgba(255,0,0,0.15);
+  color: rgba(255,100,100,0.8);
+  border-color: rgba(255,0,0,0.2);
+}
+.ep-realm-fx-emblem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid var(--god-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.ep-realm-fx-emblem-icon { font-size: 14px; }
+
+/* ─── ALS Vision ─── */
+.ep-als-vision {
+  width: 140px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ep-als-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ep-als-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.4);
+}
+.ep-als-level-value {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--god-primary);
+  transition: text-shadow 0.3s;
+}
+.ep-als-level-value--active {
+  text-shadow: 0 0 8px var(--god-primary);
+}
+
+/* Signal Meter */
+.ep-als-meter {
+  display: flex;
+  gap: 2px;
+  height: 40px;
+  align-items: flex-end;
+}
+.ep-als-segment {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border-radius: 1px;
+  min-height: 4px;
+  height: 100%;
+  transition: opacity 0.08s ease-out, transform 0.08s ease-out, background-color 0.1s, box-shadow 0.15s;
+  transform-origin: bottom;
+}
+.ep-als-segment.peak {
+  animation: ep-als-peak-flash 0.2s ease-out;
+}
+@keyframes ep-als-peak-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0.3; }
+}
+
+/* Spectral Ring */
+.ep-als-spectral-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 2px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ep-als-spectral-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  transition: filter 0.2s;
+  pointer-events: none;
+}
+.ep-als-emblem {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid color-mix(in srgb, var(--god-primary) 40%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ep-als-emblem-icon { font-size: 16px; }
+.ep-als-spectral-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ep-als-spectral-label {
+  position: absolute;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+  transition: opacity 0.2s, color 0.2s;
+}
+.ep-als-spectral-label--body { top: -2px; left: 50%; transform: translateX(-50%); }
+.ep-als-spectral-label--soul { right: -2px; top: 50%; transform: translateY(-50%); }
+.ep-als-spectral-label--air  { bottom: -2px; left: 50%; transform: translateX(-50%); }
+.ep-als-spectral-label--silk { left: -2px; top: 50%; transform: translateY(-50%); }
+
+/* Voice Counter */
+.ep-als-voice-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ep-als-voice-label {
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.25);
+  width: 30px;
+}
+.ep-als-voice-dots {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+.ep-als-voice-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  transition: background-color 0.15s, box-shadow 0.15s;
+}
+.ep-als-voice-dot.active {
+  transform: scale(1.1);
+}
+
+/* Macro Mini-Bars */
+.ep-als-mini-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ep-als-mini-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ep-als-mini-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.3);
+  width: 10px;
+}
+.ep-als-mini-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ep-als-mini-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.08s ease-out, box-shadow 0.2s;
+}
+
+/* ─── Keyboard ─── */
+.ep-keyboard {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 0 0 8px 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  height: 120px;
+}
+.ep-keyboard-wheels {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ep-wheel-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 28px;
+}
+.ep-wheel-label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+}
+.ep-wheel-track {
+  flex: 1;
+  width: 16px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  position: relative;
+  cursor: ns-resize;
+  overflow: hidden;
+}
+.ep-wheel-thumb {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 14px;
+  background: var(--god-primary);
+  border-radius: 4px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--god-primary) 50%, transparent);
+}
+.ep-wheel-center-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+}
+.ep-wheel-value {
+  font-size: 7px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+}
+
+/* Piano Keys Container */
+.ep-keyboard-keys {
+  flex: 1;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ep-keyboard-whites {
+  display: flex;
+  height: 100%;
+}
+.ep-keyboard-blacks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 58%;
+}
+.ep-key {
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.1s;
+  padding: 0;
+}
+.ep-key--white {
+  background: linear-gradient(180deg, #e8e8e8 0%, #f5f5f5 85%, #ddd 100%);
+  border-right: 1px solid rgba(0,0,0,0.12);
+  border-radius: 0 0 3px 3px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+}
+.ep-key--white:hover { background: linear-gradient(180deg, #f0f0f0 0%, #fff 100%); }
+.ep-key--white:active,
+.ep-key--white.ep-key--active {
+  background: linear-gradient(180deg, #ddd 0%, #e8e8e8 100%);
+}
+.ep-key--black {
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a1a 0%, #333 90%, #222 100%);
+  border-radius: 0 0 3px 3px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.ep-key--black:hover { background: linear-gradient(180deg, #2a2a2a 0%, #444 100%); }
+.ep-key--black:active,
+.ep-key--black.ep-key--active {
+  background: linear-gradient(180deg, #111 0%, #2a2a2a 100%);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.ep-key-label {
+  font-size: 6px;
+  color: rgba(0,0,0,0.25);
+  font-weight: 600;
+  pointer-events: none;
+}
+.ep-key-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.3;
+  pointer-events: none;
+}
+.ep-key-glow--black { opacity: 0.5; }
+
+/* Right Controls */
+.ep-keyboard-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 60px;
+}
+.ep-voice-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ep-voice-mode-label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+}
+.ep-voice-mode-btn {
+  font-size: 7px;
+  padding: 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transition: all 0.15s;
+}
+.ep-voice-mode-btn.active {
+  background: color-mix(in srgb, var(--god-primary) 20%, transparent);
+  color: var(--god-primary);
+  border-color: var(--god-primary);
+}
+.ep-octave-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ep-octave-info {
+  text-align: center;
+  min-width: 32px;
+}
+.ep-octave-label {
+  font-size: 10px;
+  color: var(--god-primary, rgba(255,255,255,0.6));
+  font-weight: 700;
+  display: block;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px var(--god-primary, transparent);
+}
+.ep-octave-range {
+  font-size: 7px;
+  color: rgba(255,255,255,0.25);
+  display: block;
+  text-transform: uppercase;
+}
+.ep-octave-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.ep-octave-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--god-primary) 15%, transparent);
+  border-color: var(--god-primary);
+  color: var(--god-primary);
+}
+.ep-octave-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.ep-octave-btn:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+/* ─── QWERTY Badge ─── */
+.ep-qwerty-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ep-qwerty-badge-icon {
+  font-size: 10px;
+  opacity: 0.5;
+}
+.ep-qwerty-badge-label {
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+
+/* ─── Waveform Scope ─── */
+.ep-scope-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(5,5,15,0.6));
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  min-width: 132px;
+}
+.ep-scope-label {
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  text-align: center;
+}
+.ep-scope-canvas {
+  border-radius: 3px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ─── Divine Morph Overlay ─── */
+.ep-morph-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ep-morph-overlay {
+  background: linear-gradient(135deg, rgba(20,10,30,0.95), rgba(10,15,30,0.95));
+  border: 1px solid rgba(128,0,255,0.2);
+  border-radius: 12px;
+  padding: 20px;
+  width: 420px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.ep-morph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ep-morph-title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.8);
+}
+.ep-morph-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 18px;
+  cursor: pointer;
+}
+.ep-morph-gods {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ep-morph-god-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.ep-morph-god-icon { font-size: 24px; }
+.ep-morph-god-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.8);
+}
+.ep-morph-god-label {
+  font-size: 7px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.2em;
+}
+.ep-morph-blend-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.ep-morph-blend-line {
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+}
+.ep-morph-blend-percent {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.5);
+}
+.ep-morph-target-select {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: white;
+  font-size: 10px;
+  padding: 4px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+.ep-morph-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ep-morph-slider-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.4);
+}
+.ep-morph-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+.ep-morph-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 8px rgba(128,0,255,0.5);
+  cursor: grab;
+}
+.ep-morph-apply {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

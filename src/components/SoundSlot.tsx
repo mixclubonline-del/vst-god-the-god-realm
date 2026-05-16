@@ -123,7 +123,7 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
           size="sm" 
           value={vol} 
           onChange={(v) => update(`slotVol_${id}`, v)} 
-          suffix="dB"
+          unit="dB"
           color="var(--mixx-accent)"
         />
         <DivineKnob 

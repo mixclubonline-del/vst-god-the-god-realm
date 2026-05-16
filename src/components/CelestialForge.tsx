@@ -78,7 +78,7 @@ export const GodKnobV2: React.FC<GodKnobV2Props> = ({
             
             {/* Glowing Indicator Orb */}
             <motion.div 
-              className="absolute top-[8px] w-2 h-2 rounded-full shadow-[0_0_15px_rgba(255,102,0,1),0_0_5px_#fff]"
+              className="absolute top-[8px] w-2 h-2 rounded-full shadow-[0_0_15px_rgba(255,215,0,1),0_0_5px_#fff]"
               style={{ 
                   backgroundColor: color,
                   rotate: rotation,
@@ -138,8 +138,8 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
       <motion.div 
         className="absolute inset-0 rounded-full"
         animate={{ 
-            scale: [1, 1.05, 1],
-            opacity: [0.2, 0.4, 0.2],
+            scale: [1, 1.15, 1],
+            opacity: [0.5, 0.8, 0.5],
             rotate: [0, 180, 360]
         }}
         transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
@@ -175,8 +175,8 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
                 strokeDasharray="2,8"
                 animate={{ 
                     rotate: [0, 360],
-                    opacity: [0.1, 0.3, 0.1],
-                    scale: [1, 1.02, 1]
+                    opacity: [0.2, 0.5, 0.2],
+                    scale: [1, 1.08, 1]
                 }}
                 transition={{ duration: 3 + i, repeat: Infinity, ease: 'linear' }}
             />
@@ -189,7 +189,7 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
         <path 
           d="M 40 200 A 160 160 0 0 1 360 200" 
           fill="none" 
-          stroke="rgba(255,255,255,0.03)" 
+          stroke="rgba(255,255,255,0.08)" 
           strokeWidth="16" 
           strokeLinecap="round" 
         />
@@ -209,7 +209,7 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
         <path 
           d="M 70 200 A 130 130 0 0 0 330 200" 
           fill="none" 
-          stroke="rgba(255,255,255,0.03)" 
+          stroke="rgba(255,255,255,0.08)" 
           strokeWidth="10" 
           strokeLinecap="round" 
         />
@@ -256,7 +256,7 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
           }}
           transition={{ duration: 0.5, repeat: levels.reduction > 0.05 ? Infinity : 0 }}
           style={{ 
-              boxShadow: levels.reduction > 0.05 ? '0 0 24px #ff6600, inset 0 0 8px #fff' : 'none',
+              boxShadow: levels.reduction > 0.05 ? '0 0 24px #FFD700, inset 0 0 8px #fff' : 'none',
               backgroundColor: levels.reduction > 0.05 ? '#ffaa00' : '#333'
           }}
         />
@@ -292,11 +292,11 @@ const AetherSaturationMatrix: React.FC<{ drive: number; tone: number }> = ({ dri
       <div className="flex flex-col justify-center gap-6 pr-6 border-r border-white/10">
         <div className="flex flex-col items-center">
             <span className="text-data-md text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{Math.round(drive)}%</span>
-            <span className="text-[7px] font-bold text-orange-500/80 uppercase tracking-widest mt-1">Aether Drive</span>
+            <span className="text-[7px] font-bold text-yellow-500/80 uppercase tracking-widest mt-1">Aether Drive</span>
         </div>
         <div className="flex flex-col items-center">
             <span className="text-data-md text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">{Math.round(tone)}%</span>
-            <span className="text-[7px] font-bold text-orange-500/80 uppercase tracking-widest mt-1">Harmonic Tone</span>
+            <span className="text-[7px] font-bold text-yellow-500/80 uppercase tracking-widest mt-1">Harmonic Tone</span>
         </div>
       </div>
 
@@ -364,7 +364,7 @@ const AetherSaturationMatrix: React.FC<{ drive: number; tone: number }> = ({ dri
           <h3 className="text-label-xs text-white/80 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">SATURATION CURVE</h3>
           <div className="flex gap-2">
               <motion.div 
-                  className="w-1.5 h-8 bg-orange-500 shadow-[0_0_12px_#ff6600] rounded-full" 
+                  className="w-1.5 h-8 bg-yellow-500 shadow-[0_0_12px_#FFD700] rounded-full" 
                   animate={{ height: isInteracting ? [32, 40, 32] : 32 }}
                   transition={{ duration: 0.5, repeat: isInteracting ? Infinity : 0 }}
               />
@@ -404,10 +404,11 @@ const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) 
             <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
                 {/* Neural Fluid Orbs / Blobs */}
                 <motion.circle 
-                    cx="50" cy="50" r={25 + (a.val * 20)}
+                    cx="50" cy="50"
                     fill="none"
                     stroke={a.color}
                     strokeWidth="0.5"
+                    initial={{ r: 25 + (a.val * 20), opacity: 0.1 }}
                     animate={{ 
                         r: [25 + (a.val * 20), 35 + (a.val * 15), 25 + (a.val * 20)],
                         opacity: [0.1, 0.3, 0.1]
@@ -447,6 +448,7 @@ export const CelestialForge: React.FC<{
   parameterValues: Record<string, any>;
   update: (id: string, val: any) => void;
   moduleLevels: Record<string, number>;
+  analyser?: AnalyserNode | null;
 }> = ({ parameterValues, update, moduleLevels }) => {
   // Live engine metering from JUCE bridge
   const bridgeState = useJuceBridge();
@@ -506,9 +508,9 @@ export const CelestialForge: React.FC<{
         <div className="flex items-center gap-4">
            <div className="flex flex-col items-end">
               <span className="text-[8px] text-white/50 font-bold tracking-widest">PRESET</span>
-              <span className="text-[10px] text-orange-500 font-black drop-shadow-[0_0_8px_rgba(255,102,0,0.5)]">DEEP EMBER</span>
+              <span className="text-[10px] text-yellow-500 font-black drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]">DEEP EMBER</span>
            </div>
-           <div className="w-1 h-8 bg-orange-500/30 rounded-full" />
+           <div className="w-1 h-8 bg-yellow-500/30 rounded-full" />
            <div className="flex flex-col">
               <span className="text-[8px] text-white/50 font-bold tracking-widest">ENGINE</span>
               <span className="text-[10px] text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CELESTIAL FORGE v2</span>
@@ -558,7 +560,7 @@ export const CelestialForge: React.FC<{
           
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 mix-blend-screen pointer-events-none">
              <div className="text-[28px] font-black text-white italic tracking-tighter drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]">AURA</div>
-             <div className="text-[9px] font-bold text-orange-500 uppercase tracking-[0.3em]">Mastering</div>
+             <div className="text-[9px] font-bold text-yellow-500 uppercase tracking-[0.3em]">Mastering</div>
           </div>
         </div>
 
@@ -602,7 +604,7 @@ export const CelestialForge: React.FC<{
       </div>
 
       {/* Floating Polish Effects */}
-      <div className="fixed top-0 right-0 w-1/3 h-1/3 bg-orange-500/10 blur-[150px] pointer-events-none mix-blend-screen" />
+      <div className="fixed top-0 right-0 w-1/3 h-1/3 bg-yellow-500/10 blur-[150px] pointer-events-none mix-blend-screen" />
       <div className="fixed bottom-0 left-0 w-1/4 h-1/4 bg-blue-500/10 blur-[120px] pointer-events-none mix-blend-screen" />
 
       {/* SVG Filters for MixxTech GUI Forge */}

@@ -39,11 +39,11 @@ interface RealmParticleCanvasProps {
 
 /* ═══ Realm Color Palettes ═══ */
 const REALM_COLORS: Record<string, string[]> = {
-  'Multi-Realm':    ['#ff6600', '#ff8800', '#ffaa33', '#ff4400', '#cc3300'],
+  'Multi-Realm':    ['#FFD700', '#FFA726', '#ffaa33', '#ff4400', '#cc3300'],
   'Effects':        ['#60A5FA', '#BB8FCE', '#9B59B6', '#1ABC9C', '#F5B041'],
   'Sample Chopper': ['#9B59B6', '#BB8FCE', '#6C3483', '#D2B4DE', '#8E44AD'],
   'Divine Archive': ['#c29623', '#F5B041', '#d4a017', '#e6c200', '#b8860b'],
-  'Mastering':      ['#ff6600', '#ff8800', '#c29623', '#ffaa33', '#e65100'],
+  'Mastering':      ['#FFD700', '#FFA726', '#c29623', '#ffaa33', '#e65100'],
   'Performance':    ['#1ABC9C', '#60A5FA', '#27AE60', '#3498DB', '#48C9B0'],
   'Preset Vault':   ['#c29623', '#F5B041', '#8B7355', '#d4a017', '#DAA520'],
 };

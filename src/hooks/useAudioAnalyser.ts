@@ -11,7 +11,7 @@ interface AudioAnalysisData {
  */
 export function useAudioAnalyser(analyser: AnalyserNode | null): AudioAnalysisData {
   const [data, setData] = useState<AudioAnalysisData>({ energy: 0, peak: 0 });
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(undefined);
   
   useEffect(() => {
     if (!analyser) return;

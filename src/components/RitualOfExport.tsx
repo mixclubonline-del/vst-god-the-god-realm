@@ -7,7 +7,7 @@ import {
 import JSZip from 'jszip';
 import { ExportEngine } from '../audio/ExportEngine';
 import { useSequencerEngine } from './sequencer/useSequencerEngine';
-import { DivineSpectrometer } from './DivineSpectrometer';
+import { DivineSpectrometer } from './ui/DivineSpectrometer';
 
 interface RitualOfExportProps {
   onExportComplete?: (data: any) => void;
@@ -178,11 +178,11 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
             <h2 className="text-xl font-black text-white tracking-tighter">Multi-Stem Manifestation</h2>
           </div>
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,102,0,0.1)' }}
+            whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,215,0,0.1)' }}
             whileTap={{ scale: 0.95 }}
             onClick={handleManifestAllStems}
             disabled={isBatchManifesting || isRendering}
-            className="px-3 py-2 rounded-lg border border-orange-500/30 text-[9px] font-black uppercase tracking-widest text-orange-500 disabled:opacity-30"
+            className="px-3 py-2 rounded-lg border border-yellow-500/30 text-[9px] font-black uppercase tracking-widest text-yellow-500 disabled:opacity-30"
           >
             {isBatchManifesting ? 'Manifesting All...' : 'Manifest All'}
           </motion.button>
@@ -199,7 +199,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
               onMouseLeave={() => setActiveStem(null)}
               onClick={() => handleStemExport(idx)}
               draggable={!!stemUrls[idx]}
-              onDragStart={(e) => onDragStart(e, stemUrls[idx], stem.name)}
+              onDragStart={(e) => onDragStart(e as unknown as React.DragEvent, stemUrls[idx], stem.name)}
               onDragEnd={() => setIsDragging(false)}
               className={`p-4 rounded-xl border transition-all cursor-pointer group ${
                 renderingStemIdx === idx
@@ -207,7 +207,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
                   : stemUrls[idx]
                     ? 'bg-green-500/10 border-green-500/30'
                     : activeStem === idx 
-                      ? 'bg-orange-500/10 border-orange-500/30' 
+                      ? 'bg-yellow-500/10 border-yellow-500/30' 
                       : 'bg-white/[0.03] border-white/5 hover:border-white/10'
               }`}
             >
@@ -219,7 +219,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
                       : stemUrls[idx]
                         ? 'bg-green-500 text-black'
                         : activeStem === idx 
-                          ? 'bg-orange-500 text-black' 
+                          ? 'bg-yellow-500 text-black' 
                           : 'bg-white/5 text-white/40'
                   }`}>
                     <FileAudio size={14} />
@@ -250,7 +250,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
                       ? 'bg-green-500' 
                       : renderingStemIdx === idx
                         ? 'bg-blue-500'
-                        : 'bg-gradient-to-r from-orange-600 to-orange-400'
+                        : 'bg-gradient-to-r from-amber-600 to-yellow-400'
                   }`}
                   initial={{ width: '0%' }}
                   animate={{ 
@@ -275,7 +275,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
             <button 
               onClick={handleStartRitual}
               disabled={isRendering}
-              className="flex-1 py-6 rounded-2xl bg-orange-600 hover:bg-orange-500 disabled:bg-white/5 disabled:text-white/10 text-black font-black uppercase tracking-[0.4em] transition-all relative overflow-hidden group shadow-[0_0_40px_rgba(255,102,0,0.2)]"
+              className="flex-1 py-6 rounded-2xl bg-amber-600 hover:bg-yellow-500 disabled:bg-white/5 disabled:text-white/10 text-black font-black uppercase tracking-[0.4em] transition-all relative overflow-hidden group shadow-[0_0_40px_rgba(255,215,0,0.2)]"
             >
               {isRendering && (
                 <motion.div 
@@ -357,22 +357,22 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
 
           <motion.div 
             draggable={!!exportUrl}
-            onDragStart={(e) => onDragStart(e, exportUrl, 'Full_Pattern')}
+            onDragStart={(e) => onDragStart(e as unknown as React.DragEvent, exportUrl, 'Full_Pattern')}
             onDragEnd={() => setIsDragging(false)}
             animate={{ 
               scale: isDragging ? 0.8 : 1,
               rotate: isRendering ? 360 : 0,
-              boxShadow: exportUrl ? '0_0_80px_rgba(34,197,94,0.3)' : '0_0_40px_rgba(255,102,0,0.1)'
+              boxShadow: exportUrl ? '0_0_80px_rgba(34,197,94,0.3)' : '0_0_40px_rgba(255,215,0,0.1)'
             }}
             transition={{ 
               rotate: isRendering ? { repeat: Infinity, duration: 2, ease: 'linear' } : { duration: 0.5 }
             }}
             className={`relative w-64 h-64 rounded-full flex items-center justify-center transition-all duration-500 ${
               isRendering 
-                ? 'bg-orange-500/20 shadow-[0_0_100px_rgba(255,102,0,0.4)] ring-4 ring-orange-500/20' 
+                ? 'bg-yellow-500/20 shadow-[0_0_100px_rgba(255,215,0,0.4)] ring-4 ring-yellow-500/20' 
                 : exportUrl
                   ? 'bg-green-500/20 border-2 border-green-500/50 cursor-grab active:cursor-grabbing'
-                  : 'bg-white/[0.03] border border-white/10 hover:border-orange-500/40 hover:bg-orange-500/5 cursor-default'
+                  : 'bg-white/[0.03] border border-white/10 hover:border-yellow-500/40 hover:bg-yellow-500/5 cursor-default'
             }`}
           >
             <AnimatePresence mode="wait">
@@ -384,7 +384,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 flex items-center justify-center"
                 >
-                   <Disc size={80} className="text-orange-500 opacity-20 animate-spin" />
+                   <Disc size={80} className="text-yellow-500 opacity-20 animate-spin" />
                    <div className="absolute text-2xl font-black text-white">
                      {Math.round(renderProgress * 100)}%
                    </div>
@@ -422,7 +422,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
             {isRendering && Array.from({ length: 8 }).map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-2 h-2 bg-orange-500 rounded-full blur-[1px]"
+                className="absolute w-2 h-2 bg-yellow-500 rounded-full blur-[1px]"
                 animate={{ 
                   rotate: 360,
                   scale: [1, 1.5, 1],
@@ -466,7 +466,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
             <div className="w-1.5 h-1.5 rounded-full bg-green-500/50" />
           </div>
           <div className="text-white/40 space-y-1">
-            <p className="text-orange-500/60 font-bold">[SYSTEM] Initializing Divine Render Engine v1.0.4...</p>
+            <p className="text-yellow-500/60 font-bold">[SYSTEM] Initializing Divine Render Engine v1.0.4...</p>
             <p>[SYSTEM] Mapping sacred frequency nodes (20Hz - 20kHz)...</p>
             <p>[SYSTEM] Applying Celestial Forge mastering chain (Aether v2)...</p>
             <p>[SYSTEM] Manifesting multi-stem arrays (6 channels detected)...</p>
@@ -500,7 +500,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
         <div className="flex-1 glass-panel border border-white/5 bg-black/40 p-6 flex flex-col">
           <header className="mb-8">
             <div className="flex items-center gap-2 mb-2">
-              <Activity size={14} className="text-orange-500" />
+              <Activity size={14} className="text-yellow-500" />
               <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Loudness Sanctum</h3>
             </div>
             <div className="h-[1px] w-full bg-white/5" />
@@ -525,7 +525,7 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
                    ))}
                 </div>
                 <motion.div 
-                  className="w-full bg-gradient-to-t from-orange-600 via-orange-400 to-yellow-200 rounded-md shadow-[0_0_15px_rgba(255,102,0,0.3)]"
+                  className="w-full bg-gradient-to-t from-amber-600 via-yellow-400 to-yellow-200 rounded-md shadow-[0_0_15px_rgba(255,215,0,0.3)]"
                   animate={{ height: isRendering ? ['40%', '60%', '55%', '65%', '45%'] : '55%' }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
                 />
@@ -553,10 +553,10 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
           <div className="mt-8 space-y-4">
             <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Shield size={14} className="text-orange-500" />
+                <Shield size={14} className="text-yellow-500" />
                 <span className="text-[10px] font-black text-white uppercase">Divine Limit</span>
               </div>
-              <div className="w-10 h-5 bg-orange-600 rounded-full flex items-center px-1">
+              <div className="w-10 h-5 bg-amber-600 rounded-full flex items-center px-1">
                 <div className="w-3 h-3 bg-white rounded-full ml-auto shadow-sm" />
               </div>
             </div>
@@ -573,15 +573,15 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
           </div>
         </div>
 
-        <div className="p-6 glass-panel border border-white/5 bg-orange-500/5 flex items-center justify-between group cursor-pointer hover:bg-orange-500/10 transition-all">
+        <div className="p-6 glass-panel border border-white/5 bg-yellow-500/5 flex items-center justify-between group cursor-pointer hover:bg-yellow-500/10 transition-all">
           <div className="flex items-center gap-3">
-            <Share2 size={16} className="text-orange-500 group-hover:scale-110 transition-transform" />
+            <Share2 size={16} className="text-yellow-500 group-hover:scale-110 transition-transform" />
             <div>
               <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Ascend to Cloud</h4>
               <p className="text-[8px] text-white/30 font-bold uppercase mt-0.5">Share Ritual with the Pantheon</p>
             </div>
           </div>
-          <ArrowRight size={14} className="text-white/20 group-hover:text-orange-500 group-hover:translate-x-1 transition-all" />
+          <ArrowRight size={14} className="text-white/20 group-hover:text-yellow-500 group-hover:translate-x-1 transition-all" />
         </div>
       </section>
     </div>

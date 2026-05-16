@@ -112,7 +112,7 @@ export const HallOfRecords: React.FC<HallOfRecordsProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search the Divine Memory..."
-            className="w-full bg-[#1a0a05]/60 border border-[#c29623]/20 rounded-full py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-[#ff6600]/40 transition-all placeholder:text-[#c29623]/20"
+            className="w-full bg-[#1a0a05]/60 border border-[#c29623]/20 rounded-full py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-[#FFD700]/40 transition-all placeholder:text-[#c29623]/20"
           />
         </div>
       </div>
@@ -176,7 +176,7 @@ export const HallOfRecords: React.FC<HallOfRecordsProps> = ({
                          />
                       </div>
 
-                      <button className="mt-auto py-1 bg-[#ff6600] text-black text-[8px] font-black uppercase rounded shadow-[0_0_10px_rgba(255,102,0,0.4)]">
+                      <button className="mt-auto py-1 bg-[#FFD700] text-black text-[8px] font-black uppercase rounded shadow-[0_0_10px_rgba(255,215,0,0.4)]">
                         Recall to Pad {activePad + 1}
                       </button>
                     </div>
@@ -205,7 +205,7 @@ export const HallOfRecords: React.FC<HallOfRecordsProps> = ({
             className="absolute bottom-10 right-10 w-64 glass-panel p-6 border-[#c29623]/20 z-50 pointer-events-none"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded bg-[#ff6600]/10 text-[#ff6600]">
+              <div className="p-2 rounded bg-[#FFD700]/10 text-[#FFD700]">
                 <ScrollText size={16} />
               </div>
               <div className="flex flex-col">
@@ -217,7 +217,7 @@ export const HallOfRecords: React.FC<HallOfRecordsProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-end">
                 <span className="text-[9px] uppercase tracking-widest opacity-40">Resonance</span>
-                <span className="text-[10px] font-mono text-[#ff6600]">
+                <span className="text-[10px] font-mono text-[#FFD700]">
                   {Math.round(hoveredSample.acoustic.energy)}%
                 </span>
               </div>
@@ -225,7 +225,7 @@ export const HallOfRecords: React.FC<HallOfRecordsProps> = ({
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${hoveredSample.acoustic.energy}%` }}
-                  className="h-full bg-gradient-to-r from-[#ff6600] to-[#c29623]" 
+                  className="h-full bg-gradient-to-r from-[#FFD700] to-[#c29623]" 
                 />
               </div>
 

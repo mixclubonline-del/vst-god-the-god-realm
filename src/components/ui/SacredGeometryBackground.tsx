@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, useTransform, useSpring, useMotionTemplate } from 'framer-motion';
 
 interface SacredGeometryBackgroundProps {
-  energy: number; // 0 to 1
+  energy?: number; // 0 to 1
   activeTab: string;
 }
 
@@ -14,7 +14,7 @@ export const SacredGeometryBackground: React.FC<SacredGeometryBackgroundProps> =
   energy,
   activeTab
 }) => {
-  const safeEnergy = isNaN(energy) || energy === undefined ? 0 : energy;
+  const safeEnergy = energy === undefined || isNaN(energy) ? 0 : energy;
   const springEnergy = useSpring(safeEnergy, { stiffness: 100, damping: 30 });
   
   // Transform energy into visual parameters
@@ -24,7 +24,7 @@ export const SacredGeometryBackground: React.FC<SacredGeometryBackgroundProps> =
   const filterTemplate = useMotionTemplate`blur(${blur}px)`;
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
       {/* Metatron's Cube Style Pattern */}
       <motion.svg
         viewBox="0 0 100 100"

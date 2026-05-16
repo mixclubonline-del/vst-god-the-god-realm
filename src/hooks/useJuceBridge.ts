@@ -78,7 +78,7 @@ export function useJuceBridge(): JuceBridgeState {
 
   useEffect(() => {
     const unsubscribe = nativeAudio.subscribe(handleUpdate);
-    return unsubscribe;
+    return () => { unsubscribe(); };
   }, [handleUpdate]);
 
   return state;

@@ -122,7 +122,7 @@ export const RealmDashboard: React.FC<RealmDashboardProps> = ({
          <div className="w-64 flex flex-col items-end gap-3">
             <button 
               onClick={onNeuralForge}
-              className="group relative px-6 py-4 rounded-xl bg-black/60 border border-red-500/30 overflow-hidden hover:border-red-500/60 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,102,0,0.1)]"
+              className="group relative px-6 py-4 rounded-xl bg-black/60 border border-red-500/30 overflow-hidden hover:border-red-500/60 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,215,0,0.1)]"
             >
                <div className="absolute inset-0 bg-gradient-to-tr from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                <div className="relative flex items-center gap-3">

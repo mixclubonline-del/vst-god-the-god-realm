@@ -46,12 +46,12 @@ export const PresetLibrarySidebar: React.FC<PresetLibrarySidebarProps> = ({
       {/* Search Bar */}
       <div className="p-4 border-b border-white/5 bg-black/20">
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-orange-500 transition-colors" size={14} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-500 transition-colors" size={14} />
           <input 
             type="text" 
             value={presetSearch}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-black/60 border border-white/10 rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder:text-white/20 focus:border-orange-500/40 outline-none transition-all"
+            className="w-full bg-black/60 border border-white/10 rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder:text-white/20 focus:border-yellow-500/40 outline-none transition-all"
             placeholder="Search the Vault..."
           />
         </div>
@@ -71,12 +71,12 @@ export const PresetLibrarySidebar: React.FC<PresetLibrarySidebarProps> = ({
                   onClick={() => onSelectCategory(cat.name)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
                     isActive 
-                      ? 'bg-orange-500/10 text-orange-500' 
+                      ? 'bg-yellow-500/10 text-yellow-500' 
                       : 'text-white/40 hover:bg-white/5 hover:text-white/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon size={14} className={isActive ? 'text-orange-500' : 'opacity-50'} />
+                    <Icon size={14} className={isActive ? 'text-yellow-500' : 'opacity-50'} />
                     <span className="text-[11px] font-bold tracking-wide">{cat.name}</span>
                   </div>
                   <span className="text-[10px] font-mono opacity-40">{cat.count}</span>
@@ -95,7 +95,7 @@ export const PresetLibrarySidebar: React.FC<PresetLibrarySidebarProps> = ({
               onClick={() => onSelectPreset(preset.originalIndex)}
               className={`group flex items-center justify-between px-3 py-2.5 rounded-lg border cursor-pointer transition-all ${
                 selectedPreset === preset.originalIndex 
-                  ? 'bg-orange-500/20 border-orange-500/30 shadow-[0_0_15px_rgba(255,102,0,0.1)]' 
+                  ? 'bg-yellow-500/20 border-yellow-500/30 shadow-[0_0_15px_rgba(255,215,0,0.1)]' 
                   : 'bg-transparent border-transparent hover:bg-white/5'
               }`}
             >
@@ -114,7 +114,7 @@ export const PresetLibrarySidebar: React.FC<PresetLibrarySidebarProps> = ({
                   e.stopPropagation();
                   onToggleFavorite(preset.originalIndex);
                 }}
-                className={`transition-colors ${preset.fav ? 'text-orange-500 shadow-[0_0_8px_rgba(255,102,0,0.4)]' : 'text-white/10 hover:text-white/40'}`}
+                className={`transition-colors ${preset.fav ? 'text-yellow-500 shadow-[0_0_8px_rgba(255,215,0,0.4)]' : 'text-white/10 hover:text-white/40'}`}
               >
                 <Heart size={12} fill={preset.fav ? 'currentColor' : 'none'} />
               </button>

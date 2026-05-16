@@ -15,7 +15,9 @@ import {
   Zap,
   Layers,
   ChevronRight,
-  Fingerprint
+  Fingerprint,
+  PanelRightOpen,
+  X
 } from 'lucide-react';
 import { VstgodthegodrealmPlugin } from './VstgodthegodrealmPlugin';
 import { GlassPanel, GlassButton } from './ui/Glassmorphism';
@@ -63,6 +65,7 @@ export const GodRealmStandalone: React.FC = () => {
   const [bpm, setBpm] = useState(140);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState('Plugin');
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'analyzing' | 'compressing' | 'finalizing' | 'complete'>('idle');
   const [exportProgress, setExportProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState('');
@@ -163,7 +166,7 @@ export const GodRealmStandalone: React.FC = () => {
         imageData: "", 
         imageMimeType: "image/png",
         colorScheme: {
-          primary: "#ff6600",
+          primary: "#FFD700",
           secondary: "#ff4400",
           accent: "#ffcc00",
           background: "#0a0a0a",
@@ -220,18 +223,18 @@ export const GodRealmStandalone: React.FC = () => {
   const tabs = ['Plugin', 'Parameter Stream', 'State Matrix', 'Export Lab'];
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-[#050507] text-white font-sans overflow-hidden">
+    <div className="absolute inset-0 flex flex-col bg-[#0E0A2E] text-white font-sans overflow-hidden">
       {/* ── Standalone Header ── */}
       <header className="h-16 flex items-center justify-between px-8 bg-black/40 backdrop-blur-3xl border-b border-white/5 z-50">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-[0_0_20px_rgba(255,102,0,0.2)]">
+            <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-400 shadow-[0_0_20px_rgba(255,215,0,0.2)]">
               <Fingerprint className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-sm font-black tracking-[0.2em] text-white/90 uppercase">Antigravity Standalone</h1>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-orange-400 font-bold tracking-widest uppercase">The God Realm</span>
+                <span className="text-[10px] text-yellow-400 font-bold tracking-widest uppercase">The God Realm</span>
                 <span className="w-1 h-1 rounded-full bg-white/20" />
                 <span className="text-[10px] text-white/30 font-bold tracking-widest uppercase">v1.0.0-dev</span>
               </div>
@@ -273,11 +276,14 @@ export const GodRealmStandalone: React.FC = () => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/5 border border-orange-500/10">
-            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-            <span className="text-[10px] font-mono font-bold text-orange-500/80">LAB_SESSION: ACTIVE</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/5 border border-yellow-500/10">
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+            <span className="text-[10px] font-mono font-bold text-yellow-500/80">LAB_SESSION: ACTIVE</span>
           </div>
+          <GlassButton variant="secondary" size="sm" className="w-9 h-9 p-0 rounded-xl" onClick={() => setInspectorOpen(o => !o)}>
+            <PanelRightOpen className={`w-4 h-4 transition-colors ${inspectorOpen ? 'text-yellow-400' : 'text-white/60'}`} />
+          </GlassButton>
           <GlassButton variant="secondary" size="sm" className="w-9 h-9 p-0 rounded-xl" onClick={handleReset}>
             <RotateCcw className="w-4 h-4 text-white/60" />
           </GlassButton>
@@ -286,15 +292,16 @@ export const GodRealmStandalone: React.FC = () => {
 
       {/* ── Workbench Content ── */}
       <main className="flex-1 flex overflow-hidden relative">
-        {/* Background Ambient Elements */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-500/5 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
+        {/* Background Ambient Elements — Divine Light */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-yellow-500/8 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/3 right-1/3 w-[300px] h-[300px] bg-cyan-500/3 blur-[100px] rounded-full pointer-events-none" />
 
         {/* ── Left: Plugin Display ── */}
-        <section className={`flex-1 flex items-center justify-center p-12 transition-all duration-500 ${activeTab !== 'Plugin' ? 'opacity-40 scale-95' : ''}`}>
+        <section className={`flex-1 flex items-center justify-center p-6 transition-all duration-500 ${activeTab !== 'Plugin' ? 'opacity-40 scale-95' : ''}`}>
           <div className="relative">
-            {/* Stage Lighting */}
-            <div className="absolute -inset-20 bg-orange-500/10 blur-[100px] rounded-full opacity-50" />
+            {/* Stage Lighting — Divine Radiance */}
+            <div className="absolute -inset-20 bg-yellow-500/8 blur-[100px] rounded-full opacity-50" />
             
             <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.9)] rounded-2xl overflow-hidden border border-white/10">
               <VstgodthegodrealmPlugin 
@@ -331,8 +338,36 @@ export const GodRealmStandalone: React.FC = () => {
           </div>
         </section>
 
-        {/* ── Right Panel: Inspector ── */}
-        <aside className="w-[450px] flex flex-col bg-black/40 border-l border-white/5 backdrop-blur-3xl z-10">
+        {/* ── Slide-Out Inspector Drawer ── */}
+        <AnimatePresence>
+        {inspectorOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black/40 z-30"
+              onClick={() => setInspectorOpen(false)}
+            />
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="absolute right-0 top-0 bottom-0 w-[420px] flex flex-col bg-[#0a0a0f]/95 border-l border-white/10 backdrop-blur-3xl z-40 shadow-[-20px_0_60px_rgba(0,0,0,0.6)]"
+            >
+              {/* Drawer Header */}
+              <div className="h-12 flex items-center justify-between px-5 border-b border-white/5 shrink-0">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 flex items-center gap-2">
+                  <Settings className="w-3.5 h-3.5 text-yellow-400" /> Engine Inspector
+                </span>
+                <button onClick={() => setInspectorOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/60 hover:bg-white/5 transition-all">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
            {/* Tab Content */}
            <div className="flex-1 overflow-hidden flex flex-col">
               <AnimatePresence mode="wait">
@@ -346,7 +381,7 @@ export const GodRealmStandalone: React.FC = () => {
                   >
                     <div className="flex items-center justify-between mb-6">
                        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 flex items-center gap-2">
-                         <Terminal className="w-4 h-4 text-orange-400" /> Real-time Stream
+                         <Terminal className="w-4 h-4 text-yellow-400" /> Real-time Stream
                        </h3>
                        <span className="text-[10px] font-mono text-white/20">{logs.length} EVENTS</span>
                     </div>
@@ -367,7 +402,7 @@ export const GodRealmStandalone: React.FC = () => {
                            >
                               <div className="flex items-center gap-3">
                                  <span className="text-[9px] font-mono text-white/20">{log.time}</span>
-                                 <span className="text-[10px] font-bold text-orange-300 uppercase tracking-wider">{log.param}</span>
+                                 <span className="text-[10px] font-bold text-yellow-300 uppercase tracking-wider">{log.param}</span>
                               </div>
                               <span className="text-[10px] font-mono font-bold text-emerald-400">
                                 {typeof log.value === 'number' ? log.value.toFixed(2) : String(log.value)}
@@ -389,7 +424,7 @@ export const GodRealmStandalone: React.FC = () => {
                    >
                      <div className="flex items-center justify-between mb-6">
                         <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40 flex items-center gap-2">
-                          <Database className="w-4 h-4 text-orange-400" /> State Matrix
+                          <Database className="w-4 h-4 text-yellow-400" /> State Matrix
                         </h3>
                         <GlassButton variant="ghost" size="sm" className="h-7 text-[9px] px-2" onClick={() => {
                           const blob = new Blob([JSON.stringify(godPlugin?.parameterValues, null, 2)], { type: 'application/json' });
@@ -455,7 +490,7 @@ export const GodRealmStandalone: React.FC = () => {
                                   </div>
                                   <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
                                     <motion.div 
-                                      className={`h-full ${exportStatus === 'complete' ? 'bg-emerald-500' : 'bg-orange-500'} shadow-[0_0_15px_rgba(255,102,0,0.3)] transition-all duration-300 ease-out relative`}
+                                      className={`h-full ${exportStatus === 'complete' ? 'bg-emerald-500' : 'bg-yellow-500'} shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all duration-300 ease-out relative`}
                                       initial={{ width: 0 }}
                                       animate={{ width: `${exportProgress}%` }}
                                     >
@@ -514,9 +549,9 @@ export const GodRealmStandalone: React.FC = () => {
                                 </div>
                              </div>
                              
-                             <div className="flex-1 p-5 overflow-y-auto font-mono text-[10px] space-y-1.5 glass-scroll pr-2 selection:bg-orange-500/30">
+                             <div className="flex-1 p-5 overflow-y-auto font-mono text-[10px] space-y-1.5 glass-scroll pr-2 selection:bg-yellow-500/30">
                                 {selectedFile ? (
-                                  <div className="whitespace-pre text-orange-200/90 leading-relaxed">
+                                  <div className="whitespace-pre text-yellow-200/90 leading-relaxed">
                                     {selectedFile.content}
                                   </div>
                                 ) : exportLogs.length === 0 ? (
@@ -531,7 +566,7 @@ export const GodRealmStandalone: React.FC = () => {
                                           key={i} 
                                           initial={{ opacity: 0, x: -5 }}
                                           animate={{ opacity: 1, x: 0 }}
-                                          className={`flex gap-3 ${log.includes('[SUCCESS]') ? 'text-emerald-400' : log.includes('[FILE]') ? 'text-amber-400/80' : 'text-orange-300/80'}`}
+                                          className={`flex gap-3 ${log.includes('[SUCCESS]') ? 'text-emerald-400' : log.includes('[FILE]') ? 'text-amber-400/80' : 'text-yellow-300/80'}`}
                                         >
                                            <span className="opacity-20 shrink-0 font-mono w-4 text-right">{i + 1}</span>
                                            <span className="break-all">{log}</span>
@@ -549,7 +584,7 @@ export const GodRealmStandalone: React.FC = () => {
                                               onClick={() => setSelectedFile(file)}
                                               className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-left group"
                                             >
-                                              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                                              <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-400 group-hover:scale-110 transition-transform">
                                                 <Box className="w-4 h-4" />
                                               </div>
                                               <div className="flex flex-col min-w-0">
@@ -626,7 +661,7 @@ export const GodRealmStandalone: React.FC = () => {
                     <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest flex items-center gap-2">
                        <Activity className="w-3.5 h-3.5" /> Engine Metrics
                     </span>
-                    <span className={`text-[10px] font-mono font-bold ${cpuPct > 60 ? 'text-amber-400' : 'text-orange-400'}`}>
+                    <span className={`text-[10px] font-mono font-bold ${cpuPct > 60 ? 'text-amber-400' : 'text-yellow-400'}`}>
                       {cpuPct > 80 ? 'HOT' : cpuPct > 60 ? 'WARM' : 'OPTIMAL'}
                     </span>
                  </div>
@@ -641,7 +676,7 @@ export const GodRealmStandalone: React.FC = () => {
                           <motion.div 
                             animate={{ width: `${Math.min(100, cpuPct * 10)}%` }}
                             transition={{ duration: 0.15, ease: 'linear' }}
-                            className={`h-full ${cpuPct > 80 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : cpuPct > 60 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(255,102,0,0.5)]'}`}
+                            className={`h-full ${cpuPct > 80 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : cpuPct > 60 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.5)]'}`}
                           />
                        </div>
                     </div>
@@ -665,14 +700,17 @@ export const GodRealmStandalone: React.FC = () => {
                  </div>
               </div>
            </div>
-        </aside>
+            </motion.aside>
+          </>
+        )}
+        </AnimatePresence>
       </main>
 
       {/* ── Global Footer — Live Status ── */}
-      <footer className="h-10 flex items-center justify-between px-8 bg-[#09090b] border-t border-white/5 text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">
+      <footer className="h-10 flex items-center justify-between px-8 bg-[#0A0824] border-t border-yellow-500/10 text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">
         <div className="flex gap-8">
           <span className="flex items-center gap-2">ANTIGRAVITY_CORE::CONNECTED</span>
-          <span className="flex items-center gap-2 text-orange-400/60">STANDALONE_MODE::ENABLED</span>
+          <span className="flex items-center gap-2 text-yellow-400/60">STANDALONE_MODE::ENABLED</span>
         </div>
         <div className="flex gap-8">
           <span className="text-white/30">{(sampleRate / 1000).toFixed(1)}kHz / {bufferSize}smp</span>

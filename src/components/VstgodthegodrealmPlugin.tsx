@@ -22,7 +22,7 @@ import { GodRealmSampleChopper } from './GodRealmSampleChopper';
 import { SamplerEngine } from './SamplerEngine';
 import { KitExporter } from './KitExporter';
 import { PresetLibrarySidebar } from './PresetLibrarySidebar';
-import { CelestialBrowser } from './CelestialBrowser';
+import { DivineArchive } from './DivineArchive';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
 import { FluidSlider } from './FluidSlider';
@@ -36,6 +36,7 @@ import { SacredGeometryBackground } from './ui/SacredGeometryBackground';
 import { HarmonicPantheon } from './HarmonicPantheon';
 import { EternalPresetVault } from './EternalPresetVault';
 import { RitualOfExport } from './RitualOfExport';
+import { ElectricPantheon } from './electricPantheon/ElectricPantheon';
 import type { DivineRelic } from '@/archive/divineArchive';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
 import type { Midi2NoteEvent } from '@/native/bridge';
@@ -72,10 +73,11 @@ const TABS = [
   { id: 'Pantheon', label: 'HARMONIC PANTHEON' },
   { id: 'Sample Chopper', label: 'CHOPPER' },
   { id: 'Divine Archive', label: 'ARCHIVE' },
+  { id: 'Sequencer', label: 'SACRED SEQUENCER' },
   { id: 'Mastering', label: 'CELESTIAL FORGE' },
-  { id: 'Performance', label: 'SEQUENCER' },
+  { id: 'Export', label: 'RITUAL OF EXPORT' },
   { id: 'Preset Vault', label: 'PRESET VAULT' },
-  { id: 'The Ritual', label: 'THE RITUAL' },
+  { id: 'Electric Pantheon', label: 'ELECTRIC PANTHEON' },
 ];
 
 /* ─── Initial Data ─── */
@@ -130,6 +132,10 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   parameterValues = {},
 }) => {
   const activeTab = parameterValues.activeTab || 'Preset Vault';
+
+  /* ─── Sequencer Drawer & Export Overlay State ─── */
+  const [isSequencerOpen, setIsSequencerOpen] = useState(false);
+  const [isExportOverlayOpen, setIsExportOverlayOpen] = useState(false);
 
   /* ─── Phase 4: Realm Transition State ─── */
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -664,12 +670,13 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           />
         )}
 
-        {/* ─── DIVINE ARCHIVE TAB (NEW) ─── */}
+        {/* ─── DIVINE ARCHIVE TAB (V2) ─── */}
         {displayedTab === 'Divine Archive' && (
           <div className="vg-panel vg-archive h-full overflow-hidden">
-            <CelestialBrowser 
+            <DivineArchive
+              engineRef={{ current: { ctx: engine.audioCtx.current, init: async () => {}, loadSampleByPath: (path: string, pad: number) => { handleArchiveRecall(path, pad, { name: path.split('/').pop()?.replace(/\.[^.]+$/, '') || 'Sample', roomName: 'Archive', sourceCategory: 'Archive', format: 'ogg' } as any); } } }}
               activePad={activePad}
-              onLoadToPad={handleArchiveRecall}
+              onActivePadChange={(pad: number) => update('activePad', pad)}
             />
           </div>
         )}
@@ -702,13 +709,40 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           />
         )}
 
-        {/* ─── PERFORMANCE TAB (The Sacred Sequencer) ─── */}
-        {displayedTab === 'Performance' && (
-          <SacredSequencerV2
+        {/* ─── SACRED SEQUENCER TAB ─── */}
+        {displayedTab === 'Sequencer' && (
+          <div className="vg-panel h-full overflow-hidden p-4">
+            <SacredSequencerV2
+              parameterValues={parameterValues}
+              update={update}
+              engine={engine}
+              buffers={buffers}
+            />
+          </div>
+        )}
+
+        {/* ─── RITUAL OF EXPORT TAB ─── */}
+        {displayedTab === 'Export' && (
+          <div className="vg-panel h-full overflow-hidden p-4">
+            <RitualOfExport
+              parameterValues={parameterValues}
+              update={update}
+              analyser={masterChain.current?.analyser || null}
+              engine={engine}
+              buffers={buffers}
+              onExportComplete={() => {
+                showMessage('RITUAL EXPORT COMPLETE');
+              }}
+            />
+          </div>
+        )}
+
+        {/* ─── ELECTRIC PANTHEON TAB ─── */}
+        {displayedTab === 'Electric Pantheon' && (
+          <ElectricPantheon
             parameterValues={parameterValues}
             update={update}
             engine={engine}
-            buffers={buffers}
           />
         )}
 
@@ -729,7 +763,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                 onSaveAsPreset={handleSaveAsPreset}
                 onDeletePreset={() => {
                   if (confirm('Banish this ritual from the vault forever?')) {
-                    const next = presets.filter((_, i) => i !== selectedPreset);
+                    const next = presets.filter((_: any, i: number) => i !== selectedPreset);
                     setPresets(next);
                     if (selectedPreset >= next.length) update('selectedPreset', Math.max(0, next.length - 1));
                   }
@@ -756,44 +790,115 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             />
           </div>
         )}
-        {/* ─── THE RITUAL (EXPORT) TAB ─── */}
-        {displayedTab === 'The Ritual' && (
-          <RitualOfExport 
-            parameterValues={parameterValues}
-            update={update}
-            analyser={masterChain.current?.analyser || null}
-            engine={engine}
-            buffers={buffers}
-            onExportComplete={() => showMessage('RITUAL EXPORT COMPLETE')}
-          />
-        )}
+
         </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* ═══════════ FOOTER BAR ═══════════ */}
+      {/* ═══════════ SEQUENCER DRAWER (Collapsible Panel) ═══════════ */}
+      <AnimatePresence>
+        {isSequencerOpen && (
+          <motion.div
+            className="vg-sequencer-drawer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 340, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', bounce: 0.1, duration: 0.5 }}
+          >
+            {/* Drag Handle */}
+            <div className="vg-drawer-handle">
+              <div className="vg-drawer-handle-bar" />
+              <span className="vg-drawer-handle-label">SACRED SEQUENCER</span>
+              <button
+                className="vg-drawer-close"
+                onClick={() => setIsSequencerOpen(false)}
+                aria-label="Close Sequencer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="vg-drawer-content">
+              <SacredSequencerV2
+                parameterValues={parameterValues}
+                update={update}
+                engine={engine}
+                buffers={buffers}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════ EXPORT OVERLAY (Modal) ═══════════ */}
+      <AnimatePresence>
+        {isExportOverlayOpen && (
+          <motion.div
+            className="vg-export-overlay-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={() => setIsExportOverlayOpen(false)}
+          >
+            <motion.div
+              className="vg-export-overlay-panel"
+              initial={{ opacity: 0, scale: 0.92, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 30 }}
+              transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="vg-export-overlay-close"
+                onClick={() => setIsExportOverlayOpen(false)}
+                aria-label="Close Export"
+              >
+                ✕
+              </button>
+              <RitualOfExport
+                parameterValues={parameterValues}
+                update={update}
+                analyser={masterChain.current?.analyser || null}
+                engine={engine}
+                buffers={buffers}
+                onExportComplete={() => {
+                  showMessage('RITUAL EXPORT COMPLETE');
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════ FOOTER BAR (Cleaned Up) ═══════════ */}
       <footer className="vg-footer">
         <div className="vg-footer-left">
-          <button className="vg-foot-btn" onClick={handleImportPreset}>📥 IMPORT PRESET</button>
-          <button className="vg-foot-btn" onClick={handleExportPreset}>📤 EXPORT PRESET</button>
-          <button className="vg-foot-btn" onClick={handleExportVault}>💾 BACKUP VAULT</button>
-          <button className="vg-foot-btn" onClick={handleImportVault}>🔄 RESTORE VAULT</button>
-          <button className="vg-foot-btn vg-foot-accent" style={{ position: 'relative', overflow: 'hidden' }} onClick={handleCloudSync}>
-            {isSyncing && <div className="vg-progress-scanner" />}
-            <span style={{ position: 'relative', zIndex: 1 }}>{isSyncing ? '⌛ SYNCING...' : '☁️ CLOUD SYNC'}</span>
+          <span className="vg-foot-status">ANTIGRAVITY_CORE::CONNECTED</span>
+          <span className="vg-foot-status">STANDALONE_MODE::ENABLED</span>
+          <span className="vg-foot-status">44.1KHZ / 512SMP</span>
+          <span className="vg-foot-status">{new Date().toISOString().slice(0, 10)}</span>
+          <span className="vg-foot-status">SYSTEM_STABLE</span>
+        </div>
+        <div className="vg-footer-center">
+          <button
+            className={`vg-foot-btn-action ${isSequencerOpen ? 'active' : ''}`}
+            onClick={() => setIsSequencerOpen(!isSequencerOpen)}
+          >
+            <span className="vg-foot-btn-icon">🎹</span>
+            <span>SEQUENCER</span>
           </button>
-          <span className="vg-sync-status">{isSyncing ? 'Alignment in progress...' : 'Synced 2 min ago'}</span>
+          <button
+            className={`vg-foot-btn-action vg-foot-accent ${isExportOverlayOpen ? 'active' : ''}`}
+            onClick={() => setIsExportOverlayOpen(true)}
+          >
+            <span className="vg-foot-btn-icon">⚡</span>
+            <span>EXPORT</span>
+          </button>
         </div>
         <div className="vg-footer-right">
           <div className="vg-foot-info">
             <span>PLUGIN INFO</span>
             <span className="vg-foot-sub">Version 1.0.0</span>
-          </div>
-          <button className="vg-foot-btn">📚 TUTORIALS</button>
-          <button className="vg-foot-btn">💬 JOIN DISCORD</button>
-          <div className="vg-foot-info">
-            <span>WEBSITE</span>
-            <span className="vg-foot-sub">payhip.com/sauceland</span>
           </div>
         </div>
       </footer>

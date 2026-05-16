@@ -167,8 +167,8 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
     ctx.fill();
 
     // 2. Selected Slice Highlight (Divine Aura)
-    if (selectedSlice !== null && sampleParams.slices[selectedSlice]) {
-      const slice = sampleParams.slices[selectedSlice];
+    if (selectedSlice !== null && safeSampleParams.slices[selectedSlice]) {
+      const slice = safeSampleParams.slices[selectedSlice];
       const startX = slice.start * width;
       const endX = slice.end * width;
       
@@ -234,17 +234,12 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
     });
 
     // 5. Reactive Analyzer Pulse
-    if (audioData.length > 0) {
-      const totalEnergy = audioData.reduce((a, b) => a + b, 0);
-      const avgEnergy = isFinite(totalEnergy / audioData.length) ? totalEnergy / audioData.length : 0;
-      
-      if (avgEnergy > 0.05) {
-        ctx.strokeStyle = `rgba(255, 102, 0, ${Math.min(0.8, avgEnergy * 0.8)})`;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 15]);
-        ctx.strokeRect(0, 0, width, height);
-        ctx.setLineDash([]);
-      }
+    if (audioData.energy > 0.05) {
+      ctx.strokeStyle = `rgba(255, 102, 0, ${Math.min(0.8, audioData.energy * 0.8)})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 15]);
+      ctx.strokeRect(0, 0, width, height);
+      ctx.setLineDash([]);
     }
 
   }, [buffer, selectedSlice, safeSampleParams.slices, audioData]);
@@ -362,7 +357,7 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
           <div className="flex flex-col gap-1 items-end">
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Flux Sensitivity</span>
-              <span className="text-[9px] font-mono text-[#ff6600] font-bold">{transientsRef.current.length} NODES</span>
+              <span className="text-[9px] font-mono text-[#FFD700] font-bold">{transientsRef.current.length} NODES</span>
             </div>
             <input 
               type="range" min="0" max="1" step="0.01" 
@@ -373,10 +368,10 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
                 // Real-time re-analysis for feedback
                 if (buffer) detectTransients(val);
               }}
-              className="w-32 h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-[#ff6600]"
+              className="w-32 h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-[#FFD700]"
             />
           </div>
-          <RelicButton onClick={() => detectTransients(transientSensitivity)} color="#ff6600">Analyze Transients</RelicButton>
+          <RelicButton onClick={() => detectTransients(transientSensitivity)} color="#FFD700">Analyze Transients</RelicButton>
           <RelicButton onClick={() => {
             const newSlice = { start: 0.1, end: 0.2, reverse: false, loop: false, volume: 1.0 };
             safeOnUpdateParam('slices', [...safeSampleParams.slices, newSlice]);
@@ -408,8 +403,8 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
               
               {safeSampleParams.loop && (
                 <>
-                  <Marker x={safeSampleParams.loopStart} color="#ff6600" label="CYCLE_START" onMouseDown={() => setDraggingMarker({ type: 'loopStart' })} isDragging={draggingMarker?.type === 'loopStart'} />
-                  <Marker x={safeSampleParams.loopEnd} color="#ff6600" label="CYCLE_END" onMouseDown={() => setDraggingMarker({ type: 'loopEnd' })} isDragging={draggingMarker?.type === 'loopEnd'} />
+                  <Marker x={safeSampleParams.loopStart} color="#FFD700" label="CYCLE_START" onMouseDown={() => setDraggingMarker({ type: 'loopStart' })} isDragging={draggingMarker?.type === 'loopStart'} />
+                  <Marker x={safeSampleParams.loopEnd} color="#FFD700" label="CYCLE_END" onMouseDown={() => setDraggingMarker({ type: 'loopEnd' })} isDragging={draggingMarker?.type === 'loopEnd'} />
                 </>
               )}
 
@@ -465,7 +460,7 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
                 <DivineToggle 
                   label="Inverted Karma" 
                   active={safeSampleParams.slices[selectedSlice]?.reverse} 
-                  color="#ff6600"
+                  color="#FFD700"
                   onClick={() => updateSlice(selectedSlice, 'reverse', !safeSampleParams.slices[selectedSlice]?.reverse)} 
                 />
                 
@@ -511,14 +506,14 @@ export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
           <DivineToggle 
             label="Global Cycle" 
             active={safeSampleParams.loop} 
-            color="#ff6600"
+            color="#FFD700"
             onClick={() => safeOnUpdateParam('loop', !safeSampleParams.loop)} 
           />
           
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-black text-[#a855f7] uppercase tracking-widest">Chronology</span>
             <button 
-              className={`px-8 py-3 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${safeSampleParams.reverse ? 'bg-[#ff6600]/10 border-[#ff6600]/50 text-[#ff6600] shadow-[0_0_15px_rgba(255,102,0,0.2)]' : 'bg-white/5 border-white/10 text-white/30 hover:text-white'}`}
+              className={`px-8 py-3 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${safeSampleParams.reverse ? 'bg-[#FFD700]/10 border-[#FFD700]/50 text-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.2)]' : 'bg-white/5 border-white/10 text-white/30 hover:text-white'}`}
               onClick={() => safeOnUpdateParam('reverse', !safeSampleParams.reverse)}
             >
               {safeSampleParams.reverse ? 'Retrograde' : 'Chronological'}

@@ -21,7 +21,7 @@ export const DivineSpectrometer: React.FC<DivineSpectrometerProps> = ({
   glowColor = 'rgba(255, 102, 0, 0.5)',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(undefined);
 
   useEffect(() => {
     const canvas = canvasRef.current;

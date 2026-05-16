@@ -11,7 +11,7 @@ import './RealmPortalTransition.css';
 
 /* ─── Realm Color Map ─── */
 const REALM_COLORS: Record<string, { primary: string; secondary: string; glyph: string }> = {
-  'Multi-Realm':    { primary: '#ff6600', secondary: '#ff9944', glyph: '⚒' },
+  'Multi-Realm':    { primary: '#FFD700', secondary: '#ff9944', glyph: '⚒' },
   'Effects':        { primary: '#a855f7', secondary: '#c084fc', glyph: '⚡' },
   'Sample Chopper': { primary: '#ef4444', secondary: '#f97316', glyph: '🗡' },
   'Divine Archive': { primary: '#eab308', secondary: '#fbbf24', glyph: '📜' },

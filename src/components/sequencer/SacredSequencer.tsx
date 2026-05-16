@@ -46,7 +46,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   useEffect(() => {
     // Only sync from JUCE when transport is active and step is valid
     if (juceIsPlaying && juceStep >= 0 && juceStep < state.stepCount) {
-      dispatch({ type: 'SET_STEP', step: juceStep % state.stepCount });
+      dispatch({ type: 'SET_CURRENT_STEP', step: juceStep % state.stepCount });
     }
   }, [juceStep, juceIsPlaying, state.stepCount, dispatch]);
 
@@ -193,14 +193,25 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   }, [dispatch, state.tracks, state.activePattern]);
 
   const handleGraphSetValue = useCallback((stepIndex: number, value: number) => {
-    const propMap: Record<SequencerState['activeGraphMode'], string> = {
+    // Note mode routes to SET_NOTE_MAP for synth tracks
+    if (state.activeGraphMode === 'note') {
+      dispatch({
+        type: 'SET_NOTE_MAP',
+        trackIndex: state.selectedTrack,
+        stepIndex,
+        note: Math.round(value),
+      });
+      return;
+    }
+
+    const propMap: Record<Exclude<SequencerState['activeGraphMode'], 'note'>, string> = {
       velocity: 'velocity',
       pitch: 'pitch',
       pan: 'pan',
       decay: 'decay',
       probability: 'probability',
     };
-    const prop = propMap[state.activeGraphMode];
+    const prop = propMap[state.activeGraphMode as Exclude<SequencerState['activeGraphMode'], 'note'>];
     let finalValue = value;
 
     // Normalize for pan and decay (stored as 0-1)
@@ -415,6 +426,18 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onClear={() => dispatch({ type: 'CLEAR_TRACK', trackIndex: i })}
             onToggleMute={() => dispatch({ type: 'TOGGLE_MUTE', trackIndex: i })}
             onToggleSolo={() => dispatch({ type: 'TOGGLE_SOLO', trackIndex: i })}
+            onSetSource={(trackIndex, sourceType, godId) =>
+              dispatch({ type: 'SET_TRACK_SOURCE', trackIndex, sourceType, godId })
+            }
+            onRename={(trackIndex, name) =>
+              dispatch({ type: 'RENAME_TRACK', trackIndex, name })
+            }
+            onSetColor={(trackIndex, color) =>
+              dispatch({ type: 'SET_TRACK_COLOR', trackIndex, color })
+            }
+            onDeleteTrack={(trackId) =>
+              dispatch({ type: 'REMOVE_TRACK', trackId })
+            }
           />
         ))}
       </div>
@@ -493,7 +516,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               ✕
             </button>
             <GodRealmSampleChopper
-              buffer={buffersRef.current[chopperTrackIndex]}
+              buffer={buffers[chopperTrackIndex]}
               trackIndex={chopperTrackIndex}
               analyser={masterChain.current?.analyser || null}
               sampleParams={state.tracks[chopperTrackIndex].sampleParams}

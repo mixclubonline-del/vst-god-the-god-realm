@@ -13,12 +13,12 @@ import { assetPersistence } from '@/services/assetPersistence';
 
 const MODULE_COLORS: Record<DSPModuleType, string> = {
   eq: '#ffcc00',        // Amber
-  compressor: '#ff6600',  // Ember Orange
+  compressor: '#FFD700',  // Ember Orange
   delay: '#ff9900',     // Deep Orange
   reverb: '#ff4400',    // Red-Orange
   distortion: '#ff2200', // Crimson Ember
   gain: '#ffaa00',      // Gold
-  chorus: '#ff8800',    // Bright Orange
+  chorus: '#FFA726',    // Bright Orange
   phaser: '#ff7700',    // Mid Orange
   limiter: '#cc3300',   // Dark Ember
   multi808: '#ff3d00',   // Sub Ember
@@ -65,6 +65,7 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number>(0);
   const dprRef = useRef<number>(1);
+  const initialBuildDoneRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
@@ -72,6 +73,8 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; id: string } | null>(null);
   const [vizMode, setVizMode] = useState<'waveform' | 'spectrum'>('waveform');
+  const [outputLevel, setOutputLevel] = useState(0); // 0–1 normalized RMS
+  const levelTimerRef = useRef<number>(0);
 
   // ── Initialize Engine ───────────────────────────────────────────────────
 
@@ -99,6 +102,13 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
 
   useEffect(() => {
     if (!engineRef.current || !isInitialized) return;
+
+    // Skip the first render after init — handlePlay already called buildGraph
+    if (!initialBuildDoneRef.current) {
+      initialBuildDoneRef.current = true;
+      return;
+    }
+
     const wasPlaying = engineRef.current.isPlaying;
     if (wasPlaying) {
       engineRef.current.stop();
@@ -298,7 +308,7 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
       // Reusable gradient for bars
       const barGrad = ctx.createLinearGradient(0, 0, 0, H);
       barGrad.addColorStop(0, '#ffcc00'); 
-      barGrad.addColorStop(0.3, '#ff6600'); 
+      barGrad.addColorStop(0.3, '#FFD700'); 
       barGrad.addColorStop(1, '#ff2200'); 
 
       // Draw bars
@@ -340,6 +350,35 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
     }
     return () => cancelAnimationFrame(animFrameRef.current);
   }, [isPlaying, drawVisualization]);
+
+  // ── Output Level Meter ───────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setOutputLevel(0);
+      return;
+    }
+
+    const tick = () => {
+      const engine = engineRef.current;
+      if (!engine) return;
+      const data = engine.getTimeDomainData();
+      if (data.length === 0) { setOutputLevel(0); return; }
+
+      // Compute RMS from time-domain data (byte values 0–255, center=128)
+      let sumSq = 0;
+      for (let i = 0; i < data.length; i++) {
+        const s = (data[i] - 128) / 128;
+        sumSq += s * s;
+      }
+      const rms = Math.sqrt(sumSq / data.length);
+      setOutputLevel(rms);
+      levelTimerRef.current = requestAnimationFrame(tick);
+    };
+
+    levelTimerRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(levelTimerRef.current);
+  }, [isPlaying]);
 
   // ── Transport Controls ────────────────────────────────────────────────
 
@@ -512,6 +551,31 @@ export const LiveChainPreview: React.FC<LiveChainPreviewProps> = ({
         </label>
       </div>
 
+      {/* ── Output Level Meter ────────────────────────────────────────── */}
+      {isPlaying && (
+        <div style={styles.levelMeterContainer}>
+          <span style={styles.levelLabel}>OUTPUT</span>
+          <div style={styles.levelTrack}>
+            <div
+              style={{
+                ...styles.levelFill,
+                width: `${Math.min(100, outputLevel * 200)}%`,
+                background: outputLevel > 0.7
+                  ? '#ff2200'
+                  : outputLevel > 0.3
+                  ? 'linear-gradient(90deg, #FFD700, #ffcc00)'
+                  : 'linear-gradient(90deg, #22cc44, #66ff88)',
+              }}
+            />
+          </div>
+          <span style={styles.levelDb}>
+            {outputLevel > 0.001
+              ? `${(20 * Math.log10(outputLevel)).toFixed(1)} dB`
+              : '-∞ dB'}
+          </span>
+        </div>
+      )}
+
       {/* ── Module Bypass Strip ────────────────────────────────────── */}
       <div style={styles.bypassStrip}>
         {chain.map((mod, i) => (
@@ -579,7 +643,7 @@ const styles: Record<string, React.CSSProperties> = {
   headerTitle: {
     fontSize: 11,
     fontWeight: 900,
-    color: '#ff6600',
+    color: '#FFD700',
     letterSpacing: '0.15em',
     textTransform: 'uppercase' as const,
     flex: 1,
@@ -601,7 +665,7 @@ const styles: Record<string, React.CSSProperties> = {
   vizBtnActive: {
     background: 'rgba(255, 102, 0, 0.15)',
     borderColor: 'rgba(255, 102, 0, 0.4)',
-    color: '#ff6600',
+    color: '#FFD700',
   },
   canvas: {
     width: '100%',
@@ -618,7 +682,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 12,
   },
   playBtn: {
-    background: 'linear-gradient(135deg, #ff6600, #ff4400)',
+    background: 'linear-gradient(135deg, #FFD700, #ff4400)',
     color: '#000',
     border: 'none',
     borderRadius: 8,
@@ -646,7 +710,7 @@ const styles: Record<string, React.CSSProperties> = {
   loopBtnActive: {
     background: 'rgba(255, 102, 0, 0.12)',
     borderColor: 'rgba(255, 102, 0, 0.3)',
-    color: '#ff6600',
+    color: '#FFD700',
   },
   toneGroup: {
     display: 'flex',
@@ -666,7 +730,7 @@ const styles: Record<string, React.CSSProperties> = {
   toneBtnActive: {
     background: 'rgba(255, 102, 0, 0.1)',
     borderColor: 'rgba(255, 102, 0, 0.3)',
-    color: '#ff6600',
+    color: '#FFD700',
   },
   uploadLabel: {
     background: 'rgba(255,255,255,0.04)',
@@ -724,5 +788,43 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     color: '#666',
     margin: 0,
+  },
+
+  // ── Output Level Meter ──────────────────────────────────────────────────
+  levelMeterContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '8px 0',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
+  },
+  levelLabel: {
+    fontSize: 8,
+    fontWeight: 900,
+    color: '#888',
+    letterSpacing: '0.12em',
+    minWidth: 42,
+    textTransform: 'uppercase' as const,
+  },
+  levelTrack: {
+    flex: 1,
+    height: 6,
+    background: 'rgba(255,255,255,0.06)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative' as const,
+  },
+  levelFill: {
+    height: '100%',
+    borderRadius: 3,
+    transition: 'width 60ms linear',
+    boxShadow: '0 0 6px rgba(255,215,0,0.3)',
+  },
+  levelDb: {
+    fontSize: 9,
+    fontFamily: 'monospace',
+    color: '#FFD700',
+    minWidth: 52,
+    textAlign: 'right' as const,
   },
 };

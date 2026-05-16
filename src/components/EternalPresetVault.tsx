@@ -83,7 +83,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
       <aside className="w-64 glass-panel bg-black/40 flex flex-col border-r border-white/5">
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded bg-orange-500/20 flex items-center justify-center text-orange-500">
+            <div className="w-8 h-8 rounded bg-yellow-500/20 flex items-center justify-center text-yellow-500">
               <Database size={16} />
             </div>
             <div>
@@ -93,12 +93,12 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
           </div>
 
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-orange-500 transition-colors" size={12} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-500 transition-colors" size={12} />
             <input 
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/60 border border-white/10 rounded-full pl-9 pr-4 py-2 text-[10px] text-white placeholder:text-white/20 focus:border-orange-500/40 outline-none transition-all"
+              className="w-full bg-black/60 border border-white/10 rounded-full pl-9 pr-4 py-2 text-[10px] text-white placeholder:text-white/20 focus:border-yellow-500/40 outline-none transition-all"
               placeholder="Search rituals..."
             />
           </div>
@@ -130,7 +130,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
           <div>
             <div className="flex items-center justify-between mb-3 ml-1">
               <h4 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Semantic DNA</h4>
-              <Sparkles size={10} className="text-orange-500/40" />
+              <Sparkles size={10} className="text-yellow-500/40" />
             </div>
             <div className="flex flex-wrap gap-1.5">
               {allTags.map(tag => (
@@ -139,7 +139,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                   className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter transition-all ${
                     selectedTag === tag 
-                      ? 'bg-orange-500 text-black shadow-[0_0_10px_rgba(255,102,0,0.4)]' 
+                      ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(255,215,0,0.4)]' 
                       : 'bg-white/5 text-white/30 hover:bg-white/10 hover:text-white/60'
                   }`}
                 >
@@ -151,11 +151,11 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
         </div>
 
         {/* Cloud Sync Status */}
-        <div className="p-4 bg-orange-500/5 border-t border-white/5">
+        <div className="p-4 bg-yellow-500/5 border-t border-white/5">
           <button 
             onClick={onCloudSync}
             disabled={isSyncing}
-            className="w-full group relative flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-orange-500/20 bg-orange-500/10 hover:bg-orange-500/20 transition-all overflow-hidden"
+            className="w-full group relative flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/20 bg-yellow-500/10 hover:bg-yellow-500/20 transition-all overflow-hidden"
           >
             {isSyncing && (
               <motion.div 
@@ -164,8 +164,8 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                 transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
               />
             )}
-            <Cloud size={16} className={`${isSyncing ? 'animate-pulse' : 'group-hover:scale-110'} transition-transform text-orange-500`} />
-            <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">
+            <Cloud size={16} className={`${isSyncing ? 'animate-pulse' : 'group-hover:scale-110'} transition-transform text-yellow-500`} />
+            <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.2em]">
               {isSyncing ? 'Syncing to Heaven...' : 'Cloud Ritual Sync'}
             </span>
           </button>
@@ -176,7 +176,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
       <main className="flex-1 glass-panel bg-black/20 flex flex-col relative overflow-hidden">
         {/* Ambient background effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-600/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
@@ -190,7 +190,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
           </div>
           <div className="flex gap-2">
             <button className="vg-btn vg-btn-ghost px-4 gap-2" onClick={() => setShowHistory(!showHistory)}>
-              <History size={14} className={showHistory ? 'text-orange-500' : ''} />
+              <History size={14} className={showHistory ? 'text-yellow-500' : ''} />
               <span className="text-[10px]">HISTORY</span>
             </button>
             <button className="vg-btn vg-btn-primary px-6 gap-2" onClick={onSaveAsPreset}>
@@ -216,7 +216,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                     onClick={() => onSelectPreset(idx)}
                     className={`relative group cursor-pointer rounded-2xl border transition-all duration-300 h-40 overflow-hidden ${
                       isSelected 
-                        ? 'bg-orange-500/10 border-orange-500/40 shadow-[0_0_40px_rgba(255,102,0,0.15)] ring-1 ring-orange-500/20' 
+                        ? 'bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_40px_rgba(255,215,0,0.15)] ring-1 ring-yellow-500/20' 
                         : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.05]'
                     }`}
                   >
@@ -228,26 +228,26 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                             fill="none" 
                             stroke="currentColor" 
                             strokeWidth="2" 
-                            className={isSelected ? 'text-orange-500' : 'text-white'}
+                            className={isSelected ? 'text-yellow-500' : 'text-white'}
                           />
                        </svg>
                     </div>
 
                     <div className="p-5 h-full flex flex-col justify-between relative z-10">
                       <div className="flex justify-between items-start">
-                        <div className={`p-2 rounded-lg ${isSelected ? 'bg-orange-500 text-black' : 'bg-white/5 text-white/40'} transition-colors`}>
+                        <div className={`p-2 rounded-lg ${isSelected ? 'bg-yellow-500 text-black' : 'bg-white/5 text-white/40'} transition-colors`}>
                            <Layers size={14} />
                         </div>
                         <button 
                           onClick={(e) => { e.stopPropagation(); onToggleFavorite(idx); }}
-                          className={`${preset.fav ? 'text-orange-500' : 'text-white/10 hover:text-white/40'} transition-colors`}
+                          className={`${preset.fav ? 'text-yellow-500' : 'text-white/10 hover:text-white/40'} transition-colors`}
                         >
                           <Heart size={14} fill={preset.fav ? 'currentColor' : 'none'} />
                         </button>
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-black text-white tracking-wide truncate mb-1 group-hover:text-orange-500 transition-colors">
+                        <h4 className="text-sm font-black text-white tracking-wide truncate mb-1 group-hover:text-yellow-500 transition-colors">
                           {preset.name}
                         </h4>
                         <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                             <Star 
                               key={i} 
                               size={8} 
-                              className={i < preset.rating ? 'text-orange-500' : 'text-white/5'} 
+                              className={i < preset.rating ? 'text-yellow-500' : 'text-white/5'} 
                               fill={i < preset.rating ? 'currentColor' : 'none'} 
                             />
                           ))}
@@ -276,7 +276,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
 
                     {/* Highlight corner */}
                     {isSelected && (
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rotate-45 transform translate-x-3 -translate-y-3 shadow-lg" />
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rotate-45 transform translate-x-3 -translate-y-3 shadow-lg" />
                     )}
                   </motion.div>
                 );
@@ -297,7 +297,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <History size={18} className="text-orange-500" />
+                  <History size={18} className="text-yellow-500" />
                   <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Ritual History</h3>
                 </div>
                 <button onClick={() => setShowHistory(false)} className="text-white/20 hover:text-white">✕</button>
@@ -307,7 +307,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                  {[
                    { action: 'Harmonic Shift', time: '2m ago', icon: Zap, color: 'text-blue-400' },
                    { action: 'Portal Transition', time: '12m ago', icon: Globe, color: 'text-purple-400' },
-                   { action: 'Relic Recall', time: '45m ago', icon: Database, color: 'text-orange-400' },
+                   { action: 'Relic Recall', time: '45m ago', icon: Database, color: 'text-yellow-400' },
                    { action: 'Soul Extraction', time: '1h ago', icon: Activity, color: 'text-red-400' },
                    { action: 'Void Compression', time: 'Yesterday', icon: ShieldCheck, color: 'text-emerald-400' },
                  ].map((step, i) => (
@@ -343,7 +343,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
               className="flex-1 flex flex-col p-6"
             >
               <div className="mb-8">
-                <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em] block mb-2">Sacred Specification</span>
+                <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.4em] block mb-2">Sacred Specification</span>
                 <h3 className="text-3xl font-black text-white tracking-tighter mb-4">{selectedPreset.name}</h3>
                 
                 <div className="flex flex-wrap gap-2">
@@ -360,10 +360,10 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
 
               {/* Spectral Footprint */}
               <div className="mb-8 p-4 rounded-2xl bg-black/40 border border-white/5 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex justify-between items-center mb-4">
                    <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Spectral Footprint</h4>
-                   <Activity size={12} className="text-orange-500/60" />
+                   <Activity size={12} className="text-yellow-500/60" />
                 </div>
                 <div className="h-24 flex items-end gap-[2px]">
                    {Array.from({ length: 32 }).map((_, i) => {
@@ -373,7 +373,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                          key={i}
                          initial={{ height: 0 }}
                          animate={{ height: `${height}%` }}
-                         className={`flex-1 rounded-t-sm ${i % 4 === 0 ? 'bg-orange-500/60' : 'bg-white/10'}`}
+                         className={`flex-1 rounded-t-sm ${i % 4 === 0 ? 'bg-yellow-500/60' : 'bg-white/10'}`}
                        />
                      );
                    })}

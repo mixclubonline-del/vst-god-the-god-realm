@@ -83,8 +83,12 @@ export const SacredStep: React.FC<SacredStepProps> = React.memo(({
   const renderRetrigSegments = () => {
     if (!step.retrigRate || !step.enabled) return null;
     
+    const divisionMap: Record<string, number> = {
+      '1/2': 2, '1/4': 4, '1/8': 8, '1/16': 16, '1/32': 32
+    };
+    const count = divisionMap[step.retrigRate] ?? 2;
     const segments = [];
-    for (let i = 0; i < step.retrigRate; i++) {
+    for (let i = 0; i < count; i++) {
       segments.push(<div key={i} className="seq-step__segment" />);
     }
     

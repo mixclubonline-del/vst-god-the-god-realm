@@ -91,8 +91,8 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
       drawPath('#d946ef', 15, true, 18, 0.6, 1.5);
       
       // 3. Core Ember Lightning
-      drawPath('#ff6600', 8, false, 40, 0.9, 1.2);
-      drawPath('#ff6600', 8, true, 40, 0.9, 1.2);
+      drawPath('#FFD700', 8, false, 40, 0.9, 1.2);
+      drawPath('#FFD700', 8, true, 40, 0.9, 1.2);
       
       // 4. White Hot Center
       ctx.globalCompositeOperation = 'lighter';
@@ -132,18 +132,18 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
             {/* Glow Line */}
             <line 
               x1={`${pos * 100}%`} y1="0" x2={`${pos * 100}%`} y2="100%" 
-              stroke={draggingMarker === i ? "#ff6600" : "#a855f7"} 
+              stroke={draggingMarker === i ? "#FFD700" : "#a855f7"} 
               strokeWidth={draggingMarker === i ? "3" : "1.5"}
               strokeOpacity={0.8}
               className="transition-all"
-              style={{ filter: `drop-shadow(0 0 8px ${draggingMarker === i ? "#ff6600" : "#a855f7"})` }}
+              style={{ filter: `drop-shadow(0 0 8px ${draggingMarker === i ? "#FFD700" : "#a855f7"})` }}
             />
             
             {/* Marker Handle */}
             <rect 
               x={pos * 100 + '%'} y="100%" width="28" height="24" rx="6" 
               transform="translate(-14, -32)"
-              fill={draggingMarker === i ? "#ff6600" : "rgba(20,10,40,0.95)"}
+              fill={draggingMarker === i ? "#FFD700" : "rgba(20,10,40,0.95)"}
               stroke={draggingMarker === i ? "#ffaa00" : "#a855f7"}
               strokeWidth="1.5"
               className="transition-all shadow-xl"
@@ -159,9 +159,9 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
             {/* Top Indicator */}
             <circle 
               cx={`${pos * 100}%`} cy="10" r="4"
-              fill={draggingMarker === i ? "#ff6600" : "#a855f7"}
+              fill={draggingMarker === i ? "#FFD700" : "#a855f7"}
               className="transition-all"
-              style={{ filter: `drop-shadow(0 0 4px ${draggingMarker === i ? "#ff6600" : "#a855f7"})` }}
+              style={{ filter: `drop-shadow(0 0 4px ${draggingMarker === i ? "#FFD700" : "#a855f7"})` }}
             />
           </g>
         ))}

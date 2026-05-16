@@ -16,7 +16,7 @@ export const SacredVisualizer: React.FC<SacredVisualizerProps> = ({
   color = '#F5B041', // Default Ember Amber
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(undefined);
 
   useEffect(() => {
     const canvas = canvasRef.current;

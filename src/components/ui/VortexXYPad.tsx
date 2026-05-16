@@ -131,8 +131,8 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
               </radialGradient>
            </defs>
            <circle cx={`${x}%`} cy={`${y}%`} r={20 + rms * 40} fill="url(#vortexGrad)" />
-           <line x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" stroke="rgba(255,102,0,0.1)" strokeWidth="1" />
-           <line x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} stroke="rgba(255,102,0,0.1)" strokeWidth="1" />
+           <line x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
+           <line x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
         </svg>
       </div>
     </div>

@@ -13,6 +13,7 @@
   
   position: relative;
   width: 100%;
+  max-width: 100vw;
   height: 100%;
   background-color: var(--god-obsidian);
   background-image: 
@@ -38,6 +39,18 @@
   background-position: center;
   background-blend-mode: overlay, normal, multiply;
   opacity: 1;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Glass Refraction Layer — subtle depth distortion over the background */
+.vg-celestial-forge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(8, 5, 4, 0.35) 100%);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
   z-index: 0;
   pointer-events: none;
 }
@@ -84,23 +97,27 @@
 .vg-forge-main {
   flex: 1;
   display: flex;
-  padding: 32px 40px;
-  gap: 40px;
+  padding: 24px 24px;
+  gap: 20px;
   z-index: 5;
   position: relative;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .vg-forge-rail {
-  width: 240px;
+  width: 170px;
+  min-width: 150px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   z-index: 10;
   position: relative;
   background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.3) 100%);
   border-left: 1px solid rgba(255,255,255,0.08);
   border-right: 1px solid rgba(0,0,0,0.4);
-  padding: 32px 20px;
+  padding: 20px 10px;
   border-radius: 8px;
   box-shadow: 
     inset 0 0 40px rgba(0,0,0,0.5),
@@ -118,11 +135,13 @@
 
 .vg-forge-viz-area {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: visible;
 }
 
 /* Glass Panels - Enhanced Premium Tactile Glass */
@@ -171,8 +190,9 @@
 /* Sun Disk Styles */
 .vg-sun-disk-wrap {
   position: relative;
-  width: 440px;
-  height: 440px;
+  width: min(400px, 100%);
+  height: min(400px, 100%);
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,7 +201,7 @@
 .vg-sun-disk-svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 24px var(--god-primary-glow));
+  filter: drop-shadow(0 0 32px var(--god-primary-glow));
 }
 
 .vg-sun-disk-core {
