@@ -40,6 +40,8 @@ import { ElectricPantheon } from './electricPantheon/ElectricPantheon';
 import type { DivineRelic } from '@/archive/divineArchive';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
 import type { Midi2NoteEvent } from '@/native/bridge';
+import { GodRealmSamplerEngine } from '@/services/samplerEngine';
+import { neuralInputBus } from '@/services/neuralInputBus';
 
 interface VstgodthegodrealmPluginProps {
   isOpen: boolean;
@@ -184,23 +186,70 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const [buffers, setBuffers] = useState<Record<number, AudioBuffer>>({});
   const [isBuffersLoaded, setIsBuffersLoaded] = useState(false);
 
-  // Load Samples globally
+  /* ─── God Realm Sampler Engine (86KB DSP Powerhouse) ─── */
+  const godEngine = useRef<GodRealmSamplerEngine | null>(null);
+
+  // Initialize the engine on mount, populate buffers from its manifest
   useEffect(() => {
-    if (!engine.audioCtx.current || isBuffersLoaded) return;
-    
-    const loadSamples = async () => {
+    if (isBuffersLoaded) return;
+
+    const boot = async () => {
       try {
-        const loadedBuffers = await sampleManager.loadKit(engine.audioCtx.current!);
+        const eng = new GodRealmSamplerEngine();
+        await eng.init();
+        godEngine.current = eng;
+
+        // Sync the engine's loaded buffers into React state for waveform rendering
+        const loadedBuffers: Record<number, AudioBuffer> = {};
+        for (let i = 0; i < 16; i++) {
+          const buf = eng.getBuffer(i);
+          if (buf) loadedBuffers[i] = buf;
+        }
         setBuffers(loadedBuffers);
         setIsBuffersLoaded(true);
-        console.log('Sacred Samples Loaded Globally');
+        console.log('[God Engine] Initialized — %d sacred samples loaded', Object.keys(loadedBuffers).length);
       } catch (err) {
-        console.error('Failed to load sacred samples', err);
+        console.error('[God Engine] Initialization failed, falling back to SampleManager', err);
+        // Graceful degradation: fall back to the simpler SampleManager loader
+        if (engine.audioCtx.current) {
+          try {
+            const fallbackBuffers = await sampleManager.loadKit(engine.audioCtx.current);
+            setBuffers(fallbackBuffers);
+            setIsBuffersLoaded(true);
+            console.log('[God Engine] Fallback: SampleManager loaded');
+          } catch (fallbackErr) {
+            console.error('[God Engine] Fallback also failed', fallbackErr);
+          }
+        }
       }
     };
 
-    loadSamples();
-  }, [engine.audioCtx, isBuffersLoaded]);
+    boot();
+
+    return () => {
+      if (godEngine.current) {
+        godEngine.current.dispose();
+        godEngine.current = null;
+        console.log('[God Engine] Disposed');
+      }
+    };
+  }, [isBuffersLoaded]);
+
+  /* ─── Neural Input Bus (Keyboard Z-M / MIDI Triggering) ─── */
+  useEffect(() => {
+    const unsubscribe = neuralInputBus.addListener((event) => {
+      const eng = godEngine.current;
+      if (!eng) return;
+
+      // Trigger the engine's polyphonic voice system
+      eng.playBufferPart(event.target, 0);
+
+      // Visual feedback: update activePad to reflect the triggered pad
+      if (onParameterChange) onParameterChange('activePad', event.target);
+    });
+
+    return unsubscribe;
+  }, [onParameterChange]);
   // ─── JUCE ↔ WebView Bidirectional State Bridge ───
   const bridgeState = useJuceBridge();
   const slotLevels = bridgeState.slotLevels;
@@ -311,7 +360,8 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     setTimeout(() => setVaultMessage(''), 3000);
   };
 
-  const handleArchiveRecall = useCallback((samplePath: string, padIndex: number, relic: DivineRelic) => {
+  const handleArchiveRecall = useCallback(async (samplePath: string, padIndex: number, relic: DivineRelic) => {
+    // 1. Update metadata in parameter state (existing behavior)
     update(`slotName_${padIndex}`, relic.name);
     update(`slotRoom_${padIndex}`, relic.roomName);
     update(`slotCategory_${padIndex}`, relic.sourceCategory);
@@ -319,6 +369,21 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     update(`slotFormat_${padIndex}`, relic.format.toUpperCase());
     update('lastArchiveRecall', `${relic.name} -> Pad ${padIndex + 1}`);
     showMessage(`Recalled ${relic.name} to Pad ${padIndex + 1}`);
+
+    // 2. Actually load the audio buffer into the engine AND React state
+    const eng = godEngine.current;
+    if (eng) {
+      try {
+        await eng.loadSampleByPath(samplePath, padIndex);
+        const loadedBuffer = eng.getBuffer(padIndex);
+        if (loadedBuffer) {
+          setBuffers(prev => ({ ...prev, [padIndex]: loadedBuffer }));
+          console.log(`[God Engine] Buffer loaded for Pad ${padIndex}: ${relic.name}`);
+        }
+      } catch (err) {
+        console.error(`[God Engine] Failed to load buffer for ${relic.name}:`, err);
+      }
+    }
   }, [update]);
 
   const handleLoadPreset = useCallback(() => {
@@ -354,11 +419,15 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
     const currentState = { params: parameterValues };
     const newPreset = {
+      id: `preset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name,
       type: 'User',
       author: 'User',
       rating: 5,
       fav: false,
+      tags: ['User', 'Custom'],
+      lastModified: new Date().toISOString(),
+      energyLevel: 40 + Math.random() * 60,
       state: currentState
     };
 
@@ -674,19 +743,21 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         {displayedTab === 'Divine Archive' && (
           <div className="vg-panel vg-archive h-full overflow-hidden">
             <DivineArchive
-              engineRef={{ current: { ctx: engine.audioCtx.current, init: async () => {}, loadSampleByPath: (path: string, pad: number) => { handleArchiveRecall(path, pad, { name: path.split('/').pop()?.replace(/\.[^.]+$/, '') || 'Sample', roomName: 'Archive', sourceCategory: 'Archive', format: 'ogg' } as any); } } }}
+              engineRef={godEngine}
               activePad={activePad}
               onActivePadChange={(pad: number) => update('activePad', pad)}
             />
           </div>
         )}
 
-        {/* ─── SAMPLE CHOPPER TAB (Phase 6 Polish) ─── */}
+        {/* ─── SAMPLE CHOPPER TAB (Original Prototype) ─── */}
         {displayedTab === 'Sample Chopper' && (
           <GodRealmSampleChopper
             activePad={activePad}
             parameterValues={parameterValues}
             update={update}
+            engineRef={godEngine}
+            buffer={buffers[activePad] || null}
           />
         )}
 
@@ -748,47 +819,44 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
         {/* ─── PRESET VAULT TAB ─── */}
         {displayedTab === 'Preset Vault' && (
-          <div className="flex h-full overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <EternalPresetVault 
+          <EternalPresetVault 
+            presets={presets}
+            selectedPresetIndex={selectedPreset}
+            onSelectPreset={(idx) => update('selectedPreset', idx)}
+            onToggleFavorite={(idx) => {
+              const next = [...presets];
+              next[idx] = { ...next[idx], fav: !next[idx].fav };
+              setPresets(next);
+            }}
+            onLoadPreset={handleLoadPreset}
+            onSavePreset={handleSavePreset}
+            onSaveAsPreset={handleSaveAsPreset}
+            onDeletePreset={() => {
+              if (confirm('Banish this ritual from the vault forever?')) {
+                const next = presets.filter((_: any, i: number) => i !== selectedPreset);
+                setPresets(next);
+                if (selectedPreset >= next.length) update('selectedPreset', Math.max(0, next.length - 1));
+              }
+            }}
+            onCloudSync={handleCloudSync}
+            isSyncing={isSyncing}
+            kitExporter={
+              <KitExporter 
+                kitName={kitName}
+                kitAuthor={kitAuthor}
+                kitDescription={kitDescription}
                 presets={presets}
-                selectedPresetIndex={selectedPreset}
-                onSelectPreset={(idx) => update('selectedPreset', idx)}
-                onToggleFavorite={(idx) => {
-                  const next = [...presets];
-                  next[idx] = { ...next[idx], fav: !next[idx].fav };
-                  setPresets(next);
+                includedPresets={includedPresets}
+                onToggleIncluded={(idx) => {
+                  const next = [...includedPresets];
+                  next[idx] = !next[idx];
+                  update('includedPresets', next);
                 }}
-                onSavePreset={handleSavePreset}
-                onSaveAsPreset={handleSaveAsPreset}
-                onDeletePreset={() => {
-                  if (confirm('Banish this ritual from the vault forever?')) {
-                    const next = presets.filter((_: any, i: number) => i !== selectedPreset);
-                    setPresets(next);
-                    if (selectedPreset >= next.length) update('selectedPreset', Math.max(0, next.length - 1));
-                  }
-                }}
-                onCloudSync={handleCloudSync}
-                isSyncing={isSyncing}
+                onExport={handleExportKit}
+                update={update}
               />
-            </div>
-
-            {/* ── RIGHT: KIT EXPORTER ── */}
-            <KitExporter 
-              kitName={kitName}
-              kitAuthor={kitAuthor}
-              kitDescription={kitDescription}
-              presets={presets}
-              includedPresets={includedPresets}
-              onToggleIncluded={(idx) => {
-                const next = [...includedPresets];
-                next[idx] = !next[idx];
-                update('includedPresets', next);
-              }}
-              onExport={handleExportKit}
-              update={update}
-            />
-          </div>
+            }
+          />
         )}
 
         </motion.div>
