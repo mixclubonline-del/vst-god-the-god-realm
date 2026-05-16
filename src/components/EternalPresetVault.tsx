@@ -17,7 +17,8 @@ import {
   Database,
   ShieldCheck,
   Star,
-  Plus
+  Plus,
+  Package
 } from 'lucide-react';
 
 interface Preset {
@@ -32,16 +33,35 @@ interface Preset {
   energyLevel: number; // 0-100 for visual resonance
 }
 
+type CollectionFilter = 'all' | 'fav' | 'cloud' | 'user';
+
 interface EternalPresetVaultProps {
   presets: Preset[];
   selectedPresetIndex: number;
   onSelectPreset: (index: number) => void;
   onToggleFavorite: (index: number) => void;
+  onLoadPreset: () => void;
   onSavePreset: () => void;
   onSaveAsPreset: () => void;
   onDeletePreset: () => void;
   onCloudSync: () => void;
   isSyncing: boolean;
+  /* Kit Assembler props (optional — shown as right-panel tab) */
+  kitExporter?: React.ReactNode;
+}
+
+/**
+ * Deterministic pseudo-random number from a string seed.
+ * Produces the same result for the same seed on every render.
+ */
+function seededRandom(seed: string, index: number): number {
+  let hash = 0;
+  const str = seed + index.toString();
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0; // Convert to 32-bit integer
+  }
+  return (Math.abs(hash) % 100) / 100;
 }
 
 export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
@@ -49,15 +69,19 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
   selectedPresetIndex,
   onSelectPreset,
   onToggleFavorite,
+  onLoadPreset,
   onSavePreset,
   onSaveAsPreset,
   onDeletePreset,
   onCloudSync,
-  isSyncing
+  isSyncing,
+  kitExporter
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeCollection, setActiveCollection] = useState<CollectionFilter>('all');
+  const [rightPanelMode, setRightPanelMode] = useState<'detail' | 'kit'>('detail');
 
   const selectedPreset = presets[selectedPresetIndex];
 
@@ -70,17 +94,44 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
 
   const filteredPresets = useMemo(() => {
     return presets.filter(p => {
+      // Search filter
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            p.author.toLowerCase().includes(searchQuery.toLowerCase());
+      // Tag filter
       const matchesTag = !selectedTag || p.tags.includes(selectedTag);
-      return matchesSearch && matchesTag;
+      // Collection filter
+      let matchesCollection = true;
+      switch (activeCollection) {
+        case 'fav':
+          matchesCollection = p.fav;
+          break;
+        case 'user':
+          matchesCollection = p.author !== 'VST GOD';
+          break;
+        case 'cloud':
+          matchesCollection = true; // Cloud presets — future: filter by synced flag
+          break;
+        case 'all':
+        default:
+          matchesCollection = true;
+          break;
+      }
+      return matchesSearch && matchesTag && matchesCollection;
     });
-  }, [presets, searchQuery, selectedTag]);
+  }, [presets, searchQuery, selectedTag, activeCollection]);
+
+  // Collection definitions with live counts
+  const collections = useMemo(() => [
+    { id: 'all' as CollectionFilter, name: 'All Rituals', icon: Globe, count: presets.length },
+    { id: 'fav' as CollectionFilter, name: 'Marked Rituals', icon: Heart, count: presets.filter(p => p.fav).length },
+    { id: 'cloud' as CollectionFilter, name: 'Ascended (Cloud)', icon: Cloud, count: presets.length },
+    { id: 'user' as CollectionFilter, name: 'My Creations', icon: User, count: presets.filter(p => p.author !== 'VST GOD').length },
+  ], [presets]);
 
   return (
     <div className="flex w-full h-full gap-2 p-1 overflow-hidden select-none">
       {/* ─── LEFT: DIVINE COLLECTIONS & TAGS ─── */}
-      <aside className="w-64 glass-panel bg-black/40 flex flex-col border-r border-white/5">
+      <aside className="w-64 shrink-0 glass-panel bg-black/40 flex flex-col border-r border-white/5">
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded bg-yellow-500/20 flex items-center justify-center text-yellow-500">
@@ -109,18 +160,21 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
           <div>
             <h4 className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-3 ml-1">Collections</h4>
             <div className="space-y-1">
-              {[
-                { id: 'all', name: 'All Rituals', icon: Globe, count: presets.length },
-                { id: 'fav', name: 'Marked Rituals', icon: Heart, count: presets.filter(p => p.fav).length },
-                { id: 'cloud', name: 'Ascended (Cloud)', icon: Cloud, count: 42 },
-                { id: 'user', name: 'My Creations', icon: User, count: presets.filter(p => p.author !== 'VST GOD').length },
-              ].map(col => (
-                <button key={col.id} className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-white/40 hover:bg-white/5 hover:text-white/60 transition-all">
+              {collections.map(col => (
+                <button 
+                  key={col.id} 
+                  onClick={() => setActiveCollection(col.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+                    activeCollection === col.id
+                      ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 shadow-[inset_3px_0_0_rgba(255,215,0,0.6)]'
+                      : 'text-white/40 hover:bg-white/5 hover:text-white/60 border border-transparent'
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <col.icon size={14} className="opacity-50" />
+                    <col.icon size={14} className={activeCollection === col.id ? 'opacity-100' : 'opacity-50'} />
                     <span className="text-[11px] font-bold tracking-wide">{col.name}</span>
                   </div>
-                  <span className="text-[9px] font-mono opacity-30">{col.count}</span>
+                  <span className={`text-[9px] font-mono ${activeCollection === col.id ? 'text-yellow-500/80' : 'opacity-30'}`}>{col.count}</span>
                 </button>
               ))}
             </div>
@@ -173,7 +227,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
       </aside>
 
       {/* ─── CENTER: CONSTELLATION GRID ─── */}
-      <main className="flex-1 glass-panel bg-black/20 flex flex-col relative overflow-hidden">
+      <main className="flex-1 min-w-0 glass-panel bg-black/20 flex flex-col relative overflow-hidden">
         {/* Ambient background effect */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] animate-pulse" />
@@ -202,9 +256,11 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
 
         {/* The Node Grid */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar z-10">
-          <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             <AnimatePresence mode="popLayout">
               {filteredPresets.map((preset, idx) => {
+                // Find the real index in the unfiltered presets array
+                const realIndex = presets.findIndex(p => p.id === preset.id);
                 const isSelected = selectedPreset?.id === preset.id;
                 return (
                   <motion.div
@@ -213,8 +269,8 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    onClick={() => onSelectPreset(idx)}
-                    className={`relative group cursor-pointer rounded-2xl border transition-all duration-300 h-40 overflow-hidden ${
+                    onClick={() => onSelectPreset(realIndex)}
+                    className={`relative group cursor-pointer rounded-2xl border transition-all duration-300 overflow-hidden ${
                       isSelected 
                         ? 'bg-yellow-500/10 border-yellow-500/40 shadow-[0_0_40px_rgba(255,215,0,0.15)] ring-1 ring-yellow-500/20' 
                         : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.05]'
@@ -233,21 +289,21 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                        </svg>
                     </div>
 
-                    <div className="p-5 h-full flex flex-col justify-between relative z-10">
+                    <div className="p-5 flex flex-col justify-between relative z-10" style={{ minHeight: '10rem' }}>
                       <div className="flex justify-between items-start">
                         <div className={`p-2 rounded-lg ${isSelected ? 'bg-yellow-500 text-black' : 'bg-white/5 text-white/40'} transition-colors`}>
                            <Layers size={14} />
                         </div>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(idx); }}
+                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(realIndex); }}
                           className={`${preset.fav ? 'text-yellow-500' : 'text-white/10 hover:text-white/40'} transition-colors`}
                         >
                           <Heart size={14} fill={preset.fav ? 'currentColor' : 'none'} />
                         </button>
                       </div>
 
-                      <div>
-                        <h4 className="text-sm font-black text-white tracking-wide truncate mb-1 group-hover:text-yellow-500 transition-colors">
+                      <div className="mt-auto">
+                        <h4 className="text-sm font-black text-white tracking-wide mb-1 group-hover:text-yellow-500 transition-colors leading-tight" title={preset.name}>
                           {preset.name}
                         </h4>
                         <div className="flex items-center gap-2">
@@ -257,7 +313,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                      <div className="flex items-center justify-between pt-3 border-t border-white/5 mt-3">
                         <div className="flex gap-0.5">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star 
@@ -331,87 +387,136 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
         </AnimatePresence>
       </main>
 
-      {/* ─── RIGHT: SACRED SPECIFICATION ─── */}
-      <aside className="w-80 glass-panel bg-black/40 flex flex-col border-l border-white/5">
-        <AnimatePresence mode="wait">
-          {selectedPreset ? (
-            <motion.div
-              key={selectedPreset.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex-1 flex flex-col p-6"
+      {/* ─── RIGHT: TABBED PANEL (Sacred Specification / Kit Assembler) ─── */}
+      <aside className="w-80 shrink-0 glass-panel bg-black/40 flex flex-col border-l border-white/5">
+        {/* Panel Tab Switcher */}
+        {kitExporter && (
+          <div className="flex border-b border-white/5 shrink-0">
+            <button
+              onClick={() => setRightPanelMode('detail')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
+                rightPanelMode === 'detail'
+                  ? 'text-yellow-500 bg-yellow-500/5 border-b-2 border-yellow-500'
+                  : 'text-white/30 hover:text-white/50 hover:bg-white/[0.02]'
+              }`}
             >
-              <div className="mb-8">
-                <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.4em] block mb-2">Sacred Specification</span>
-                <h3 className="text-3xl font-black text-white tracking-tighter mb-4">{selectedPreset.name}</h3>
-                
-                <div className="flex flex-wrap gap-2">
-                  <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                    <User size={12} className="text-white/40" />
-                    <span className="text-[10px] font-bold text-white/60">{selectedPreset.author}</span>
-                  </div>
-                  <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                    <Tag size={12} className="text-white/40" />
-                    <span className="text-[10px] font-bold text-white/60">{selectedPreset.type}</span>
-                  </div>
-                </div>
-              </div>
+              <Eye size={12} />
+              DETAIL
+            </button>
+            <button
+              onClick={() => setRightPanelMode('kit')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-[9px] font-black uppercase tracking-[0.15em] transition-all ${
+                rightPanelMode === 'kit'
+                  ? 'text-yellow-500 bg-yellow-500/5 border-b-2 border-yellow-500'
+                  : 'text-white/30 hover:text-white/50 hover:bg-white/[0.02]'
+              }`}
+            >
+              <Package size={12} />
+              KIT ASSEMBLER
+            </button>
+          </div>
+        )}
 
-              {/* Spectral Footprint */}
-              <div className="mb-8 p-4 rounded-2xl bg-black/40 border border-white/5 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex justify-between items-center mb-4">
-                   <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Spectral Footprint</h4>
-                   <Activity size={12} className="text-yellow-500/60" />
+        {/* Detail Panel */}
+        {rightPanelMode === 'detail' && (
+          <AnimatePresence mode="wait">
+            {selectedPreset ? (
+              <motion.div
+                key={selectedPreset.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar"
+              >
+                <div className="mb-8">
+                  <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.4em] block mb-2">Sacred Specification</span>
+                  <h3 className="text-3xl font-black text-white tracking-tighter mb-4">{selectedPreset.name}</h3>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                      <User size={12} className="text-white/40" />
+                      <span className="text-[10px] font-bold text-white/60">{selectedPreset.author}</span>
+                    </div>
+                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                      <Tag size={12} className="text-white/40" />
+                      <span className="text-[10px] font-bold text-white/60">{selectedPreset.type}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="h-24 flex items-end gap-[2px]">
-                   {Array.from({ length: 32 }).map((_, i) => {
-                     const height = 20 + Math.random() * 80;
-                     return (
-                       <motion.div 
-                         key={i}
-                         initial={{ height: 0 }}
-                         animate={{ height: `${height}%` }}
-                         className={`flex-1 rounded-t-sm ${i % 4 === 0 ? 'bg-yellow-500/60' : 'bg-white/10'}`}
-                       />
-                     );
-                   })}
-                </div>
-                <div className="flex justify-between mt-3 text-[8px] font-mono text-white/20">
-                   <span>20Hz</span>
-                   <span>20kHz</span>
-                </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-3 mt-auto">
-                 <button className="w-full vg-btn vg-btn-primary py-4 text-xs tracking-widest" onClick={onSavePreset}>
-                   LOAD RITUAL
-                 </button>
-                 <div className="grid grid-cols-2 gap-2">
-                   <button className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2" onClick={onSavePreset}>
-                     <ShieldCheck size={12} />
-                     OVERWRITE
+                {/* Spectral Footprint — deterministic per preset */}
+                <div className="mb-8 p-4 rounded-2xl bg-black/40 border border-white/5 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex justify-between items-center mb-4">
+                     <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Spectral Footprint</h4>
+                     <Activity size={12} className="text-yellow-500/60" />
+                  </div>
+                  <div className="h-24 flex items-end gap-[2px]">
+                     {Array.from({ length: 32 }).map((_, i) => {
+                       const height = 20 + seededRandom(selectedPreset.id, i) * 80;
+                       return (
+                         <motion.div 
+                           key={i}
+                           initial={{ height: 0 }}
+                           animate={{ height: `${height}%` }}
+                           transition={{ duration: 0.5, delay: i * 0.015 }}
+                           className={`flex-1 rounded-t-sm ${i % 4 === 0 ? 'bg-yellow-500/60' : 'bg-white/10'}`}
+                         />
+                       );
+                     })}
+                  </div>
+                  <div className="flex justify-between mt-3 text-[8px] font-mono text-white/20">
+                     <span>20Hz</span>
+                     <span>20kHz</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3 mt-auto">
+                   <button className="w-full vg-btn vg-btn-primary py-4 text-xs tracking-widest" onClick={onLoadPreset}>
+                     LOAD RITUAL
                    </button>
-                   <button className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2">
-                     <Share2 size={12} />
-                     ASCEND
+                   <div className="grid grid-cols-2 gap-2">
+                     <button 
+                       className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2" 
+                       onClick={() => {
+                         if (confirm(`Overwrite "${selectedPreset.name}" with current settings?`)) {
+                           onSavePreset();
+                         }
+                       }}
+                     >
+                       <ShieldCheck size={12} />
+                       OVERWRITE
+                     </button>
+                     <button 
+                       className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2"
+                       onClick={onCloudSync}
+                     >
+                       <Share2 size={12} />
+                       ASCEND
+                     </button>
+                   </div>
+                   <button className="w-full text-[9px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-[0.3em] py-4 transition-colors" onClick={onDeletePreset}>
+                     BANISH FROM VAULT
                    </button>
-                 </div>
-                 <button className="w-full text-[9px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-[0.3em] py-4 transition-colors" onClick={onDeletePreset}>
-                   BANISH FROM VAULT
-                 </button>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center opacity-20 p-12 text-center">
+                 <Eye size={48} strokeWidth={1} />
+                 <h3 className="text-xs font-black uppercase tracking-[0.4em] mt-8">Gaze into the Void</h3>
+                 <p className="text-[10px] font-bold mt-4 leading-relaxed">Select a ritual node to inspect its sacred specification and sonic footprint.</p>
               </div>
-            </motion.div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center opacity-20 p-12 text-center">
-               <Eye size={48} strokeWidth={1} />
-               <h3 className="text-xs font-black uppercase tracking-[0.4em] mt-8">Gaze into the Void</h3>
-               <p className="text-[10px] font-bold mt-4 leading-relaxed">Select a ritual node to inspect its sacred specification and sonic footprint.</p>
-            </div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        )}
+
+        {/* Kit Assembler Panel */}
+        {rightPanelMode === 'kit' && kitExporter && (
+          <div className="flex-1 overflow-hidden">
+            {kitExporter}
+          </div>
+        )}
       </aside>
     </div>
   );

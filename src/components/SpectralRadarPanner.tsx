@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import { nativeAudio, SpectralDataState } from '@/native/bridge';
 import './SpectralRadarPanner.css';
 
 interface Point {
@@ -7,7 +8,12 @@ interface Point {
   y: number;
 }
 
-export const SpectralRadarPanner: React.FC = () => {
+interface SpectralRadarPannerProps {
+  /** Phase 4: Real-time FFT data from JUCE engine (optional, falls back to mock) */
+  spectralData?: SpectralDataState | null;
+}
+
+export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectralData }) => {
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [elevation, setElevation] = useState(0.5); 
   const [rms, setRms] = useState(0);
@@ -21,8 +27,11 @@ export const SpectralRadarPanner: React.FC = () => {
   const springZ = useSpring(0.5, { stiffness: 120, damping: 20 });
   const springRotateX = useSpring(45, { stiffness: 50, damping: 30 });
 
-  // Mock audio engine for visual feedback
+  // Mock audio engine for visual feedback (dev mode fallback)
   useEffect(() => {
+    // If real spectral data is available from JUCE, skip mock generation
+    if (spectralData) return;
+
     let rafId: number;
     let frame = 0;
     const update = () => {
@@ -45,7 +54,14 @@ export const SpectralRadarPanner: React.FC = () => {
     };
     rafId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [spectralData]);
+
+  // Phase 4: Consume real FFT data from JUCE engine when available
+  useEffect(() => {
+    if (!spectralData) return;
+    setRms(spectralData.rms);
+    setFreqData(spectralData.fftBins);
+  }, [spectralData]);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!containerRef.current || e.buttons !== 1) return;
@@ -74,6 +90,10 @@ export const SpectralRadarPanner: React.FC = () => {
       springX.set(nx);
       springY.set(ny);
     }
+
+    // Phase 4: Forward spatial position to JUCE panner
+    const azimuth = (Math.atan2(position.y, position.x) * 180 / Math.PI + 450) % 360;
+    nativeAudio.updateSpatialPosition(azimuth, elevation, 'ALPHA_PRIME');
   };
 
   const handleScroll = (e: React.WheelEvent) => {

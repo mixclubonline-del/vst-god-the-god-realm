@@ -49,7 +49,7 @@
   font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.35em;
-  background: linear-gradient(90deg, #fff 0%, #d4a574 100%);
+  background: linear-gradient(90deg, #fff 0%, var(--god-text-dim) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -98,8 +98,8 @@
 }
 
 .da-search:focus {
-  border-color: rgba(255,102,0,0.4);
-  box-shadow: 0 0 20px rgba(255,102,0,0.08);
+  border-color: rgba(255, 215, 0,0.4);
+  box-shadow: 0 0 20px rgba(255, 215, 0,0.08);
 }
 
 .da-stats {
@@ -170,17 +170,17 @@
 }
 
 .da-realm-btn.active {
-  background: rgba(255,102,0,0.08);
-  color: #d4a574;
-  border-color: rgba(255,102,0,0.25);
-  box-shadow: 0 0 20px rgba(255,102,0,0.06);
+  background: rgba(255, 215, 0,0.08);
+  color: var(--god-text-dim);
+  border-color: rgba(255, 215, 0,0.25);
+  box-shadow: 0 0 20px rgba(255, 215, 0,0.06);
 }
 
 .da-realm-btn.active::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(255,102,0,0.1), transparent 70%);
+  background: radial-gradient(circle at 20% 50%, rgba(255, 215, 0,0.1), transparent 70%);
   pointer-events: none;
 }
 
@@ -198,8 +198,8 @@
 }
 
 .da-realm-btn.active .da-realm-icon {
-  background: rgba(255,102,0,0.15);
-  box-shadow: 0 0 12px rgba(255,102,0,0.15);
+  background: rgba(255, 215, 0,0.15);
+  box-shadow: 0 0 12px rgba(255, 215, 0,0.15);
 }
 
 .da-realm-info {
@@ -276,7 +276,7 @@
 }
 
 .da-chip:hover { color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.12); }
-.da-chip.active { background: rgba(255,102,0,0.12); color: #d4a574; border-color: rgba(255,102,0,0.3); }
+.da-chip.active { background: rgba(255, 215, 0,0.12); color: var(--god-text-dim); border-color: rgba(255, 215, 0,0.3); }
 
 .da-view-toggle {
   display: flex;
@@ -335,25 +335,25 @@
 
 .da-relic-card:hover {
   transform: translateY(-3px);
-  background: rgba(255,102,0,0.04);
-  border-color: rgba(255,102,0,0.2);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(255,102,0,0.06);
+  background: rgba(255, 215, 0,0.04);
+  border-color: rgba(255, 215, 0,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(255, 215, 0,0.06);
 }
 
 .da-relic-card.selected {
-  background: rgba(255,102,0,0.08);
-  border-color: rgba(255,102,0,0.35);
-  box-shadow: 0 0 30px rgba(255,102,0,0.1);
+  background: rgba(255, 215, 0,0.08);
+  border-color: rgba(255, 215, 0,0.35);
+  box-shadow: 0 0 30px rgba(255, 215, 0,0.1);
 }
 
 .da-relic-card.playing {
-  border-color: rgba(255,102,0,0.5);
+  border-color: rgba(255, 215, 0,0.5);
   animation: da-pulse-border 1.5s infinite ease-in-out;
 }
 
 @keyframes da-pulse-border {
-  0%, 100% { box-shadow: 0 0 15px rgba(255,102,0,0.1); }
-  50% { box-shadow: 0 0 30px rgba(255,102,0,0.25); }
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0,0.1); }
+  50% { box-shadow: 0 0 30px rgba(255, 215, 0,0.25); }
 }
 
 .da-relic-wave {
@@ -379,8 +379,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(255,102,0,0.15);
-  color: #ff6600;
+  background: rgba(255,215,0,0.15);
+  color: var(--god-primary);
   opacity: 0;
   transform: scale(0.8);
   transition: all 0.25s;
@@ -429,7 +429,7 @@
 
 .da-relic-energy-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d4a574, #ff6600);
+  background: linear-gradient(90deg, var(--god-secondary), var(--god-primary));
   border-radius: 1px;
   transition: width 0.4s ease;
 }
@@ -449,7 +449,7 @@
 }
 
 .da-list-item:hover { background: rgba(255,255,255,0.03); }
-.da-list-item.selected { background: rgba(255,102,0,0.08); border-color: rgba(255,102,0,0.2); }
+.da-list-item.selected { background: rgba(255, 215, 0,0.08); border-color: rgba(255, 215, 0,0.2); }
 
 .da-list-play {
   width: 28px;
@@ -459,18 +459,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,102,0,0.4);
+  color: rgba(255, 215, 0,0.4);
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
-.da-list-item:hover .da-list-play { color: #ff6600; background: rgba(255,102,0,0.1); }
+.da-list-item:hover .da-list-play { color: var(--god-primary); background: rgba(255,215,0,0.1); }
 
 .da-list-info { flex: 1; min-width: 0; }
 .da-list-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .da-list-cat { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.05em; }
 .da-list-energy-bar { width: 60px; height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
-.da-list-energy-fill { height: 100%; background: linear-gradient(90deg, #d4a574, #ff6600); border-radius: 2px; }
+.da-list-energy-fill { height: 100%; background: linear-gradient(90deg, var(--god-secondary), var(--god-primary)); border-radius: 2px; }
 
 /* ─── Inspector (Right) ─── */
 .da-inspector {
@@ -553,7 +553,7 @@
   font-size: 10px;
   font-weight: 800;
   font-family: 'JetBrains Mono', monospace;
-  color: #d4a574;
+  color: var(--god-text-dim);
 }
 
 .da-meter-track {
@@ -567,7 +567,7 @@
 .da-meter-fill {
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #d4a574, #ff6600);
+  background: linear-gradient(90deg, var(--god-secondary), var(--god-primary));
   transition: width 0.4s ease;
 }
 
@@ -620,7 +620,7 @@
   padding: 14px;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ff6600, #d4a574);
+  background: linear-gradient(135deg, var(--god-primary), var(--god-secondary));
   color: #000;
   font-size: 12px;
   font-weight: 900;
@@ -631,12 +631,12 @@
   transition: all 0.25s;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(255,102,0,0.2);
+  box-shadow: 0 4px 20px rgba(255, 215, 0,0.2);
 }
 
 .da-btn-awaken:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255,102,0,0.35);
+  box-shadow: 0 8px 30px rgba(255, 215, 0,0.35);
 }
 
 .da-btn-awaken:active { transform: scale(0.97); }
@@ -647,8 +647,8 @@
 }
 
 @keyframes da-awaken-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(255,102,0,0.2); }
-  50% { box-shadow: 0 4px 30px rgba(255,102,0,0.5); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(255, 215, 0,0.2); }
+  50% { box-shadow: 0 4px 30px rgba(255, 215, 0,0.5); }
 }
 
 .da-btn-recall {
@@ -657,7 +657,7 @@
   border: 1px solid rgba(212,165,116,0.3);
   border-radius: 10px;
   background: rgba(212,165,116,0.06);
-  color: #d4a574;
+  color: var(--god-text-dim);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.15em;
@@ -689,7 +689,7 @@
 }
 
 .da-btn-mark:hover { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); }
-.da-btn-mark.marked { color: #d4a574; border-color: rgba(194,150,35,0.3); }
+.da-btn-mark.marked { color: var(--god-text-dim); border-color: rgba(194,150,35,0.3); }
 
 /* ─── Sacred Pad Bank (Bottom) ─── */
 .da-pad-bank {
@@ -717,12 +717,12 @@
   min-width: 0;
 }
 
-.da-pad:hover { background: rgba(255,102,0,0.04); border-color: rgba(255,102,0,0.15); }
+.da-pad:hover { background: rgba(255, 215, 0,0.04); border-color: rgba(255, 215, 0,0.15); }
 
 .da-pad.active {
-  background: rgba(255,102,0,0.1);
-  border-color: rgba(255,102,0,0.35);
-  box-shadow: 0 0 15px rgba(255,102,0,0.1);
+  background: rgba(255, 215, 0,0.1);
+  border-color: rgba(255, 215, 0,0.35);
+  box-shadow: 0 0 15px rgba(255, 215, 0,0.1);
 }
 
 .da-pad.loaded { border-color: rgba(194,150,35,0.2); }
@@ -733,7 +733,7 @@
   color: rgba(255,255,255,0.25);
 }
 
-.da-pad.active .da-pad-num { color: #ff6600; }
+.da-pad.active .da-pad-num { color: var(--god-primary); }
 
 .da-pad-sample {
   font-size: 7px;

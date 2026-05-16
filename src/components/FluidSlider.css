@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════
-   FLUID SLIDER — Midnight Ember v2
+   FLUID SLIDER — Divine Light v3
    ══════════════════════════════════════ */
 
 .fluid-slider-container {
@@ -7,13 +7,13 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, rgba(20,16,14,0.95) 0%, rgba(8,5,4,0.98) 100%);
+  background: linear-gradient(135deg, rgba(14,10,40,0.95) 0%, rgba(8,5,20,0.98) 100%);
   border-radius: 6px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,215,0,0.06);
   border-left: 1px solid rgba(255,255,255,0.04);
   border-right: 1px solid rgba(255,255,255,0.02);
   border-bottom: 1px solid rgba(0,0,0,0.5);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.03);
 }
 
 .fluid-slider-header {
@@ -34,8 +34,8 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 700;
-  color: #ff6600;
-  text-shadow: 0 0 6px rgba(255, 102, 0, 0.4);
+  color: var(--god-primary);
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
   min-width: 40px;
   text-align: right;
 }
@@ -58,12 +58,12 @@
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #ff4400, #ff6600, #ff8800);
+  background: linear-gradient(90deg, var(--god-secondary), var(--god-accent), var(--god-primary));
   border-radius: 3px;
   transition: width 0.06s linear;
   box-shadow:
-    0 0 8px rgba(255, 102, 0, 0.3),
-    0 0 16px rgba(255, 102, 0, 0.1);
+    0 0 8px rgba(255, 215, 0, 0.3),
+    0 0 16px rgba(255, 215, 0, 0.1);
   position: relative;
 }
 
@@ -75,7 +75,7 @@
   right: -2px;
   bottom: -4px;
   width: 20px;
-  background: radial-gradient(circle, rgba(255, 102, 0, 0.5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
   pointer-events: none;
   filter: blur(4px);
 }
@@ -87,12 +87,12 @@
   transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
-  background: radial-gradient(circle at 35% 35%, #fff 0%, #ff8800 100%);
+  background: radial-gradient(circle at 35% 35%, #fff 0%, var(--god-primary) 100%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 3;
   box-shadow:
-    0 0 12px rgba(255, 102, 0, 0.6),
+    0 0 12px rgba(255, 215, 0, 0.6),
     0 2px 6px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255,255,255,0.3);
   transition: box-shadow 0.2s ease;
@@ -100,8 +100,8 @@
 
 .fluid-slider-track:hover .fluid-slider-thumb {
   box-shadow:
-    0 0 20px rgba(255, 102, 0, 0.8),
-    0 0 40px rgba(255, 102, 0, 0.3),
+    0 0 20px rgba(255, 215, 0, 0.8),
+    0 0 40px rgba(255, 215, 0, 0.3),
     0 2px 6px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255,255,255,0.3);
 }
@@ -126,18 +126,18 @@
 
 /* Celestial Gold */
 .fluid-variant-celestial .fluid-slider-value {
-  color: #ffd700;
+  color: var(--god-primary);
   text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
 }
 .fluid-variant-celestial .fluid-slider-fill {
-  background: linear-gradient(90deg, #8b6914, #daa520, #ffd700);
+  background: linear-gradient(90deg, var(--god-secondary), var(--god-accent), var(--god-primary));
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.3), 0 0 16px rgba(255, 215, 0, 0.1);
 }
 .fluid-variant-celestial .fluid-slider-fill::after {
   background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
 }
 .fluid-variant-celestial .fluid-slider-thumb {
-  background: radial-gradient(circle at 35% 35%, #fff 0%, #ffd700 100%);
+  background: radial-gradient(circle at 35% 35%, #fff 0%, var(--god-primary) 100%);
   box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 .fluid-variant-celestial .fluid-shimmer {

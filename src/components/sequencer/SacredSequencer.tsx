@@ -15,7 +15,7 @@ import { sampleManager } from './SampleManager';
 import { SacredMasterPanel } from './SacredMasterPanel';
 import { GodRealmSampleChopper } from '../GodRealmSampleChopper';
 import { ExportEngine } from '../../audio/ExportEngine';
-import { nativeAudio } from '../../native/bridge';
+import { nativeAudio, StepBridgePayload } from '../../native/bridge';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
 import './SacredSequencer.css';
 
@@ -150,6 +150,19 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       // Start/Stop
       source.start(time, startTime, shouldLoop ? undefined : duration);
       source.stop(time + decayTime + 0.1);
+
+      // Phase 4: Forward step trigger to JUCE for native playback
+      const stepBridgePayload: StepBridgePayload = {
+        velocity: step.velocity,
+        pitch: step.pitch,
+        pan: step.pan,
+        decay: step.decay,
+        sliceIndex: step.sliceIndex,
+        sourceType: track.sourceType || 'sample',
+        synthNote: track.sourceType === 'synth' ? track.synthConfig?.noteMap?.[step.sliceIndex] : undefined,
+        synthGodId: track.sourceType === 'synth' ? track.synthConfig?.godId : undefined,
+      };
+      nativeAudio.triggerStep(trackIndex, stepBridgePayload, time);
     });
   }, [setOnTrigger, audioCtx, masterChain, state.tracks]);
 
@@ -364,14 +377,28 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       {/* Header / Transport */}
       <SacredSequencerHeader
         state={state}
-        onPlay={play}
-        onStop={stop}
+        onPlay={() => {
+          play();
+          // Phase 4: Transport sync — notify JUCE on play
+          nativeAudio.updateTransport({ bpm: state.bpm, isPlaying: true, swing: state.swing });
+        }}
+        onStop={() => {
+          stop();
+          // Phase 4: Transport sync — notify JUCE on stop
+          nativeAudio.updateTransport({ bpm: state.bpm, isPlaying: false, swing: state.swing });
+        }}
         onTogglePlay={togglePlay}
         onSetBpm={(bpm) => {
           dispatch({ type: 'SET_BPM', bpm });
           nativeAudio.setParameter('globalBpm', bpm);
+          // Phase 4: Transport sync
+          nativeAudio.updateTransport({ bpm, isPlaying: state.isPlaying, swing: state.swing });
         }}
-        onSetSwing={(swing) => dispatch({ type: 'SET_SWING', swing })}
+        onSetSwing={(swing) => {
+          dispatch({ type: 'SET_SWING', swing });
+          // Phase 4: Transport sync
+          nativeAudio.updateTransport({ bpm: state.bpm, isPlaying: state.isPlaying, swing });
+        }}
         onSetSwingPreset={(preset) => dispatch({ type: 'SET_SWING_PRESET', preset })}
         onSetStepCount={(count) => dispatch({ type: 'SET_STEP_COUNT', count })}
         onSetPattern={(pattern) => {
@@ -516,16 +543,39 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               ✕
             </button>
             <GodRealmSampleChopper
-              buffer={buffers[chopperTrackIndex]}
-              trackIndex={chopperTrackIndex}
-              analyser={masterChain.current?.analyser || null}
-              sampleParams={state.tracks[chopperTrackIndex].sampleParams}
-              onUpdateParam={(param, value) => dispatch({ 
-                type: 'SET_SAMPLE_PARAM', 
-                trackIndex: chopperTrackIndex, 
-                param, 
-                value 
-              })}
+              activePad={chopperTrackIndex}
+              parameterValues={{
+                chopMarkers: state.tracks[chopperTrackIndex]?.sampleParams?.slices?.map((s: any) => s.start) || [0.25, 0.5, 0.75],
+                snapToTransient: true,
+                scopeGlobal: true,
+                chopMode: 'Auto',
+                chopperSpeed: 1.0,
+                chopperPitch: 0,
+                chopperFadeIn: 25,
+                chopperFadeOut: 150,
+                chopperGlide: 10,
+                chopperReverse: state.tracks[chopperTrackIndex]?.sampleParams?.reverse ?? false,
+                chopperSensitivity: 50,
+                chopperTrigger: 'MIDI',
+                chopperDryWet: 75,
+                chopperOutputVolume: -3,
+              }}
+              update={(param: string, value: any) => {
+                if (param === 'chopperReverse') {
+                  dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: chopperTrackIndex, param: 'reverse', value });
+                } else if (param === 'chopMarkers') {
+                  // Map markers back to slices
+                  const slices = (value as number[]).map((start: number, i: number) => ({
+                    start,
+                    end: (value as number[])[i + 1] ?? 1.0,
+                    reverse: false,
+                    loop: false,
+                    volume: 1.0,
+                  }));
+                  dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: chopperTrackIndex, param: 'slices', value: slices });
+                }
+              }}
+              buffer={buffers[chopperTrackIndex] || null}
             />
           </div>
         </div>

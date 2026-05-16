@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/CelestialForge.css';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
+import { nativeAudio, MasteringBridgeParams } from '@/native/bridge';
 import { MasterMeter } from './ui/MasterMeter';
 import { HardwareScrew } from './ui/HardwareScrew';
 
@@ -239,7 +240,7 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
         <defs>
           <linearGradient id="peak-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#ff4400" />
-            <stop offset="50%" stopColor="#ffaa00" />
+            <stop offset="50%" stopColor="#FFD700" />
             <stop offset="100%" stopColor="#ff2200" />
           </linearGradient>
         </defs>
@@ -257,7 +258,7 @@ const SunDisk: React.FC<SunDiskProps> = ({ levels }) => {
           transition={{ duration: 0.5, repeat: levels.reduction > 0.05 ? Infinity : 0 }}
           style={{ 
               boxShadow: levels.reduction > 0.05 ? '0 0 24px #FFD700, inset 0 0 8px #fff' : 'none',
-              backgroundColor: levels.reduction > 0.05 ? '#ffaa00' : '#333'
+              backgroundColor: levels.reduction > 0.05 ? '#FFD700' : '#333'
           }}
         />
         <span className="vg-sun-label">ACTIVE</span>
@@ -380,7 +381,7 @@ const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) 
   const anchors = [
     { name: 'BODY', freq: '20Hz-200Hz', class: 'body', val: levels.bodyLevel || 0.3, color: '#ff4400' },
     { name: 'AIR', freq: '10kHz-20kHz', class: 'air', val: levels.airLevel || 0.4, color: '#00ccff' },
-    { name: 'SOUL', freq: '200Hz-2kHz', class: 'soul', val: levels.soulLevel || 0.5, color: '#ffaa00' },
+    { name: 'SOUL', freq: '200Hz-2kHz', class: 'soul', val: levels.soulLevel || 0.5, color: '#FFD700' },
     { name: 'SILK', freq: '2kHz-10kHz', class: 'silk', val: levels.silkLevel || 0.2, color: '#cc00ff' }
   ];
 
@@ -452,6 +453,51 @@ export const CelestialForge: React.FC<{
 }> = ({ parameterValues, update, moduleLevels }) => {
   // Live engine metering from JUCE bridge
   const bridgeState = useJuceBridge();
+
+  // Phase 4: Debounced mastering parameter sync to JUCE (60Hz max)
+  const masteringSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingMasteringSync = useRef<MasteringBridgeParams | null>(null);
+
+  const syncMasteringToJuce = useCallback(() => {
+    const params: MasteringBridgeParams = {
+      drive: parameterValues.masterDrive ?? 20,
+      silk: parameterValues.masterColorTilt ?? 50,    // ColorTilt maps to Silk anchor
+      body: parameterValues.masterInputGain ?? 0,      // InputGain maps to Body anchor
+      soul: parameterValues.masterDrive ?? 20,          // Drive also feeds Soul harmonic
+      air: parameterValues.masterColdExtension ?? 0,    // Cold Extension maps to Air anchor
+      threshold: parameterValues.masterDynamicsThreshold ?? -12,
+      ceiling: parameterValues.masterCeiling ?? -0.1,
+      width: parameterValues.masterWidth ?? 100,
+      imager: parameterValues.masterImager ?? 0,
+      volume: parameterValues.masterInputGain ?? 0,
+    };
+    pendingMasteringSync.current = params;
+
+    if (!masteringSyncTimer.current) {
+      masteringSyncTimer.current = setTimeout(() => {
+        if (pendingMasteringSync.current) {
+          nativeAudio.updateMasteringParams(pendingMasteringSync.current);
+        }
+        masteringSyncTimer.current = null;
+      }, 16); // ~60Hz debounce
+    }
+  }, [parameterValues]);
+
+  // Wrapped update that syncs to both local state and JUCE
+  const bridgedUpdate = useCallback((id: string, val: any) => {
+    update(id, val);
+    // Queue a debounced sync after the local state update
+    requestAnimationFrame(syncMasteringToJuce);
+  }, [update, syncMasteringToJuce]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (masteringSyncTimer.current) {
+        clearTimeout(masteringSyncTimer.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="vg-celestial-forge">
@@ -528,15 +574,15 @@ export const CelestialForge: React.FC<{
           <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={180} />
 
           {/* Calibrated Defaults */}
-          <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={update} />
-          <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={update} />
-          <GodKnobV2 label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt ?? 50} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={update} />
+          <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={bridgedUpdate} />
+          <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={bridgedUpdate} />
+          <GodKnobV2 label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt ?? 50} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={bridgedUpdate} />
           
           <div className="mt-auto p-6 glass-panel rounded-2xl">
              <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Dynamics</span>
              <div className="flex gap-4">
-                <GodKnobV2 size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold ?? -12} min={-60} max={0} unit="dB" update={update} />
-                <GodKnobV2 size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio ?? 2.0} min={1} max={10} unit=":1" update={update} />
+                <GodKnobV2 size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold ?? -12} min={-60} max={0} unit="dB" update={bridgedUpdate} />
+                <GodKnobV2 size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio ?? 2.0} min={1} max={10} unit=":1" update={bridgedUpdate} />
              </div>
           </div>
         </aside>
@@ -570,24 +616,24 @@ export const CelestialForge: React.FC<{
           <HardwareScrew className="absolute top-2 left-2 opacity-60" size={12} rotation={90} />
           <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={270} />
 
-          <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={update} color="#00ccff" />
+          <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={bridgedUpdate} color="#00ccff" />
           <div className="flex flex-col items-center">
               <span className="text-label-xs text-white/50 mb-2 drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">CEILING</span>
-              <GodKnobV2 label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling ?? -0.1} min={-12} max={12} unit="dB" update={update} color="#ff2200" />
+              <GodKnobV2 label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling ?? -0.1} min={-12} max={12} unit="dB" update={bridgedUpdate} color="#ff2200" />
           </div>
           
           <div className="p-6 glass-panel rounded-2xl w-full">
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack ?? 30} min={1} max={100} unit="ms" update={update} />
-                <GodKnobV2 size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease ?? 100} min={10} max={1000} unit="ms" update={update} />
+                <GodKnobV2 size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack ?? 30} min={1} max={100} unit="ms" update={bridgedUpdate} />
+                <GodKnobV2 size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease ?? 100} min={10} max={1000} unit="ms" update={bridgedUpdate} />
              </div>
           </div>
 
           <div className="p-6 glass-panel rounded-2xl w-full">
              <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Stereo Field</span>
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth ?? 100} min={0} max={200} unit="%" update={update} color="#cc00ff" />
-                <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={update} color="#cc00ff" />
+                <GodKnobV2 size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth ?? 100} min={0} max={200} unit="%" update={bridgedUpdate} color="#cc00ff" />
+                <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={bridgedUpdate} color="#cc00ff" />
              </div>
           </div>
 

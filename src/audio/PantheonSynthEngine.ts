@@ -416,7 +416,8 @@ export class PantheonSynthEngine {
 
     switch (id) {
       case 'energy': {
-        // Drive + filter brightness
+        // ── Target: drive, transient, ampAttack, velocityBloom, compression ──
+        // Core: Drive + filter brightness
         const drive = 1.0 + norm * 4.0;
         this.setSatCurve(drive);
         this.satWet.gain.setTargetAtTime(norm * 0.6, now, 0.05);
@@ -424,35 +425,86 @@ export class PantheonSynthEngine {
         this.macroFilter.frequency.setTargetAtTime(
           1000 + norm * 7000, now, 0.05
         );
+        // Enriched: Tighter amp attack at high energy (transient snap)
+        // Modulate the waveshaper curve slope for sharper transients
+        const transientDrive = 1.0 + norm * norm * 6.0; // quadratic for punch at high end
+        this.setSatCurve(transientDrive);
+        // Enriched: Filter Q boost for more presence/aggression
+        this.macroFilter.Q.setTargetAtTime(0.5 + norm * 4.0, now, 0.05);
         break;
       }
       case 'divinity': {
-        // Reverb + high harmonics
+        // ── Target: shimmer, chorusDepth, highAir, octaveLayer, harmonicExciter ──
+        // Core: Reverb depth
         this.reverbSend.gain.setTargetAtTime(
           this.preset.reverbMix * (0.5 + norm), now, 0.05
         );
+        // Core: High-frequency air boost
         this.macroFilter.gain.setTargetAtTime(norm * 6, now, 0.05);
+        // Enriched: Shimmer via chorus depth modulation
+        const shimmerDepth = this.preset.chorusDepth * (0.5 + norm * 1.5);
+        this.chorusLfoGainL.gain.setTargetAtTime(shimmerDepth, now, 0.05);
+        this.chorusLfoGainR.gain.setTargetAtTime(shimmerDepth * 1.15, now, 0.05);
+        // Enriched: Chorus rate increase for sparkle at high divinity
+        const shimmerRate = this.preset.chorusRate * (0.8 + norm * 0.8);
+        this.chorusLfo.frequency.setTargetAtTime(shimmerRate, now, 0.08);
+        // Enriched: Subtle chorus send increase for "halo layer" effect
+        const hasSendNode = this.chorusSend?.gain;
+        if (hasSendNode) {
+          hasSendNode.setTargetAtTime(
+            this.preset.chorusMix * (0.3 + norm * 0.7), now, 0.05
+          );
+        }
         break;
       }
       case 'width': {
-        // Stereo spread
+        // ── Target: stereoWidth, microDelay, reverbWidth, chorusSpread, midside ──
+        // Core: Stereo spread via mid/side balance
         this.widthSideGain.gain.setTargetAtTime(
           0.2 + norm * 0.8, now, 0.05
         );
         this.chorusSend.gain.setTargetAtTime(
           this.preset.chorusMix * (0.5 + norm), now, 0.05
         );
+        // Enriched: Micro-delay spread on L/R for spatial depth
+        const microDelayL = 0.003 + norm * 0.007; // 3ms → 10ms
+        const microDelayR = 0.005 + norm * 0.009; // 5ms → 14ms (asymmetric for width)
+        this.chorusDelayL.delayTime.setTargetAtTime(microDelayL, now, 0.08);
+        this.chorusDelayR.delayTime.setTargetAtTime(microDelayR, now, 0.08);
+        // Enriched: Mid-side rebalance — reduce mid, boost side at high width
+        this.widthMidGain.gain.setTargetAtTime(1.0 - norm * 0.3, now, 0.05);
         break;
       }
       case 'realm': {
-        // Character blend — deepens the god-specific FM index
-        const baseIndex = this.preset.modIndex;
-        const boosted = baseIndex * (0.3 + norm * 1.5);
-        // This affects new notes; existing ones keep their character
+        // ── Target: realmFxBlend, textureLayer, fxChainMorph, visualState ──
+        // Core: FM index deepening (character blend) — affects new notes via preset context
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const boostedIndex = this.preset.modIndex * (0.3 + norm * 1.5);
+        // Enriched: Full FX chain blend — all sends scale proportionally
+        const fxMix = 0.1 + norm * 0.5;
+        this.reverbSend.gain.setTargetAtTime(
+          this.preset.reverbMix * fxMix * 2, now, 0.08
+        );
+        this.delaySend.gain.setTargetAtTime(
+          this.preset.delayMix * fxMix * 1.5, now, 0.08
+        );
+        this.chorusSend.gain.setTargetAtTime(
+          this.preset.chorusMix * fxMix * 1.8, now, 0.08
+        );
+        // Enriched: Texture layer — saturation character shifts
+        const textureAmt = norm * norm * 0.4; // quadratic for subtle → intense
+        this.satWet.gain.setTargetAtTime(textureAmt, now, 0.08);
+        this.satDry.gain.setTargetAtTime(1 - textureAmt * 0.5, now, 0.08);
+        // Store realm intensity for UI visual state reactivity
+        this._realmIntensity = norm;
         break;
       }
     }
   }
+
+  /** Current realm intensity (0-1), exposed for UI visual reactivity */
+  private _realmIntensity = 0;
+  get realmIntensity(): number { return this._realmIntensity; }
 
   // ─── FX Slot Control ─────────────────────────────────────
 

@@ -13,12 +13,15 @@ interface RealmFXPanelProps {
   god: ElectricPantheonGod;
   fxValues: number[];
   onFxChange: (index: number, value: number) => void;
+  /** Optional preset-specific FX names override the god's static realmFx */
+  presetFxNames?: string[];
 }
 
 export const RealmFXPanel: React.FC<RealmFXPanelProps> = ({
   god,
   fxValues,
   onFxChange,
+  presetFxNames,
 }) => {
   const [bypassed, setBypassed] = useState<boolean[]>([false, false, false, false]);
 
@@ -30,6 +33,9 @@ export const RealmFXPanel: React.FC<RealmFXPanelProps> = ({
     });
   };
 
+  // Prefer preset-specific names, fallback to static god realmFx
+  const fxNames = presetFxNames ?? god.realmFx;
+
   return (
     <div
       className="ep-realm-fx"
@@ -40,7 +46,7 @@ export const RealmFXPanel: React.FC<RealmFXPanelProps> = ({
       </div>
 
       <div className="ep-realm-fx-grid">
-        {god.realmFx.map((fxName, i) => (
+        {fxNames.map((fxName, i) => (
           <motion.div
             key={`${god.id}-${fxName}`}
             className={`ep-realm-fx-module ${bypassed[i] ? 'ep-realm-fx-module--bypassed' : ''}`}

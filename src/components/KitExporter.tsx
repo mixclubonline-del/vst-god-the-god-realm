@@ -27,7 +27,7 @@ export const KitExporter: React.FC<KitExporterProps> = ({
   const estimatedSize = (totalIncluded * 1.2).toFixed(1); // Rough estimate in MB
 
   return (
-    <div className="flex flex-col h-full glass-panel border-l border-white/5 bg-black/20 w-80 shrink-0">
+    <div className="flex flex-col h-full glass-panel bg-black/20">
       {/* Exporter Header */}
       <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
         <div className="flex items-center gap-3 mb-2">

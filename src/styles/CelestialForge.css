@@ -1,14 +1,9 @@
-/* Celestial Forge V2 Styles - Midnight Ember & Tactile Glass */
+/* Celestial Forge V3 Styles - Divine Light & Celestial Glass */
 
 .vg-celestial-forge {
-  --god-primary: #ff6600;
-  --god-primary-glow: rgba(255, 102, 0, 0.4);
+  /* Inherit from :root — only override Forge-specific tokens */
   --god-secondary: #c29623;
   --god-secondary-glow: rgba(194, 150, 35, 0.4);
-  --god-obsidian: #12100e;
-  --god-bronze-charcoal: #1c1917;
-  --god-stone-bg: #1d100a;
-  --mixx-accent-glow: rgba(255, 102, 0, 0.6);
   --mixx-system-blue: rgba(0, 204, 255, 0.5);
   
   position: relative;
@@ -17,8 +12,8 @@
   height: 100%;
   background-color: var(--god-obsidian);
   background-image: 
-    radial-gradient(circle at 0% 0%, rgba(255, 102, 0, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(0, 204, 255, 0.03) 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, rgba(255, 215, 0, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(100, 60, 200, 0.03) 0%, transparent 50%);
   color: #f8ddd2;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
@@ -32,7 +27,7 @@
   inset: 0;
   background-color: var(--god-bronze-charcoal);
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 102, 0, 0.15) 0%, transparent 80%),
+    radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.15) 0%, transparent 80%),
     url('/plugins/backgrounds/celestial-forge.png'),
     url('https://www.transparenttextures.com/patterns/dark-leather.png');
   background-size: cover;
@@ -68,12 +63,12 @@
 
 .vg-forge-header {
   height: 60px;
-  border-bottom: 1px solid rgba(255, 102, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  background: linear-gradient(180deg, rgba(30, 20, 15, 0.9) 0%, rgba(15, 10, 5, 0.6) 100%);
+  background: linear-gradient(180deg, rgba(14, 10, 40, 0.9) 0%, rgba(8, 5, 20, 0.6) 100%);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   z-index: 10;
@@ -168,7 +163,7 @@
   transform: translateY(-4px) scale(1.01);
   box-shadow: 
     0 40px 80px rgba(0, 0, 0, 0.9),
-    0 0 30px rgba(255, 102, 0, 0.1),
+    0 0 30px rgba(255, 215, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -218,23 +213,23 @@
     inset 0 2px 8px rgba(255,255,255,0.2),
     inset 0 -4px 12px rgba(0,0,0,0.6),
     0 20px 40px rgba(0,0,0,0.7),
-    0 0 80px rgba(255, 102, 0, 0.2);
-  border: 1px solid rgba(255, 102, 0, 0.4);
+    0 0 80px rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.4);
   animation: vgCoreBreath 4s ease-in-out infinite;
 }
 @keyframes vgCoreBreath {
-  0%, 100% { box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -4px 8px rgba(0,0,0,0.8), 0 12px 30px rgba(0,0,0,0.8), 0 0 40px rgba(255, 102, 0, 0.1); }
-  50% { box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -4px 8px rgba(0,0,0,0.8), 0 12px 30px rgba(0,0,0,0.8), 0 0 80px rgba(255, 102, 0, 0.25); }
+  0%, 100% { box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -4px 8px rgba(0,0,0,0.8), 0 12px 30px rgba(0,0,0,0.8), 0 0 40px rgba(255, 215, 0, 0.1); }
+  50% { box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -4px 8px rgba(0,0,0,0.8), 0 12px 30px rgba(0,0,0,0.8), 0 0 80px rgba(255, 215, 0, 0.25); }
 }
 
 .vg-sun-active-gem {
   width: 14px;
   height: 14px;
-  background: linear-gradient(135deg, #ff8800, #ff4400);
+  background: linear-gradient(135deg, var(--god-primary), var(--god-secondary));
   border-radius: 3px;
   transform: rotate(45deg);
   margin-bottom: 10px;
-  box-shadow: 0 0 20px #ff6600, 0 0 40px rgba(255,102,0,0.4), inset 0 0 6px #fff;
+  box-shadow: 0 0 20px var(--god-primary), 0 0 40px rgba(255,215,0,0.4), inset 0 0 6px #fff;
 }
 
 .vg-sun-label {
@@ -269,13 +264,13 @@
     flex: 1;
     height: 100px;
     background: rgba(15, 10, 8, 0.8);
-    border: 1px solid rgba(255, 102, 0, 0.25);
+    border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 12px;
     position: relative;
     overflow: hidden;
     box-shadow: 
         inset 0 6px 16px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(255, 102, 0, 0.05);
+        0 0 20px rgba(255, 215, 0, 0.05);
 }
 
 @keyframes scanline {
@@ -336,7 +331,7 @@
 
 .vg-hall-of-records {
   --shelf-wood: #2a1810;
-  --shelf-gold: #c29623;
+  --shelf-gold: var(--god-secondary);
   --shelf-nebula: #1a0a20;
   
   display: flex;
@@ -472,7 +467,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 102, 0, 0.05) 50%, transparent 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 215, 0, 0.05) 50%, transparent 100%);
   background-size: 100% 200%;
   animation: vgGridScan 4s linear infinite;
 }

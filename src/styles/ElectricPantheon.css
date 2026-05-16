@@ -30,6 +30,7 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  position: relative;
 }
 .ep-macro-icon {
   font-size: 14px;
@@ -1024,4 +1025,267 @@
   letter-spacing: 0.15em;
   cursor: pointer;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* ═══════════════════════════════════════════
+   Preset Navigator Bar
+   ═══════════════════════════════════════════ */
+
+.ep-preset-nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px 8px 0 0;
+}
+
+.ep-preset-nav-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.6);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.ep-preset-nav-btn:hover {
+  background: color-mix(in srgb, var(--god-primary) 15%, transparent);
+  border-color: var(--god-primary);
+  color: var(--god-primary);
+}
+.ep-preset-nav-btn:active {
+  transform: scale(0.9);
+}
+
+.ep-preset-nav-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.ep-preset-nav-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.85);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ep-preset-nav-sub {
+  font-size: 8px;
+  color: var(--god-primary, rgba(255,255,255,0.4));
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ep-preset-nav-midi {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.35);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Profile Preset Badge ─── */
+.ep-profile-preset-badge {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--god-primary) 15%, transparent);
+  color: var(--god-primary);
+  border: 1px solid color-mix(in srgb, var(--god-primary) 25%, transparent);
+}
+
+.ep-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ─── Mood Tag Variant ─── */
+.ep-profile-tag--mood {
+  background: color-mix(in srgb, var(--god-secondary) 12%, transparent);
+  color: var(--god-secondary, rgba(255,255,255,0.7));
+  border-color: color-mix(in srgb, var(--god-secondary) 20%, transparent);
+}
+
+/* ═══════════════════════════════════════════
+   Load Kit to Sequencer Button
+   ═══════════════════════════════════════════ */
+
+.ep-preset-nav-load-kit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--god-primary) 35%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--god-primary) 10%, transparent) 0%,
+    color-mix(in srgb, var(--god-primary) 18%, transparent) 100%
+  );
+  color: var(--god-primary);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.ep-preset-nav-load-kit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--god-primary) 0%, transparent),
+    color-mix(in srgb, var(--god-primary) 20%, transparent)
+  );
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ep-preset-nav-load-kit:hover {
+  border-color: var(--god-primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--god-primary) 30%, transparent),
+              inset 0 0 8px color-mix(in srgb, var(--god-primary) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.ep-preset-nav-load-kit:hover::before {
+  opacity: 1;
+}
+
+.ep-preset-nav-load-kit:active {
+  transform: scale(0.95) translateY(0);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--god-primary) 20%, transparent);
+}
+
+.ep-load-kit-icon {
+  font-size: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.ep-load-kit-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════
+   Macro Behavior Tooltip Styles
+   ═══════════════════════════════════════════ */
+
+.ep-macro-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(10, 8, 20, 0.92);
+  border: 1px solid color-mix(in srgb, var(--god-primary) 25%, transparent);
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ep-macro-slot:hover .ep-macro-tooltip {
+  opacity: 1;
+}
+
+.ep-macro-tooltip-label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--god-primary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ep-macro-tooltip-desc {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  display: block;
+}
+
+.ep-macro-tooltip-targets {
+  font-size: 6px;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   Load Kit Success State
+   ═══════════════════════════════════════════ */
+
+.ep-load-kit--success {
+  border-color: hsl(140, 70%, 45%) !important;
+  background: linear-gradient(
+    135deg,
+    hsla(140, 70%, 45%, 0.12) 0%,
+    hsla(140, 70%, 45%, 0.22) 100%
+  ) !important;
+  color: hsl(140, 70%, 55%) !important;
+  animation: ep-load-kit-pulse 0.6s ease-out;
+  pointer-events: none;
+}
+
+.ep-load-kit--success .ep-load-kit-icon {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ep-load-kit--success .ep-load-kit-label {
+  color: hsl(140, 70%, 55%);
+}
+
+@keyframes ep-load-kit-pulse {
+  0% {
+    box-shadow: 0 0 0 0 hsla(140, 70%, 45%, 0.5),
+               0 0 12px hsla(140, 70%, 45%, 0.3);
+    transform: scale(1.05);
+  }
+  50% {
+    box-shadow: 0 0 0 6px hsla(140, 70%, 45%, 0),
+               0 0 20px hsla(140, 70%, 45%, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsla(140, 70%, 45%, 0),
+               0 0 8px hsla(140, 70%, 45%, 0.1);
+    transform: scale(1);
+  }
 }

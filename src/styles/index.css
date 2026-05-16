@@ -2,23 +2,25 @@
 
 @layer base {
   :root {
-    --ember-50: 20 100% 95%;
-    --ember-100: 20 100% 90%;
-    --ember-200: 20 100% 80%;
-    --ember-300: 20 100% 70%;
-    --ember-400: 20 100% 60%;
-    --ember-500: 20 100% 50%; /* Primary Ember */
-    --ember-600: 20 100% 40%;
-    --ember-700: 20 100% 30%;
-    --ember-800: 20 100% 20%;
-    --ember-900: 20 100% 10%;
-    
-    --midnight-bg: 240 10% 3.9%;
-    --midnight-panel: 240 10% 6%;
+    /* ═══ Divine Light Gold Scale (HSL) ═══ */
+    --divine-50: 51 100% 95%;
+    --divine-100: 51 100% 90%;
+    --divine-200: 51 100% 80%;
+    --divine-300: 51 100% 70%;
+    --divine-400: 51 100% 60%;
+    --divine-500: 51 100% 50%;  /* Primary Gold — #FFD700 */
+    --divine-600: 43 75% 49%;   /* Dark Gold — #daa520 */
+    --divine-700: 43 69% 45%;   /* Antique Gold — #c29623 */
+    --divine-800: 43 60% 30%;
+    --divine-900: 43 50% 15%;
+
+    /* ═══ Celestial Indigo Backgrounds ═══ */
+    --celestial-bg: 250 55% 12%;    /* #0a0820 */
+    --celestial-panel: 250 50% 15%; /* #12102a */
   }
 }
 
-/* Glassmorphism Classes — Midnight Ember v2 */
+/* Glassmorphism Classes — Divine Light v3 */
 .glass-panel {
   background: linear-gradient(135deg, rgba(10, 10, 15, 0.75) 0%, rgba(5, 5, 8, 0.9) 100%);
   backdrop-filter: blur(24px) saturate(160%);
@@ -50,16 +52,16 @@
   transform: translateY(-4px) scale(1.01);
   box-shadow:
     0 20px 60px 0 rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(255, 102, 0, 0.08),
+    0 0 20px rgba(255, 215, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .ember-glow {
-  box-shadow: 0 0 30px rgba(255, 102, 0, 0.12), 0 0 60px rgba(255, 102, 0, 0.06);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.12), 0 0 60px rgba(255, 215, 0, 0.06);
 }
 
 .ember-glow:hover {
-  box-shadow: 0 0 50px rgba(255, 102, 0, 0.25), 0 0 80px rgba(255, 102, 0, 0.1);
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.25), 0 0 80px rgba(255, 215, 0, 0.1);
 }
 
 /* Animations */
@@ -89,8 +91,8 @@
 }
 
 @keyframes heat-pulse {
-  0%, 100% { filter: contrast(1.1) brightness(1) drop-shadow(0 0 5px rgba(255, 87, 34, 0.2)); transform: scale(1); }
-  50% { filter: contrast(1.4) brightness(1.2) drop-shadow(0 0 20px rgba(255, 87, 34, 0.5)); transform: scale(1.02); }
+  0%, 100% { filter: contrast(1.1) brightness(1) drop-shadow(0 0 5px rgba(255, 215, 0, 0.2)); transform: scale(1); }
+  50% { filter: contrast(1.4) brightness(1.2) drop-shadow(0 0 20px rgba(255, 215, 0, 0.5)); transform: scale(1.02); }
 }
 
 @keyframes data-flow {
@@ -100,9 +102,9 @@
 }
 
 @keyframes seal-lock {
-  0% { transform: rotate(0deg) scale(1); opacity: 0; border-color: rgba(255, 87, 34, 0); }
-  50% { transform: rotate(180deg) scale(1.1); opacity: 1; border-color: rgba(255, 87, 34, 0.5); }
-  100% { transform: rotate(360deg) scale(1); opacity: 0.8; border-color: rgba(255, 87, 34, 0.2); }
+  0% { transform: rotate(0deg) scale(1); opacity: 0; border-color: rgba(255, 215, 0, 0); }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 1; border-color: rgba(255, 215, 0, 0.5); }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.8; border-color: rgba(255, 215, 0, 0.2); }
 }
 
 .animate-heat-pulse {
@@ -110,7 +112,7 @@
 }
 
 .animate-data-flow {
-  background-image: radial-gradient(circle, rgba(255, 87, 34, 0.1) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 215, 0, 0.1) 1px, transparent 1px);
   background-size: 10px 10px;
   animation: data-flow 20s infinite linear;
 }
@@ -138,19 +140,19 @@
 .forge-grid {
   background-size: 50px 50px;
   background-image: 
-    linear-gradient(to right, rgba(255, 87, 34, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 87, 34, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 215, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 215, 0, 0.05) 1px, transparent 1px);
   mask-image: radial-gradient(circle at center, black 30%, transparent 90%);
 }
 
 .ember-border {
-  border: 1px solid rgba(255, 87, 34, 0.2);
-  box-shadow: inset 0 0 10px rgba(255, 87, 34, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.05);
 }
 
 .ember-border:hover {
-  border-color: rgba(255, 87, 34, 0.5);
-  box-shadow: inset 0 0 20px rgba(255, 87, 34, 0.1), 0 0 15px rgba(255, 87, 34, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.1), 0 0 15px rgba(255, 215, 0, 0.2);
 }
 
 /* Custom Scrollbar for Glassmorphism */
@@ -163,13 +165,13 @@
 }
 
 .glass-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 87, 34, 0.2);
+  background: rgba(255, 215, 0, 0.2);
   border-radius: 10px;
-  border: 1px solid rgba(255, 87, 34, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.1);
 }
 
 .glass-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 87, 34, 0.4);
+  background: rgba(255, 215, 0, 0.4);
 }
 
 /* ═══════════ DIVINE ARCHIVE ═══════════ */
@@ -177,8 +179,8 @@
 /* Scrollbar alias */
 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 87, 34, 0.2); border-radius: 10px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 87, 34, 0.4); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 215, 0, 0.2); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 215, 0, 0.4); }
 
 /* Now-Playing Equalizer Bars */
 .da-eq-bars {
@@ -192,7 +194,7 @@
 .da-eq-bar {
   width: 3px;
   border-radius: 1px;
-  background: #ff6600;
+  background: var(--god-primary);
   animation: da-eq-bounce 0.8s ease-in-out infinite alternate;
 }
 
@@ -208,21 +210,21 @@
 
 /* Playing Row Glow */
 .da-row-playing {
-  background: rgba(255, 102, 0, 0.06) !important;
-  border-color: rgba(255, 102, 0, 0.25) !important;
-  box-shadow: inset 0 0 20px rgba(255, 102, 0, 0.04), 0 0 12px rgba(255, 102, 0, 0.08);
+  background: rgba(255, 215, 0, 0.06) !important;
+  border-color: rgba(255, 215, 0, 0.25) !important;
+  box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.04), 0 0 12px rgba(255, 215, 0, 0.08);
 }
 
 /* Category Active Left-Border Glow */
 .da-cat-active {
-  border-left: 3px solid #ff6600 !important;
-  background: linear-gradient(90deg, rgba(255, 102, 0, 0.12), transparent) !important;
-  box-shadow: inset 3px 0 12px -4px rgba(255, 102, 0, 0.3);
+  border-left: 3px solid var(--god-primary) !important;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.12), transparent) !important;
+  box-shadow: inset 3px 0 12px -4px rgba(255, 215, 0, 0.3);
 }
 
 /* Skeleton Loader */
 .da-skeleton {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 102, 0, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 215, 0, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
   background-size: 200% 100%;
   animation: da-shimmer 1.5s infinite ease-in-out;
   border-radius: 8px;
@@ -236,7 +238,7 @@
 /* Archive Header Divider */
 .da-header-line {
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 102, 0, 0.4), rgba(255, 68, 0, 0.6), rgba(255, 102, 0, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), rgba(255, 215, 0, 0.6), rgba(255, 215, 0, 0.4), transparent);
   position: relative;
   overflow: hidden;
 }
@@ -285,8 +287,8 @@
 
 .da-fav-btn.is-fav {
   opacity: 1;
-  color: #ff6600;
-  text-shadow: 0 0 8px rgba(255, 102, 0, 0.5);
+  color: var(--god-primary);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 *:hover > .da-fav-btn,
@@ -302,8 +304,8 @@
 }
 
 .da-grid-card:hover {
-  border-color: rgba(255, 102, 0, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 102, 0, 0.04);
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 215, 0, 0.04);
   transform: translateY(-2px);
 }
 
@@ -326,15 +328,15 @@
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
-  background: rgba(255, 102, 0, 0.08);
-  border: 1px solid rgba(255, 102, 0, 0.15);
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.15);
   border-radius: 20px;
   animation: da-np-glow 2s infinite ease-in-out;
 }
 
 @keyframes da-np-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(255, 102, 0, 0.1); }
-  50% { box-shadow: 0 0 16px rgba(255, 102, 0, 0.2); }
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.2); }
 }
 
 /* Row alternating */
@@ -344,7 +346,7 @@
 
 /* Hall of Records shell */
 .da-hall-shell {
-  --room-accent: #ff6600;
+  --room-accent: var(--god-primary);
   --room-image: none;
   height: 100%;
   min-height: 0;
@@ -420,12 +422,12 @@
   background:
     linear-gradient(180deg, rgba(19, 15, 14, 0.95), rgba(5, 5, 6, 0.97)),
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 9px);
-  border-color: rgba(255, 138, 61, 0.13);
+  border-color: rgba(255, 215, 0, 0.13);
 }
 
 .da-room-nav {
   min-width: 0;
-  border-right: 1px solid rgba(255, 138, 61, 0.13);
+  border-right: 1px solid rgba(255, 215, 0, 0.13);
   padding: 16px 12px;
   overflow: hidden;
 }
@@ -449,7 +451,7 @@
   letter-spacing: 0.08em;
   line-height: 1.15;
   text-transform: uppercase;
-  text-shadow: 0 0 16px rgba(255, 102, 0, 0.24);
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.24);
 }
 
 .da-room-list {
@@ -474,12 +476,12 @@
 .da-relic-shelf::-webkit-scrollbar-thumb,
 .da-relic-list::-webkit-scrollbar-thumb,
 .da-recall-strip div::-webkit-scrollbar-thumb {
-  background: rgba(255, 102, 0, 0.25);
+  background: rgba(255, 215, 0, 0.25);
   border-radius: 999px;
 }
 
 .da-room {
-  --room-accent: #ff6600;
+  --room-accent: var(--god-primary);
   --room-image: none;
   position: relative;
   min-height: 54px;
@@ -576,7 +578,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 15px 18px;
-  border-bottom: 1px solid rgba(255, 138, 61, 0.1);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
   background: linear-gradient(180deg, rgba(12, 9, 9, 0.9), rgba(5, 5, 6, 0.74));
 }
 
@@ -643,8 +645,8 @@
 
 .da-search-tools > button.is-active {
   color: #ffb86b;
-  border-color: rgba(255, 102, 0, 0.38);
-  background: rgba(255, 102, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.38);
+  background: rgba(255, 215, 0, 0.12);
 }
 
 .da-relic-shelf,
@@ -669,7 +671,7 @@
 }
 
 .da-relic {
-  --room-accent: #ff6600;
+  --room-accent: var(--god-primary);
   position: relative;
   min-width: 0;
   min-height: 132px;
@@ -827,13 +829,13 @@
 
 .da-inspector {
   min-width: 0;
-  border-left: 1px solid rgba(255, 138, 61, 0.13);
+  border-left: 1px solid rgba(255, 215, 0, 0.13);
   padding: 14px;
   overflow: hidden;
 }
 
 .da-inspector-card {
-  --room-accent: #ff6600;
+  --room-accent: var(--god-primary);
   --room-image: none;
   height: 100%;
   min-height: 0;
@@ -961,11 +963,11 @@
 
 .da-inspector-actions button,
 .da-recall-strip button {
-  border: 1px solid rgba(255, 102, 0, 0.24);
+  border: 1px solid rgba(255, 215, 0, 0.24);
   border-radius: 7px;
   padding: 8px 10px;
   color: #ffd6a0;
-  background: rgba(255, 102, 0, 0.12);
+  background: rgba(255, 215, 0, 0.12);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -975,7 +977,7 @@
 .da-inspector-actions button:hover,
 .da-recall-strip button:hover {
   border-color: rgba(255, 184, 107, 0.55);
-  background: rgba(255, 102, 0, 0.2);
+  background: rgba(255, 215, 0, 0.2);
 }
 
 .da-inspector-empty {
@@ -994,7 +996,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 14px;
-  border-top: 1px solid rgba(255, 138, 61, 0.13);
+  border-top: 1px solid rgba(255, 215, 0, 0.13);
   background: rgba(5, 5, 6, 0.94);
 }
 

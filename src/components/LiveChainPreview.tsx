@@ -17,7 +17,7 @@ const MODULE_COLORS: Record<DSPModuleType, string> = {
   delay: '#ff9900',     // Deep Orange
   reverb: '#ff4400',    // Red-Orange
   distortion: '#ff2200', // Crimson Ember
-  gain: '#ffaa00',      // Gold
+  gain: '#FFD700',      // Divine Gold
   chorus: '#FFA726',    // Bright Orange
   phaser: '#ff7700',    // Mid Orange
   limiter: '#cc3300',   // Dark Ember

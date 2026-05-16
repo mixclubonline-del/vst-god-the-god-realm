@@ -32,6 +32,56 @@ export interface TelemetryState {
   bufferSize: number;
 }
 
+// Phase 4: Mastering Bridge Params — Celestial Forge → JUCE
+export interface MasteringBridgeParams {
+  drive: number;
+  silk: number;
+  body: number;
+  soul: number;
+  air: number;
+  threshold: number;
+  ceiling: number;
+  width: number;
+  imager: number;
+  volume: number;
+}
+
+// Phase 4: Sequencer Step Bridge Payload — Sacred Sequencer → JUCE
+export interface StepBridgePayload {
+  velocity: number;
+  pitch: number;
+  pan: number;
+  decay: number;
+  sliceIndex: number;
+  sourceType: 'sample' | 'synth' | 'bus';
+  synthNote?: number;
+  synthGodId?: string;
+}
+
+// Phase 4: Spectral Data from JUCE → SpectralRadarPanner
+export interface SpectralDataState {
+  fftBins: Uint8Array;
+  rms: number;
+  peakFrequency: number;
+}
+
+// Phase 4: Waveform Analysis from JUCE → Sample Chopper
+export interface WaveformAnalysisState {
+  padIndex: number;
+  transients: number[];
+  spectralFlux?: Float32Array;
+  rmsEnvelope?: Float32Array;
+}
+
+// Phase 4: Chopper Slice — matches GodRealmSampleChopper Slice interface
+export interface BridgeSlice {
+  start: number;
+  end: number;
+  reverse?: boolean;
+  loop?: boolean;
+  volume?: number;
+}
+
 export interface EngineState {
   // Metering (30Hz from JUCE)
   slotLevels: number[];
@@ -53,6 +103,12 @@ export interface EngineState {
   bufferSize: number;
   memoryUsage: number;
   
+  // Phase 4: Real-time spectral data
+  spectralData: SpectralDataState | null;
+  
+  // Phase 4: Waveform analysis results
+  waveformAnalysis: WaveformAnalysisState | null;
+  
   // Legacy compat
   moduleLevels: Record<string, number>;
   arpStep: number;
@@ -68,6 +124,9 @@ declare global {
     sendToJuce?: (message: any) => void;
     __godRealmStateUpdate?: (state: any) => void;
     __godRealmTelemetry?: (telemetry: any) => void;
+    // Phase 4: New inbound callbacks from JUCE
+    __godRealmWaveformAnalysis?: (data: WaveformAnalysisState) => void;
+    __godRealmSpectralData?: (data: SpectralDataState) => void;
   }
 }
 
@@ -88,6 +147,8 @@ class NativeAudioBridge {
     sampleRate: 44100,
     bufferSize: 512,
     memoryUsage: 42.8,
+    spectralData: null,
+    waveformAnalysis: null,
     moduleLevels: {},
     arpStep: 0,
     vortexAnchors: []
@@ -120,6 +181,18 @@ class NativeAudioBridge {
         if (telemetry.bufferSize !== undefined) this.currentState.bufferSize = telemetry.bufferSize;
         
         // Telemetry is lower priority, don't trigger a full re-render
+      };
+
+      // ─── Phase 4: Waveform analysis callback (on-demand from JUCE) ───
+      window.__godRealmWaveformAnalysis = (data: WaveformAnalysisState) => {
+        this.currentState.waveformAnalysis = data;
+        this.notifyListeners({ waveformAnalysis: data } as Partial<EngineState>);
+      };
+
+      // ─── Phase 4: Spectral data callback (30Hz from JUCE) ───
+      window.__godRealmSpectralData = (data: SpectralDataState) => {
+        this.currentState.spectralData = data;
+        this.notifyListeners({ spectralData: data } as Partial<EngineState>);
       };
 
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
@@ -187,6 +260,24 @@ class NativeAudioBridge {
     setInterval(() => {
       this.currentState.cpuUsage = 1.0 + Math.random() * 3.0;
       this.currentState.memoryUsage = 40 + Math.random() * 20;
+    }, 100);
+
+    // ─── Phase 4: Spectral data simulation (10Hz) ───
+    let spectralFrame = 0;
+    setInterval(() => {
+      spectralFrame++;
+      const bins = new Uint8Array(64);
+      for (let i = 0; i < 64; i++) {
+        const bassBump = Math.exp(-Math.abs(i - 8) / 8) * 2;
+        const midBump = Math.exp(-Math.abs(i - 32) / 12) * 1.5;
+        bins[i] = Math.floor((Math.sin(spectralFrame * 0.12 + i * 0.18) * 40 + 80) * (bassBump + midBump) * 0.4);
+      }
+      const simRms = (Math.sin(spectralFrame * 0.05) * 0.3 + 0.5) * 0.2;
+      this.currentState.spectralData = {
+        fftBins: bins,
+        rms: simRms,
+        peakFrequency: 200 + Math.sin(spectralFrame * 0.03) * 150,
+      };
     }, 100);
   }
 
@@ -287,6 +378,107 @@ class NativeAudioBridge {
       else if (window.sendToJuce) window.sendToJuce(msg);
     } else {
       console.log('[NativeBridge Sim] Neural orchestration triggered');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Phase 4: Audio Bridge Integration — 7 New Outbound Methods
+  // ═══════════════════════════════════════════════════════════════
+
+  /** Push chopper slice grid to JUCE engine for native sample playback */
+  public updateChopperSlices(padIndex: number, slices: BridgeSlice[], samplePath: string) {
+    const msg = {
+      type: 'UPDATE_CHOPPER_SLICES',
+      payload: { padIndex, slices, samplePath }
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Chopper slices updated:', { padIndex, sliceCount: slices.length });
+    }
+  }
+
+  /** Push 3D spatial position to JUCE panner (azimuth/elevation) */
+  public updateSpatialPosition(azimuth: number, elevation: number, sourceId: string) {
+    const msg = {
+      type: 'UPDATE_SPATIAL_POSITION',
+      payload: { azimuth, elevation, sourceId }
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Spatial position:', { azimuth: Math.round(azimuth), elevation: Math.round(elevation * 100) + '%', sourceId });
+    }
+  }
+
+  /** Push Celestial Forge mastering params to JUCE master chain */
+  public updateMasteringParams(params: MasteringBridgeParams) {
+    const msg = {
+      type: 'UPDATE_MASTERING_PARAMS',
+      payload: params
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Mastering params:', { drive: params.drive.toFixed(2), silk: params.silk.toFixed(2), volume: params.volume.toFixed(2) });
+    }
+  }
+
+  /** Notify JUCE of transport state changes (BPM, play/stop, swing) */
+  public updateTransport(transport: { bpm: number; isPlaying: boolean; swing: number }) {
+    const msg = {
+      type: 'UPDATE_TRANSPORT',
+      payload: transport
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Transport:', { bpm: transport.bpm, playing: transport.isPlaying, swing: transport.swing });
+    }
+  }
+
+  /** Forward sequencer step trigger to JUCE for native playback */
+  public triggerStep(trackIndex: number, stepData: StepBridgePayload, time: number) {
+    const msg = {
+      type: 'TRIGGER_STEP',
+      payload: { trackIndex, stepData, time }
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    }
+    // Sim mode: silent — steps already play via WebAudio
+  }
+
+  /** Push automation lane data to JUCE */
+  public updateAutomation(trackIndex: number, paramId: string, curve: number[]) {
+    const msg = {
+      type: 'UPDATE_AUTOMATION',
+      payload: { trackIndex, paramId, curve }
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Automation updated:', { trackIndex, paramId, points: curve.length });
+    }
+  }
+
+  /** Push Multi-808 sub-oscillator params to JUCE */
+  public updateSubOscParams(frequency: number, drive: number, attack: number, decay: number) {
+    const msg = {
+      type: 'UPDATE_SUB_OSC',
+      payload: { frequency, drive, attack, decay }
+    };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Sub-osc params:', { freq: frequency.toFixed(1), drive: drive.toFixed(2) });
     }
   }
 }

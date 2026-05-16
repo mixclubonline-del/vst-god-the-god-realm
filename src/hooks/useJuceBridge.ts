@@ -6,7 +6,7 @@
 // simulation data when not inside JUCE.
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { nativeAudio, EngineState, Midi2NoteEvent, TransportState } from '@/native/bridge';
+import { nativeAudio, EngineState, Midi2NoteEvent, TransportState, SpectralDataState, WaveformAnalysisState } from '@/native/bridge';
 
 export interface JuceBridgeState {
   /** Per-track peak levels (0.0 – 1.0+), 8 slots */
@@ -30,6 +30,12 @@ export interface JuceBridgeState {
     sampleRate: number;
     bufferSize: number;
   };
+
+  /** Phase 4: Real-time FFT data from JUCE engine (for SpectralRadarPanner) */
+  spectralData: SpectralDataState | null;
+  
+  /** Phase 4: Waveform analysis from JUCE engine (for Sample Chopper) */
+  waveformAnalysis: WaveformAnalysisState | null;
 }
 
 const DEFAULT_STATE: JuceBridgeState = {
@@ -38,7 +44,9 @@ const DEFAULT_STATE: JuceBridgeState = {
   transport: { isPlaying: false, bpm: 140, ppq: 0, currentStep: 0 },
   midiNotes: [],
   arpStep: 0,
-  telemetry: { cpuUsage: 0, sampleRate: 44100, bufferSize: 512 }
+  telemetry: { cpuUsage: 0, sampleRate: 44100, bufferSize: 512 },
+  spectralData: null,
+  waveformAnalysis: null
 };
 
 /**
@@ -69,7 +77,9 @@ export function useJuceBridge(): JuceBridgeState {
         cpuUsage: engineState.cpuUsage ?? stateRef.current.telemetry.cpuUsage,
         sampleRate: engineState.sampleRate ?? stateRef.current.telemetry.sampleRate,
         bufferSize: engineState.bufferSize ?? stateRef.current.telemetry.bufferSize,
-      }
+      },
+      spectralData: engineState.spectralData ?? stateRef.current.spectralData,
+      waveformAnalysis: engineState.waveformAnalysis ?? stateRef.current.waveformAnalysis,
     };
 
     stateRef.current = next;

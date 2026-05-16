@@ -7,9 +7,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ElectricPantheonGod } from '@/data/electricPantheonGods';
+import type { VstGodPreset } from '@/data/vstGodElectricPantheonLibrary';
 
 interface GodProfileProps {
   god: ElectricPantheonGod;
+  /** Active library preset — provides preset-specific mood, bestFor, quote */
+  preset?: VstGodPreset;
 }
 
 const PROFILE_ICONS: Record<string, string> = {
@@ -19,13 +22,17 @@ const PROFILE_ICONS: Record<string, string> = {
   mood: '🎭',
 };
 
-export const GodProfile: React.FC<GodProfileProps> = ({ god }) => {
+export const GodProfile: React.FC<GodProfileProps> = ({ god, preset }) => {
   const profileEntries = [
     { key: 'element', label: 'ELEMENT', value: god.profile.element },
     { key: 'domain', label: 'DOMAIN', value: god.profile.domain },
     { key: 'energy', label: 'ENERGY', value: god.profile.energy },
     { key: 'mood', label: 'MOOD', value: god.profile.mood },
   ];
+
+  // Prefer preset-specific data when available
+  const bestForTags = preset?.bestFor ?? god.bestFor;
+  const quoteText = preset?.quote ?? god.profile.quote;
 
   return (
     <div
@@ -37,6 +44,9 @@ export const GodProfile: React.FC<GodProfileProps> = ({ god }) => {
     >
       <div className="ep-profile-header">
         <span className="ep-profile-label">GOD PROFILE</span>
+        {preset && (
+          <span className="ep-profile-preset-badge">{preset.category.toUpperCase()}</span>
+        )}
       </div>
 
       {/* Profile Stats */}
@@ -67,11 +77,23 @@ export const GodProfile: React.FC<GodProfileProps> = ({ god }) => {
         </motion.div>
       </AnimatePresence>
 
+      {/* Preset Mood Tags */}
+      {preset && (
+        <div className="ep-profile-section">
+          <span className="ep-profile-section-label">MOOD</span>
+          <div className="ep-profile-tags">
+            {preset.mood.map((tag) => (
+              <span key={tag} className="ep-profile-tag ep-profile-tag--mood">{tag}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Best For Tags */}
       <div className="ep-profile-section">
         <span className="ep-profile-section-label">BEST FOR</span>
         <div className="ep-profile-tags">
-          {god.bestFor.map((tag) => (
+          {bestForTags.map((tag) => (
             <span key={tag} className="ep-profile-tag">{tag}</span>
           ))}
         </div>
@@ -90,13 +112,13 @@ export const GodProfile: React.FC<GodProfileProps> = ({ god }) => {
       {/* God Quote */}
       <motion.blockquote
         className="ep-profile-quote"
-        key={god.id + '-quote'}
+        key={god.id + (preset?.id ?? '') + '-quote'}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
       >
         <span className="ep-profile-quote-mark">"</span>
-        {god.profile.quote}
+        {quoteText}
         <span className="ep-profile-quote-mark">"</span>
       </motion.blockquote>
     </div>

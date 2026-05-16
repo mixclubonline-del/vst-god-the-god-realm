@@ -44,8 +44,8 @@
 }
 
 .sacred-step:hover {
-  background: rgba(255, 102, 0, 0.1);
-  border-color: rgba(255, 102, 0, 0.3);
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
 }
 
 .sacred-step.active-step {
@@ -70,7 +70,7 @@
 
 /* Playhead Indicator */
 .sacred-step.playing {
-  background: rgba(255, 102, 0, 0.2);
+  background: rgba(255, 215, 0, 0.2);
   border-color: #fff;
   box-shadow: 0 0 20px var(--god-primary);
   z-index: 2;

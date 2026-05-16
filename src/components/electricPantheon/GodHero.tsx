@@ -7,12 +7,20 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ElectricPantheonGod } from '@/data/electricPantheonGods';
+import type { VstGodPreset } from '@/data/vstGodElectricPantheonLibrary';
 
 interface GodHeroProps {
   god: ElectricPantheonGod;
+  /** Active library preset — provides sound recipe, subtitle, mood */
+  preset?: VstGodPreset;
 }
 
-export const GodHero: React.FC<GodHeroProps> = ({ god }) => {
+export const GodHero: React.FC<GodHeroProps> = ({ god, preset }) => {
+  // Use preset's sound recipe for chips when available, else sonic references
+  const chipItems = preset?.soundRecipe ?? god.sonicReferences;
+  const subtitleText = preset ? preset.subtitle : god.emotionalPurpose;
+  const quoteText = preset?.quote ?? god.profile.quote;
+
   return (
     <div
       className="ep-hero"
@@ -73,12 +81,12 @@ export const GodHero: React.FC<GodHeroProps> = ({ god }) => {
           <h2 className="ep-hero-name">{god.name}</h2>
           <p className="ep-hero-title">{god.title}</p>
 
-          {/* Emotional Purpose */}
-          <p className="ep-hero-purpose">{god.emotionalPurpose}</p>
+          {/* Preset Subtitle / Emotional Purpose */}
+          <p className="ep-hero-purpose">{subtitleText}</p>
 
-          {/* Sound Chips */}
+          {/* Sound Recipe / Sonic Reference Chips */}
           <div className="ep-hero-chips">
-            {god.sonicReferences.map((ref, i) => (
+            {chipItems.map((ref, i) => (
               <motion.span
                 key={ref}
                 className="ep-hero-chip"

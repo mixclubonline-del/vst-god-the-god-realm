@@ -12,21 +12,39 @@
   --god-primary: #FFD700;                          /* Apollo Gold */
   --god-primary-glow: rgba(255,215,0,0.3);
   --god-primary-intense: rgba(255,215,0,0.65);
+  --god-secondary: #c29623;                        /* Antique Gold */
   --god-accent: #FFA726;                           /* Hyperion Amber */
-  --god-gold: #FFD700;
+  --god-gold: var(--god-primary);
   --god-gold-glow: rgba(255,215,0,0.45);
+  --god-ember: var(--god-primary);                  /* Legacy alias — points to gold */
+
+  /* ═══ Gold Opacity Scale ═══ */
+  --god-gold-04: rgba(255,215,0,0.04);
+  --god-gold-06: rgba(255,215,0,0.06);
+  --god-gold-08: rgba(255,215,0,0.08);
+  --god-gold-10: rgba(255,215,0,0.10);
+  --god-gold-12: rgba(255,215,0,0.12);
+  --god-gold-15: rgba(255,215,0,0.15);
+  --god-gold-20: rgba(255,215,0,0.20);
+  --god-gold-25: rgba(255,215,0,0.25);
+  --god-gold-30: rgba(255,215,0,0.30);
+  --god-gold-40: rgba(255,215,0,0.40);
+  --god-gold-50: rgba(255,215,0,0.50);
+
+  /* ═══ Surfaces & Depth ═══ */
   --god-bg: #1A1245;                               /* Deep Aether Indigo — VISIBLE */
   --god-surface: #221852;                          /* Celestial Surface */
   --god-obsidian: #16103A;                         /* Divine Depth */
   --god-glass: rgba(255, 255, 255, 0.06);
   --god-glass-heavy: rgba(22, 16, 58, 0.75);
-  --god-glass-border: rgba(255, 215, 0, 0.12);    /* Gold-tinted borders */
-  --god-glass-border-hot: rgba(255, 215, 0, 0.25);
+  --god-glass-border: var(--god-gold-12);          /* Gold-tinted borders */
+  --god-glass-border-hot: var(--god-gold-25);
+
+  /* ═══ Typography ═══ */
   --god-text: #FFF8E1;                             /* Warm Divine White */
   --god-text-dim: #C5B87A;                         /* Theia Shimmer */
   --god-text-muted: #7B6F50;                       /* Aged Gold */
   --god-danger: #FF6B6B;
-  --god-ember: #FFD700;                            /* Now Gold, not orange */
 
   /* ═══ Iris Prismatic Accents ═══ */
   --iris-violet: #B388FF;
@@ -492,16 +510,21 @@
 }
 
 .vg-pad-triggering {
-  animation: vgPadTrigger 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  background: rgba(255, 165, 0, 0.4) !important;
-  border-color: #ffaa00 !important;
-  box-shadow: 0 0 30px rgba(255, 165, 0, 0.6) !important;
+  animation: vgPadTrigger 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--god-gold-40) !important;
+  border-color: var(--god-primary) !important;
+  box-shadow: 
+    0 0 30px var(--god-gold-50),
+    0 0 60px var(--god-gold-25),
+    inset 0 0 15px var(--god-gold-15) !important;
   z-index: 10;
 }
 
 @keyframes vgPadTrigger {
   0% { transform: scale(1); filter: brightness(1); }
-  30% { transform: scale(1.1); filter: brightness(2); }
+  20% { transform: scale(1.12); filter: brightness(2.5); }
+  50% { transform: scale(0.96); filter: brightness(1.8); }
+  70% { transform: scale(1.04); filter: brightness(1.3); }
   100% { transform: scale(1); filter: brightness(1); }
 }
 
@@ -577,7 +600,7 @@
   pointer-events: none;
 }
 .vg-core-number {
-  font-size: 16px; font-weight: 900; fill: #FFD700;
+  font-size: 16px; font-weight: 900; fill: var(--god-primary);
   font-family: 'JetBrains Mono', monospace;
 }
 .vg-core-label {
@@ -1037,7 +1060,10 @@
 .vg-btn-primary:hover { background: var(--god-accent); }
 .vg-btn-danger { color: var(--god-danger); border-color: rgba(239,68,68,0.3); }
 .vg-btn-full { width: 100%; }
-.vg-btn-export { background: linear-gradient(to right, #FFD700, #FFA726); border: none; color: #000; font-weight: 900; font-size: 12px; padding: 12px; margin-top: auto; }
+.vg-btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); display: inline-flex; align-items: center; }
+.vg-btn-ghost:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+.vg-btn-ghost:active { background: rgba(255,255,255,0.08); transform: scale(0.97); }
+.vg-btn-export { background: linear-gradient(to right, var(--god-primary), var(--god-accent)); border: none; color: #000; font-weight: 900; font-size: 12px; padding: 12px; margin-top: auto; }
 
 /* Kit Gallery */
 .vg-kit-gallery { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
@@ -1153,7 +1179,7 @@
 /* Sauce Brand */
 .vg-sauce-brand {
   position: fixed; bottom: 80px; right: 20px; width: 300px;
-  background: linear-gradient(135deg, #FFD700, #FFA726);
+  background: linear-gradient(135deg, var(--god-primary), var(--god-accent));
   border-radius: 12px; padding: 20px; color: #000;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.15);
   animation: vgSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1285,8 +1311,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 102, 0, 0.4);
-  box-shadow: inset 0 0 50px rgba(255, 102, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: inset 0 0 50px rgba(255, 215, 0, 0.15);
   z-index: 5;
 }
 
@@ -1379,8 +1405,8 @@
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 102, 0, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 102, 0, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(255, 215, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 215, 0, 0.08) 1px, transparent 1px);
   background-size: 20px 20px;
   pointer-events: none;
   animation: vgGridPulse 4s ease-in-out infinite;
@@ -1423,12 +1449,12 @@
 }
 
 .vg-aether-btn:hover {
-  background: rgba(255, 102, 0, 0.1);
+  background: rgba(255, 215, 0, 0.1);
   border-color: var(--god-primary);
 }
 
 .vg-aether-btn-active {
-  background: rgba(255, 102, 0, 0.2);
+  background: rgba(255, 215, 0, 0.2);
   border-color: var(--god-primary);
   box-shadow: 0 0 10px var(--god-primary-glow);
 }
@@ -1466,7 +1492,7 @@
 }
 
 .vg-knob-outer:hover {
-  border-color: rgba(255, 102, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.3);
   box-shadow:
     var(--god-knob-shadow),
     0 0 15px var(--god-primary-glow);
@@ -1928,9 +1954,9 @@
   background: conic-gradient(
     from 0deg at 50% 50%,
     transparent 0%,
-    rgba(255, 102, 0, 0.1) 10%,
+    rgba(255, 215, 0, 0.1) 10%,
     transparent 20%,
-    rgba(255, 102, 0, 0.1) 30%,
+    rgba(255, 215, 0, 0.1) 30%,
     transparent 40%
   );
   animation: divineRays 60s linear infinite;
@@ -1959,7 +1985,7 @@
 .da-hall-shell {
   background:
     radial-gradient(ellipse at 20% 80%, rgba(255,215,0,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(255,138,61,0.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0,0.02) 0%, transparent 50%),
     linear-gradient(180deg, #050506 0%, #030304 100%);
   font-family: 'Inter', system-ui, sans-serif;
 }
@@ -2437,7 +2463,7 @@
   background:
     linear-gradient(145deg, rgba(255,215,0,0.14) 0%, rgba(255,180,0,0.06) 100%);
   border: 1px solid rgba(255,215,0,0.20);
-  border-top-color: rgba(255,138,61,0.28);
+  border-top-color: rgba(255, 215, 0,0.28);
   font-family: 'Inter', system-ui, sans-serif;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.06),
@@ -2571,46 +2597,46 @@
 }
 
 .vg-plugin ::-webkit-scrollbar-thumb {
-  background: rgba(255, 102, 0, 0.16);
+  background: rgba(255, 215, 0, 0.16);
   border-radius: 999px;
-  border: 1px solid rgba(255, 102, 0, 0.06);
+  border: 1px solid rgba(255, 215, 0, 0.06);
 }
 
 .vg-plugin ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 102, 0, 0.32);
+  background: rgba(255, 215, 0, 0.32);
 }
 
 .vg-plugin ::-webkit-scrollbar-thumb:active {
-  background: rgba(255, 102, 0, 0.45);
+  background: rgba(255, 215, 0, 0.45);
 }
 
 /* Firefox scrollbar support */
 .vg-plugin * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 102, 0, 0.16) rgba(0, 0, 0, 0.15);
+  scrollbar-color: rgba(255, 215, 0, 0.16) rgba(0, 0, 0, 0.15);
 }
 
 /* ─── Selection Highlight: Ember Accent ─── */
 .vg-plugin ::selection {
-  background: rgba(255, 102, 0, 0.3);
+  background: rgba(255, 215, 0, 0.3);
   color: #fff2d8;
   text-shadow: none;
 }
 
 .vg-plugin ::-moz-selection {
-  background: rgba(255, 102, 0, 0.3);
+  background: rgba(255, 215, 0, 0.3);
   color: #fff2d8;
   text-shadow: none;
 }
 
 /* ─── Focus Outlines: Ember Ring (keyboard accessibility) ─── */
 .vg-plugin *:focus-visible {
-  outline: 2px solid rgba(255, 102, 0, 0.5);
+  outline: 2px solid rgba(255, 215, 0, 0.5);
   outline-offset: 2px;
   border-radius: var(--god-radius);
   box-shadow:
-    0 0 0 4px rgba(255, 102, 0, 0.08),
-    0 0 12px rgba(255, 102, 0, 0.12);
+    0 0 0 4px rgba(255, 215, 0, 0.08),
+    0 0 12px rgba(255, 215, 0, 0.12);
 }
 
 /* Remove default outline for mouse clicks */
@@ -2625,11 +2651,11 @@
 .vg-plugin select:focus-visible,
 .vg-plugin [role="button"]:focus-visible,
 .vg-plugin [role="tab"]:focus-visible {
-  outline: 2px solid rgba(255, 102, 0, 0.6);
+  outline: 2px solid rgba(255, 215, 0, 0.6);
   outline-offset: 1px;
   box-shadow:
-    0 0 0 4px rgba(255, 102, 0, 0.1),
-    0 0 16px rgba(255, 102, 0, 0.15);
+    0 0 0 4px rgba(255, 215, 0, 0.1),
+    0 0 16px rgba(255, 215, 0, 0.15);
 }
 
 /* Suppress focus ring for knobs/sliders (continuous drag elements) */
@@ -2639,8 +2665,8 @@
 .vg-plugin .nebula-xy-pad:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px rgba(255, 102, 0, 0.2),
-    0 0 8px rgba(255, 102, 0, 0.1);
+    0 0 0 2px rgba(255, 215, 0, 0.2),
+    0 0 8px rgba(255, 215, 0, 0.1);
 }
 
 /* ─── Cursor: Premium crosshair for drag surfaces ─── */
@@ -2657,4 +2683,288 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHASE 8 — MICRO-ANIMATION SYSTEM | Divine Kinetics
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Tab Hover Shimmer — Gold light sweeps across on hover ─── */
+.vg-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255,215,0,0.08) 48%,
+    rgba(255,215,0,0.15) 50%,
+    rgba(255,215,0,0.08) 52%,
+    transparent 60%
+  );
+  transform: translateX(-200%);
+  transition: none;
+  pointer-events: none;
+}
+.vg-tab:hover::before {
+  animation: vgTabShimmer 0.6s ease-out forwards;
+}
+@keyframes vgTabShimmer {
+  from { transform: translateX(-200%); }
+  to { transform: translateX(200%); }
+}
+
+/* ─── Active Tab Breathing Underline ─── */
+.vg-tab-active::after {
+  animation: vgTabGlow 2s ease-in-out infinite, vgTabUnderlineBreathe 4s ease-in-out infinite;
+}
+@keyframes vgTabUnderlineBreathe {
+  0%, 100% { height: 2px; box-shadow: 0 0 12px var(--god-primary), 0 2px 20px var(--god-primary-glow); }
+  50% { height: 2.5px; box-shadow: 0 0 18px var(--god-primary), 0 2px 30px var(--god-primary-glow), 0 4px 40px var(--god-gold-08); }
+}
+
+/* ─── Button Press Physics ─── */
+.vg-btn {
+  transition: all 0.2s var(--god-spring), transform 0.15s var(--god-spring-snappy);
+  will-change: transform;
+}
+.vg-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 20px var(--god-gold-06);
+}
+.vg-btn:active {
+  transform: translateY(0.5px) scale(0.97);
+  transition-duration: 0.06s;
+}
+
+/* Primary Button — Gold pulse on hover */
+.vg-btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+.vg-btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255,255,255,0.25) 50%,
+    transparent 65%
+  );
+  transform: translateX(-200%);
+  pointer-events: none;
+}
+.vg-btn-primary:hover::after {
+  animation: vgBtnShimmer 0.5s ease-out forwards;
+}
+@keyframes vgBtnShimmer {
+  from { transform: translateX(-200%); }
+  to { transform: translateX(200%); }
+}
+
+/* Export Button — Premium press feedback */
+.vg-btn-export {
+  transition: all 0.25s var(--god-spring), box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.vg-btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px var(--god-gold-30), 0 0 40px var(--god-gold-15);
+  filter: brightness(1.1);
+}
+.vg-btn-export:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 2px 8px var(--god-gold-20);
+  filter: brightness(0.95);
+}
+
+/* ─── Knob Drag Intensification ─── */
+.vg-knob-ring-sm:active,
+.vg-knob-ring-lg:active {
+  border-color: var(--god-primary) !important;
+  box-shadow: 
+    var(--god-knob-shadow),
+    0 0 20px var(--god-gold-25),
+    0 0 40px var(--god-gold-10);
+  transition-duration: 0.05s;
+}
+.vg-knob-ring-sm:active::after,
+.vg-knob-ring-lg:active::after {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 90%, var(--god-gold-40) 0%, transparent 60%);
+}
+
+/* Knob value text flash on change */
+.vg-knob-val {
+  transition: text-shadow 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Pad Press Ripple ─── */
+.vg-pad {
+  transition: all 0.2s var(--god-spring), transform 0.12s var(--god-spring-snappy);
+}
+.vg-pad:active {
+  transform: scale(0.95);
+  transition-duration: 0.05s;
+}
+.vg-pad:active .vg-pad-glow {
+  opacity: 0.5;
+  transform: scale(1.1);
+}
+
+/* ─── Panel Entrance Choreography — Staggered reveals ─── */
+@keyframes vgTabEnterStagger {
+  from { 
+    opacity: 0; 
+    transform: translateY(16px) scale(0.98); 
+    filter: blur(6px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: none; 
+    filter: blur(0); 
+  }
+}
+
+.vg-panel > *:nth-child(1) { animation: vgTabEnterStagger 0.4s var(--god-spring) 0.05s both; }
+.vg-panel > *:nth-child(2) { animation: vgTabEnterStagger 0.4s var(--god-spring) 0.1s both; }
+.vg-panel > *:nth-child(3) { animation: vgTabEnterStagger 0.4s var(--god-spring) 0.15s both; }
+.vg-panel > *:nth-child(4) { animation: vgTabEnterStagger 0.4s var(--god-spring) 0.2s both; }
+.vg-panel > *:nth-child(5) { animation: vgTabEnterStagger 0.4s var(--god-spring) 0.25s both; }
+
+/* ─── Section Head Sweep — Gold line draws in from left ─── */
+.vg-section-head::after {
+  transform-origin: left;
+  animation: vgSectionLineGrow 0.6s var(--god-spring) 0.3s both;
+}
+@keyframes vgSectionLineGrow {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* ─── Deity Panel Slide — Enhanced with backdrop blur ramp ─── */
+.vg-deity-panel {
+  animation: vgDeityPanelEnter 0.35s var(--god-spring);
+  backdrop-filter: blur(16px);
+}
+@keyframes vgDeityPanelEnter {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+    backdrop-filter: blur(0px);
+  }
+  to { 
+    opacity: 1; 
+    transform: none; 
+    backdrop-filter: blur(16px);
+  }
+}
+
+/* ─── Waveform Playhead Glow Enhancement ─── */
+.vg-chop-marker:hover,
+.vg-chop-dragging {
+  box-shadow: 0 0 15px var(--god-primary), 0 0 30px var(--god-gold-20);
+}
+.vg-chop-dragging {
+  width: 2px;
+  background: var(--god-primary);
+  box-shadow: 
+    0 0 15px var(--god-primary), 
+    0 0 30px var(--god-gold-25),
+    0 0 60px var(--god-gold-10);
+}
+
+/* ─── Constellation Node Magnetic Pull ─── */
+.vg-cnode {
+  transition: all 0.35s var(--god-spring), box-shadow 0.4s ease;
+}
+.vg-cnode:hover {
+  transition-duration: 0.2s;
+}
+
+/* ─── Preset Row Hover Slide ─── */
+.vg-table-row {
+  transition: all 0.2s var(--god-spring);
+  position: relative;
+}
+.vg-table-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--god-primary);
+  transform: scaleY(0);
+  transition: transform 0.2s var(--god-spring-snappy);
+}
+.vg-table-row:hover {
+  transform: translateX(4px);
+  background: rgba(255,215,0,0.04);
+}
+.vg-table-row:hover::before {
+  transform: scaleY(1);
+}
+
+/* ─── Status Message Pop-In Enhancement ─── */
+.vg-vault-status {
+  animation: vgStatusPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+             vgStatusGlow 1.5s ease-in-out 0.35s infinite;
+}
+@keyframes vgStatusGlow {
+  0%, 100% { box-shadow: 0 0 20px var(--god-gold-25), 0 0 40px rgba(179,136,255,0.08); }
+  50% { box-shadow: 0 0 30px var(--god-gold-30), 0 0 60px rgba(179,136,255,0.12); }
+}
+
+/* ─── Search Input Focus Expansion ─── */
+.vg-search {
+  transition: all 0.3s var(--god-spring);
+}
+.vg-search:focus {
+  border-color: var(--god-gold-30);
+  box-shadow: 0 0 0 3px var(--god-gold-08), 0 0 20px var(--god-gold-10);
+  transform: scale(1.01);
+}
+
+/* ─── Category Active Gold Accent ─── */
+.vg-cat-active {
+  position: relative;
+  transition: all 0.2s var(--god-spring);
+}
+.vg-cat-active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 15%; bottom: 15%;
+  width: 2px;
+  background: var(--god-primary);
+  border-radius: 1px;
+  box-shadow: 0 0 8px var(--god-primary);
+  animation: vgCatAccentGlow 2s ease-in-out infinite;
+}
+@keyframes vgCatAccentGlow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; box-shadow: 0 0 12px var(--god-primary), 0 0 20px var(--god-gold-15); }
+}
+
+/* ─── GPU Acceleration Hints ─── */
+.vg-panel,
+.vg-cnode,
+.vg-pad,
+.vg-ember,
+.realm-portal-overlay,
+.vg-ambient-glow {
+  will-change: transform, opacity;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .vg-plugin *,
+  .vg-plugin *::before,
+  .vg-plugin *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

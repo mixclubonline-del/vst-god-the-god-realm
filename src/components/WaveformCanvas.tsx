@@ -144,7 +144,7 @@ export const WaveformCanvas: React.FC<WaveformCanvasProps> = ({
               x={pos * 100 + '%'} y="100%" width="28" height="24" rx="6" 
               transform="translate(-14, -32)"
               fill={draggingMarker === i ? "#FFD700" : "rgba(20,10,40,0.95)"}
-              stroke={draggingMarker === i ? "#ffaa00" : "#a855f7"}
+              stroke={draggingMarker === i ? "#FFD700" : "#a855f7"}
               strokeWidth="1.5"
               className="transition-all shadow-xl"
             />
