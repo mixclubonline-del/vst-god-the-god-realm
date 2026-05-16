@@ -297,44 +297,18 @@ export const GodRealmStandalone: React.FC = () => {
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute top-1/3 right-1/3 w-[300px] h-[300px] bg-cyan-500/3 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* ── Left: Plugin Display ── */}
-        <section className={`flex-1 flex items-center justify-center p-6 transition-all duration-500 ${activeTab !== 'Plugin' ? 'opacity-40 scale-95' : ''}`}>
-          <div className="relative">
-            {/* Stage Lighting — Divine Radiance */}
-            <div className="absolute -inset-20 bg-yellow-500/8 blur-[100px] rounded-full opacity-50" />
-            
-            <div className="relative shadow-[0_50px_100px_rgba(0,0,0,0.9)] rounded-2xl overflow-hidden border border-white/10">
-              <VstgodthegodrealmPlugin 
-                isOpen={true} 
-                onClose={() => {}} 
-                embedded
-                width={1280}
-                height={820}
-                onParameterChange={handleParamChange}
-                parameterValues={godPlugin?.parameterValues}
-              />
-            </div>
-            
-            {/* Status indicators floating around the plugin */}
-            <div className="absolute -right-24 top-0 flex flex-col gap-4">
-               <motion.div 
-                 initial={{ x: 20, opacity: 0 }}
-                 animate={{ x: 0, opacity: 1 }}
-                 className="p-3 rounded-xl bg-black/40 border border-white/5 backdrop-blur-xl flex flex-col items-center gap-1"
-               >
-                 <Zap className="w-4 h-4 text-yellow-400" />
-                 <span className="text-[8px] font-bold text-white/40 uppercase">Power</span>
-               </motion.div>
-               <motion.div 
-                 initial={{ x: 20, opacity: 0 }}
-                 animate={{ x: 0, opacity: 1 }}
-                 transition={{ delay: 0.1 }}
-                 className="p-3 rounded-xl bg-black/40 border border-white/5 backdrop-blur-xl flex flex-col items-center gap-1"
-               >
-                 <Activity className="w-4 h-4 text-emerald-400" />
-                 <span className="text-[8px] font-bold text-white/40 uppercase">Audio</span>
-               </motion.div>
-            </div>
+        {/* ── Full-Screen Plugin Display ── */}
+        <section className={`flex-1 flex overflow-hidden transition-all duration-500 ${activeTab !== 'Plugin' ? 'opacity-40 scale-95' : ''}`}>
+          <div className="relative flex-1 overflow-hidden">
+            <VstgodthegodrealmPlugin 
+              isOpen={true} 
+              onClose={() => {}} 
+              embedded
+              width="100%"
+              height="100%"
+              onParameterChange={handleParamChange}
+              parameterValues={godPlugin?.parameterValues}
+            />
           </div>
         </section>
 
