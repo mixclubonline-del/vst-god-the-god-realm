@@ -38,16 +38,74 @@
   pointer-events: none;
 }
 
-/* Glass Refraction Layer — subtle depth distortion over the background */
+/* Prismatic Edge Vignette — color separation at the periphery */
+.vg-forge-stone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(255, 60, 20, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 0%, rgba(100, 60, 220, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 100%, rgba(0, 180, 255, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 0% 100%, rgba(255, 180, 0, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: screen;
+}
+
+/* Glass Refraction Layer — subtle depth distortion + animated caustic light */
 .vg-celestial-forge::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(8, 5, 4, 0.35) 100%);
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
+  background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(8, 5, 4, 0.3) 100%);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
   z-index: 0;
   pointer-events: none;
+}
+
+/* Caustic Light Animation Layer — the "light through water" effect */
+.vg-celestial-forge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 215, 0, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(255, 150, 50, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  animation: vgCausticDrift 20s ease-in-out infinite alternate;
+}
+
+@keyframes vgCausticDrift {
+  0% {
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255, 215, 0, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(255, 150, 50, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+  }
+  33% {
+    background:
+      radial-gradient(ellipse at 60% 30%, rgba(255, 200, 80, 0.05) 0%, transparent 45%),
+      radial-gradient(ellipse at 30% 70%, rgba(200, 120, 255, 0.03) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 50%, rgba(255, 255, 255, 0.015) 0%, transparent 50%);
+  }
+  66% {
+    background:
+      radial-gradient(ellipse at 40% 60%, rgba(255, 180, 0, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(100, 180, 255, 0.03) 0%, transparent 45%),
+      radial-gradient(ellipse at 20% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 55%);
+  }
+  100% {
+    background:
+      radial-gradient(ellipse at 70% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 60%, rgba(255, 100, 50, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 55%);
+  }
 }
 
 /* Ancient Glyphs Overlay */
@@ -63,19 +121,49 @@
 
 .vg-forge-header {
   height: 60px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  background: linear-gradient(180deg, rgba(14, 10, 40, 0.9) 0%, rgba(8, 5, 20, 0.6) 100%);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: linear-gradient(180deg, rgba(14, 10, 40, 0.92) 0%, rgba(8, 5, 20, 0.65) 100%);
+  backdrop-filter: blur(30px) saturate(220%) brightness(1.02);
+  -webkit-backdrop-filter: blur(30px) saturate(220%) brightness(1.02);
   z-index: 10;
   box-shadow: 
     0 4px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 2px 0 rgba(255, 215, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   position: relative;
+}
+
+/* Inner refraction glow on the header */
+.vg-forge-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 100, 50, 0.2) 15%,
+    rgba(255, 215, 0, 0.3) 35%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(0, 180, 255, 0.2) 65%,
+    rgba(150, 50, 255, 0.15) 85%,
+    transparent
+  );
+  filter: blur(0.5px);
+  z-index: 11;
+  animation: vgHeaderPrism 8s ease-in-out infinite alternate;
+}
+
+@keyframes vgHeaderPrism {
+  0% { opacity: 0.5; left: 10%; right: 10%; }
+  50% { opacity: 0.9; left: 5%; right: 5%; }
+  100% { opacity: 0.6; left: 15%; right: 15%; }
 }
 
 .vg-forge-title {
@@ -110,6 +198,8 @@
   z-index: 10;
   position: relative;
   background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.3) 100%);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
   border-left: 1px solid rgba(255,255,255,0.08);
   border-right: 1px solid rgba(0,0,0,0.4);
   padding: 20px 10px;
@@ -119,13 +209,54 @@
     5px 0 15px rgba(0,0,0,0.4);
 }
 
+/* Prismatic edge highlight — the "rainbow edge" where glass meets background */
 .vg-forge-rail::before {
   content: '';
   position: absolute;
   top: 0; bottom: 0;
-  left: 10px;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.1), transparent);
+  left: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 100, 50, 0.15) 15%,
+    rgba(255, 215, 0, 0.2) 30%,
+    rgba(100, 255, 100, 0.1) 50%,
+    rgba(0, 150, 255, 0.15) 70%,
+    rgba(150, 50, 255, 0.12) 85%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  z-index: 20;
+  animation: vgPrismaticShimmer 6s ease-in-out infinite alternate;
+}
+
+/* Mirror prismatic edge on the right side */
+.vg-forge-rail::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  right: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(150, 50, 255, 0.12) 15%,
+    rgba(0, 150, 255, 0.15) 30%,
+    rgba(100, 255, 100, 0.1) 50%,
+    rgba(255, 215, 0, 0.2) 70%,
+    rgba(255, 100, 50, 0.15) 85%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  z-index: 20;
+  animation: vgPrismaticShimmer 6s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes vgPrismaticShimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
 }
 
 .vg-forge-viz-area {
@@ -139,20 +270,21 @@
   overflow: visible;
 }
 
-/* Glass Panels - Enhanced Premium Tactile Glass */
+/* Glass Panels - Enhanced Premium Tactile Glass with Refraction */
 .glass-panel {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(20, 15, 12, 0.85) 100%);
-  backdrop-filter: blur(50px) saturate(220%);
-  -webkit-backdrop-filter: blur(50px) saturate(220%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(20, 15, 12, 0.88) 100%);
+  backdrop-filter: blur(50px) saturate(220%) brightness(1.05);
+  -webkit-backdrop-filter: blur(50px) saturate(220%) brightness(1.05);
   border-top: 1px solid rgba(255, 255, 255, 0.35);
   border-left: 1px solid rgba(255, 255, 255, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 2px solid rgba(0, 0, 0, 0.9);
   box-shadow:
     0 35px 70px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
     inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0,0,0,0.5);
+    0 0 20px rgba(0,0,0,0.5),
+    0 0 1px rgba(255, 215, 0, 0.15);
   border-radius: 20px;
   position: relative;
   overflow: hidden;
@@ -163,23 +295,57 @@
   transform: translateY(-4px) scale(1.01);
   box-shadow: 
     0 40px 80px rgba(0, 0, 0, 0.9),
-    0 0 30px rgba(255, 215, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 0 40px rgba(255, 215, 0, 0.12),
+    0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
+/* Prismatic glass sweep — light refracts into color spectrum as it passes */
 .glass-panel::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 55%, transparent 60%);
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 80, 50, 0.02) 40%,
+    rgba(255, 215, 0, 0.04) 44%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(100, 200, 255, 0.04) 52%,
+    rgba(150, 80, 255, 0.02) 56%,
+    transparent 62%
+  );
   pointer-events: none;
-  transform: translateX(-100%);
-  animation: vgGlassSweep 8s infinite ease-in-out;
+  transform: translateX(-120%);
+  animation: vgPrismaticSweep 10s infinite ease-in-out;
 }
 
-@keyframes vgGlassSweep {
-  0% { transform: translateX(-100%) skewX(-15deg); }
-  20%, 100% { transform: translateX(150%) skewX(-15deg); }
+/* Caustic light pattern on glass — "light dancing on the surface" */
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 215, 0, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.8;
+  transition: opacity 0.4s;
+}
+
+.glass-panel:hover::after {
+  opacity: 1;
+}
+
+@keyframes vgPrismaticSweep {
+  0% { transform: translateX(-120%) skewX(-15deg); opacity: 0; }
+  5% { opacity: 1; }
+  18% { opacity: 1; }
+  22%, 100% { transform: translateX(150%) skewX(-15deg); opacity: 0; }
 }
 
 /* Sun Disk Styles */
