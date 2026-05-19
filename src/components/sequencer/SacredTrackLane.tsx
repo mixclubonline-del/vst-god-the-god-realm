@@ -13,7 +13,9 @@
 import React, { useCallback, useState } from 'react';
 import { SacredStep } from './SacredStep';
 import { TrackSourceSelector } from './TrackSourceSelector';
-import type { TrackState, StepState, TrackSourceType } from './useSequencerEngine';
+import { SacredFXPopover } from './SacredFXPopover';
+import { SacredAutomationLane, AddAutomationLaneSelector } from './SacredAutomationLane';
+import type { TrackState, StepState, TrackSourceType, FXSendState, AutomationParam, AutomationPoint, AutomationLane } from './useSequencerEngine';
 import { electricPantheonGods } from '../../data/electricPantheonGods';
 import type { ElectricPantheonGodId } from '../../data/electricPantheonGods';
 
@@ -40,6 +42,17 @@ interface SacredTrackLaneProps {
   onRename?: (trackIndex: number, name: string) => void;
   onSetColor?: (trackIndex: number, color: string) => void;
   onDeleteTrack?: (trackId: string) => void;
+  // FX Send control
+  onSetFxSend?: (trackIndex: number, fx: keyof FXSendState, value: number) => void;
+  // Automation lane controls
+  isPlaying?: boolean;
+  onAddAutomationLane?: (trackIndex: number, param: AutomationParam) => void;
+  onRemoveAutomationLane?: (trackIndex: number, param: AutomationParam) => void;
+  onSetAutomationPoint?: (trackIndex: number, param: AutomationParam, point: AutomationPoint) => void;
+  onRemoveAutomationPoint?: (trackIndex: number, param: AutomationParam, pointIndex: number) => void;
+  onSetAutomationPoints?: (trackIndex: number, param: AutomationParam, points: AutomationPoint[]) => void;
+  onToggleAutomationEnabled?: (trackIndex: number, param: AutomationParam) => void;
+  onSetAutomationCurveType?: (trackIndex: number, param: AutomationParam, curveType: AutomationLane['curveType']) => void;
 }
 
 /** Convert MIDI note number to note name */
@@ -77,10 +90,23 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
   onRename,
   onSetColor,
   onDeleteTrack,
+  onSetFxSend,
+  // Automation
+  isPlaying,
+  onAddAutomationLane,
+  onRemoveAutomationLane,
+  onSetAutomationPoint,
+  onRemoveAutomationPoint,
+  onSetAutomationPoints,
+  onToggleAutomationEnabled,
+  onSetAutomationCurveType,
 }) => {
   const pattern = activePattern === 'A' ? track.patternA : track.patternB;
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [selectorPos, setSelectorPos] = useState({ x: 0, y: 0 });
+  const [fxPopoverOpen, setFxPopoverOpen] = useState(false);
+  const [fxPopoverPos, setFxPopoverPos] = useState({ x: 0, y: 0 });
+  const [autoExpanded, setAutoExpanded] = useState(false);
 
   // Find god data for synth tracks
   const godData = track.sourceType === 'synth' && track.synthConfig
@@ -167,11 +193,16 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
             S
           </button>
 
-          {/* FX Send Indicator */}
+          {/* FX Send Indicator — clickable to open FX Popover */}
           <div
-            className="seq-lane__fx-indicator"
+            className="seq-lane__fx-indicator seq-lane__fx-indicator--clickable"
             title={`FX: R${track.fxSends?.reverb || 0} C${track.fxSends?.chorus || 0} D${track.fxSends?.delay || 0} S${track.fxSends?.saturation || 0}`}
             style={{ '--fx-level': `${totalFx}%` } as React.CSSProperties}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFxPopoverPos({ x: e.clientX, y: e.clientY });
+              setFxPopoverOpen(prev => !prev);
+            }}
           >
             <span className="seq-lane__fx-label">FX</span>
             <svg className="seq-lane__fx-arc" viewBox="0 0 24 24">
@@ -230,6 +261,17 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
           >
             ⚙
           </button>
+
+          {/* Automation Toggle */}
+          {onAddAutomationLane && (
+            <button
+              className={`seq-lane__btn seq-lane__btn--auto ${autoExpanded ? 'seq-lane__btn--auto-active' : ''}`}
+              onClick={(e) => { e.stopPropagation(); setAutoExpanded(!autoExpanded); }}
+              title="Toggle Automation Lanes"
+            >
+              📈
+            </button>
+          )}
         </div>
       </div>
 
@@ -286,6 +328,47 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
           }}
           onClose={() => setSelectorOpen(false)}
         />
+      )}
+
+      {/* FX Send Popover */}
+      {fxPopoverOpen && onSetFxSend && (
+        <SacredFXPopover
+          trackIndex={trackIndex}
+          trackName={track.name}
+          trackColor={track.color}
+          sends={track.fxSends}
+          anchorPosition={fxPopoverPos}
+          onSetSend={onSetFxSend}
+          onClose={() => setFxPopoverOpen(false)}
+        />
+      )}
+
+      {/* ═══ Automation Lanes Drawer ═══ */}
+      {autoExpanded && onAddAutomationLane && (
+        <div className="seq-lane__auto-drawer">
+          {(track.automationLanes || []).map(lane => (
+            <SacredAutomationLane
+              key={lane.param}
+              lane={lane}
+              trackIndex={trackIndex}
+              trackColor={track.color}
+              stepCount={stepCount}
+              currentStep={currentStep}
+              isPlaying={isPlaying || false}
+              onSetPoint={(param, point) => onSetAutomationPoint?.(trackIndex, param, point)}
+              onRemovePoint={(param, idx) => onRemoveAutomationPoint?.(trackIndex, param, idx)}
+              onSetPoints={(param, pts) => onSetAutomationPoints?.(trackIndex, param, pts)}
+              onToggleEnabled={(param) => onToggleAutomationEnabled?.(trackIndex, param)}
+              onSetCurveType={(param, ct) => onSetAutomationCurveType?.(trackIndex, param, ct)}
+              onRemoveLane={(param) => onRemoveAutomationLane?.(trackIndex, param)}
+            />
+          ))}
+          <AddAutomationLaneSelector
+            existingParams={(track.automationLanes || []).map(l => l.param)}
+            trackSourceType={track.sourceType}
+            onAddLane={(param) => onAddAutomationLane(trackIndex, param)}
+          />
+        </div>
       )}
     </div>
   );

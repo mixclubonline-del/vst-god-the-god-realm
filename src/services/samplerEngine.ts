@@ -530,7 +530,9 @@ export class GodRealmSamplerEngine {
 
     // ─── Multi-808 Engine Setup ───
     this.m808MasterGain = this.ctx.createGain();
+    this.m808MasterGain.gain.value = 0; // Silent until triggered
     this.m808SubGain = this.ctx.createGain();
+    this.m808SubGain.gain.value = 0;    // Silent until triggered
     this.m808SubOsc = this.ctx.createOscillator();
     this.m808SubOsc.type = 'sine';
     this.m808MidDrive = this.ctx.createWaveShaper();
@@ -832,6 +834,11 @@ export class GodRealmSamplerEngine {
     this.m808SubGain.gain.setValueAtTime(0, now);
     this.m808SubGain.gain.linearRampToValueAtTime(1.0, now + 0.005);
     this.m808SubGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+    // Master 808 Bus Envelope (gate open then decay to silence)
+    this.m808MasterGain.gain.cancelScheduledValues(now);
+    this.m808MasterGain.gain.setValueAtTime(1.0, now);
+    this.m808MasterGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
     // Click Layer
     if (this.m808ClickBuffer) {

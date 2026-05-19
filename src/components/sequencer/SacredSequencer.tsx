@@ -15,6 +15,15 @@ import { sampleManager } from './SampleManager';
 import { SacredMasterPanel } from './SacredMasterPanel';
 import { GodRealmSampleChopper } from '../GodRealmSampleChopper';
 import { ExportEngine } from '../../audio/ExportEngine';
+import { PantheonSynthEngine } from '../../audio/PantheonSynthEngine';
+import { FXRack } from '../../audio/FXRack';
+import { SacredMixerStrip } from './SacredMixerStrip';
+import { SacredFXRackPanel } from './SacredFXRackPanel';
+import { SacredSongTimeline } from './SacredSongTimeline';
+import { SacredProjectDrawer } from './SacredProjectDrawer';
+import { useTrackMetering } from './useTrackMetering';
+import { useProjectManager } from './useProjectManager';
+import type { FXSendState, AutomationParam } from './useSequencerEngine';
 import { nativeAudio, StepBridgePayload } from '../../native/bridge';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
 import './SacredSequencer.css';
@@ -33,7 +42,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   engine,
   buffers,
 }) => {
-  const { state, dispatch, play, stop, togglePlay, setOnTrigger, audioCtx, masterChain } = engine;
+  const { state, dispatch, play, stop, togglePlay, setOnTrigger, setOnAutomation, audioCtx, masterChain, fxRack, undo, redo, canUndo, canRedo, clearHistory } = engine;
   const isLoadedRef = useRef(true);
 
   // ─── JUCE Transport Sync ───
@@ -58,14 +67,125 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   } | null>(null);
   
   const [chopperTrackIndex, setChopperTrackIndex] = useState<number | null>(null);
+  const [showMixer, setShowMixer] = useState(false);
+  const [showFxPanel, setShowFxPanel] = useState(false);
+  const [showProjectDrawer, setShowProjectDrawer] = useState(false);
 
-  // Sample-based trigger logic (Phase 7: Refined per-slice audio + de-clicking)
+  // ─── Project Manager ───
+  const projectManager = useProjectManager(state, dispatch, clearHistory);
+
+  // ─── Track Metering ───
+  const trackLevels = useTrackMetering(fxRack, state.isPlaying, state.tracks.length);
+
+  // ─── Synth Engine Pool ───
+  // One PantheonSynthEngine per synth track, lazily created and cached by track index.
+  const synthEnginesRef = useRef<Map<number, PantheonSynthEngine>>(new Map());
+
+  // Keep synth engines in sync with track config changes (god, macros)
+  useEffect(() => {
+    const engines = synthEnginesRef.current;
+    state.tracks.forEach((track, idx) => {
+      if (track.sourceType !== 'synth' || !track.synthConfig) return;
+      const engine = engines.get(idx);
+      if (engine) {
+        // Update god if changed
+        engine.setGod(track.synthConfig.godId);
+        // Update macros
+        Object.entries(track.synthConfig.macros).forEach(([key, val]) => {
+          engine.setMacro(key, val);
+        });
+        engine.setVoiceMode(track.synthConfig.voiceMode.toUpperCase() as any);
+      }
+    });
+  }, [state.tracks]);
+
+  // Cleanup synth engines on unmount
+  useEffect(() => {
+    return () => {
+      synthEnginesRef.current.forEach(e => e.dispose());
+      synthEnginesRef.current.clear();
+    };
+  }, []);
+
+  // Helper: get or create a synth engine for a track
+  const getSynthEngine = useCallback((trackIndex: number, godId: string): PantheonSynthEngine | null => {
+    if (!audioCtx.current) return null;
+    const engines = synthEnginesRef.current;
+    let engine = engines.get(trackIndex);
+    if (!engine) {
+      engine = new PantheonSynthEngine();
+      engine.init(audioCtx.current);
+      engine.setGod(godId);
+      engines.set(trackIndex, engine);
+    }
+    return engine;
+  }, [audioCtx]);
+
+  // ─── BPM → FXRack Delay Sync ───
+  useEffect(() => {
+    if (fxRack.current) {
+      fxRack.current.updateBPM(state.bpm);
+    }
+  }, [state.bpm, fxRack]);
+
+  // ─── Per-Track FX Send Level Sync ───
+  useEffect(() => {
+    if (!fxRack.current) return;
+    state.tracks.forEach((track, idx) => {
+      fxRack.current!.updateTrackSends(idx, track.fxSends);
+    });
+  }, [state.tracks, fxRack]);
+
+  // Sample + Synth trigger logic
   useEffect(() => {
     setOnTrigger((trackIndex, step, time) => {
       const track = state.tracks[trackIndex];
-      if (!audioCtx.current || !buffers[trackIndex] || !masterChain.current || !track) return;
+      if (!audioCtx.current || !masterChain.current || !track) return;
       
       const ctx = audioCtx.current;
+
+      // ─── Get or create per-track FX send nodes ───
+      const sends = fxRack.current?.createTrackSends(trackIndex, track.fxSends);
+      // Fallback destination: if FXRack not ready, route to masterChain directly
+      const trackDestination = sends?.dry ?? masterChain.current!.input;
+
+      // ═══ SYNTH TRACK ROUTING ═══
+      if (track.sourceType === 'synth' && track.synthConfig) {
+        const engine = getSynthEngine(trackIndex, track.synthConfig.godId);
+        if (!engine) return;
+
+        // Resolve MIDI note: noteMap[stepIndex] + octave offset
+        const baseNote = track.synthConfig.noteMap[step.sliceIndex] ?? 60; // C4 fallback
+        const midiNote = baseNote + (track.synthConfig.octave * 12);
+        const velocity = step.velocity;
+
+        // Trigger note
+        engine.noteOn(midiNote, velocity);
+
+        // Schedule noteOff after decay duration
+        const decayMs = Math.max(50, step.decay * 2000);
+        setTimeout(() => {
+          engine.noteOff(midiNote);
+        }, decayMs);
+
+        // Phase 4: Forward step trigger to JUCE
+        const stepBridgePayload: StepBridgePayload = {
+          velocity: step.velocity,
+          pitch: step.pitch,
+          pan: step.pan,
+          decay: step.decay,
+          sliceIndex: step.sliceIndex,
+          sourceType: 'synth',
+          synthNote: midiNote,
+          synthGodId: track.synthConfig.godId,
+        };
+        nativeAudio.triggerStep(trackIndex, stepBridgePayload, time);
+        return;
+      }
+
+      // ═══ SAMPLE TRACK ROUTING (existing logic) ═══
+      if (!buffers[trackIndex]) return;
+      
       const originalBuffer = buffers[trackIndex];
       const params = track.sampleParams;
 
@@ -144,8 +264,16 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       const panner = ctx.createStereoPanner();
       panner.pan.setValueAtTime(step.pan, time);
 
-      // Routing
-      source.connect(gain).connect(panner).connect(masterChain.current.input);
+      // Routing — through per-track FX sends
+      source.connect(gain).connect(panner);
+      panner.connect(trackDestination);
+      // Route to FX sends (reverb, chorus, delay, saturation)
+      if (sends) {
+        panner.connect(sends.reverb);
+        panner.connect(sends.chorus);
+        panner.connect(sends.delay);
+        panner.connect(sends.saturation);
+      }
       
       // Start/Stop
       source.start(time, startTime, shouldLoop ? undefined : duration);
@@ -159,26 +287,151 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         decay: step.decay,
         sliceIndex: step.sliceIndex,
         sourceType: track.sourceType || 'sample',
-        synthNote: track.sourceType === 'synth' ? track.synthConfig?.noteMap?.[step.sliceIndex] : undefined,
-        synthGodId: track.sourceType === 'synth' ? track.synthConfig?.godId : undefined,
+        synthNote: undefined,
+        synthGodId: undefined,
       };
       nativeAudio.triggerStep(trackIndex, stepBridgePayload, time);
     });
-  }, [setOnTrigger, audioCtx, masterChain, state.tracks]);
+  }, [setOnTrigger, audioCtx, masterChain, fxRack, state.tracks, getSynthEngine]);
+
+  // ─── Automation Playback Callback ───
+  // Applies per-step automation values to the live audio graph
+  useEffect(() => {
+    setOnAutomation((trackIndex: number, param: AutomationParam, value: number, _time: number) => {
+      // Apply automation values to the audio graph
+      switch (param) {
+        case 'volume':
+          // Update track volume in state (0-1 normalized → 0-1.5 range)
+          dispatch({ type: 'SET_TRACK_VOLUME', trackIndex, volume: value * 1.5 });
+          break;
+        case 'fxReverb':
+          dispatch({ type: 'SET_FX_SEND', trackIndex, fx: 'reverb', value: value * 100 });
+          break;
+        case 'fxChorus':
+          dispatch({ type: 'SET_FX_SEND', trackIndex, fx: 'chorus', value: value * 100 });
+          break;
+        case 'fxDelay':
+          dispatch({ type: 'SET_FX_SEND', trackIndex, fx: 'delay', value: value * 100 });
+          break;
+        case 'fxSaturation':
+          dispatch({ type: 'SET_FX_SEND', trackIndex, fx: 'saturation', value: value * 100 });
+          break;
+        case 'synthEnergy':
+        case 'synthDivinity':
+        case 'synthWidth':
+        case 'synthRealm': {
+          // Map automation param name → synth macro key
+          const macroMap: Record<string, string> = {
+            synthEnergy: 'energy', synthDivinity: 'divinity',
+            synthWidth: 'width', synthRealm: 'realm',
+          };
+          const macroKey = macroMap[param];
+          if (macroKey) {
+            dispatch({ type: 'SET_SYNTH_MACRO', trackIndex, macro: macroKey as any, value: value * 100 });
+          }
+          break;
+        }
+        // Pan is applied per-step at trigger time — stored but not dispatched here
+        case 'pan':
+          break;
+      }
+    });
+  }, [setOnAutomation, dispatch]);
 
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — comprehensive DAW workflow
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        togglePlay();
+      // Skip when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const isMeta = e.metaKey || e.ctrlKey;
+
+      // ─── Modifier shortcuts (Cmd/Ctrl + key) ───
+      if (isMeta) {
+        switch (e.key.toLowerCase()) {
+          case 'z':
+            e.preventDefault();
+            if (e.shiftKey) redo();
+            else undo();
+            return;
+          case 'y':
+            e.preventDefault();
+            redo();
+            return;
+          case 's':
+            e.preventDefault();
+            if (projectManager.activeProject) {
+              projectManager.quickSave();
+            } else {
+              setShowProjectDrawer(true);
+            }
+            return;
+          case 'c':
+            e.preventDefault();
+            dispatch({ type: 'COPY_TRACK_PATTERN' });
+            return;
+          case 'v':
+            e.preventDefault();
+            dispatch({ type: 'PASTE_TRACK_PATTERN' });
+            return;
+        }
+        return;
+      }
+
+      // ─── Single-key shortcuts ───
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'KeyM':
+          dispatch({ type: 'TOGGLE_MUTE', trackIndex: state.selectedTrack });
+          break;
+        case 'KeyS':
+          dispatch({ type: 'TOGGLE_SOLO', trackIndex: state.selectedTrack });
+          break;
+        case 'KeyA':
+          dispatch({ type: 'SET_PATTERN', pattern: 'A' });
+          break;
+        case 'KeyB':
+          dispatch({ type: 'SET_PATTERN', pattern: 'B' });
+          break;
+        case 'KeyF':
+          dispatch({ type: 'TOGGLE_FILL' });
+          break;
+        case 'KeyR':
+          dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' });
+          break;
+        case 'Tab':
+          e.preventDefault();
+          dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack + 1) % state.tracks.length });
+          break;
+        case 'Escape':
+          setStepDetail(null);
+          setChopperTrackIndex(null);
+          setShowProjectDrawer(false);
+          break;
+        case 'Delete':
+        case 'Backspace':
+          if (!e.metaKey && !e.ctrlKey) {
+            dispatch({ type: 'CLEAR_TRACK', trackIndex: state.selectedTrack });
+          }
+          break;
+        // Number keys 1-8 select tracks
+        case 'Digit1': dispatch({ type: 'SELECT_TRACK', index: 0 }); break;
+        case 'Digit2': dispatch({ type: 'SELECT_TRACK', index: Math.min(1, state.tracks.length - 1) }); break;
+        case 'Digit3': dispatch({ type: 'SELECT_TRACK', index: Math.min(2, state.tracks.length - 1) }); break;
+        case 'Digit4': dispatch({ type: 'SELECT_TRACK', index: Math.min(3, state.tracks.length - 1) }); break;
+        case 'Digit5': dispatch({ type: 'SELECT_TRACK', index: Math.min(4, state.tracks.length - 1) }); break;
+        case 'Digit6': dispatch({ type: 'SELECT_TRACK', index: Math.min(5, state.tracks.length - 1) }); break;
+        case 'Digit7': dispatch({ type: 'SELECT_TRACK', index: Math.min(6, state.tracks.length - 1) }); break;
+        case 'Digit8': dispatch({ type: 'SELECT_TRACK', index: Math.min(7, state.tracks.length - 1) }); break;
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [togglePlay]);
+  }, [togglePlay, undo, redo, dispatch, state.selectedTrack, state.tracks.length, projectManager]);
 
   /* ─── Dispatch Helpers ─── */
   const handleToggleStep = useCallback((trackIndex: number, stepIndex: number) => {
@@ -304,15 +557,6 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   ];
 
   const loadTrapPreset = useCallback((presetId: string) => {
-    // Apply pattern to all tracks
-    const s = state.stepCount;
-    state.tracks.forEach((_, tIdx) => {
-      // Clear first
-      for (let step = 0; step < s; step++) {
-        dispatch({ type: 'SET_STEP_PROP', trackIndex: tIdx, stepIndex: step, prop: 'enabled', value: false });
-      }
-    });
-
     // Define patterns per preset
     const patterns: Record<string, Record<number, { steps: number[]; vel?: number[] }>> = {
       metro: {
@@ -354,18 +598,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
     };
 
     const preset = patterns[presetId] || {};
-    Object.entries(preset).forEach(([trackIdxStr, data]) => {
-      const tIdx = parseInt(trackIdxStr);
-      data.steps.forEach((stepIdx, i) => {
-        if (stepIdx < s) {
-          dispatch({ type: 'TOGGLE_STEP', trackIndex: tIdx, stepIndex: stepIdx });
-          if (data.vel && data.vel[i] !== undefined) {
-            dispatch({ type: 'SET_STEP_VELOCITY', trackIndex: tIdx, stepIndex: stepIdx, velocity: data.vel[i] });
-          }
-        }
-      });
-    });
-  }, [dispatch, state.stepCount, state.tracks]);
+    // Single batch dispatch — replaces ~100+ individual dispatches
+    dispatch({ type: 'LOAD_PRESET', preset });
+  }, [dispatch]);
 
   // Calculate playhead beam position
   const playheadBeamLeft = state.currentStep >= 0
@@ -409,6 +644,19 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         onToggleFill={() => dispatch({ type: 'TOGGLE_FILL' })}
         onClearAll={() => dispatch({ type: 'CLEAR_ALL' })}
         onExport={handleExport}
+        showMixer={showMixer}
+        onToggleMixer={() => setShowMixer(prev => !prev)}
+        showFxPanel={showFxPanel}
+        onToggleFxPanel={() => setShowFxPanel(prev => !prev)}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        activeProject={projectManager.activeProject}
+        isDirty={projectManager.isDirty}
+        onToggleProjectDrawer={() => setShowProjectDrawer(prev => !prev)}
+        isRecording={state.isRecording}
+        onToggleRecord={() => dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' })}
       />
 
       {/* Playhead Position Bar */}
@@ -465,9 +713,95 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onDeleteTrack={(trackId) =>
               dispatch({ type: 'REMOVE_TRACK', trackId })
             }
+            onSetFxSend={(trackIndex, fx, value) =>
+              dispatch({ type: 'SET_FX_SEND', trackIndex, fx, value })
+            }
+            /* Automation lane props */
+            isPlaying={state.isPlaying}
+            onAddAutomationLane={(trackIndex, param) =>
+              dispatch({ type: 'ADD_AUTOMATION_LANE', trackIndex, param })
+            }
+            onRemoveAutomationLane={(trackIndex, param) =>
+              dispatch({ type: 'REMOVE_AUTOMATION_LANE', trackIndex, param })
+            }
+            onSetAutomationPoint={(trackIndex, param, point) =>
+              dispatch({ type: 'SET_AUTOMATION_POINT', trackIndex, param, point })
+            }
+            onRemoveAutomationPoint={(trackIndex, param, pointIndex) =>
+              dispatch({ type: 'REMOVE_AUTOMATION_POINT', trackIndex, param, pointIndex })
+            }
+            onSetAutomationPoints={(trackIndex, param, points) =>
+              dispatch({ type: 'SET_AUTOMATION_POINTS', trackIndex, param, points })
+            }
+            onToggleAutomationEnabled={(trackIndex, param) =>
+              dispatch({ type: 'TOGGLE_AUTOMATION_ENABLED', trackIndex, param })
+            }
+            onSetAutomationCurveType={(trackIndex, param, curveType) =>
+              dispatch({ type: 'SET_AUTOMATION_CURVE_TYPE', trackIndex, param, curveType })
+            }
           />
         ))}
       </div>
+
+      {/* Mixer Strip — FL Studio-style per-track mixer */}
+      {showMixer && (
+        <SacredMixerStrip
+          tracks={state.tracks}
+          selectedTrack={state.selectedTrack}
+          levels={trackLevels}
+          onSelectTrack={(idx) => dispatch({ type: 'SELECT_TRACK', index: idx })}
+          onSetVolume={(trackIndex, volume) => {
+            dispatch({ type: 'SET_TRACK_VOLUME', trackIndex, volume });
+            // Live record: capture volume changes as automation
+            if (state.isRecording && state.isPlaying && state.currentStep >= 0) {
+              dispatch({
+                type: 'RECORD_AUTOMATION_SNAPSHOT',
+                trackIndex, param: 'volume',
+                step: state.currentStep,
+                value: Math.min(1, volume / 1.5),  // normalize to 0-1
+              });
+            }
+          }}
+          onSetFxSend={(trackIndex, fx, value) => {
+            dispatch({ type: 'SET_FX_SEND', trackIndex, fx, value });
+            // Live record: capture FX send changes as automation
+            if (state.isRecording && state.isPlaying && state.currentStep >= 0) {
+              const fxParamMap: Record<string, AutomationParam> = {
+                reverb: 'fxReverb', chorus: 'fxChorus', delay: 'fxDelay', saturation: 'fxSaturation',
+              };
+              const autoParam = fxParamMap[fx];
+              if (autoParam) {
+                dispatch({
+                  type: 'RECORD_AUTOMATION_SNAPSHOT',
+                  trackIndex, param: autoParam,
+                  step: state.currentStep,
+                  value: value / 100,  // normalize to 0-1
+                });
+              }
+            }
+          }}
+          onToggleMute={(trackIndex) => dispatch({ type: 'TOGGLE_MUTE', trackIndex })}
+          onToggleSolo={(trackIndex) => dispatch({ type: 'TOGGLE_SOLO', trackIndex })}
+        />
+      )}
+
+      {/* FX Rack Panel — toggle via FX button */}
+      {showFxPanel && (
+        <SacredFXRackPanel fxRack={fxRack} />
+      )}
+
+      {/* Song Timeline — arrangement row */}
+      <SacredSongTimeline
+        arrangement={state.songArrangement}
+        songPosition={state.songPosition}
+        isPlaying={state.isPlaying}
+        playbackMode={state.playbackMode}
+        onAddBlock={(pattern) => dispatch({ type: 'ADD_SONG_BLOCK', pattern })}
+        onRemoveBlock={(index) => dispatch({ type: 'REMOVE_SONG_BLOCK', index })}
+        onUpdateBlock={(index, changes) => dispatch({ type: 'UPDATE_SONG_BLOCK', index, changes })}
+        onSetPosition={(position) => dispatch({ type: 'SET_SONG_POSITION', position })}
+        onSetPlaybackMode={(mode) => dispatch({ type: 'SET_PLAYBACK_MODE', mode })}
+      />
 
       {/* Graph Editor */}
       {selectedPattern && (
@@ -477,6 +811,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           mode={state.activeGraphMode}
           trackColor={selectedTrack.color}
           currentStep={state.currentStep}
+          noteMap={selectedTrack.synthConfig?.noteMap}
           onSetMode={(mode) => dispatch({ type: 'SET_GRAPH_MODE', mode })}
           onSetValue={handleGraphSetValue}
         />
@@ -580,6 +915,22 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Project Drawer */}
+      <SacredProjectDrawer
+        isOpen={showProjectDrawer}
+        onClose={() => setShowProjectDrawer(false)}
+        projects={projectManager.projects}
+        activeProject={projectManager.activeProject}
+        isDirty={projectManager.isDirty}
+        onSave={projectManager.saveProject}
+        onLoad={projectManager.loadProject}
+        onDelete={projectManager.deleteProject}
+        onRename={projectManager.renameProject}
+        onNew={projectManager.newProject}
+        onExport={projectManager.exportProject}
+        onImport={projectManager.importProject}
+      />
     </div>
   );
 };

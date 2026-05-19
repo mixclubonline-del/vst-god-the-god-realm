@@ -1,15 +1,19 @@
 /**
  * ExportEngine — High-quality WAV rendering for Sacred Sequencer.
  * Uses OfflineAudioContext to render the loop at high resolution.
+ * Supports both sample and synth tracks with full FXRack processing.
  */
 
 import { SequencerState, StepState, TrackState } from '../components/sequencer/useSequencerEngine';
 import { MasterChain } from './VelvetCurveEngine';
+import { FXRack } from './FXRack';
+import { PantheonSynthEngine } from './PantheonSynthEngine';
 import { sampleManager } from '../components/sequencer/SampleManager';
 
 export class ExportEngine {
   /**
    * Renders the current pattern to a WAV blob.
+   * Handles sample tracks, synth tracks, and FX processing.
    */
   static async renderToWav(
     state: SequencerState,
@@ -20,7 +24,7 @@ export class ExportEngine {
     const stepDuration = 60 / bpm / 4;
     const totalDuration = stepCount * stepDuration;
     
-    // Create Offline Context
+    // Create Offline Context (extra tail for reverb/delay)
     const offlineCtx = new OfflineAudioContext(2, Math.ceil(sampleRate * (totalDuration + 2)), sampleRate);
 
     // Setup Master Chain in Offline Context
@@ -28,12 +32,57 @@ export class ExportEngine {
     masterChain.updateParams(state.master);
     masterChain.connect(offlineCtx.destination);
 
+    // Setup FX Rack in Offline Context
+    const fxRack = new FXRack(offlineCtx, masterChain.input);
+    fxRack.updateBPM(bpm);
+
+    // Collect synth engines for cleanup
+    const synthEngines: PantheonSynthEngine[] = [];
+
     // Schedule Triggers
     tracks.forEach((track, trackIdx) => {
       if (track.muted) return;
       
       const pattern = activePattern === 'A' ? track.patternA : track.patternB;
       const polyLength = track.polymetricLength;
+
+      // Create per-track FX sends
+      const sends = fxRack.createTrackSends(trackIdx, track.fxSends);
+
+      // ═══ SYNTH TRACK ═══
+      if (track.sourceType === 'synth' && track.synthConfig) {
+        const engine = new PantheonSynthEngine();
+        engine.init(offlineCtx, sends.dry); // Route through FX sends dry bus
+        engine.setGod(track.synthConfig.godId);
+        synthEngines.push(engine);
+
+        for (let stepIdx = 0; stepIdx < stepCount; stepIdx++) {
+          const polyStep = stepIdx % polyLength;
+          const step = pattern[polyStep];
+          
+          if (step.enabled) {
+            const time = stepIdx * stepDuration;
+            const baseNote = track.synthConfig.noteMap[step.sliceIndex] ?? 60;
+            const midiNote = baseNote + (track.synthConfig.octave * 12);
+            const decaySec = Math.max(0.05, step.decay * 2.0);
+
+            // Schedule noteOn
+            const noteOnTime = time;
+            const noteOffTime = time + decaySec;
+
+            // For offline rendering, we use direct scheduling via setTimeout equivalent
+            // In OfflineAudioContext, we need to schedule notes at exact times
+            // The engine's noteOn/noteOff use currentTime internally,
+            // so we schedule them using OfflineAudioContext timing
+            this.scheduleOfflineSynth(
+              offlineCtx, engine, midiNote, step.velocity, noteOnTime, noteOffTime
+            );
+          }
+        }
+        return;
+      }
+
+      // ═══ SAMPLE TRACK ═══
       const originalBuffer = buffers[trackIdx];
       if (!originalBuffer) return;
 
@@ -65,16 +114,21 @@ export class ExportEngine {
               }
 
               const subStep = { ...step, velocity: subVelocity };
-              this.scheduleSample(offlineCtx, originalBuffer, subStep, subTime, track, masterChain.input);
+              this.scheduleSample(offlineCtx, originalBuffer, subStep, subTime, track, sends);
             }
           } else {
-            this.scheduleSample(offlineCtx, originalBuffer, step, time, track, masterChain.input);
+            this.scheduleSample(offlineCtx, originalBuffer, step, time, track, sends);
           }
         }
       }
     });
 
     const renderedBuffer = await offlineCtx.startRendering();
+
+    // Cleanup
+    synthEngines.forEach(e => e.dispose());
+    fxRack.dispose();
+
     return this.audioBufferToWav(renderedBuffer);
   }
 
@@ -84,7 +138,7 @@ export class ExportEngine {
   static async renderStem(
     state: SequencerState,
     trackIdx: number,
-    buffer: AudioBuffer
+    buffer?: AudioBuffer
   ): Promise<Blob> {
     const { bpm, stepCount, tracks, activePattern } = state;
     const sampleRate = 48000;
@@ -98,20 +152,80 @@ export class ExportEngine {
     masterChain.updateParams({ ...state.master, volume: 1.0 }); // Full volume for stems
     masterChain.connect(offlineCtx.destination);
 
+    // FX Rack for stems too
+    const fxRack = new FXRack(offlineCtx, masterChain.input);
+    fxRack.updateBPM(bpm);
+    const sends = fxRack.createTrackSends(trackIdx, track.fxSends);
+
     const pattern = activePattern === 'A' ? track.patternA : track.patternB;
     const polyLength = track.polymetricLength;
 
-    for (let stepIdx = 0; stepIdx < stepCount; stepIdx++) {
-      const polyStep = stepIdx % polyLength;
-      const step = pattern[polyStep];
-      if (step.enabled) {
-        const time = stepIdx * stepDuration;
-        this.scheduleSample(offlineCtx, buffer, step, time, track, masterChain.input);
+    const synthEngines: PantheonSynthEngine[] = [];
+
+    // ═══ SYNTH STEM ═══
+    if (track.sourceType === 'synth' && track.synthConfig) {
+      const engine = new PantheonSynthEngine();
+      engine.init(offlineCtx, sends.dry);
+      engine.setGod(track.synthConfig.godId);
+      synthEngines.push(engine);
+
+      for (let stepIdx = 0; stepIdx < stepCount; stepIdx++) {
+        const polyStep = stepIdx % polyLength;
+        const step = pattern[polyStep];
+        if (step.enabled) {
+          const time = stepIdx * stepDuration;
+          const baseNote = track.synthConfig.noteMap[step.sliceIndex] ?? 60;
+          const midiNote = baseNote + (track.synthConfig.octave * 12);
+          const decaySec = Math.max(0.05, step.decay * 2.0);
+          this.scheduleOfflineSynth(offlineCtx, engine, midiNote, step.velocity, time, time + decaySec);
+        }
+      }
+    }
+
+    // ═══ SAMPLE STEM ═══
+    if (track.sourceType !== 'synth' && buffer) {
+      for (let stepIdx = 0; stepIdx < stepCount; stepIdx++) {
+        const polyStep = stepIdx % polyLength;
+        const step = pattern[polyStep];
+        if (step.enabled) {
+          const time = stepIdx * stepDuration;
+          this.scheduleSample(offlineCtx, buffer, step, time, track, sends);
+        }
       }
     }
 
     const renderedBuffer = await offlineCtx.startRendering();
+    synthEngines.forEach(e => e.dispose());
+    fxRack.dispose();
     return this.audioBufferToWav(renderedBuffer);
+  }
+
+  /**
+   * Schedule a synth note at exact offline times.
+   * Uses suspend/resume to trigger noteOn/Off at the right moments.
+   */
+  private static scheduleOfflineSynth(
+    ctx: OfflineAudioContext,
+    engine: PantheonSynthEngine,
+    midi: number,
+    velocity: number,
+    onTime: number,
+    offTime: number
+  ): void {
+    // OfflineAudioContext.suspend() schedules a callback at exact sample frame
+    // We queue noteOn and noteOff at their respective times
+    const safeOnTime = Math.max(0, onTime);
+    const safeOffTime = Math.max(safeOnTime + 0.01, offTime);
+
+    ctx.suspend(safeOnTime).then(() => {
+      engine.noteOn(midi, velocity);
+      ctx.resume();
+    });
+
+    ctx.suspend(safeOffTime).then(() => {
+      engine.noteOff(midi);
+      ctx.resume();
+    });
   }
 
   private static scheduleSample(
@@ -120,7 +234,7 @@ export class ExportEngine {
     step: StepState,
     time: number,
     track: TrackState,
-    destination: AudioNode
+    sends: { dry: GainNode; reverb: GainNode; chorus: GainNode; delay: GainNode; saturation: GainNode }
   ) {
     const params = track.sampleParams;
     let slice = null;
@@ -187,7 +301,14 @@ export class ExportEngine {
     const panner = ctx.createStereoPanner();
     panner.pan.setValueAtTime(step.pan, time);
 
-    source.connect(gain).connect(panner).connect(destination);
+    // Route through per-track FX sends
+    source.connect(gain).connect(panner);
+    panner.connect(sends.dry);
+    panner.connect(sends.reverb);
+    panner.connect(sends.chorus);
+    panner.connect(sends.delay);
+    panner.connect(sends.saturation);
+
     source.start(time, startTime, shouldLoop ? undefined : duration);
     source.stop(time + decayTime + 0.1);
   }
@@ -279,4 +400,3 @@ export class ExportEngine {
     }
   }
 }
-

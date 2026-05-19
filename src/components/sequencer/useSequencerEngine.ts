@@ -6,8 +6,10 @@
  * Sacred Sequence Ascension — Universal Track Architecture
  * Supports sample, synth, and bus track types with dynamic add/remove (up to 16).
  */
-import { useReducer, useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
+import { useUndoableReducer } from './useUndoableReducer';
 import { MasterChain, MasterParams } from '../../audio/VelvetCurveEngine';
+import { FXRack } from '../../audio/FXRack';
 import type { ElectricPantheonGodId } from '../../data/electricPantheonGods';
 
 /* ═══ Constants ═══ */
@@ -51,6 +53,64 @@ export interface FXSendState {
   saturation: number;
 }
 
+/* ═══ Automation Types ═══ */
+
+/** A single automation breakpoint with sub-step precision */
+export interface AutomationPoint {
+  step: number;       // 0-based, fractional for sub-step precision (e.g. 3.5)
+  value: number;      // 0–1 normalized (mapped to parameter range at playback)
+}
+
+/** Automatable parameters */
+export type AutomationParam =
+  | 'volume' | 'pan'
+  | 'fxReverb' | 'fxChorus' | 'fxDelay' | 'fxSaturation'
+  | 'synthEnergy' | 'synthDivinity' | 'synthWidth' | 'synthRealm';
+
+/** A single automation lane attached to a track */
+export interface AutomationLane {
+  param: AutomationParam;
+  enabled: boolean;
+  points: AutomationPoint[];    // sorted ascending by step
+  curveType: 'linear' | 'step' | 'smooth';  // interpolation mode
+}
+
+/** Interpolate automation value at a given step position */
+export function getAutomationValue(lane: AutomationLane, step: number): number | null {
+  if (!lane.enabled || lane.points.length === 0) return null;
+  const pts = lane.points;
+
+  // Before first point — hold first value
+  if (step <= pts[0].step) return pts[0].value;
+  // After last point — hold last value
+  if (step >= pts[pts.length - 1].step) return pts[pts.length - 1].value;
+
+  // Binary search for surrounding points
+  let lo = 0, hi = pts.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (pts[mid].step <= step) lo = mid;
+    else hi = mid;
+  }
+
+  const p0 = pts[lo];
+  const p1 = pts[hi];
+  const t = (step - p0.step) / (p1.step - p0.step);
+
+  switch (lane.curveType) {
+    case 'step':
+      return p0.value;
+    case 'smooth': {
+      // Hermite / smoothstep interpolation
+      const s = t * t * (3 - 2 * t);
+      return p0.value + (p1.value - p0.value) * s;
+    }
+    case 'linear':
+    default:
+      return p0.value + (p1.value - p0.value) * t;
+  }
+}
+
 export interface TrackState {
   id: string;
   name: string;
@@ -75,6 +135,15 @@ export interface TrackState {
     loopEnd: number;
     slices: { start: number; end: number; reverse?: boolean; loop?: boolean; volume?: number }[];
   };
+  automationLanes: AutomationLane[];
+}
+
+/* ═══ Song Mode Types ═══ */
+export interface SongBlock {
+  id: string;
+  pattern: 'A' | 'B';
+  repeats: number; // how many times this block plays before advancing
+  label?: string;
 }
 
 export interface SequencerState {
@@ -93,6 +162,12 @@ export interface SequencerState {
   cycleCount: number;
   master: MasterParams;
   playbackMode: 'pattern' | 'song';
+  /* Song Mode */
+  songArrangement: SongBlock[];
+  songPosition: number; // index into songArrangement
+  songRepeatCount: number; // how many repeats of current block have played
+  /* Clipboard */
+  clipboardPattern: StepState[] | null;
 }
 
 /* ═══ Default Data ═══ */
@@ -166,6 +241,7 @@ function createDefaultTrack(
     busConfig: sourceType === 'bus' ? { inputTrackIds: [] } : undefined,
     fxSends: createDefaultFXSends(),
     sampleParams: createDefaultSampleParams(),
+    automationLanes: [],
   };
 }
 
@@ -203,6 +279,10 @@ function createInitialState(): SequencerState {
       volume: 1.0,
     },
     playbackMode: 'pattern',
+    songArrangement: [],
+    songPosition: 0,
+    songRepeatCount: 0,
+    clipboardPattern: null,
   };
 }
 
@@ -234,6 +314,7 @@ type SeqAction =
   | { type: 'SET_MASTER_PARAM'; param: keyof MasterParams; value: number }
   | { type: 'SET_SAMPLE_PARAM'; trackIndex: number; param: string; value: any }
   | { type: 'LOAD_PATTERN'; tracks: TrackState[] }
+  | { type: 'LOAD_PROJECT_STATE'; payload: Partial<SequencerState> }
   /* ─── Sacred Sequence Ascension: Dynamic Track Management ─── */
   | { type: 'ADD_TRACK'; sourceType: TrackSourceType; name?: string; godId?: ElectricPantheonGodId }
   | { type: 'REMOVE_TRACK'; trackId: string }
@@ -247,7 +328,28 @@ type SeqAction =
   | { type: 'SET_FX_SEND'; trackIndex: number; fx: keyof FXSendState; value: number }
   | { type: 'RENAME_TRACK'; trackIndex: number; name: string }
   | { type: 'SET_TRACK_COLOR'; trackIndex: number; color: string }
-  | { type: 'SET_PLAYBACK_MODE'; mode: 'pattern' | 'song' };
+  | { type: 'SET_PLAYBACK_MODE'; mode: 'pattern' | 'song' }
+  | { type: 'LOAD_PRESET'; preset: Record<number, { steps: number[]; vel?: number[] }> }
+  /* Song Mode actions */
+  | { type: 'ADD_SONG_BLOCK'; pattern: 'A' | 'B'; repeats?: number; label?: string }
+  | { type: 'REMOVE_SONG_BLOCK'; index: number }
+  | { type: 'REORDER_SONG_BLOCKS'; fromIndex: number; toIndex: number }
+  | { type: 'UPDATE_SONG_BLOCK'; index: number; changes: Partial<Omit<SongBlock, 'id'>> }
+  | { type: 'SET_SONG_POSITION'; position: number }
+  /* Clipboard */
+  | { type: 'COPY_TRACK_PATTERN' }
+  | { type: 'PASTE_TRACK_PATTERN' }
+  | { type: 'SWAP_PATTERNS' }
+  /* Automation */
+  | { type: 'ADD_AUTOMATION_LANE'; trackIndex: number; param: AutomationParam }
+  | { type: 'REMOVE_AUTOMATION_LANE'; trackIndex: number; param: AutomationParam }
+  | { type: 'SET_AUTOMATION_POINT'; trackIndex: number; param: AutomationParam; point: AutomationPoint }
+  | { type: 'REMOVE_AUTOMATION_POINT'; trackIndex: number; param: AutomationParam; pointIndex: number }
+  | { type: 'SET_AUTOMATION_POINTS'; trackIndex: number; param: AutomationParam; points: AutomationPoint[] }
+  | { type: 'TOGGLE_AUTOMATION_ENABLED'; trackIndex: number; param: AutomationParam }
+  | { type: 'SET_AUTOMATION_CURVE_TYPE'; trackIndex: number; param: AutomationParam; curveType: AutomationLane['curveType'] }
+  | { type: 'RECORD_AUTOMATION_SNAPSHOT'; trackIndex: number; param: AutomationParam; step: number; value: number }
+  | { type: 'TOGGLE_AUTOMATION_RECORD' };
 
 function getActivePattern(track: TrackState, pattern: 'A' | 'B'): StepState[] {
   return pattern === 'A' ? track.patternA : track.patternB;
@@ -264,7 +366,7 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
     case 'PLAY':
       return { ...state, isPlaying: true, currentStep: -1 };
     case 'STOP':
-      return { ...state, isPlaying: false, currentStep: -1 };
+      return { ...state, isPlaying: false, isRecording: false, currentStep: -1 };
     case 'SET_BPM':
       return { ...state, bpm: Math.max(20, Math.min(300, action.bpm)) };
     case 'SET_SWING':
@@ -292,8 +394,28 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
     }
     case 'SET_CURRENT_STEP':
       return { ...state, currentStep: action.step };
-    case 'INCREMENT_CYCLE':
-      return { ...state, cycleCount: state.cycleCount + 1 };
+    case 'INCREMENT_CYCLE': {
+      const newCycle = state.cycleCount + 1;
+      // In song mode, advance arrangement blocks
+      if (state.playbackMode === 'song' && state.songArrangement.length > 0) {
+        const currentBlock = state.songArrangement[state.songPosition];
+        const newRepeat = state.songRepeatCount + 1;
+        if (currentBlock && newRepeat >= currentBlock.repeats) {
+          // Advance to next block (loop back to 0 at end)
+          const nextPos = (state.songPosition + 1) % state.songArrangement.length;
+          const nextBlock = state.songArrangement[nextPos];
+          return {
+            ...state,
+            cycleCount: newCycle,
+            songPosition: nextPos,
+            songRepeatCount: 0,
+            activePattern: nextBlock?.pattern ?? state.activePattern,
+          };
+        }
+        return { ...state, cycleCount: newCycle, songRepeatCount: newRepeat };
+      }
+      return { ...state, cycleCount: newCycle };
+    }
     case 'TOGGLE_FILL':
       return { ...state, isFillMode: !state.isFillMode };
     case 'SET_PATTERN':
@@ -398,6 +520,8 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
     }
     case 'LOAD_PATTERN':
       return { ...state, tracks: action.tracks };
+    case 'LOAD_PROJECT_STATE':
+      return { ...state, ...action.payload, isPlaying: false, currentStep: -1, cycleCount: 0, clipboardPattern: null };
 
     /* ─── Sacred Sequence Ascension: Dynamic Track Actions ─── */
     case 'ADD_TRACK': {
@@ -517,7 +641,231 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       return { ...state, tracks };
     }
     case 'SET_PLAYBACK_MODE':
-      return { ...state, playbackMode: action.mode };
+      return {
+        ...state,
+        playbackMode: action.mode,
+        songPosition: 0,
+        songRepeatCount: 0,
+        // When entering song mode with blocks, set pattern to first block's pattern
+        ...(action.mode === 'song' && state.songArrangement.length > 0
+          ? { activePattern: state.songArrangement[0].pattern }
+          : {}),
+      };
+
+    /* ─── Song Arrangement ─── */
+    case 'ADD_SONG_BLOCK': {
+      const newBlock: SongBlock = {
+        id: `song-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        pattern: action.pattern,
+        repeats: action.repeats ?? 1,
+        label: action.label,
+      };
+      return { ...state, songArrangement: [...state.songArrangement, newBlock] };
+    }
+    case 'REMOVE_SONG_BLOCK': {
+      const arr = state.songArrangement.filter((_, i) => i !== action.index);
+      return {
+        ...state,
+        songArrangement: arr,
+        songPosition: Math.min(state.songPosition, Math.max(0, arr.length - 1)),
+      };
+    }
+    case 'REORDER_SONG_BLOCKS': {
+      const arr = [...state.songArrangement];
+      const [moved] = arr.splice(action.fromIndex, 1);
+      arr.splice(action.toIndex, 0, moved);
+      return { ...state, songArrangement: arr };
+    }
+    case 'UPDATE_SONG_BLOCK': {
+      const arr = [...state.songArrangement];
+      arr[action.index] = { ...arr[action.index], ...action.changes };
+      return { ...state, songArrangement: arr };
+    }
+    case 'SET_SONG_POSITION':
+      return {
+        ...state,
+        songPosition: action.position,
+        songRepeatCount: 0,
+        activePattern: state.songArrangement[action.position]?.pattern ?? state.activePattern,
+      };
+
+    case 'LOAD_PRESET': {
+      // Batch preset loading — single dispatch replaces O(N×M) individual toggles
+      const tracks = state.tracks.map((track, tIdx) => {
+        const data = action.preset[tIdx];
+        // Clear all steps first
+        const clearedSteps = getActivePattern(track, state.activePattern).map(() => createDefaultStep());
+        if (!data) return setActivePattern(track, state.activePattern, clearedSteps);
+        
+        // Apply preset steps
+        data.steps.forEach((stepIdx, i) => {
+          if (stepIdx < clearedSteps.length) {
+            clearedSteps[stepIdx] = {
+              ...clearedSteps[stepIdx],
+              enabled: true,
+              velocity: data.vel?.[i] ?? 100,
+            };
+          }
+        });
+        return setActivePattern(track, state.activePattern, clearedSteps);
+      });
+      return { ...state, tracks };
+    }
+
+    /* ─── Clipboard Actions ─── */
+    case 'COPY_TRACK_PATTERN': {
+      const track = state.tracks[state.selectedTrack];
+      if (!track) return state;
+      const pattern = getActivePattern(track, state.activePattern);
+      return { ...state, clipboardPattern: pattern.map(s => ({ ...s })) };
+    }
+    case 'PASTE_TRACK_PATTERN': {
+      if (!state.clipboardPattern) return state;
+      const track = state.tracks[state.selectedTrack];
+      if (!track) return state;
+      // Paste clipboard, truncating or padding to match stepCount
+      const pastedSteps = Array.from({ length: state.stepCount }, (_, i) =>
+        i < state.clipboardPattern!.length
+          ? { ...state.clipboardPattern![i] }
+          : createDefaultStep()
+      );
+      const tracks = state.tracks.map((t, idx) =>
+        idx === state.selectedTrack ? setActivePattern(t, state.activePattern, pastedSteps) : t
+      );
+      return { ...state, tracks };
+    }
+    case 'SWAP_PATTERNS': {
+      const track = state.tracks[state.selectedTrack];
+      if (!track) return state;
+      const swapped: TrackState = {
+        ...track,
+        patternA: [...track.patternB],
+        patternB: [...track.patternA],
+      };
+      const tracks = state.tracks.map((t, idx) =>
+        idx === state.selectedTrack ? swapped : t
+      );
+      return { ...state, tracks };
+    }
+
+    /* ═══ Automation Lane Actions ═══ */
+    case 'ADD_AUTOMATION_LANE': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      // Don't add duplicate param lanes
+      if (track.automationLanes.some(l => l.param === action.param)) return state;
+      const newLane: AutomationLane = {
+        param: action.param,
+        enabled: true,
+        points: [],
+        curveType: 'linear',
+      };
+      const tracks = state.tracks.map((t, i) =>
+        i === action.trackIndex
+          ? { ...t, automationLanes: [...t.automationLanes, newLane] }
+          : t
+      );
+      return { ...state, tracks };
+    }
+    case 'REMOVE_AUTOMATION_LANE': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const tracks = state.tracks.map((t, i) =>
+        i === action.trackIndex
+          ? { ...t, automationLanes: t.automationLanes.filter(l => l.param !== action.param) }
+          : t
+      );
+      return { ...state, tracks };
+    }
+    case 'SET_AUTOMATION_POINT': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane => {
+          if (lane.param !== action.param) return lane;
+          // Replace existing point at same step, or insert sorted
+          let points = lane.points.filter(p => Math.abs(p.step - action.point.step) > 0.01);
+          points.push(action.point);
+          points.sort((a, b) => a.step - b.step);
+          return { ...lane, points };
+        });
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'REMOVE_AUTOMATION_POINT': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane => {
+          if (lane.param !== action.param) return lane;
+          return { ...lane, points: lane.points.filter((_, idx) => idx !== action.pointIndex) };
+        });
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'SET_AUTOMATION_POINTS': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const sorted = [...action.points].sort((a, b) => a.step - b.step);
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane =>
+          lane.param === action.param ? { ...lane, points: sorted } : lane
+        );
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'TOGGLE_AUTOMATION_ENABLED': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane =>
+          lane.param === action.param ? { ...lane, enabled: !lane.enabled } : lane
+        );
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'SET_AUTOMATION_CURVE_TYPE': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane =>
+          lane.param === action.param ? { ...lane, curveType: action.curveType } : lane
+        );
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'RECORD_AUTOMATION_SNAPSHOT': {
+      // Upserts a point during live recording
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      const clampedValue = Math.max(0, Math.min(1, action.value));
+      const newPoint: AutomationPoint = { step: action.step, value: clampedValue };
+      const tracks = state.tracks.map((t, i) => {
+        if (i !== action.trackIndex) return t;
+        const lanes = t.automationLanes.map(lane => {
+          if (lane.param !== action.param) return lane;
+          // Merge: remove points within ±0.1 step of new point, then insert
+          let points = lane.points.filter(p => Math.abs(p.step - action.step) > 0.1);
+          points.push(newPoint);
+          points.sort((a, b) => a.step - b.step);
+          return { ...lane, points };
+        });
+        return { ...t, automationLanes: lanes };
+      });
+      return { ...state, tracks };
+    }
+    case 'TOGGLE_AUTOMATION_RECORD':
+      return { ...state, isRecording: !state.isRecording };
 
     default:
       return state;
@@ -545,24 +893,53 @@ function shouldTrigger(step: StepState, isFillMode: boolean, cycleCount: number)
   return true;
 }
 
+/* ═══ Undo History Config ═══ */
+const HISTORY_IGNORE_ACTIONS = [
+  'SET_CURRENT_STEP',
+  'INCREMENT_CYCLE',
+  'PLAY',
+  'STOP',
+  'SET_SONG_POSITION',
+  'RECORD_AUTOMATION_SNAPSHOT',
+  'TOGGLE_AUTOMATION_RECORD',
+];
+
 /* ═══ Hook ═══ */
 export function useSequencerEngine() {
-  const [state, dispatch] = useReducer(sequencerReducer, null, createInitialState);
+  const { state, dispatch, undo, redo, canUndo, canRedo, clearHistory } =
+    useUndoableReducer(sequencerReducer, createInitialState(), {
+      maxHistory: 50,
+      ignoreActions: HISTORY_IGNORE_ACTIONS,
+    });
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const schedulerIdRef = useRef<number | null>(null);
   const nextStepTimeRef = useRef(0);
   const currentStepRef = useRef(-1);
   const masterChainRef = useRef<MasterChain | null>(null);
+  const fxRackRef = useRef<FXRack | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage (debounced, skips playhead-only changes)
+  const prevPersistRef = useRef('');
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Always sync master params immediately (cheap operation)
     if (masterChainRef.current) {
       masterChainRef.current.updateParams(state.master);
     }
+
+    // Skip persistence for playhead-only changes during playback
+    const { currentStep, cycleCount, ...persistableState } = state;
+    const key = JSON.stringify(persistableState);
+    if (key === prevPersistRef.current) return; // No meaningful change
+
+    const timer = setTimeout(() => {
+      prevPersistRef.current = key;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [state]);
 
   // Trigger callback — override from parent to play actual samples
@@ -570,6 +947,13 @@ export function useSequencerEngine() {
 
   const setOnTrigger = useCallback((fn: (trackIndex: number, step: StepState, time: number) => void) => {
     onTriggerRef.current = fn;
+  }, []);
+
+  // Automation callback — override from parent to apply automation values to audio graph
+  const onAutomationRef = useRef<((trackIndex: number, param: AutomationParam, value: number, time: number) => void) | null>(null);
+
+  const setOnAutomation = useCallback((fn: (trackIndex: number, param: AutomationParam, value: number, time: number) => void) => {
+    onAutomationRef.current = fn;
   }, []);
 
   const LOOKAHEAD = 0.1;       // seconds to look ahead
@@ -592,6 +976,17 @@ export function useSequencerEngine() {
       }
 
       const hasSolo = s.tracks.some(t => t.soloed);
+
+      // ═══ Automation Playback — apply automation lane values for this step ═══
+      s.tracks.forEach((track, tIdx) => {
+        if (!track.automationLanes || track.automationLanes.length === 0) return;
+        for (const lane of track.automationLanes) {
+          const val = getAutomationValue(lane, stepIdx);
+          if (val !== null && onAutomationRef.current) {
+            onAutomationRef.current(tIdx, lane.param, val, nextStepTimeRef.current);
+          }
+        }
+      });
 
       s.tracks.forEach((track, trackIdx) => {
         // Mute/solo logic
@@ -645,8 +1040,11 @@ export function useSequencerEngine() {
         }
       });
 
-      // Update UI step (via dispatch, decoupled from audio)
-      dispatch({ type: 'SET_CURRENT_STEP', step: stepIdx });
+      // Update UI step — throttled to reduce React re-render churn
+      // Direct ref update is always current; dispatch is throttled
+      if (currentStepRef.current !== stepIdx) {
+        dispatch({ type: 'SET_CURRENT_STEP', step: stepIdx });
+      }
       nextStepTimeRef.current += stepDuration;
     }
   }, []);
@@ -657,6 +1055,9 @@ export function useSequencerEngine() {
       masterChainRef.current = new MasterChain(audioCtxRef.current);
       masterChainRef.current.connect(audioCtxRef.current.destination);
       masterChainRef.current.updateParams(stateRef.current.master);
+      // Insert FXRack between tracks and MasterChain
+      fxRackRef.current = new FXRack(audioCtxRef.current, masterChainRef.current.input);
+      fxRackRef.current.updateBPM(stateRef.current.bpm);
     }
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
@@ -699,8 +1100,16 @@ export function useSequencerEngine() {
     stop,
     togglePlay,
     setOnTrigger,
+    setOnAutomation,
     audioCtx: audioCtxRef,
     masterChain: masterChainRef,
+    fxRack: fxRackRef,
+    /* Undo/Redo */
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clearHistory,
   };
 }
 

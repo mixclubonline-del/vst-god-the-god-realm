@@ -6,7 +6,7 @@
 import type { GodVoicePreset } from './pantheonVoicePresets';
 
 export class PantheonVoice {
-  private ctx: AudioContext;
+  private ctx: BaseAudioContext;
   private carrier!: OscillatorNode;
   private modulator!: OscillatorNode;
   private modGain!: GainNode;
@@ -24,7 +24,7 @@ export class PantheonVoice {
   private releaseTimer: number | null = null;
   private preset: GodVoicePreset | null = null;
 
-  constructor(ctx: AudioContext) {
+  constructor(ctx: BaseAudioContext) {
     this.ctx = ctx;
     this.buildGraph();
   }

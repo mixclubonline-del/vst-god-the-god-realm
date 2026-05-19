@@ -19,6 +19,21 @@ interface SacredSequencerHeaderProps {
   onToggleFill: () => void;
   onClearAll: () => void;
   onExport: () => void;
+  showMixer: boolean;
+  onToggleMixer: () => void;
+  showFxPanel: boolean;
+  onToggleFxPanel: () => void;
+  /* Phase 5 */
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  activeProject: string | null;
+  isDirty: boolean;
+  onToggleProjectDrawer: () => void;
+  /* Phase 6b — Automation Record */
+  isRecording: boolean;
+  onToggleRecord: () => void;
 }
 
 const SWING_PRESETS: { id: SequencerState['swingPreset']; label: string }[] = [
@@ -43,6 +58,19 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
   onToggleFill,
   onClearAll,
   onExport,
+  showMixer,
+  onToggleMixer,
+  showFxPanel,
+  onToggleFxPanel,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  activeProject,
+  isDirty,
+  onToggleProjectDrawer,
+  isRecording,
+  onToggleRecord,
 }) => {
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const bpmInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +127,35 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
           ) : (
             <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="3,1 13,7 3,13" fill="currentColor"/></svg>
           )}
+        </button>
+
+        {/* Record Automation */}
+        <button
+          className={`seq-transport-btn seq-transport-btn--rec ${isRecording ? 'seq-transport-btn--rec-active' : ''}`}
+          onClick={onToggleRecord}
+          title={isRecording ? 'Disarm Automation Record (R)' : 'Arm Automation Record (R)'}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14">
+            <circle cx="7" cy="7" r="5" fill={isRecording ? '#EF4444' : 'none'} stroke={isRecording ? '#EF4444' : 'currentColor'} strokeWidth="1.5" />
+          </svg>
+        </button>
+
+        {/* Undo/Redo */}
+        <button
+          className={`seq-transport-btn seq-undo-btn ${!canUndo ? 'seq-transport-btn--disabled' : ''}`}
+          onClick={onUndo}
+          disabled={!canUndo}
+          title="Undo (⌘Z)"
+        >
+          ↶
+        </button>
+        <button
+          className={`seq-transport-btn seq-redo-btn ${!canRedo ? 'seq-transport-btn--disabled' : ''}`}
+          onClick={onRedo}
+          disabled={!canRedo}
+          title="Redo (⌘⇧Z)"
+        >
+          ↷
         </button>
       </div>
 
@@ -208,9 +265,45 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         CLR
       </button>
 
+      {/* Project */}
+      <button
+        className={`seq-mixer-toggle ${activeProject ? 'seq-mixer-toggle--active' : ''}`}
+        onClick={onToggleProjectDrawer}
+        title="Projects (⌘S)"
+      >
+        <span style={{ fontSize: '12px' }}>📁</span>
+        <span>{activeProject ? (activeProject.length > 8 ? activeProject.slice(0, 8) + '…' : activeProject) : 'PROJ'}</span>
+        {isDirty && <span className="seq-project-dirty-dot" />}
+      </button>
+
       {/* Export */}
       <button className="seq-export-btn" onClick={onExport} title="Render to WAV">
         EXPORT
+      </button>
+
+      {/* Mixer Toggle */}
+      <button
+        className={`seq-mixer-toggle ${showMixer ? 'seq-mixer-toggle--active' : ''}`}
+        onClick={onToggleMixer}
+        title={showMixer ? 'Hide Mixer' : 'Show Mixer'}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="2" width="2" height="10" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
+          <rect x="6" y="5" width="2" height="7" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
+          <rect x="11" y="1" width="2" height="11" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
+        </svg>
+        <span>MIX</span>
+      </button>
+
+      {/* FX Panel Toggle */}
+      <button
+        className={`seq-mixer-toggle ${showFxPanel ? 'seq-mixer-toggle--active' : ''}`}
+        onClick={onToggleFxPanel}
+        title={showFxPanel ? 'Hide FX Rack' : 'Show FX Rack'}
+        style={{ color: showFxPanel ? '#FFD700' : undefined }}
+      >
+        <span style={{ fontSize: '12px' }}>✨</span>
+        <span>FX</span>
       </button>
     </div>
   );

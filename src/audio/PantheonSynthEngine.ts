@@ -22,7 +22,7 @@ export interface PantheonAnalysisData {
 }
 
 export class PantheonSynthEngine {
-  private ctx: AudioContext | null = null;
+  private ctx: BaseAudioContext | null = null;
   private voices: PantheonVoice[] = [];
   private voiceMixer!: GainNode;
   private masterGain!: GainNode;
@@ -81,13 +81,13 @@ export class PantheonSynthEngine {
     return GOD_VOICE_PRESETS[this.currentGodId] || GOD_VOICE_PRESETS.olympus;
   }
 
-  init(ctx: AudioContext): void {
+  init(ctx: BaseAudioContext, destination?: AudioNode): void {
     this.ctx = ctx;
 
     // Master output
     this.masterGain = ctx.createGain();
     this.masterGain.gain.value = 0.7;
-    this.masterGain.connect(ctx.destination);
+    this.masterGain.connect(destination ?? ctx.destination);
 
     // Macro filter (mid-chain EQ)
     this.macroFilter = ctx.createBiquadFilter();
