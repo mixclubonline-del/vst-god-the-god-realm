@@ -8,6 +8,10 @@ interface SoundSlotProps {
   name: string;
   room?: string;
   category?: string;
+  realm?: string;
+  realmIcon?: string;
+  realmColor?: string;
+  realmKnobVariant?: 'default' | 'mystical' | 'infernal' | 'celestial';
   isActive: boolean;
   onSelect: () => void;
   onToggle: (active: boolean) => void;
@@ -19,13 +23,17 @@ interface SoundSlotProps {
 
 /**
  * SoundSlot — Individual sound engine module for the Multi-Realm stack.
- * Features specialized controls for per-layer synthesis parameters.
+ * Each slot carries a unique realm identity with distinct visuals.
  */
 export const SoundSlot: React.FC<SoundSlotProps> = ({
   id,
   name,
   room,
   category,
+  realm,
+  realmIcon,
+  realmColor,
+  realmKnobVariant = 'default',
   isActive,
   onSelect,
   onToggle,
@@ -44,12 +52,17 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
   return (
     <div 
       className={`vg-sound-slot ${isActive ? 'vg-sound-slot-active' : ''} relative overflow-hidden group`}
+      data-realm={realm}
       onClick={onSelect}
     >
+      {/* Realm Ambient Animation Layer */}
+      {realm && <div className="realm-ambient" />}
+
       {/* Divine Aura Background */}
       <motion.div 
-        className="absolute inset-0 bg-gradient-to-br from-mixx-accent/5 to-transparent pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         animate={{ opacity: isPowered ? (0.1 + level * 0.5) : 0 }}
+        style={{ background: realmColor ? `radial-gradient(ellipse at center, ${realmColor}10 0%, transparent 70%)` : undefined }}
       />
 
       {/* MIDI 2.0 Note-On Flash */}
@@ -60,15 +73,17 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
           animate={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(245,176,65,0.35) 0%, transparent 70%)',
-            boxShadow: 'inset 0 0 20px rgba(245,176,65,0.2)'
+            background: `radial-gradient(ellipse at center, ${realmColor || 'rgba(245,176,65,1)'}55 0%, transparent 70%)`,
+            boxShadow: `inset 0 0 20px ${realmColor || 'rgba(245,176,65,0.2)'}33`
           }}
         />
       )}
 
       <div className="vg-slot-header relative z-10 p-3">
+        {/* Power Toggle with realm color */}
         <div 
-          className={`cursor-pointer transition-all duration-300 ${isPowered ? 'text-mixx-accent' : 'text-white/20'}`}
+          className="cursor-pointer transition-all duration-300"
+          style={{ color: isPowered ? (realmColor || 'var(--mixx-accent)') : 'rgba(255,255,255,0.2)' }}
           onClick={(e) => {
             e.stopPropagation();
             const next = !isPowered;
@@ -79,8 +94,17 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
           <Power size={14} fill={isPowered ? "currentColor" : "none"} />
         </div>
         
+        {/* Realm Icon Badge */}
+        {realmIcon && (
+          <span className="text-sm ml-1 select-none" style={{ filter: isPowered ? 'none' : 'grayscale(1) opacity(0.3)' }}>
+            {realmIcon}
+          </span>
+        )}
+
         <div className="vg-slot-title ml-3" title={name}>
-          <div className="vg-slot-name text-[11px] font-black tracking-tighter text-white/90 uppercase">{name || 'EMPTY SLOT'}</div>
+          <div className="vg-slot-name text-[11px] font-black tracking-tighter uppercase">
+            {name || 'EMPTY SLOT'}
+          </div>
           {(room || category) && (
             <div className="vg-slot-meta text-[8px] font-bold text-white/30 uppercase tracking-widest">
               {[room, category].filter(Boolean).join(' // ')}
@@ -89,11 +113,14 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
         </div>
         
         <div className="ml-auto flex gap-2">
-           <div className={`w-1 h-1 rounded-full ${isPowered ? 'bg-mixx-accent animate-pulse' : 'bg-white/10'}`} />
+           <div 
+             className={`w-1.5 h-1.5 rounded-full ${isPowered ? 'animate-pulse realm-power-on' : 'bg-white/10'}`}
+             style={isPowered ? { background: realmColor, boxShadow: `0 0 8px ${realmColor}` } : undefined}
+           />
         </div>
       </div>
 
-      {/* Visualizer Area */}
+      {/* Visualizer Area — Realm-Tinted Waveform */}
       <div className="vg-slot-viz h-24 flex items-center justify-center relative">
          <div className="flex items-end gap-[2px] h-12">
            {Array.from({ length: 32 }).map((_, i) => {
@@ -102,13 +129,14 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
              return (
                <motion.div 
                  key={i}
-                 className="w-[2px] rounded-full bg-mixx-accent/40"
+                 className="w-[2px] rounded-full realm-wave-bar"
                  animate={{ 
                     height: isPowered ? `${h}%` : '4%',
                     opacity: isPowered ? (0.2 + level * 0.8) : 0.05,
                  }}
                  style={{ 
-                    boxShadow: level > 0.1 ? `0 0 10px var(--mixx-accent-glow)` : 'none'
+                    background: realmColor || 'var(--mixx-accent)',
+                    boxShadow: level > 0.1 ? `0 0 10px ${realmColor || 'var(--mixx-accent-glow)'}` : 'none'
                  }}
                />
              );
@@ -116,7 +144,7 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
          </div>
       </div>
 
-      {/* Divine Control Suite */}
+      {/* Divine Control Suite — Realm-Matched Knobs */}
       <div className="vg-slot-knobs grid grid-cols-5 gap-1 p-3 bg-black/40 backdrop-blur-md border-t border-white/5">
         <DivineKnob 
           label="Vol" 
@@ -124,35 +152,35 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
           value={vol} 
           onChange={(v) => update(`slotVol_${id}`, v)} 
           unit="dB"
-          variant="celestial"
+          variant={realmKnobVariant}
         />
         <DivineKnob 
           label="Pan" 
           size="sm" 
           value={pan} 
           onChange={(v) => update(`slotPan_${id}`, v)} 
-          variant="mystical"
+          variant={realmKnobVariant}
         />
         <DivineKnob 
           label="Tune" 
           size="sm" 
           value={tune} 
           onChange={(v) => update(`slotTune_${id}`, v)} 
-          variant="celestial"
+          variant={realmKnobVariant}
         />
         <DivineKnob 
           label="Txture" 
           size="sm" 
           value={texture} 
           onChange={(v) => update(`slotTexture_${id}`, v)} 
-          variant="infernal"
+          variant={realmKnobVariant}
         />
         <DivineKnob 
           label="Fine" 
           size="sm" 
           value={fine} 
           onChange={(v) => update(`slotFine_${id}`, v)} 
-          variant="mystical"
+          variant={realmKnobVariant}
         />
       </div>
 

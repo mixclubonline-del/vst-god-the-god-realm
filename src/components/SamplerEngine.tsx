@@ -26,6 +26,15 @@ const SLOT_NAMES = [
   'OLYMPUS KEYS'
 ];
 
+const SLOT_REALMS = [
+  { realm: 'celestial', icon: '☁️', color: '#00d4ff', knobVariant: 'celestial' as const },
+  { realm: 'olympus',   icon: '⚡', color: '#ffd700', knobVariant: 'default' as const },
+  { realm: 'inferno',   icon: '🔥', color: '#ff3322', knobVariant: 'infernal' as const },
+  { realm: 'starfield', icon: '✨', color: '#b366ff', knobVariant: 'mystical' as const },
+  { realm: 'eden',      icon: '🌿', color: '#33ff88', knobVariant: 'celestial' as const },
+  { realm: 'aether',    icon: '🌊', color: '#ff8844', knobVariant: 'infernal' as const },
+];
+
 export const SamplerEngine: React.FC<SamplerEngineProps> = ({
   parameterValues,
   update,
@@ -80,10 +89,13 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
             name={slot.name}
             room={slot.room}
             category={slot.category}
+            realm={SLOT_REALMS[i].realm}
+            realmIcon={SLOT_REALMS[i].icon}
+            realmColor={SLOT_REALMS[i].color}
+            realmKnobVariant={SLOT_REALMS[i].knobVariant}
             isActive={activePad === i}
             onSelect={() => update('activePad', i)}
             onToggle={(active) => {
-              // Logic to enable/disable engine layer
               update(`slotPower_${i}`, active);
             }}
             parameterValues={parameterValues}
