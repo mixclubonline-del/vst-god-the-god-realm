@@ -124,35 +124,35 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
           value={vol} 
           onChange={(v) => update(`slotVol_${id}`, v)} 
           unit="dB"
-          color="var(--mixx-accent)"
+          variant="celestial"
         />
         <DivineKnob 
           label="Pan" 
           size="sm" 
           value={pan} 
           onChange={(v) => update(`slotPan_${id}`, v)} 
-          color="#ffffff"
+          variant="mystical"
         />
         <DivineKnob 
           label="Tune" 
           size="sm" 
           value={tune} 
           onChange={(v) => update(`slotTune_${id}`, v)} 
-          color="#fbbf24"
+          variant="celestial"
         />
         <DivineKnob 
           label="Txture" 
           size="sm" 
           value={texture} 
           onChange={(v) => update(`slotTexture_${id}`, v)} 
-          color="#ef4444"
+          variant="infernal"
         />
         <DivineKnob 
           label="Fine" 
           size="sm" 
           value={fine} 
           onChange={(v) => update(`slotFine_${id}`, v)} 
-          color="rgba(255,255,255,0.4)"
+          variant="mystical"
         />
       </div>
 
