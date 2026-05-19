@@ -188,15 +188,17 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   /* ─── God Realm Sampler Engine (86KB DSP Powerhouse) ─── */
   const godEngine = useRef<GodRealmSamplerEngine | null>(null);
+  const [engineEpoch, setEngineEpoch] = useState(0);
 
-  // Initialize the engine on mount, populate buffers from its manifest
+  // Initialize the engine on mount — always re-creates on Strict Mode re-mount
   useEffect(() => {
-    if (isBuffersLoaded) return;
+    let cancelled = false;
 
     const boot = async () => {
       try {
         const eng = new GodRealmSamplerEngine();
         await eng.init();
+        if (cancelled) { eng.dispose(); return; }
         godEngine.current = eng;
 
         // Sync the engine's loaded buffers into React state for waveform rendering
@@ -205,18 +207,23 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           const buf = eng.getBuffer(i);
           if (buf) loadedBuffers[i] = buf;
         }
-        setBuffers(loadedBuffers);
-        setIsBuffersLoaded(true);
-        console.log('[God Engine] Initialized — %d sacred samples loaded', Object.keys(loadedBuffers).length);
+        if (!cancelled) {
+          setBuffers(loadedBuffers);
+          setIsBuffersLoaded(true);
+          setEngineEpoch(prev => prev + 1); // Signal meter loop to start
+          console.log('[God Engine] Initialized — %d sacred samples loaded', Object.keys(loadedBuffers).length);
+        }
       } catch (err) {
+        if (cancelled) return;
         console.error('[God Engine] Initialization failed, falling back to SampleManager', err);
-        // Graceful degradation: fall back to the simpler SampleManager loader
         if (engine.audioCtx.current) {
           try {
             const fallbackBuffers = await sampleManager.loadKit(engine.audioCtx.current);
-            setBuffers(fallbackBuffers);
-            setIsBuffersLoaded(true);
-            console.log('[God Engine] Fallback: SampleManager loaded');
+            if (!cancelled) {
+              setBuffers(fallbackBuffers);
+              setIsBuffersLoaded(true);
+              console.log('[God Engine] Fallback: SampleManager loaded');
+            }
           } catch (fallbackErr) {
             console.error('[God Engine] Fallback also failed', fallbackErr);
           }
@@ -227,13 +234,14 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     boot();
 
     return () => {
+      cancelled = true;
       if (godEngine.current) {
         godEngine.current.dispose();
         godEngine.current = null;
         console.log('[God Engine] Disposed');
       }
     };
-  }, [isBuffersLoaded]);
+  }, []);
 
   /* ─── Neural Input Bus (Keyboard Z-M / MIDI Triggering) ─── */
   useEffect(() => {
@@ -263,23 +271,28 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const meterRafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const engine = godEngine.current;
-    if (!engine) return;
+    // engineEpoch changes each time the DSP engine successfully boots
+    if (!godEngine.current) return;
 
+    const eng = godEngine.current;
     const tick = () => {
-      const levels = engine.getSlotLevels();
+      const levels = eng.getSlotLevels();
       setLiveSlotLevels(levels);
-      setLiveArpStep(engine.getArpStep());
+      setLiveArpStep(eng.getArpStep());
       meterRafRef.current = requestAnimationFrame(tick);
     };
     meterRafRef.current = requestAnimationFrame(tick);
+    console.log('[Live Meters] rAF metering loop engaged — epoch', engineEpoch);
+    // DEBUG: expose engine for console probing (remove before prod)
+    (window as any).__godEngine = eng;
 
     return () => {
       if (meterRafRef.current !== null) {
         cancelAnimationFrame(meterRafRef.current);
+        console.log('[Live Meters] rAF metering loop disengaged');
       }
     };
-  }, []);
+  }, [engineEpoch]);
 
   // Use live engine data when available, fall back to JUCE bridge
   const slotLevels = liveSlotLevels;

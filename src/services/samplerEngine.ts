@@ -774,6 +774,12 @@ export class GodRealmSamplerEngine {
       playStart = Math.max(0, totalDur - originalEnd);
     }
 
+    // Route voice through the slot's DSP chain so the slot analyser picks up signal
+    const slotIdx = index % this.slotGains.length;
+    if (this.slotGains[slotIdx]) {
+      voice.setDestination(this.slotGains[slotIdx]);
+    }
+
     voice.trigger(
       sourceBuffer,
       this.ctx.currentTime,
@@ -1909,6 +1915,12 @@ export class GodRealmSamplerEngine {
     
     // Combine base rate with detuneShift (cents)
     const finalRate = rate * Math.pow(2, detuneShift / 1200);
+
+    // Route voice through the slot's DSP chain for metering
+    const slotIdx = index % this.slotGains.length;
+    if (this.slotGains[slotIdx]) {
+      voice.setDestination(this.slotGains[slotIdx]);
+    }
 
     voice.trigger(
       this.buffers[index]!,
