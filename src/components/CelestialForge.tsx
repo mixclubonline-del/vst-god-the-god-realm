@@ -5,128 +5,9 @@ import { useJuceBridge } from '@/hooks/useJuceBridge';
 import { nativeAudio, MasteringBridgeParams } from '@/native/bridge';
 import { MasterMeter } from './ui/MasterMeter';
 import { HardwareScrew } from './ui/HardwareScrew';
+import { DivineKnob } from './ui/DivineKnob';
 
-interface GodKnobV2Props {
-  label: string;
-  value: number;
-  min?: number;
-  max?: number;
-  unit?: string;
-  id: string;
-  update: (id: string, val: any) => void;
-  color?: string;
-  size?: 'sm' | 'md' | 'lg';
-  labels?: [string, string, string]; // e.g. ["WARM", "TILT", "BRIGHT"]
-}
-
-export const GodKnobV2: React.FC<GodKnobV2Props> = ({
-  label,
-  value,
-  min = 0,
-  max = 100,
-  unit = '',
-  id,
-  update,
-  color = 'var(--god-primary)',
-  size = 'md',
-  labels
-}) => {
-  const rotation = ((value - min) / (max - min)) * 270 - 135;
-  const sizePx = size === 'sm' ? 48 : size === 'md' ? 84 : 110;
-
-  return (
-    <div className="flex flex-col items-center group/gknob relative">
-      {/* Numerical Readout Above */}
-      <div className="text-[10px] font-mono text-white/80 font-bold mb-1 opacity-0 group-hover/gknob:opacity-100 transition-opacity">
-        {Math.round(value * 10) / 10}{unit}
-      </div>
-
-      <motion.div 
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="vg-knob-well"
-      >
-        <div 
-          className="relative flex items-center justify-center cursor-ns-resize"
-          style={{ width: sizePx, height: sizePx }}
-        >
-          {/* Outer Value Ring (SVG) */}
-          <svg className="absolute inset-0 w-full h-full -rotate-90 overflow-visible" viewBox="0 0 100 100">
-            <circle 
-              cx="50" cy="50" r="46" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.03)" 
-              strokeWidth="2" 
-            />
-            <motion.circle 
-              cx="50" cy="50" r="46" 
-              fill="none" 
-              stroke={color} 
-              strokeWidth="3"
-              strokeDasharray="289"
-              strokeDashoffset={289 - (289 * (value - min) / (max - min))}
-              strokeLinecap="round"
-              style={{ filter: `drop-shadow(0 0 8px ${color}66)` }}
-            />
-          </svg>
-
-          {/* Knob Body with Brushed Obsidian Texture */}
-          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#444444] via-[#1a1816] to-[#0a0807] shadow-[0_12px_24px_rgba(0,0,0,0.9),inset_0_2px_4px_rgba(255,255,255,0.15),inset_0_-2px_4px_rgba(0,0,0,0.5)] border border-white/10 flex items-center justify-center overflow-hidden">
-            <div 
-                className="absolute inset-0 opacity-40 bg-cover bg-center mix-blend-overlay scale-125"
-                style={{ backgroundImage: `url('/Users/mixxclub/.gemini/antigravity/brain/cc31ef20-a16b-45eb-9d6c-007877cf3acc/brushed_obsidian_texture_1778620817722.png')` }} 
-            />
-            
-            {/* Glowing Indicator Orb */}
-            <motion.div 
-              className="absolute top-[8px] w-2 h-2 rounded-full shadow-[0_0_15px_rgba(255,215,0,1),0_0_5px_#fff]"
-              style={{ 
-                  backgroundColor: color,
-                  rotate: rotation,
-                  transformOrigin: `50% ${sizePx/2 - 8}px`
-              }}
-              animate={{ 
-                  boxShadow: [`0 0 15px ${color}`, `0 0 25px ${color}`, `0 0 15px ${color}`]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-
-            {/* Internal Glow (The Heat) */}
-            <motion.div 
-              className="w-1/2 h-1/2 rounded-full blur-xl"
-              style={{ backgroundColor: color }}
-              animate={{ 
-                  opacity: [0.1, 0.3, 0.1],
-                  scale: [0.8, 1.2, 0.8]
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
-          </div>
-
-          <input 
-            type="range"
-            min={min}
-            max={max}
-            step="0.1"
-            className="absolute inset-0 opacity-0 cursor-ns-resize"
-            value={value}
-            onChange={(e) => update(id, parseFloat(e.target.value))}
-          />
-        </div>
-      </motion.div>
-
-      <span className="text-[10px] font-black text-white/40 mt-3 uppercase tracking-[0.2em] group-hover/gknob:text-white/90 transition-colors">{label}</span>
-      
-      {labels && (
-        <div className="flex justify-between w-full mt-1 px-1 opacity-40">
-           <span className="text-[7px] font-bold">{labels[0]}</span>
-           <span className="text-[7px] font-bold">{labels[1]}</span>
-           <span className="text-[7px] font-bold">{labels[2]}</span>
-        </div>
-      )}
-    </div>
-  );
-};
+/* GodKnobV2 has been retired — all mastering knobs now use DivineKnob with variant="celestial" */
 
 interface SunDiskProps {
   levels: { peak: number; rms: number; reduction: number };
@@ -574,15 +455,15 @@ export const CelestialForge: React.FC<{
           <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={180} />
 
           {/* Calibrated Defaults */}
-          <GodKnobV2 label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={bridgedUpdate} />
-          <GodKnobV2 label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={bridgedUpdate} />
-          <GodKnobV2 label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt ?? 50} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={bridgedUpdate} />
+          <DivineKnob label="GAIN" id="masterInputGain" value={parameterValues.masterInputGain ?? 0} min={-12} max={12} unit="dB" update={bridgedUpdate} variant="celestial" />
+          <DivineKnob label="DRIVE" id="masterDrive" value={parameterValues.masterDrive ?? 20} unit="%" update={bridgedUpdate} variant="celestial" />
+          <DivineKnob label="COLOR" id="masterColorTilt" value={parameterValues.masterColorTilt ?? 50} unit="%" labels={["WARM", "TILT", "BRIGHT"]} update={bridgedUpdate} variant="celestial" />
           
           <div className="mt-auto p-6 glass-panel rounded-2xl">
              <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Dynamics</span>
              <div className="flex gap-4">
-                <GodKnobV2 size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold ?? -12} min={-60} max={0} unit="dB" update={bridgedUpdate} />
-                <GodKnobV2 size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio ?? 2.0} min={1} max={10} unit=":1" update={bridgedUpdate} />
+                <DivineKnob size="sm" label="THRES" id="masterDynamicsThreshold" value={parameterValues.masterDynamicsThreshold ?? -12} min={-60} max={0} unit="dB" update={bridgedUpdate} variant="celestial" />
+                <DivineKnob size="sm" label="RATIO" id="masterDynamicsRatio" value={parameterValues.masterDynamicsRatio ?? 2.0} min={1} max={10} unit=":1" update={bridgedUpdate} variant="celestial" />
              </div>
           </div>
         </aside>
@@ -616,24 +497,24 @@ export const CelestialForge: React.FC<{
           <HardwareScrew className="absolute top-2 left-2 opacity-60" size={12} rotation={90} />
           <HardwareScrew className="absolute top-2 right-2 opacity-60" size={12} rotation={270} />
 
-          <GodKnobV2 label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={bridgedUpdate} color="#00ccff" />
+          <DivineKnob label="COLD" id="masterColdExtension" value={parameterValues.masterColdExtension ?? 0} min={0} max={100} unit="%" update={bridgedUpdate} variant="mystical" color="#00ccff" />
           <div className="flex flex-col items-center">
               <span className="text-label-xs text-white/50 mb-2 drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">CEILING</span>
-              <GodKnobV2 label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling ?? -0.1} min={-12} max={12} unit="dB" update={bridgedUpdate} color="#ff2200" />
+              <DivineKnob label="CEILING" id="masterCeiling" value={parameterValues.masterCeiling ?? -0.1} min={-12} max={12} unit="dB" update={bridgedUpdate} variant="infernal" color="#ff2200" />
           </div>
           
           <div className="p-6 glass-panel rounded-2xl w-full">
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack ?? 30} min={1} max={100} unit="ms" update={bridgedUpdate} />
-                <GodKnobV2 size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease ?? 100} min={10} max={1000} unit="ms" update={bridgedUpdate} />
+                <DivineKnob size="sm" label="ATTACK" id="masterAttack" value={parameterValues.masterAttack ?? 30} min={1} max={100} unit="ms" update={bridgedUpdate} variant="celestial" />
+                <DivineKnob size="sm" label="RELEASE" id="masterRelease" value={parameterValues.masterRelease ?? 100} min={10} max={1000} unit="ms" update={bridgedUpdate} variant="celestial" />
              </div>
           </div>
 
           <div className="p-6 glass-panel rounded-2xl w-full">
              <span className="text-label-xs text-white/50 mb-4 block text-center drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">Stereo Field</span>
              <div className="flex gap-4 justify-center">
-                <GodKnobV2 size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth ?? 100} min={0} max={200} unit="%" update={bridgedUpdate} color="#cc00ff" />
-                <GodKnobV2 size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={bridgedUpdate} color="#cc00ff" />
+                <DivineKnob size="sm" label="WIDTH" id="masterWidth" value={parameterValues.masterWidth ?? 100} min={0} max={200} unit="%" update={bridgedUpdate} variant="mystical" color="#cc00ff" />
+                <DivineKnob size="sm" label="IMAGER" id="masterImager" value={parameterValues.masterImager ?? 0} min={-1} max={1} update={bridgedUpdate} variant="mystical" color="#cc00ff" />
              </div>
           </div>
 

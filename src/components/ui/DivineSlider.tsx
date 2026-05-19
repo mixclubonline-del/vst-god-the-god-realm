@@ -13,7 +13,7 @@ interface DivineSliderProps {
   color?: string;
   orientation?: 'horizontal' | 'vertical';
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'mystical' | 'infernal' | 'celestial';
+  variant?: 'default' | 'mystical' | 'infernal' | 'celestial' | 'fluid';
 }
 
 export const DivineSlider: React.FC<DivineSliderProps> = ({

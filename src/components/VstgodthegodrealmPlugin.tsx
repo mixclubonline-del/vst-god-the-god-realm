@@ -14,7 +14,6 @@ import { MultiControlPanel } from './MultiControlPanel';
 import { RealmDashboard } from './RealmDashboard';
 import { NeuralSuggestPanel } from './NeuralSuggestPanel';
 import { CelestialTabs } from './ui/CelestialTabs';
-import { GodKnob } from './ui/GodKnob';
 import { DivineKnob } from './ui/DivineKnob';
 import { DivineSlider } from './ui/DivineSlider';
 import { CelestialForge } from './CelestialForge';
@@ -25,7 +24,7 @@ import { PresetLibrarySidebar } from './PresetLibrarySidebar';
 import { DivineArchive } from './DivineArchive';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
-import { FluidSlider } from './FluidSlider';
+/* FluidSlider retired — use DivineSlider variant="fluid" instead */
 import { SacredSequencer as SacredSequencerV2, useSequencerEngine } from './sequencer';
 import { RealmParticleCanvas } from './RealmParticleCanvas';
 import { RealmPortalTransition } from './RealmPortalTransition';
@@ -704,7 +703,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <span className="vg-display-label">TEMPO</span>
           </div>
           <div className="vg-knob-group">
-            <GodKnob 
+            <DivineKnob 
               label="TUNE"
               min={-24}
               max={24}
@@ -712,8 +711,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               onChange={(v) => update('tuneSemitones', v)}
               size="sm"
               suffix=" ST"
+              variant="celestial"
             />
-            <GodKnob 
+            <DivineKnob 
               label="VOLUME"
               min={-60}
               max={6}
@@ -721,6 +721,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               onChange={(v) => update('masterVolume', v)}
               size="sm"
               suffix=" dB"
+              variant="celestial"
             />
           </div>
           

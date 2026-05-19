@@ -9,7 +9,12 @@ interface DivineKnobProps {
   value?: number;
   defaultValue?: number;
   onChange?: (value: number) => void;
+  /** CelestialForge bridge pattern — when both id+update are present, update(id, val) is called */
+  id?: string;
+  update?: (id: string, val: number) => void;
   unit?: string;
+  /** Alias for unit — maps GodKnob's suffix prop */
+  suffix?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   color?: string;
   labels?: [string, string, string]; // e.g. ["MIN", "MID", "MAX"]
@@ -25,7 +30,10 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   value: externalValue,
   defaultValue = 0,
   onChange,
-  unit = '',
+  id,
+  update,
+  unit: unitProp = '',
+  suffix,
   size = 'md',
   color = 'var(--mixx-accent)',
   labels,
@@ -33,6 +41,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   valueDisplay,
   variant = 'default'
 }) => {
+  const unit = suffix || unitProp;
   const [internalValue, setInternalValue] = useState(externalValue ?? defaultValue);
   const [rms, setRms] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -40,7 +49,19 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   const startY = useRef(0);
   const startValue = useRef(0);
 
+  // Sync internal state when external value changes
+  useEffect(() => {
+    if (externalValue !== undefined) setInternalValue(externalValue);
+  }, [externalValue]);
+
   const displayValue = externalValue ?? internalValue;
+
+  /** Unified emit — routes to either update(id,val) or onChange(val) */
+  const emit = (val: number) => {
+    setInternalValue(val);
+    if (id && update) update(id, val);
+    onChange?.(val);
+  };
 
   // Audio reactivity loop (Mocked for premium feel)
   useEffect(() => {
@@ -79,8 +100,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     let newValue = startValue.current + deltaY * sensitivity;
     newValue = Math.max(min, Math.min(max, newValue));
     
-    setInternalValue(newValue);
-    onChange?.(newValue);
+    emit(newValue);
   };
 
   const handlePointerUp = () => {
@@ -88,8 +108,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   };
 
   const handleDoubleClick = () => {
-    setInternalValue(defaultValue);
-    onChange?.(defaultValue);
+    emit(defaultValue);
   };
 
   return (

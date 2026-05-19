@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { GodKnob } from '../ui/GodKnob';
+import { DivineKnob } from '../ui/DivineKnob';
 import type { ElectricPantheonGod } from '@/data/electricPantheonGods';
 
 interface RealmFXPanelProps {
@@ -55,7 +55,7 @@ export const RealmFXPanel: React.FC<RealmFXPanelProps> = ({
             transition={{ delay: i * 0.08, duration: 0.3 }}
           >
             {/* FX Knob */}
-            <GodKnob
+            <DivineKnob
               label={fxName}
               min={0}
               max={100}
@@ -63,6 +63,7 @@ export const RealmFXPanel: React.FC<RealmFXPanelProps> = ({
               onChange={(v) => onFxChange(i, v)}
               size="sm"
               suffix="%"
+              variant="celestial"
             />
 
             {/* Bypass Toggle */}
