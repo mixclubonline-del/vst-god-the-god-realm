@@ -2955,57 +2955,69 @@
 /* ── Realm Design Tokens ── */
 .vg-sound-slot[data-realm="celestial"] {
   --realm-primary: #00d4ff;
-  --realm-glow: rgba(0, 212, 255, 0.5);
-  --realm-bg: radial-gradient(circle at 50% 50%, #020c15 0%, #000305 100%);
+  --realm-glow: rgba(0, 212, 255, 0.4);
+  --realm-bg: radial-gradient(circle at 50% 50%, #031424 0%, #000408 100%),
+              linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: cover, 14px 14px, 14px 14px;
   --realm-border-top: rgba(0, 212, 255, 0.5);
-  --realm-border-side: rgba(0, 180, 220, 0.2);
+  --realm-border-side: rgba(0, 180, 220, 0.15);
   --realm-wave: #00d4ff;
-  --realm-ember: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.25) 0%, transparent 70%);
+  --realm-ember: radial-gradient(ellipse at 50% 0%, rgba(0, 212, 255, 0.2) 0%, transparent 70%);
 }
 .vg-sound-slot[data-realm="olympus"] {
   --realm-primary: #ffd700;
-  --realm-glow: rgba(255, 215, 0, 0.55);
-  --realm-bg: radial-gradient(circle at 50% 50%, #171612 0%, #080806 100%);
-  --realm-border-top: rgba(255, 215, 0, 0.55);
-  --realm-border-side: rgba(255, 200, 0, 0.2);
+  --realm-glow: rgba(255, 215, 0, 0.4);
+  --realm-bg: radial-gradient(circle at 50% 50%, #1f1b13 0%, #0a0806 100%);
+  --realm-border-top: rgba(255, 215, 0, 0.6);
+  --realm-border-side: rgba(255, 200, 0, 0.18);
   --realm-wave: #ffd700;
-  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(255, 215, 0, 0.2) 0%, transparent 60%);
+  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(255, 215, 0, 0.15) 0%, transparent 60%);
 }
 .vg-sound-slot[data-realm="inferno"] {
   --realm-primary: #ff3322;
-  --realm-glow: rgba(255, 51, 34, 0.55);
-  --realm-bg: radial-gradient(circle at 50% 50%, #150503 0%, #050100 100%);
+  --realm-glow: rgba(255, 51, 34, 0.45);
+  --realm-bg: radial-gradient(circle at 30% 30%, rgba(255, 50, 0, 0.12), transparent 60%),
+              radial-gradient(circle at 80% 70%, rgba(200, 30, 0, 0.08), transparent 60%),
+              radial-gradient(circle at 50% 50%, #150604 0%, #060100 100%);
   --realm-border-top: rgba(255, 80, 30, 0.5);
-  --realm-border-side: rgba(255, 60, 20, 0.2);
+  --realm-border-side: rgba(255, 60, 20, 0.15);
   --realm-wave: #ff4422;
-  --realm-ember: radial-gradient(ellipse at 50% 100%, rgba(255, 80, 0, 0.3) 0%, transparent 60%);
+  --realm-ember: radial-gradient(ellipse at 50% 100%, rgba(255, 80, 0, 0.25) 0%, transparent 60%);
 }
 .vg-sound-slot[data-realm="starfield"] {
   --realm-primary: #b366ff;
-  --realm-glow: rgba(179, 102, 255, 0.5);
-  --realm-bg: radial-gradient(circle at 50% 50%, #120320 0%, #05000a 100%);
+  --realm-glow: rgba(179, 102, 255, 0.4);
+  --realm-bg: radial-gradient(circle at 20% 80%, rgba(179, 102, 255, 0.08), transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(220, 180, 255, 0.06), transparent 50%),
+              radial-gradient(circle at 50% 50%, #120422 0%, #06010b 100%);
   --realm-border-top: rgba(179, 102, 255, 0.5);
-  --realm-border-side: rgba(160, 80, 255, 0.2);
+  --realm-border-side: rgba(160, 80, 255, 0.15);
   --realm-wave: #b366ff;
-  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(179, 102, 255, 0.2) 0%, transparent 60%);
+  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(179, 102, 255, 0.15) 0%, transparent 60%);
 }
 .vg-sound-slot[data-realm="eden"] {
   --realm-primary: #33ff88;
-  --realm-glow: rgba(51, 255, 136, 0.45);
-  --realm-bg: radial-gradient(circle at 50% 50%, #09170e 0%, #030805 100%);
+  --realm-glow: rgba(51, 255, 136, 0.35);
+  --realm-bg: radial-gradient(circle at 10% 30%, rgba(51, 255, 136, 0.06), transparent 50%),
+              radial-gradient(circle at 90% 70%, rgba(30, 150, 80, 0.06), transparent 50%),
+              radial-gradient(circle at 50% 50%, #0b1a0f 0%, #030804 100%);
   --realm-border-top: rgba(51, 255, 136, 0.45);
-  --realm-border-side: rgba(40, 220, 100, 0.18);
+  --realm-border-side: rgba(40, 220, 100, 0.15);
   --realm-wave: #33ff88;
-  --realm-ember: radial-gradient(ellipse at 50% 100%, rgba(51, 255, 136, 0.2) 0%, transparent 60%);
+  --realm-ember: radial-gradient(ellipse at 50% 100%, rgba(51, 255, 136, 0.15) 0%, transparent 60%);
 }
 .vg-sound-slot[data-realm="aether"] {
-  --realm-primary: #d4af37;
-  --realm-glow: rgba(212, 175, 55, 0.4);
-  --realm-bg: linear-gradient(135deg, rgba(248, 248, 248, 0.98), rgba(228, 228, 228, 0.98)), repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(184, 134, 11, 0.05) 15px, rgba(184, 134, 11, 0.05) 18px);
-  --realm-border-top: #d4af37;
-  --realm-border-side: rgba(184, 134, 11, 0.15);
+  --realm-primary: #c29623;
+  --realm-glow: rgba(194, 150, 35, 0.3);
+  --realm-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(242, 238, 228, 0.96)),
+              linear-gradient(40deg, rgba(194, 150, 35, 0.03) 1px, transparent 1px),
+              linear-gradient(140deg, rgba(100, 80, 50, 0.02) 1px, transparent 1px);
+  background-blend-mode: multiply;
+  --realm-border-top: #c29623;
+  --realm-border-side: rgba(194, 150, 35, 0.25);
   --realm-wave: #c29623;
-  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(212, 175, 55, 0.15) 0%, transparent 60%);
+  --realm-ember: radial-gradient(ellipse at 50% 50%, rgba(194, 150, 35, 0.1) 0%, transparent 60%);
 }
 
 /* ── Realm-Aware Slot Styling ── */
@@ -3056,13 +3068,86 @@
 .vg-sound-slot[data-realm] .vg-slot-name {
   color: var(--realm-primary);
   text-shadow: 0 0 16px var(--realm-glow), 0 0 4px var(--realm-primary);
-  font-size: 12px; letter-spacing: 0.05em;
+  font-size: 11px; letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+.vg-sound-slot[data-realm="celestial"] .vg-slot-name {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.12em;
+}
+.vg-sound-slot[data-realm="olympus"] .vg-slot-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.vg-sound-slot[data-realm="inferno"] .vg-slot-name {
+  font-family: 'Creepster', cursive;
+  font-weight: normal;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+.vg-sound-slot[data-realm="starfield"] .vg-slot-name {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.1em;
+}
+.vg-sound-slot[data-realm="eden"] .vg-slot-name {
+  font-family: 'Cinzel Decorative', serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-name {
+  font-family: 'Uncial Antiqua', serif;
+  font-weight: normal;
+  font-size: 13px;
+  letter-spacing: 0.06em;
 }
 
 /* Realm knob area tinting */
 .vg-sound-slot[data-realm] .vg-slot-knobs {
   background: rgba(0,0,0,0.5);
   border-top: 1px solid var(--realm-border-side);
+}
+
+/* Aether Light Theme Overrides */
+.vg-sound-slot[data-realm="aether"] .vg-slot-name,
+.vg-sound-slot[data-realm="aether"] .vg-slot-meta,
+.vg-sound-slot[data-realm="aether"] .vg-slot-desc,
+.vg-sound-slot[data-realm="aether"] .sound-category-label,
+.vg-sound-slot[data-realm="aether"] .sound-room-label,
+.vg-sound-slot[data-realm="aether"] .vg-slot-title,
+.vg-sound-slot[data-realm="aether"] .vg-slot-header,
+.vg-sound-slot[data-realm="aether"] .vg-slot-header svg,
+.vg-sound-slot[data-realm="aether"] .vg-slot-header span,
+.vg-sound-slot[data-realm="aether"] .vg-slot-actions svg {
+  color: #5a461e !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-meta {
+  color: #706248 !important;
+  opacity: 0.8;
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-knobs {
+  background: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(194, 150, 35, 0.2);
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-actions {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-top: 1px solid rgba(194, 150, 35, 0.2);
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #5a461e !important;
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-btn:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+.vg-sound-slot[data-realm="aether"] .realm-power-on {
+  background: #c29623 !important;
+  box-shadow: 0 0 12px rgba(194, 150, 35, 0.8) !important;
+}
+.vg-sound-slot[data-realm="aether"] .vg-slot-viz {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(194, 150, 35, 0.15) !important;
 }
 
 /* ── Realm Ambient Animations ── */
@@ -3476,42 +3561,44 @@
 
 /* Typography Assignments per Realm */
 .vg-sound-slot[data-realm="celestial"] .vg-slot-name {
-  font-family: 'Montserrat', sans-serif !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.15em !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
 }
 
 .vg-sound-slot[data-realm="olympus"] .vg-slot-name {
   font-family: 'Cinzel', serif !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.1em !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
 }
 
 .vg-sound-slot[data-realm="inferno"] .vg-slot-name {
-  font-family: 'Creepster', 'Cinzel Decorative', cursive, serif !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.05em !important;
+  font-family: 'Creepster', cursive !important;
+  font-weight: normal !important;
+  font-size: 13px !important;
+  letter-spacing: 0.06em !important;
   text-shadow: 0 0 8px rgba(255, 50, 0, 0.8), 0 2px 2px #000 !important;
 }
 
 .vg-sound-slot[data-realm="starfield"] .vg-slot-name {
   font-family: 'Orbitron', sans-serif !important;
   font-weight: 700 !important;
-  letter-spacing: 0.2em !important;
+  letter-spacing: 0.1em !important;
 }
 
 .vg-sound-slot[data-realm="eden"] .vg-slot-name {
-  font-family: 'Uncial Antiqua', 'Cinzel', serif !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
+  font-family: 'Cinzel Decorative', serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
 }
 
 .vg-sound-slot[data-realm="aether"] .vg-slot-name {
-  font-family: 'Cinzel Decorative', 'Cinzel', serif !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  color: #a87d18 !important;
-  text-shadow: 0 1px 1px rgba(255,255,255,0.8) !important;
+  font-family: 'Uncial Antiqua', serif !important;
+  font-weight: normal !important;
+  font-size: 13px !important;
+  letter-spacing: 0.06em !important;
+  color: #5a461e !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8) !important;
 }
 
 /* Aether (Olympus Keys) White/Gold Marble Contrasts */

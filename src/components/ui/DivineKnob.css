@@ -425,6 +425,151 @@
   );
 }
 
+
+/* ═══ CELESTIAL BLUE — Cyan glass sphere with high-tech glow ═══ */
+.variant-celestial-blue .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(0, 212, 255, 0.25) 0%,
+    rgba(0, 150, 200, 0.08) 50%,
+    transparent 75%
+  );
+}
+.variant-celestial-blue .divine-knob-face {
+  background:
+    radial-gradient(circle at 35% 30%, #032030 0%, #000810 80%);
+  border-color: rgba(0, 212, 255, 0.15);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.8),
+    inset 0 1px 3px rgba(0, 212, 255, 0.15),
+    inset 0 0 15px rgba(0, 100, 180, 0.05);
+}
+.variant-celestial-blue .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(0, 212, 255, 0.03) 0deg 1.5deg,
+      transparent 1.5deg 3deg
+    ),
+    radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+  opacity: 0.6;
+}
+.variant-celestial-blue .divine-knob-cap {
+  background: radial-gradient(circle at 30% 30%, rgba(0,212,255,0.1) 0%, transparent 50%);
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
+}
+.variant-celestial-blue .divine-knob-indicator-line {
+  background: #00d4ff !important;
+  box-shadow: 0 0 12px #00d4ff, 0 0 25px rgba(0, 212, 255, 0.4);
+}
+.variant-celestial-blue .track-bg {
+  stroke: rgba(0, 212, 255, 0.08);
+}
+.variant-celestial-blue .track-fill {
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+}
+.variant-celestial-blue .divine-knob-label {
+  color: rgba(0, 212, 255, 0.55);
+}
+.variant-celestial-blue .divine-knob-readout {
+  color: #00d4ff;
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.5);
+}
+
+/* ═══ EDEN GREEN — Dark bronze knob with green stone inlay ═══ */
+.variant-eden-green .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(51, 255, 136, 0.2) 0%,
+    rgba(40, 200, 100, 0.08) 50%,
+    transparent 75%
+  );
+}
+.variant-eden-green .divine-knob-face {
+  background:
+    radial-gradient(circle at 35% 30%, #152c1e 0%, #0c140f 80%);
+  border-color: rgba(51, 255, 136, 0.12);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.8),
+    inset 0 1px 3px rgba(51, 255, 136, 0.1),
+    inset 0 0 15px rgba(20, 80, 40, 0.05);
+}
+.variant-eden-green .divine-knob-machined-texture {
+  background-image:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(51, 255, 136, 0.02) 0deg 2deg,
+      transparent 2deg 4deg
+    );
+  opacity: 0.6;
+}
+.variant-eden-green .divine-knob-cap {
+  background: radial-gradient(circle at 30% 30%, rgba(51,255,136,0.08) 0%, transparent 50%);
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.7);
+}
+.variant-eden-green .divine-knob-indicator-line {
+  background: #33ff88 !important;
+  box-shadow: 0 0 12px #33ff88, 0 0 25px rgba(51, 255, 136, 0.4);
+}
+.variant-eden-green .track-bg {
+  stroke: rgba(51, 255, 136, 0.08);
+}
+.variant-eden-green .track-fill {
+  filter: drop-shadow(0 0 10px rgba(51, 255, 136, 0.5));
+}
+.variant-eden-green .divine-knob-label {
+  color: rgba(51, 255, 136, 0.55);
+}
+.variant-eden-green .divine-knob-readout {
+  color: #33ff88;
+  text-shadow: 0 0 12px rgba(51, 255, 136, 0.5);
+}
+
+/* ═══ MARBLE GOLD — Cream marble face with polished gold accents ═══ */
+.variant-marble-gold .divine-knob-halo {
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(218, 165, 32, 0.05) 50%,
+    transparent 75%
+  );
+}
+.variant-marble-gold .divine-knob-face {
+  background:
+    radial-gradient(circle at 30% 30%, #ffffff 0%, #eae5db 60%, #d8d3c5 100%);
+  border-color: rgba(194, 150, 35, 0.25);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.1);
+}
+.variant-marble-gold .divine-knob-machined-texture {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(160, 130, 80, 0.03) 0px, rgba(160, 130, 80, 0.03) 2px, transparent 2px, transparent 10px);
+  opacity: 0.8;
+}
+.variant-marble-gold .divine-knob-cap {
+  background: radial-gradient(circle at 30% 30%, rgba(194,150,35,0.15) 0%, transparent 60%);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.variant-marble-gold .divine-knob-indicator-line {
+  background: #c29623 !important;
+  box-shadow: 0 0 10px rgba(194, 150, 35, 0.8);
+}
+.variant-marble-gold .track-bg {
+  stroke: rgba(194, 150, 35, 0.15);
+}
+.variant-marble-gold .track-fill {
+  filter: drop-shadow(0 0 8px rgba(194, 150, 35, 0.5));
+}
+.variant-marble-gold .divine-knob-label {
+  color: rgba(194, 150, 35, 0.7);
+}
+.variant-marble-gold .divine-knob-readout {
+  color: #c29623;
+  text-shadow: 0 0 8px rgba(194, 150, 35, 0.3);
+}
+
 /* ═══ Variant Hover Intensification (all) ═══ */
 .divine-knob-container:hover .divine-knob-halo {
   filter: brightness(1.3);

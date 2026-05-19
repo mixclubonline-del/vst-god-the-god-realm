@@ -20,7 +20,7 @@ interface DivineKnobProps {
   labels?: [string, string, string]; // e.g. ["MIN", "MID", "MAX"]
   showValue?: boolean;
   valueDisplay?: string;
-  variant?: 'default' | 'mystical' | 'infernal' | 'celestial';
+  variant?: 'default' | 'mystical' | 'infernal' | 'celestial' | 'celestial-blue' | 'eden-green' | 'marble-gold';
 }
 
 export const DivineKnob: React.FC<DivineKnobProps> = ({

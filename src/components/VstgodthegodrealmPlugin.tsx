@@ -21,7 +21,7 @@ import { GodRealmSampleChopper } from './GodRealmSampleChopper';
 import { SamplerEngine } from './SamplerEngine';
 import { KitExporter } from './KitExporter';
 import { PresetLibrarySidebar } from './PresetLibrarySidebar';
-import { DivineArchive } from './DivineArchive';
+import { CelestialBrowser } from './CelestialBrowser';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
 /* FluidSlider retired — use DivineSlider variant="fluid" instead */
@@ -788,10 +788,10 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         {/* ─── DIVINE ARCHIVE TAB (V2) ─── */}
         {displayedTab === 'Divine Archive' && (
           <div className="vg-panel vg-archive h-full overflow-hidden">
-            <DivineArchive
+            <CelestialBrowser
               engineRef={godEngine}
               activePad={activePad}
-              onActivePadChange={(pad: number) => update('activePad', pad)}
+              onLoadToPad={handleArchiveRecall}
             />
           </div>
         )}

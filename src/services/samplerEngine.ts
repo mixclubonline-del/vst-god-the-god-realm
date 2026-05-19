@@ -1,5 +1,11 @@
 import type { DSPChainModule, DSPModuleType } from './types';
 
+export interface SamplePreviewController {
+  path: string;
+  stop: () => void;
+  finished: Promise<void>;
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface ModuleNode {
@@ -322,6 +328,7 @@ class SamplerVoice {
 
 export class GodRealmSamplerEngine {
   private ctx: AudioContext | null = null;
+  private activePreview: AudioBufferSourceNode | null = null;
   private buffers: (AudioBuffer | null)[] = new Array(16).fill(null);
   private reversedBuffers: (AudioBuffer | null)[] = new Array(16).fill(null);
   private voices: SamplerVoice[] = [];
@@ -610,26 +617,70 @@ export class GodRealmSamplerEngine {
     }
   }
 
-  public async previewSample(path: string): Promise<void> {
-    if (!this.ctx) return;
+  public stopPreview(): void {
+    if (!this.activePreview) return;
+    const preview = this.activePreview;
+    this.activePreview = null;
+    try {
+      preview.onended = null;
+      preview.stop();
+    } catch {
+      // The source may already be stopped; clearing activePreview is still correct.
+    }
+    try {
+      preview.disconnect();
+    } catch {
+      // Disconnect can fail after the node has already been released.
+    }
+  }
+
+  public async previewSample(path: string): Promise<SamplePreviewController | null> {
+    if (!this.ctx || !this.masterGain) return null;
     if (this.ctx.state === 'suspended') await this.ctx.resume();
-    
+
+    this.stopPreview();
+
     try {
       const response = await fetch(path);
+      if (!response.ok) throw new Error(`Failed to fetch preview ${path}`);
       const arrayBuffer = await response.arrayBuffer();
       const buffer = await this.ctx.decodeAudioData(arrayBuffer);
-      
+
       const source = this.ctx.createBufferSource();
       source.buffer = buffer;
-      
-      // Connect to master gain for auditioning
-      source.connect(this.masterGain!);
+      source.connect(this.masterGain);
+      this.activePreview = source;
+
+      let resolveFinished!: () => void;
+      const finished = new Promise<void>((resolve) => {
+        resolveFinished = resolve;
+      });
+
+      source.onended = () => {
+        if (this.activePreview === source) this.activePreview = null;
+        try {
+          source.disconnect();
+        } catch {
+          // Source may already be disconnected by stopPreview.
+        }
+        resolveFinished();
+      };
+
       source.start(0);
-      
-      // Auto-disconnect after playback
-      source.onended = () => source.disconnect();
+
+      return {
+        path,
+        finished,
+        stop: () => {
+          if (this.activePreview === source) {
+            this.stopPreview();
+            resolveFinished();
+          }
+        }
+      };
     } catch (err) {
       console.error('Audition Failed:', err);
+      return null;
     }
   }
 
@@ -638,6 +689,8 @@ export class GodRealmSamplerEngine {
       this.abortController.abort();
       this.abortController = null;
     }
+    
+    this.stopPreview();
     
     // Properly stop and disconnect all voices
     for (const voice of this.voices) {

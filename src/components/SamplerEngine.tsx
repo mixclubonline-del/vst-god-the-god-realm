@@ -27,12 +27,12 @@ const SLOT_NAMES = [
 ];
 
 const SLOT_REALMS = [
-  { realm: 'celestial', icon: '☁️', color: '#00d4ff', knobVariant: 'celestial' as const },
-  { realm: 'olympus',   icon: '⚡', color: '#ffd700', knobVariant: 'default' as const },
+  { realm: 'celestial', icon: '☁️', color: '#00d4ff', knobVariant: 'celestial-blue' as const },
+  { realm: 'olympus',   icon: '⚡', color: '#ffd700', knobVariant: 'celestial' as const },
   { realm: 'inferno',   icon: '🔥', color: '#ff3322', knobVariant: 'infernal' as const },
   { realm: 'starfield', icon: '✨', color: '#b366ff', knobVariant: 'mystical' as const },
-  { realm: 'eden',      icon: '🌿', color: '#33ff88', knobVariant: 'celestial' as const },
-  { realm: 'aether',    icon: '🌊', color: '#ff8844', knobVariant: 'infernal' as const },
+  { realm: 'eden',      icon: '🌿', color: '#33ff88', knobVariant: 'eden-green' as const },
+  { realm: 'aether',    icon: '🌊', color: '#ff8844', knobVariant: 'marble-gold' as const },
 ];
 
 export const SamplerEngine: React.FC<SamplerEngineProps> = ({

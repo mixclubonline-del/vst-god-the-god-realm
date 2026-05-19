@@ -11,7 +11,7 @@ interface SoundSlotProps {
   realm?: string;
   realmIcon?: string;
   realmColor?: string;
-  realmKnobVariant?: 'default' | 'mystical' | 'infernal' | 'celestial';
+  realmKnobVariant?: 'default' | 'mystical' | 'infernal' | 'celestial' | 'celestial-blue' | 'eden-green' | 'marble-gold';
   isActive: boolean;
   onSelect: () => void;
   onToggle: (active: boolean) => void;
@@ -132,53 +132,127 @@ export const SoundSlot: React.FC<SoundSlotProps> = ({
         <div className="realm-border-ornament pointer-events-none absolute inset-0 z-20">
           {realm === 'olympus' && (
             <svg className="w-full h-full text-[#ffd700]/30" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.75">
-              <path d="M2,2 H15 V5 H5 V15 H2 Z" />
-              <path d="M98,2 H85 V5 H95 V15 H98 Z" />
-              <path d="M2,198 H15 V195 H5 V185 H2 Z" />
-              <path d="M98,198 H85 V195 H95 V185 H98 Z" />
+              {/* Greek key meander pattern along the top (y=5) and bottom (y=195) */}
+              <path d="M 2,5 h4 v4 h-2 v-2 h2 v2 M 10,5 h4 v4 h-2 v-2 h2 v2 M 18,5 h4 v4 h-2 v-2 h2 v2 M 26,5 h4 v4 h-2 v-2 h2 v2 M 34,5 h4 v4 h-2 v-2 h2 v2 M 42,5 h4 v4 h-2 v-2 h2 v2 M 50,5 h4 v4 h-2 v-2 h2 v2 M 58,5 h4 v4 h-2 v-2 h2 v2 M 66,5 h4 v4 h-2 v-2 h2 v2 M 74,5 h4 v4 h-2 v-2 h2 v2 M 82,5 h4 v4 h-2 v-2 h2 v2 M 90,5 h4 v4 h-2 v-2 h2 v2" />
+              <path d="M 2,195 h4 v-4 h-2 v2 h2 v-2 M 10,195 h4 v-4 h-2 v2 h2 v-2 M 18,195 h4 v-4 h-2 v2 h2 v-2 M 26,195 h4 v-4 h-2 v2 h2 v-2 M 34,195 h4 v-4 h-2 v2 h2 v-2 M 42,195 h4 v-4 h-2 v2 h2 v-2 M 50,195 h4 v-4 h-2 v2 h2 v-2 M 58,195 h4 v-4 h-2 v2 h2 v-2 M 66,195 h4 v-4 h-2 v2 h2 v-2 M 74,195 h4 v-4 h-2 v2 h2 v-2 M 82,195 h4 v-4 h-2 v2 h2 v-2 M 90,195 h4 v-4 h-2 v2 h2 v-2" />
+              {/* Golden lightning bolts */}
+              <path d="M5,15 L12,40 L3,45 L15,70" opacity="0.4" />
+              <path d="M95,15 L88,40 L97,45 L85,70" opacity="0.4" />
             </svg>
           )}
           {realm === 'aether' && (
-            <svg className="w-full h-full text-[#d4af37]/45" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.75">
-              <line x1="4" y1="5" x2="4" y2="195" strokeWidth="1.2" />
-              <line x1="6" y1="10" x2="6" y2="190" strokeWidth="0.5" />
-              <line x1="96" y1="5" x2="96" y2="195" strokeWidth="1.2" />
-              <line x1="94" y1="10" x2="94" y2="190" strokeWidth="0.5" />
-              <path d="M2,5 H9 M91,5 H98" strokeWidth="1.5" />
-              <path d="M2,195 H9 M91,195 H98" strokeWidth="1.5" />
+            <svg className="w-full h-full text-[#ffd700]/50" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.75">
+              {/* Left Pillar */}
+              <g opacity="0.8">
+                <rect x="2" y="188" width="8" height="8" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="0.5" />
+                <rect x="3" y="185" width="6" height="3" fill="currentColor" opacity="0.4" />
+                <line x1="4" y1="12" x2="4" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <line x1="6" y1="12" x2="6" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <line x1="8" y1="12" x2="8" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <rect x="3" y="9" width="6" height="3" fill="currentColor" opacity="0.4" />
+                <circle cx="3" cy="8" r="1" fill="none" stroke="currentColor" strokeWidth="0.4" />
+                <circle cx="9" cy="8" r="1" fill="none" stroke="currentColor" strokeWidth="0.4" />
+              </g>
+              {/* Right Pillar */}
+              <g opacity="0.8">
+                <rect x="90" y="188" width="8" height="8" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="0.5" />
+                <rect x="91" y="185" width="6" height="3" fill="currentColor" opacity="0.4" />
+                <line x1="92" y1="12" x2="92" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <line x1="94" y1="12" x2="94" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <line x1="96" y1="12" x2="96" y2="185" stroke="currentColor" strokeWidth="0.5" />
+                <rect x="91" y="9" width="6" height="3" fill="currentColor" opacity="0.4" />
+                <circle cx="91" cy="8" r="1" fill="none" stroke="currentColor" strokeWidth="0.4" />
+                <circle cx="97" cy="8" r="1" fill="none" stroke="currentColor" strokeWidth="0.4" />
+              </g>
+              {/* Top and Bottom bronze plates */}
+              <path d="M10,6 H90 M10,194 H90" strokeWidth="1" opacity="0.5" />
             </svg>
           )}
           {realm === 'inferno' && (
-            <svg className="w-full h-full text-[#ff3322]/20" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.75">
-              <path d="M0,0 L20,0 L15,10 L10,8 L8,18 L0,15 Z" fill="currentColor" opacity="0.25" />
-              <path d="M100,0 L80,0 L85,10 L90,8 L92,18 L100,15 Z" fill="currentColor" opacity="0.25" />
-              <path d="M0,200 L20,200 L17,190 L10,192 L8,182 L0,185 Z" fill="currentColor" opacity="0.25" />
-              <path d="M100,200 L80,200 L83,190 L90,192 L92,182 L100,185 Z" fill="currentColor" opacity="0.25" />
+            <svg className="w-full h-full text-[#ff3322]/40" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.75">
+              {/* Molten/cracked border veins */}
+              <path d="M 2 20 Q 8 40 2 60 T 9 100 T 1 140 T 8 180" opacity="0.6" strokeWidth="0.8" />
+              <path d="M 98 20 Q 92 40 98 60 T 91 100 T 99 140 T 92 180" opacity="0.6" strokeWidth="0.8" />
+              {/* Lava cracks at corners */}
+              <path d="M 0 0 L 15 5 L 8 15 L 2 12 L 5 22 L 0 18 Z" fill="currentColor" opacity="0.2" />
+              <path d="M 100 0 L 85 5 L 92 15 L 98 12 L 95 22 L 100 18 Z" fill="currentColor" opacity="0.2" />
+              <path d="M 0 200 L 15 195 L 8 185 L 2 188 L 5 178 L 0 182 Z" fill="currentColor" opacity="0.2" />
+              <path d="M 100 200 L 85 195 L 92 185 L 98 188 L 95 178 L 100 182 Z" fill="currentColor" opacity="0.2" />
+              {/* Translucent hot glow zones */}
+              <circle cx="10" cy="50" r="15" fill="currentColor" opacity="0.08" filter="blur(4px)" />
+              <circle cx="90" cy="150" r="15" fill="currentColor" opacity="0.08" filter="blur(4px)" />
             </svg>
           )}
           {realm === 'eden' && (
-            <svg className="w-full h-full text-[#33ff88]/30" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.5">
-              <path d="M2,10 Q5,30 2,60 T5,120 T2,190" />
-              <path d="M98,10 Q95,30 98,60 T95,120 T98,190" />
-              <path d="M2,30 Q-2,25 0,20 Q5,22 2,30" fill="currentColor" />
-              <path d="M98,50 Q102,45 100,40 Q95,42 98,50" fill="currentColor" />
-              <path d="M2,110 Q-2,105 0,100 Q5,102 2,110" fill="currentColor" />
-              <path d="M98,140 Q102,135 100,130 Q95,132 98,140" fill="currentColor" />
+            <svg className="w-full h-full text-[#33ff88]/45" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.5">
+              {/* Twisting ivy vines */}
+              <path d="M 2 10 Q 8 45 3 80 T 9 130 T 2 190" strokeWidth="0.7" />
+              <path d="M 98 10 Q 92 45 97 80 T 91 130 T 98 190" strokeWidth="0.7" />
+              {/* Ivy leaves along left vine */}
+              <path d="M 3 35 C -1 31 1 23 6 27 C 6 33 3 35 3 35 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 5 70 C 9 65 11 57 6 62 C 3 66 5 70 5 70 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 3 115 C -1 111 1 103 6 107 C 6 113 3 115 3 115 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 6 155 C 11 150 13 142 8 147 C 5 151 6 155 6 155 Z" fill="currentColor" opacity="0.7" />
+              {/* Ivy leaves along right vine */}
+              <path d="M 97 45 C 101 41 99 33 94 37 C 94 43 97 45 97 45 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 95 85 C 91 80 89 72 94 77 C 97 81 95 85 95 85 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 97 125 C 101 121 99 113 94 117 C 94 123 97 125 97 125 Z" fill="currentColor" opacity="0.7" />
+              <path d="M 94 165 C 89 160 87 152 92 157 C 95 161 94 165 94 165 Z" fill="currentColor" opacity="0.7" />
             </svg>
           )}
           {realm === 'starfield' && (
-            <svg className="w-full h-full text-[#b366ff]/40" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.5">
-              <polygon points="2,2 12,2 7,15 2,9" fill="currentColor" opacity="0.2" />
-              <polygon points="98,2 88,2 93,15 98,9" fill="currentColor" opacity="0.2" />
-              <polygon points="2,198 12,198 7,183 2,191" fill="currentColor" opacity="0.2" />
-              <polygon points="98,198 88,198 93,183 98,191" fill="currentColor" opacity="0.2" />
+            <svg className="w-full h-full text-[#b366ff]/60" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.5">
+              {/* Top Left Crystal Cluster */}
+              <g transform="translate(2, 2) scale(0.65)">
+                <polygon points="5,5 16,1 11,13" fill="currentColor" opacity="0.7" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="5,5 11,13 1,10" fill="currentColor" opacity="0.4" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="16,1 21,8 11,13" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.3" />
+              </g>
+              {/* Top Right Crystal Cluster */}
+              <g transform="translate(98, 2) scale(0.65) scale(-1, 1)">
+                <polygon points="5,5 16,1 11,13" fill="currentColor" opacity="0.7" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="5,5 11,13 1,10" fill="currentColor" opacity="0.4" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="16,1 21,8 11,13" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.3" />
+              </g>
+              {/* Bottom Left Crystal Cluster */}
+              <g transform="translate(2, 198) scale(0.65) scale(1, -1)">
+                <polygon points="5,5 16,1 11,13" fill="currentColor" opacity="0.7" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="5,5 11,13 1,10" fill="currentColor" opacity="0.4" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="16,1 21,8 11,13" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.3" />
+              </g>
+              {/* Bottom Right Crystal Cluster */}
+              <g transform="translate(98, 198) scale(0.65) scale(-1, -1)">
+                <polygon points="5,5 16,1 11,13" fill="currentColor" opacity="0.7" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="5,5 11,13 1,10" fill="currentColor" opacity="0.4" stroke="currentColor" strokeWidth="0.3" />
+                <polygon points="16,1 21,8 11,13" fill="currentColor" opacity="0.9" stroke="currentColor" strokeWidth="0.3" />
+              </g>
+              {/* Star Constellations */}
+              <circle cx="20" cy="50" r="0.8" fill="white" opacity="0.8" />
+              <circle cx="35" cy="40" r="0.6" fill="white" opacity="0.5" />
+              <circle cx="28" cy="65" r="0.5" fill="white" opacity="0.6" />
+              <line x1="20" y1="50" x2="35" y2="40" stroke="currentColor" strokeWidth="0.25" opacity="0.3" />
+              <line x1="20" y1="50" x2="28" y2="65" stroke="currentColor" strokeWidth="0.25" opacity="0.3" />
+              
+              <circle cx="80" cy="140" r="0.8" fill="white" opacity="0.8" />
+              <circle cx="70" cy="155" r="0.6" fill="white" opacity="0.5" />
+              <circle cx="88" cy="165" r="0.5" fill="white" opacity="0.6" />
+              <line x1="80" y1="140" x2="70" y2="155" stroke="currentColor" strokeWidth="0.25" opacity="0.3" />
+              <line x1="80" y1="140" x2="88" y2="165" stroke="currentColor" strokeWidth="0.25" opacity="0.3" />
             </svg>
           )}
           {realm === 'celestial' && (
-            <svg className="w-full h-full text-[#00d4ff]/25" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.4">
-              <rect x="3" y="3" width="94" height="194" strokeWidth="0.4" strokeDasharray="1,8" />
-              <line x1="3" y1="100" x2="8" y2="100" />
-              <line x1="92" y1="100" x2="97" y2="100" />
+            <svg className="w-full h-full text-[#00d4ff]/40" viewBox="0 0 100 200" fill="none" stroke="currentColor" strokeWidth="0.4">
+              {/* Grid cockpit borders */}
+              <rect x="3" y="3" width="94" height="194" strokeWidth="0.4" strokeDasharray="1,5" />
+              {/* Target rings */}
+              <circle cx="50" cy="100" r="30" strokeWidth="0.3" strokeDasharray="2,8" />
+              <circle cx="50" cy="100" r="45" strokeWidth="0.2" />
+              <circle cx="50" cy="100" r="12" strokeWidth="0.4" strokeDasharray="1,2" />
+              {/* Crosshairs */}
+              <line x1="50" y1="40" x2="50" y2="60" strokeWidth="0.4" />
+              <line x1="50" y1="140" x2="50" y2="160" strokeWidth="0.4" />
+              <line x1="10" y1="100" x2="30" y2="100" strokeWidth="0.4" />
+              <line x1="70" y1="100" x2="90" y2="100" strokeWidth="0.4" />
             </svg>
           )}
         </div>
