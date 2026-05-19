@@ -21,6 +21,27 @@ export const GodHero: React.FC<GodHeroProps> = ({ god, preset }) => {
   const subtitleText = preset ? preset.subtitle : god.emotionalPurpose;
   const quoteText = preset?.quote ?? god.profile.quote;
 
+  const getCategoryHeroImage = (category: string) => {
+    switch (category) {
+      case 'keys':
+        return '/images/pantheon/olympus_keys.png';
+      case 'bass':
+        return '/images/pantheon/underworld_bass.png';
+      case 'lead':
+        return '/images/pantheon/mythic_lead.png';
+      case 'hybrid':
+        return '/images/pantheon/ethereal_pluck.png';
+      case 'pad':
+        return '/images/pantheon/celestial_pad.png';
+      case 'texture':
+        return '/images/pantheon/divine_texture.png';
+      default:
+        return null;
+    }
+  };
+
+  const heroImage = (preset && getCategoryHeroImage(preset.category)) || god.heroImage;
+
   return (
     <div
       className="ep-hero"
@@ -33,7 +54,7 @@ export const GodHero: React.FC<GodHeroProps> = ({ god, preset }) => {
       {/* Background Hero Image */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={god.id}
+          key={heroImage}
           className="ep-hero-bg"
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -41,7 +62,7 @@ export const GodHero: React.FC<GodHeroProps> = ({ god, preset }) => {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <img
-            src={god.heroImage}
+            src={heroImage}
             alt={god.name}
             className="ep-hero-img"
           />

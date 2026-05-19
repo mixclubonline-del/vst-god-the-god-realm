@@ -64,6 +64,17 @@ function seededRandom(seed: string, index: number): number {
   return (Math.abs(hash) % 100) / 100;
 }
 
+function getCategoryPreviewImage(type: string): string {
+  const t = type.toLowerCase();
+  if (t.includes('keys') || t.includes('arp')) return '/images/pantheon/olympus_keys.png';
+  if (t.includes('bass')) return '/images/pantheon/underworld_bass.png';
+  if (t.includes('lead')) return '/images/pantheon/mythic_lead.png';
+  if (t.includes('pluck') || t.includes('fx')) return '/images/pantheon/ethereal_pluck.png';
+  if (t.includes('pad') || t.includes('vocal')) return '/images/pantheon/celestial_pad.png';
+  if (t.includes('texture') || t.includes('percussion') || t.includes('all')) return '/images/pantheon/divine_texture.png';
+  return '/images/pantheon/olympus_keys.png';
+}
+
 export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
   presets,
   selectedPresetIndex,
@@ -428,6 +439,21 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                 exit={{ opacity: 0, y: -10 }}
                 className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar"
               >
+                {/* Category Preset Concept Artwork Preview */}
+                <div className="relative h-32 rounded-2xl overflow-hidden mb-6 border border-white/10 group bg-black/45 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
+                  <img
+                    src={getCategoryPreviewImage(selectedPreset.type)}
+                    alt={selectedPreset.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                  <div className="absolute bottom-3 left-4">
+                    <span className="text-[8px] font-black text-yellow-400 uppercase tracking-widest bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
+                      {selectedPreset.type.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="mb-8">
                   <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.4em] block mb-2">Sacred Specification</span>
                   <h3 className="text-3xl font-black text-white tracking-tighter mb-4">{selectedPreset.name}</h3>
