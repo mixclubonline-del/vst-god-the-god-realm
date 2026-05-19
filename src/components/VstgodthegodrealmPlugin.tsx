@@ -252,12 +252,38 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [onParameterChange]);
   // ─── JUCE ↔ WebView Bidirectional State Bridge ───
   const bridgeState = useJuceBridge();
-  const slotLevels = bridgeState.slotLevels;
-  const arpStep = bridgeState.arpStep;
   const moduleLevels: Record<string, number> = {};
   const [vortexAnchors, setVortexAnchors] = useState<Array<{x: number, y: number, name: string}>>([]);
   const activeMidiNotes = bridgeState.midiNotes;
   const masterPeak = bridgeState.masterPeak;
+
+  // ─── Live Metering from DSP Engine (rAF loop) ───
+  const [liveSlotLevels, setLiveSlotLevels] = useState<number[]>(new Array(16).fill(0));
+  const [liveArpStep, setLiveArpStep] = useState<number>(0);
+  const meterRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const engine = godEngine.current;
+    if (!engine) return;
+
+    const tick = () => {
+      const levels = engine.getSlotLevels();
+      setLiveSlotLevels(levels);
+      setLiveArpStep(engine.getArpStep());
+      meterRafRef.current = requestAnimationFrame(tick);
+    };
+    meterRafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (meterRafRef.current !== null) {
+        cancelAnimationFrame(meterRafRef.current);
+      }
+    };
+  }, []);
+
+  // Use live engine data when available, fall back to JUCE bridge
+  const slotLevels = liveSlotLevels;
+  const arpStep = liveArpStep || bridgeState.arpStep;
 
   // Derive per-slot MIDI activity: slot i ↔ MIDI channel i
   const midiActivity = useMemo(() => {
