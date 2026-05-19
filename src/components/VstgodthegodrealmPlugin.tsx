@@ -337,6 +337,12 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   const update = useCallback((id: string, val: any) => {
     if (onParameterChange) onParameterChange(id, val);
+
+    // Forward every parameter change to the DSP engine for real-time processing
+    // The engine's updateFromParameters handles mapping param IDs → AudioParam nodes
+    if (godEngine.current) {
+      godEngine.current.updateFromParameters({ [id]: val });
+    }
   }, [onParameterChange]);
 
   const handleRealmTransition = useCallback((newTab: string) => {
