@@ -50,7 +50,7 @@
   transition: all 0.4s var(--transport-spring);
   will-change: transform, opacity;
 
-  font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   user-select: none;
 }
 
@@ -673,7 +673,7 @@
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   white-space: nowrap;
 }
 

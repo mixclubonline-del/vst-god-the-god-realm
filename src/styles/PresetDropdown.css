@@ -18,9 +18,10 @@
 }
 
 .preset-dropdown__label {
-  font-size: 9px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   color: #7B6F50;
   text-transform: uppercase;
   margin-right: 8px;
@@ -73,8 +74,8 @@
   border-radius: 4px;
   color: #C5B87A;
   font-size: 12px;
-  font-weight: 600;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  font-family: 'Cinzel', serif;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -195,7 +196,7 @@
   color: #C5B87A;
   font-size: 11px;
   font-weight: 500;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   outline: none;
   transition: border-color 0.15s ease;
   box-shadow:
@@ -258,6 +259,7 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.15s ease;
+  font-family: 'Orbitron', sans-serif;
   white-space: nowrap;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.02),
@@ -380,8 +382,9 @@
 }
 
 .preset-dropdown__row-name {
+  font-family: 'Cinzel', serif;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #C5B87A;
   white-space: nowrap;
   overflow: hidden;
@@ -419,6 +422,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   flex-shrink: 0;
+  font-family: 'Orbitron', sans-serif;
 }
 
 .preset-dropdown__fav-btn {
@@ -489,4 +493,5 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-align: center;
+  font-family: 'Orbitron', sans-serif;
 }

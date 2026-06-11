@@ -85,9 +85,10 @@
 }
 
 .ds-header__text {
-  font-size: 13px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--god-text-dim, #C5B87A);
 }
@@ -146,7 +147,8 @@
 }
 
 .ds-section__title {
-  font-size: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -423,6 +425,7 @@
 
 /* ─── Reset Button ─── */
 .ds-reset-btn {
+  font-family: 'Orbitron', sans-serif;
   width: 100%;
   padding: 10px;
   margin-top: 8px;

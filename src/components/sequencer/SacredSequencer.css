@@ -19,7 +19,7 @@
   border: 1px solid rgba(255, 215, 0, 0.08);
   border-radius: 12px;
   overflow: hidden;
-  font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   position: relative;
   height: 100%;
   min-height: 400px;
@@ -1783,7 +1783,7 @@
     0 0 30px rgba(255, 215, 0, 0.06),
     inset 0 1px 0 rgba(255,255,255,0.04);
   overflow: hidden;
-  font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  font-family: 'Orbitron', sans-serif;
 }
 
 .track-source-selector::before {
@@ -3076,7 +3076,7 @@
   padding: 8px 12px;
   color: #fff;
   font-size: 13px;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -3381,7 +3381,7 @@
 
 .sacred-auto-param-label {
   font-weight: 600;
-  font-family: 'Inter', 'SF Pro', sans-serif;
+  font-family: 'Orbitron', sans-serif;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-size: 9px;
@@ -3588,7 +3588,7 @@
   width: 100%;
   text-align: center;
   transition: all 0.2s;
-  font-family: 'Inter', 'SF Pro', sans-serif;
+  font-family: 'Orbitron', sans-serif;
 }
 
 .sacred-auto-add-btn:hover {

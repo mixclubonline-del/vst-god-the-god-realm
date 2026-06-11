@@ -9,7 +9,7 @@
   height: 100%;
   background: linear-gradient(180deg, rgba(14, 4, 4, 0.98) 0%, rgba(20, 6, 8, 0.96) 100%);
   color: #fff;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Orbitron', sans-serif;
   overflow: hidden;
 }
 
@@ -23,9 +23,10 @@
 }
 
 .sacred-chopper__title {
+  font-family: 'Cinzel', serif;
   font-size: 13px;
   font-weight: 900;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.12em;
   color: rgba(224, 214, 255, 0.9);
   text-transform: uppercase;
   text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);

@@ -14,8 +14,8 @@
   border: none;
   padding: 8px 16px;
   color: var(--god-text-muted);
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -33,7 +33,7 @@
 
 .celestial-tab.active {
   color: white;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 3px rgba(255, 215, 0, 0.3);
 }
 
 .active-glow-underline {

@@ -231,6 +231,17 @@
   to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
+@keyframes vgGodlyTextGlow {
+  0%, 100% {
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 24px rgba(255, 215, 0, 0.65), 0 0 10px rgba(255, 215, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.6);
+    color: #FFF;
+  }
+}
+
+
 /* ─── Header ─── */
 .vg-header {
   height: 72px;
@@ -271,9 +282,9 @@
 
 .vg-header-right { display: flex; align-items: center; gap: 20px; }
 
-.vg-logo { display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: 20px; }
-.vg-logo-vst { color: var(--god-text); }
-.vg-logo-god { color: var(--god-primary); }
+.vg-logo { display: flex; align-items: center; gap: 4px; font-size: 20px; }
+.vg-logo-vst { font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 0.08em; color: var(--god-text); }
+.vg-logo-god { font-family: 'Cinzel Decorative', 'Cinzel', serif; font-weight: 700; letter-spacing: 0.08em; color: var(--god-primary); animation: vgGodlyTextGlow 6s ease-in-out infinite; }
 
 .vg-preset-nav {
   display: flex; align-items: center; gap: 8px;
@@ -282,13 +293,14 @@
   border-radius: 6px;
   border: 1px solid var(--god-glass-border);
 }
-.vg-preset-label { font-size: 9px; color: var(--god-text-muted); font-weight: 700; letter-spacing: 0.1em; }
-.vg-preset-current { font-size: 13px; font-weight: 600; color: var(--god-text-dim); min-width: 120px; text-align: center; }
+.vg-preset-label { font-family: 'Orbitron', sans-serif; font-size: 8px; color: var(--god-text-muted); font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; }
+.vg-preset-current { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 800; color: var(--god-primary); min-width: 120px; text-align: center; letter-spacing: 0.05em; text-shadow: 0 0 10px rgba(255, 215, 0, 0.35); }
 .vg-nav-arrow { background: none; border: none; color: var(--god-text-dim); cursor: pointer; padding: 4px; transition: color 0.2s; }
 .vg-nav-arrow:hover { color: var(--god-primary); }
 
-.vg-title { font-size: 18px; font-weight: 800; letter-spacing: 0.2em; color: var(--god-text); margin: 0; }
-.vg-subtitle { font-size: 9px; font-weight: 700; color: var(--god-primary); letter-spacing: 0.1em; }
+.vg-title { font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 18px; font-weight: 700; letter-spacing: 0.1em; color: var(--god-text); margin: 0; animation: vgGodlyTextGlow 6s ease-in-out infinite; }
+.vg-subtitle { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 800; color: var(--god-primary); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 0 0 8px rgba(255, 215, 0, 0.2); }
+
 
 .vg-master-display {
   display: flex; flex-direction: column; align-items: center;
@@ -297,7 +309,7 @@
   border: 1px solid var(--god-glass-border);
   border-radius: 6px;
 }
-.vg-display-label { font-size: 8px; color: var(--god-text-dim); font-weight: 600; letter-spacing: 0.1em; }
+.vg-display-label { font-family: 'Orbitron', sans-serif; font-size: 8px; color: var(--god-text-dim); font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; text-shadow: 0 0 6px rgba(197, 184, 122, 0.2); }
 .vg-display-value { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--god-primary); font-weight: 600; }
 
 /* ─── Knob ─── */

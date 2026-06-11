@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Orbitron', sans-serif;
   color: var(--god-text);
 }
 
@@ -66,10 +66,12 @@
 }
 
 .divine-wizard-logo-vst {
+  font-family: 'Cinzel', serif;
   color: var(--god-text);
 }
 
 .divine-wizard-logo-god {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
   color: var(--god-primary);
   margin-left: 2px;
 }
@@ -136,7 +138,7 @@
   font-weight: 700;
   color: var(--god-text);
   margin: 0;
-  font-family: 'Outfit', serif;
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   background: linear-gradient(135deg, #FFF 0%, var(--god-primary) 100%);
@@ -171,13 +173,14 @@
 }
 
 .divine-wizard-browse-btn {
+  font-family: 'Orbitron', sans-serif;
   background: linear-gradient(180deg, var(--god-surface) 0%, var(--god-obsidian) 100%);
   border: 1px solid var(--god-glass-border-hot);
   color: var(--god-text);
   padding: 12px 24px;
   border-radius: var(--god-radius);
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 800;
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -200,13 +203,14 @@
 }
 
 .divine-wizard-btn {
+  font-family: 'Orbitron', sans-serif;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--god-text-dim);
   padding: 10px 24px;
   border-radius: var(--god-radius);
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 800;
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
