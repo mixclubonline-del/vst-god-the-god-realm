@@ -70,6 +70,13 @@ VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VS
     setSize (1200, 800);
 
     // ═══════════════════════════════════════════════════════════════
+    // Register parameter listeners
+    // ═══════════════════════════════════════════════════════════════
+    for (auto* param : audioProcessor.getParameters())
+        if (auto* paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
+            audioProcessor.apvts.addParameterListener (paramWithID->paramID, this);
+
+    // ═══════════════════════════════════════════════════════════════
     // Load the React UI into the WebView
     // Dev: Vite dev server on port 3001
     // Release: Embedded BinaryData served via resource provider (Phase 7)
@@ -188,6 +195,63 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
             auto serialized = juce::JSON::toString(parsed);
             juce::MessageManager::callAsync([this, serialized]() {
                 webComponent.evaluateJavascript("if(window.__godRealmSettingsUpdate) window.__godRealmSettingsUpdate(" + serialized + ");");
+            });
+        }
+        else if (type == "GET_PARAMETERS")
+        {
+            std::cerr << "[PluginEditor] GET_PARAMETERS message received from WebUI" << std::endl;
+            auto* obj = new juce::DynamicObject();
+            auto parameters = audioProcessor.getParameters();
+            for (auto* param : parameters)
+            {
+                if (auto* paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
+                {
+                    float val = *audioProcessor.apvts.getRawParameterValue (paramWithID->paramID);
+                    if (paramWithID->paramID == "activeTab")
+                    {
+                        int idx = juce::roundToInt (val);
+                        juce::String valStr = "Multi-Realm";
+                        if (idx == 0) valStr = "Multi-Realm";
+                        else if (idx == 1) valStr = "Pantheon";
+                        else if (idx == 2) valStr = "Sample Chopper";
+                        else if (idx == 3) valStr = "Divine Archive";
+                        else if (idx == 4) valStr = "Sequencer";
+                        else if (idx == 5) valStr = "Mastering";
+                        else if (idx == 6) valStr = "Export";
+                        else if (idx == 7) valStr = "Preset Vault";
+                        else if (idx == 8) valStr = "Electric Pantheon";
+                        obj->setProperty (paramWithID->paramID, valStr);
+                    }
+                    else if (paramWithID->paramID == "pantheonGod")
+                    {
+                        int idx = juce::roundToInt (val);
+                        juce::String valStr = "olympus";
+                        if (idx == 0) valStr = "olympus";
+                        else if (idx == 1) valStr = "hades";
+                        else if (idx == 2) valStr = "zeus";
+                        else if (idx == 3) valStr = "athena";
+                        else if (idx == 4) valStr = "poseidon";
+                        else if (idx == 5) valStr = "titan";
+                        else if (idx == 6) valStr = "apollo";
+                        else if (idx == 7) valStr = "chronos";
+                        obj->setProperty (paramWithID->paramID, valStr);
+                    }
+                    else if (dynamic_cast<juce::AudioParameterBool*> (param))
+                    {
+                        obj->setProperty (paramWithID->paramID, val != 0.0f);
+                    }
+                    else
+                    {
+                        obj->setProperty (paramWithID->paramID, val);
+                    }
+                }
+            }
+            juce::var paramVar (obj);
+            juce::String serialized = juce::JSON::toString (paramVar);
+            juce::MessageManager::callAsync ([this, serialized]()
+            {
+                std::cerr << "[PluginEditor] Evaluating window.__godRealmParametersUpdate with " << serialized.length() << " chars" << std::endl;
+                webComponent.evaluateJavascript ("if(window.__godRealmParametersUpdate) window.__godRealmParametersUpdate(" + serialized + ");");
             });
         }
         else if (type == "SAVE_SETTINGS")
@@ -351,6 +415,9 @@ std::optional<juce::WebBrowserComponent::Resource> VSTGodTheGodRealmAudioProcess
 VSTGodTheGodRealmAudioProcessorEditor::~VSTGodTheGodRealmAudioProcessorEditor()
 {
     stopTimer();
+    for (auto* param : audioProcessor.getParameters())
+        if (auto* paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
+            audioProcessor.apvts.removeParameterListener (paramWithID->paramID, this);
 }
 
 void VSTGodTheGodRealmAudioProcessorEditor::paint (juce::Graphics& g)
@@ -361,6 +428,55 @@ void VSTGodTheGodRealmAudioProcessorEditor::paint (juce::Graphics& g)
 void VSTGodTheGodRealmAudioProcessorEditor::resized()
 {
     webComponent.setBounds(getLocalBounds());
+}
+
+void VSTGodTheGodRealmAudioProcessorEditor::parameterChanged (const juce::String& parameterID, float newValue)
+{
+    juce::MessageManager::callAsync ([this, parameterID, newValue]()
+    {
+        juce::var valVar;
+        if (parameterID == "activeTab")
+        {
+            int idx = juce::roundToInt (newValue);
+            if (idx == 0) valVar = "Multi-Realm";
+            else if (idx == 1) valVar = "Pantheon";
+            else if (idx == 2) valVar = "Sample Chopper";
+            else if (idx == 3) valVar = "Divine Archive";
+            else if (idx == 4) valVar = "Sequencer";
+            else if (idx == 5) valVar = "Mastering";
+            else if (idx == 6) valVar = "Export";
+            else if (idx == 7) valVar = "Preset Vault";
+            else if (idx == 8) valVar = "Electric Pantheon";
+            else valVar = idx;
+        }
+        else if (parameterID == "pantheonGod")
+        {
+            int idx = juce::roundToInt (newValue);
+            if (idx == 0) valVar = "olympus";
+            else if (idx == 1) valVar = "hades";
+            else if (idx == 2) valVar = "zeus";
+            else if (idx == 3) valVar = "athena";
+            else if (idx == 4) valVar = "poseidon";
+            else if (idx == 5) valVar = "titan";
+            else if (idx == 6) valVar = "apollo";
+            else if (idx == 7) valVar = "chronos";
+            else valVar = idx;
+        }
+        else
+        {
+            valVar = newValue;
+        }
+        
+        juce::String jsonMsg = "{\"id\":\"" + parameterID + "\",\"value\":";
+        if (valVar.isString())
+            jsonMsg += "\"" + valVar.toString() + "\"}";
+        else if (valVar.isBool())
+            jsonMsg += (static_cast<bool> (valVar) ? juce::String ("true") : juce::String ("false")) + "}";
+        else
+            jsonMsg += juce::String (static_cast<double> (valVar)) + "}";
+            
+        webComponent.evaluateJavascript ("if(window.__godRealmParameterUpdate) window.__godRealmParameterUpdate(" + jsonMsg + ");");
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════

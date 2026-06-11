@@ -124,6 +124,9 @@ declare global {
     sendToJuce?: (message: any) => void;
     __godRealmStateUpdate?: (state: any) => void;
     __godRealmTelemetry?: (telemetry: any) => void;
+    // Phase 2: Parameter updates
+    __godRealmParameterUpdate?: (data: { id: string; value: any }) => void;
+    __godRealmParametersUpdate?: (params: Record<string, any>) => void;
     // Phase 4: New inbound callbacks from JUCE
     __godRealmWaveformAnalysis?: (data: WaveformAnalysisState) => void;
     __godRealmSpectralData?: (data: SpectralDataState) => void;
@@ -137,6 +140,8 @@ class NativeAudioBridge {
   private listeners: Set<(state: Partial<EngineState>) => void> = new Set();
   private settingsListeners: Set<(settings: any) => void> = new Set();
   private pathListeners: Set<(path: string) => void> = new Set();
+  private paramListeners: Set<(paramId: string, value: any) => void> = new Set();
+  private paramsListListeners: Set<(params: Record<string, any>) => void> = new Set();
   
   // Current accumulated state
   private currentState: EngineState = {
@@ -209,6 +214,17 @@ class NativeAudioBridge {
       window.__godRealmLibraryPathSelected = (path: string) => {
         console.log('[NativeBridge] __godRealmLibraryPathSelected invoked with path:', path);
         this.pathListeners.forEach(l => l(path));
+      };
+
+      // ─── Phase 2: Host Parameter Automation & Sync ───
+      window.__godRealmParameterUpdate = (data: { id: string; value: any }) => {
+        console.log('[NativeBridge] __godRealmParameterUpdate:', data.id, data.value);
+        this.paramListeners.forEach(l => l(data.id, data.value));
+      };
+
+      window.__godRealmParametersUpdate = (params: Record<string, any>) => {
+        console.log('[NativeBridge] __godRealmParametersUpdate:', JSON.stringify(params));
+        this.paramsListListeners.forEach(l => l(params));
       };
 
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
@@ -509,6 +525,20 @@ class NativeAudioBridge {
     this.pathListeners.add(callback);
     return () => {
       this.pathListeners.delete(callback);
+    };
+  }
+
+  public subscribeParameter(callback: (paramId: string, value: any) => void) {
+    this.paramListeners.add(callback);
+    return () => {
+      this.paramListeners.delete(callback);
+    };
+  }
+
+  public subscribeParametersList(callback: (params: Record<string, any>) => void) {
+    this.paramsListListeners.add(callback);
+    return () => {
+      this.paramsListListeners.delete(callback);
     };
   }
 

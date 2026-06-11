@@ -7,7 +7,8 @@
 // PluginEditor — WebView + Timer-based State Push to React UI
 // ═══════════════════════════════════════════════════════════════
 class VSTGodTheGodRealmAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                               private juce::Timer
+                                               private juce::Timer,
+                                               public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     VSTGodTheGodRealmAudioProcessorEditor (VSTGodTheGodRealmAudioProcessor&);
@@ -18,6 +19,7 @@ public:
 
 private:
     void timerCallback() override;
+    void parameterChanged (const juce::String& parameterID, float newValue) override;
     juce::String buildMeteringJson();
     juce::String buildTelemetryJson();
     void browseForLibraryPath();
