@@ -11,6 +11,7 @@ import '@/styles/VSTGODTheGodRealm-theme.css';
 import { DivineLoadingScreen, DIVINE_STAGES } from './DivineLoadingScreen';
 import { DivineSettings } from './DivineSettings';
 import { DivineSetupWizard } from './DivineSetupWizard';
+import { LicenseActivationModal } from './LicenseActivationModal';
 import { nativeAudio } from '../native/bridge';
 import type { DSPChainModule } from '@/services/types';
 import { SoundSlot } from './SoundSlot';
@@ -1043,6 +1044,16 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             currentStage={loadingStage}
             isReady={loadingComplete}
             onTransitionComplete={() => setShowLoadingScreen(false)}
+          />
+        )}
+
+        {/* ═══ LICENSE ACTIVATION MODAL ═══ */}
+        {loadingComplete && activeSettings && !activeSettings.licenseActivated && (
+          <LicenseActivationModal
+            activeSettings={activeSettings}
+            onActivationSuccess={(updatedSettings) => {
+              setActiveSettings(updatedSettings);
+            }}
           />
         )}
         {/* Background ambient glow */}

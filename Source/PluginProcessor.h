@@ -193,5 +193,12 @@ private:
     std::atomic<int> currentRoundRobinSlot { 0 };
     juce::Random randomGen;
 
+    // ─── License Verification & Demo Watermark ───
+public:
+    std::atomic<bool> licenseActivated { false };
+private:
+    int watermarkSampleCounter = 0;
+    float currentWatermarkGain = 1.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VSTGodTheGodRealmAudioProcessor)
 };

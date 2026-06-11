@@ -193,10 +193,23 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
             auto settings = audioProcessor.loadSettingsFromDisk();
             if (settings.isEmpty()) settings = "{}";
             auto parsed = juce::JSON::parse(settings);
-            if (parsed.isUndefined() || parsed.isVoid())
+            if (parsed.isUndefined() || parsed.isVoid() || !parsed.isObject())
             {
                 parsed = juce::var(new juce::DynamicObject());
             }
+            
+            if (auto* obj = parsed.getDynamicObject())
+            {
+                obj->setProperty("machineId", juce::SystemStats::getUniqueDeviceID());
+                #if JUCE_MAC
+                obj->setProperty("platform", "macos");
+                #else
+                obj->setProperty("platform", "windows");
+                #endif
+                obj->setProperty("pluginVersion", "v1.0.0-dev");
+                obj->setProperty("licenseActivated", audioProcessor.licenseActivated.load(std::memory_order_relaxed));
+            }
+            
             auto serialized = juce::JSON::toString(parsed);
             juce::MessageManager::callAsync([this, serialized]() {
                 webComponent.evaluateJavascript("if(window.__godRealmSettingsUpdate) window.__godRealmSettingsUpdate(" + serialized + ");");

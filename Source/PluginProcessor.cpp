@@ -37,6 +37,10 @@ VSTGodTheGodRealmAudioProcessor::VSTGodTheGodRealmAudioProcessor()
         {
             sampleLibraryPath = json.getProperty("sampleLibraryPath", "").toString();
         }
+        if (json.hasProperty("licenseActivated"))
+        {
+            licenseActivated.store((bool)json.getProperty("licenseActivated", false), std::memory_order_relaxed);
+        }
     }
 }
 
@@ -483,6 +487,65 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     juce::dsp::ProcessContextReplacing<float> context(block);
     velvetChain.process(context);
 
+    // ═══════════════════════════════════════════════════════════
+    // Demo Watermark (Periodic Volume Dip)
+    // ═══════════════════════════════════════════════════════════
+    if (!licenseActivated.load(std::memory_order_relaxed))
+    {
+        double sr = getSampleRate();
+        int watermarkPeriodSamples = static_cast<int>(45.0 * sr);
+        int watermarkDipSamples = static_cast<int>(4.5 * sr);
+        int fadeSamples = static_cast<int>(1.5 * sr);
+
+        const int numSamples = buffer.getNumSamples();
+        const int numChannels = buffer.getNumChannels();
+
+        for (int i = 0; i < numSamples; ++i)
+        {
+            watermarkSampleCounter++;
+            if (watermarkSampleCounter >= watermarkPeriodSamples)
+            {
+                watermarkSampleCounter = 0;
+            }
+
+            int dipStart = watermarkPeriodSamples - watermarkDipSamples;
+            if (watermarkSampleCounter >= dipStart)
+            {
+                int relativePos = watermarkSampleCounter - dipStart;
+                if (relativePos < fadeSamples)
+                {
+                    float t = static_cast<float>(relativePos) / static_cast<float>(fadeSamples);
+                    currentWatermarkGain = 1.0f - t * (1.0f - 0.15f);
+                }
+                else if (relativePos >= watermarkDipSamples - fadeSamples)
+                {
+                    int fadeInStart = watermarkDipSamples - fadeSamples;
+                    float t = static_cast<float>(relativePos - fadeInStart) / static_cast<float>(fadeSamples);
+                    currentWatermarkGain = 0.15f + t * (1.0f - 0.15f);
+                }
+                else
+                {
+                    currentWatermarkGain = 0.15f;
+                }
+            }
+            else
+            {
+                currentWatermarkGain = 1.0f;
+            }
+
+            for (int channel = 0; channel < numChannels; ++channel)
+            {
+                float* channelData = buffer.getWritePointer(channel);
+                channelData[i] *= currentWatermarkGain;
+            }
+        }
+    }
+    else
+    {
+        currentWatermarkGain = 1.0f;
+        watermarkSampleCounter = 0;
+    }
+
     // ─── Master Bus Peak Metering (post-master chain) ───
     {
         float peakL = 0.0f, peakR = 0.0f;
@@ -881,11 +944,15 @@ void VSTGodTheGodRealmAudioProcessor::saveSettingsToDisk (const juce::String& se
     
     file.replaceWithText(settingsJson);
     
-    // Parse out sampleLibraryPath if available in the JSON
+    // Parse out sampleLibraryPath and licenseActivated if available in the JSON
     auto json = juce::JSON::parse(settingsJson);
     if (json.hasProperty("sampleLibraryPath"))
     {
         sampleLibraryPath = json.getProperty("sampleLibraryPath", "").toString();
+    }
+    if (json.hasProperty("licenseActivated"))
+    {
+        licenseActivated.store((bool)json.getProperty("licenseActivated", false), std::memory_order_relaxed);
     }
 }
 

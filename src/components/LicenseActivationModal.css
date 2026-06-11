@@ -1,0 +1,344 @@
+/* ═══════════════════════════════════════════════════════
+   LicenseActivationModal Stylesheet
+   Midnight Ember & Celestial Gold Theme
+   ═══════════════════════════════════════════════════════ */
+
+.vg-license-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 8, 24, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.vg-license-card {
+  position: relative;
+  width: 520px;
+  padding: 40px;
+  border-radius: var(--god-radius-lg, 8px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  box-shadow: 
+    0 24px 64px rgba(0, 0, 0, 0.7),
+    0 0 80px rgba(255, 215, 0, 0.05),
+    inset 0 1px 0 rgba(255, 215, 0, 0.15);
+}
+
+.vg-license-glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Success and Loading Screens ─── */
+.vg-license-success-screen,
+.vg-license-loading-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  background: rgba(16, 12, 38, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.vg-success-seal {
+  width: 90px;
+  height: 90px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.3));
+}
+
+.vg-success-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.success-text {
+  color: var(--god-primary) !important;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+/* ─── Alchemical Spinner ─── */
+.vg-alchemical-spinner {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 50%;
+}
+
+.spinner-ring.outer {
+  inset: 0;
+  border-top-color: var(--god-primary);
+  border-bottom-color: var(--god-primary);
+  animation: spinClockwise 3s linear infinite;
+}
+
+.spinner-ring.middle {
+  inset: 12px;
+  border-left-color: var(--god-accent);
+  border-right-color: var(--god-accent);
+  animation: spinCounterClockwise 2s linear infinite;
+}
+
+.spinner-ring.inner {
+  inset: 24px;
+  border-top-color: var(--god-primary);
+  border-left-color: var(--god-primary);
+  animation: spinClockwise 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.spinner-eye {
+  font-size: 28px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+  animation: eyePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spinClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinCounterClockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes eyePulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.vg-loading-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--god-text-dim);
+  text-shadow: 0 0 10px rgba(197, 184, 122, 0.3);
+}
+
+/* ─── Header ─── */
+.vg-license-header {
+  text-align: center;
+  z-index: 1;
+}
+
+.vg-sacred-seal-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+}
+
+.vg-license-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--god-text);
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.vg-license-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--god-text-dim);
+  margin: 0;
+}
+
+/* ─── Form & Inputs ─── */
+.vg-license-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 1;
+}
+
+.vg-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vg-input-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--god-text-dim);
+}
+
+.vg-license-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  background: rgba(16, 12, 38, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: var(--god-radius, 4px);
+  color: var(--god-primary);
+  font-family: 'JetBrains Mono', 'Orbitron', monospace;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  transition: all 0.3s var(--god-spring);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.vg-license-input:focus {
+  outline: none;
+  border-color: var(--god-primary);
+  background: rgba(22, 16, 58, 0.85);
+  box-shadow: 
+    0 0 15px rgba(255, 215, 0, 0.15),
+    inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.vg-license-input::placeholder {
+  color: var(--god-text-muted);
+  opacity: 0.5;
+}
+
+.vg-input-wrapper.has-error .vg-license-input {
+  border-color: var(--god-danger);
+  box-shadow: 
+    0 0 12px rgba(255, 107, 107, 0.15),
+    inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vg-license-error {
+  font-size: 12px;
+  color: var(--god-danger);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── Button ─── */
+.vg-license-submit-btn {
+  position: relative;
+  height: 52px;
+  border: none;
+  border-radius: var(--god-radius, 4px);
+  background: linear-gradient(135deg, var(--god-primary) 0%, var(--god-secondary) 100%);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease, filter 0.3s ease;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(255, 215, 0, 0.1);
+}
+
+.vg-license-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.vg-license-submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(255, 215, 0, 0.15);
+}
+
+.vg-license-submit-btn:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.vg-license-submit-btn .btn-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.vg-license-submit-btn:hover .btn-glow {
+  opacity: 1;
+}
+
+.vg-license-submit-btn .btn-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #16103A;
+  z-index: 1;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.vg-license-submit-btn:disabled .btn-text {
+  color: var(--god-text-muted);
+}
+
+/* ─── Footer ─── */
+.vg-license-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid rgba(255, 215, 0, 0.08);
+  padding-top: 20px;
+  z-index: 1;
+}
+
+.vg-license-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--god-text-muted);
+}
+
+.vg-license-meta strong {
+  color: var(--god-text-dim);
+}
+
+.vg-license-meta .separator {
+  color: rgba(255, 215, 0, 0.15);
+}
+
+.vg-license-demo-note {
+  font-size: 10px;
+  color: var(--god-text-muted);
+  text-align: center;
+  font-style: italic;
+  max-width: 80%;
+  line-height: 1.4;
+}
