@@ -109,6 +109,8 @@ export const SacredGraphEditor: React.FC<SacredGraphEditorProps> = ({
   }, [stepCount, onSetValue]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     isDragging.current = true;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const result = getStepFromX(e.clientX);
@@ -132,6 +134,7 @@ export const SacredGraphEditor: React.FC<SacredGraphEditorProps> = ({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging.current) return;
+    e.stopPropagation();
     const result = getStepFromX(e.clientX);
     if (result) {
       const value = getValueFromY(e.clientY);

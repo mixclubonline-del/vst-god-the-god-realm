@@ -48,7 +48,7 @@ const REALM_COLORS: Record<string, string[]> = {
   'Preset Vault':   ['#c29623', '#F5B041', '#8B7355', '#d4a017', '#DAA520'],
 };
 
-const MAX_PARTICLES = 60;
+const MAX_PARTICLES = 90;
 
 function createParticle(w: number, h: number, realm: RealmType): Particle {
   const colors = REALM_COLORS[realm] || REALM_COLORS['Multi-Realm'];
@@ -101,21 +101,40 @@ function createParticle(w: number, h: number, realm: RealmType): Particle {
         type: 0, color,
       };
 
-    /* ── Gold Dust + Rune Glyphs: float upward gently ── */
-    case 'Divine Archive':
-      return {
+    /* ── Gold Dust + Rune Glyphs + Light Motes + Sacred Shapes: float upward gently ── */
+    case 'Divine Archive': {
+      const typeRoll = Math.random();
+      const pType = typeRoll > 0.95 ? 3 : typeRoll > 0.90 ? 2 : typeRoll > 0.82 ? 1 : 0;
+      const baseParticle = {
         x: Math.random() * w,
         y: h * 0.3 + Math.random() * h * 0.7,
-        vx: (Math.random() - 0.5) * 0.2,
-        vy: -(0.1 + Math.random() * 0.4),
-        size: 1 + Math.random() * 2.5,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: -(0.08 + Math.random() * 0.3),
+        size: 0.5 + Math.random() * 2.0,
         opacity: 0.4 + Math.random() * 0.4,
         life: 0, maxLife: maxLife * 1.3,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.02,
-        type: Math.random() > 0.85 ? 1 : 0,
+        type: pType,
         color,
       };
+      // Light motes: top 30%, drift down, large, bright
+      if (pType === 2) {
+        baseParticle.y = Math.random() * h * 0.3;
+        baseParticle.vy = 0.02 + Math.random() * 0.08;
+        baseParticle.vx = (Math.random() - 0.5) * 0.05;
+        baseParticle.size = 3 + Math.random() * 4;
+        baseParticle.opacity = 0.5 + Math.random() * 0.4;
+      }
+      // Sacred geometry shapes: large, very faint
+      if (pType === 3) {
+        baseParticle.size = 6 + Math.random() * 12;
+        baseParticle.opacity = 0.04 + Math.random() * 0.06;
+        baseParticle.rotationSpeed = (Math.random() - 0.5) * 0.005;
+        baseParticle.vy = -(0.02 + Math.random() * 0.06);
+      }
+      return baseParticle;
+    }
 
     /* ── Ember Rain: diagonal fall with glow ── */
     case 'Mastering':
@@ -212,11 +231,16 @@ function drawRuneGlyph(ctx: CanvasRenderingContext2D, p: Particle) {
   ctx.translate(p.x, p.y);
   ctx.rotate(p.rotation);
   const s = p.size * 2;
-  // Simple rune cross shape
+  // Rune cross with additional strokes
   ctx.beginPath();
   ctx.moveTo(0, -s); ctx.lineTo(0, s);
   ctx.moveTo(-s * 0.6, -s * 0.3); ctx.lineTo(s * 0.6, -s * 0.3);
   ctx.moveTo(-s * 0.4, s * 0.4); ctx.lineTo(s * 0.4, s * 0.4);
+  ctx.moveTo(-s * 0.3, -s * 0.8); ctx.lineTo(s * 0.3, s * 0.8);
+  ctx.stroke();
+  // Central dot
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
@@ -273,6 +297,24 @@ function drawStarCross(ctx: CanvasRenderingContext2D, p: Particle) {
   ctx.closePath();
   ctx.fill();
   ctx.restore();
+  ctx.shadowBlur = 0;
+}
+
+function drawLightMote(ctx: CanvasRenderingContext2D, p: Particle) {
+  const fade = 1 - p.life / p.maxLife;
+  const pulse = 0.7 + 0.3 * Math.sin(p.life * 0.03);
+  ctx.globalAlpha = p.opacity * fade * pulse;
+  ctx.fillStyle = p.color;
+  ctx.shadowColor = p.color;
+  ctx.shadowBlur = p.size * 8;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+  ctx.fill();
+  // Outer halo
+  ctx.globalAlpha = p.opacity * fade * pulse * 0.15;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+  ctx.fill();
   ctx.shadowBlur = 0;
 }
 
@@ -355,7 +397,10 @@ export const RealmParticleCanvas: React.FC<RealmParticleCanvasProps> = ({ realm,
           drawShard(ctx, p);
           break;
         case 'Divine Archive':
-          p.type === 1 ? drawRuneGlyph(ctx, p) : drawSpark(ctx, p);
+          if (p.type === 3) drawSacredGeometry(ctx, p);
+          else if (p.type === 2) drawLightMote(ctx, p);
+          else if (p.type === 1) drawRuneGlyph(ctx, p);
+          else drawSpark(ctx, p);
           break;
         case 'Performance':
           p.type === 1 ? drawShard(ctx, p) : drawSpark(ctx, p);
@@ -365,6 +410,31 @@ export const RealmParticleCanvas: React.FC<RealmParticleCanvasProps> = ({ realm,
           break;
         default:
           drawSpark(ctx, p);
+      }
+    }
+
+    // Constellation lines for Divine Archive
+    if (realm === 'Divine Archive') {
+      ctx.strokeStyle = 'rgba(194,150,35,0.06)';
+      ctx.lineWidth = 0.3;
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const a = particles[i];
+          const b = particles[j];
+          if (a.type > 1 || b.type > 1) continue;
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = dx * dx + dy * dy;
+          if (dist < 6400) {
+            const fadeFactor = 1 - dist / 6400;
+            const lifeFade = Math.min(1 - a.life / a.maxLife, 1 - b.life / b.maxLife);
+            ctx.globalAlpha = fadeFactor * lifeFade * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
       }
     }
 

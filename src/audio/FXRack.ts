@@ -35,6 +35,18 @@ export interface TrackSendNodes {
   saturation: GainNode;
   /** Per-track metering analyser */
   analyser: AnalyserNode;
+  /** 3-band EQ input — connect sources here instead of dry */
+  eqInput: GainNode;
+  /** EQ nodes for parameter control */
+  eqLow: BiquadFilterNode;
+  eqMid: BiquadFilterNode;
+  eqHigh: BiquadFilterNode;
+  /** Sidechain compressor (inserted after EQ) */
+  compressor: DynamicsCompressorNode;
+  /** Compressor bypass — when true, signal goes direct from EQ to sends */
+  compressorBypass: boolean;
+  /** Post-EQ node — EQ output merges here before dry/sends */
+  postEQ: GainNode;
 }
 
 /** Track level data from analyser */
@@ -244,24 +256,69 @@ export class FXRack {
 
     const ctx = this.ctx;
 
+    // ── 3-Band EQ Chain (input → lowshelf → peaking → highshelf → dry/sends) ──
+    const eqInput = ctx.createGain();
+    eqInput.gain.value = 1.0;
+
+    const eqLow = ctx.createBiquadFilter();
+    eqLow.type = 'lowshelf';
+    eqLow.frequency.value = 320;
+    eqLow.gain.value = 0; // ±12 dB range
+
+    const eqMid = ctx.createBiquadFilter();
+    eqMid.type = 'peaking';
+    eqMid.frequency.value = 1000;
+    eqMid.Q.value = 0.7;
+    eqMid.gain.value = 0;
+
+    const eqHigh = ctx.createBiquadFilter();
+    eqHigh.type = 'highshelf';
+    eqHigh.frequency.value = 3200;
+    eqHigh.gain.value = 0;
+
+    // Chain: eqInput → eqLow → eqMid → eqHigh → (dry, reverb, chorus, delay, sat, analyser)
+    eqInput.connect(eqLow);
+    eqLow.connect(eqMid);
+    eqMid.connect(eqHigh);
+
+    // Compressor (after EQ, before sends)
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.knee.value = 10;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.15;
+
+    // postEQ is the final routing point before sends
+    const postEQ = ctx.createGain();
+    postEQ.gain.value = 1.0;
+
+    // Default: bypassed (EQ → postEQ directly)
+    eqHigh.connect(postEQ);
+
     const dry = ctx.createGain();
     dry.gain.value = 1.0;
+    postEQ.connect(dry);
     dry.connect(this.dryBus);
 
     const reverb = ctx.createGain();
     reverb.gain.value = ((initialSends?.reverb ?? 0) / 100) * 0.6;
+    postEQ.connect(reverb);
     reverb.connect(this.reverbBus);
 
     const chorus = ctx.createGain();
     chorus.gain.value = ((initialSends?.chorus ?? 0) / 100) * 0.5;
+    postEQ.connect(chorus);
     chorus.connect(this.chorusBus);
 
     const delay = ctx.createGain();
     delay.gain.value = ((initialSends?.delay ?? 0) / 100) * 0.5;
+    postEQ.connect(delay);
     delay.connect(this.delayBus);
 
     const saturation = ctx.createGain();
     saturation.gain.value = ((initialSends?.saturation ?? 0) / 100) * 0.5;
+    postEQ.connect(saturation);
     saturation.connect(this.satBus);
 
     // Per-track metering analyser (small FFT for peak detection)
@@ -270,7 +327,11 @@ export class FXRack {
     analyser.smoothingTimeConstant = 0.4;
     dry.connect(analyser);
 
-    const sends: TrackSendNodes = { dry, reverb, chorus, delay, saturation, analyser };
+    const sends: TrackSendNodes = {
+      dry, reverb, chorus, delay, saturation, analyser,
+      eqInput, eqLow, eqMid, eqHigh,
+      compressor, compressorBypass: true, postEQ,
+    };
     this.trackSends.set(trackId, sends);
     return sends;
   }
@@ -296,16 +357,93 @@ export class FXRack {
   }
 
   /**
+   * Update a track's 3-band EQ gains (in dB, -12 to +12).
+   */
+  updateTrackEQ(
+    trackId: number,
+    eq: { low: number; mid: number; high: number }
+  ): void {
+    const sends = this.trackSends.get(trackId);
+    if (!sends) return;
+
+    const t = this.ctx instanceof AudioContext ? this.ctx.currentTime : 0;
+    const ramp = 0.03;
+
+    sends.eqLow.gain.setTargetAtTime(Math.max(-12, Math.min(12, eq.low)), t, ramp);
+    sends.eqMid.gain.setTargetAtTime(Math.max(-12, Math.min(12, eq.mid)), t, ramp);
+    sends.eqHigh.gain.setTargetAtTime(Math.max(-12, Math.min(12, eq.high)), t, ramp);
+  }
+
+  /**
    * Remove a track's send nodes (on track deletion).
    */
   removeTrackSends(trackId: number): void {
     const sends = this.trackSends.get(trackId);
     if (!sends) return;
 
-    [sends.dry, sends.reverb, sends.chorus, sends.delay, sends.saturation, sends.analyser].forEach(n => {
+    [sends.dry, sends.reverb, sends.chorus, sends.delay, sends.saturation, sends.analyser,
+     sends.eqInput, sends.eqLow, sends.eqMid, sends.eqHigh,
+     sends.compressor, sends.postEQ].forEach(n => {
       try { n.disconnect(); } catch { /* ok */ }
     });
     this.trackSends.delete(trackId);
+  }
+
+  /**
+   * Enable/disable the compressor for a track.
+   * When enabled: eqHigh → compressor → postEQ
+   * When bypassed: eqHigh → postEQ (direct)
+   */
+  setCompressorEnabled(trackId: number, enabled: boolean): void {
+    const sends = this.trackSends.get(trackId);
+    if (!sends) return;
+    if (sends.compressorBypass === !enabled) return; // no change
+
+    try { sends.eqHigh.disconnect(sends.postEQ); } catch { /* ok */ }
+    try { sends.eqHigh.disconnect(sends.compressor); } catch { /* ok */ }
+    try { sends.compressor.disconnect(sends.postEQ); } catch { /* ok */ }
+
+    if (enabled) {
+      // Route through compressor
+      sends.eqHigh.connect(sends.compressor);
+      sends.compressor.connect(sends.postEQ);
+    } else {
+      // Bypass: direct from EQ to postEQ
+      sends.eqHigh.connect(sends.postEQ);
+    }
+    sends.compressorBypass = !enabled;
+  }
+
+  /**
+   * Update compressor parameters for a track.
+   */
+  updateTrackCompressor(
+    trackId: number,
+    params: { threshold?: number; ratio?: number; attack?: number; release?: number }
+  ): void {
+    const sends = this.trackSends.get(trackId);
+    if (!sends) return;
+
+    const t = this.ctx instanceof AudioContext ? this.ctx.currentTime : 0;
+    const ramp = 0.03;
+
+    if (params.threshold !== undefined)
+      sends.compressor.threshold.setTargetAtTime(params.threshold, t, ramp);
+    if (params.ratio !== undefined)
+      sends.compressor.ratio.setTargetAtTime(params.ratio, t, ramp);
+    if (params.attack !== undefined)
+      sends.compressor.attack.setTargetAtTime(params.attack, t, ramp);
+    if (params.release !== undefined)
+      sends.compressor.release.setTargetAtTime(params.release, t, ramp);
+  }
+
+  /**
+   * Get current compressor gain reduction (in dB) for metering.
+   */
+  getCompressorReduction(trackId: number): number {
+    const sends = this.trackSends.get(trackId);
+    if (!sends || sends.compressorBypass) return 0;
+    return sends.compressor.reduction; // negative dB
   }
 
   // ═══ Metering ═══

@@ -3,7 +3,8 @@ import { NeuralInputEvent, KeyboardMap } from './types';
 /**
  * NeuralInputBus — The gateway for physical interaction.
  * Handles Computer Keyboard mapping and MIDI 2.0 high-resolution message routing.
- * Incorporates Time-Based Velocity tracking and Mouse Expression tracking.
+ * Incorporates Time-Based Velocity tracking, Mouse Expression tracking,
+ * and full CC (Control Change) message routing for controller mapping.
  */
 class NeuralInputBus {
   private listeners: ((event: NeuralInputEvent) => void)[] = [];
@@ -36,6 +37,10 @@ class NeuralInputBus {
 
   private midiAccess: MIDIAccess | null = null;
 
+  // ═══ Device tracking ═══
+  private _connectedDevices: Map<string, string> = new Map(); // id → name
+  private deviceChangeListeners: (() => void)[] = [];
+
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', this.handleKeyDown.bind(this));
@@ -53,21 +58,34 @@ class NeuralInputBus {
     };
   }
 
+  /** Subscribe to MIDI device connect/disconnect events */
+  public onDeviceChange(callback: () => void) {
+    this.deviceChangeListeners.push(callback);
+    return () => {
+      this.deviceChangeListeners = this.deviceChangeListeners.filter(l => l !== callback);
+    };
+  }
+
+  /** Get list of connected MIDI input device names */
+  public get connectedDevices(): string[] {
+    return Array.from(this._connectedDevices.values());
+  }
+
   private emit(event: NeuralInputEvent) {
     this.listeners.forEach(l => l(event));
   }
 
+  private emitDeviceChange() {
+    this.deviceChangeListeners.forEach(l => l());
+  }
+
   private handleMouseMove(e: MouseEvent) {
-    // Map Y position to expression (bottom of screen = 0, top of screen = 1.0)
-    // We only want this active if the user holds a modifier like Shift or if a toggle is active,
-    // but for now, we map it directly as requested.
     const yRatio = 1.0 - (e.clientY / window.innerHeight);
     this.expressionMultiplier = Math.max(0.1, Math.min(1.0, yRatio));
   }
 
   private handleWheel(e: WheelEvent) {
-    // Scroll adjusts expression like a mod wheel
-    if (e.ctrlKey || e.metaKey) return; // Ignore zoom
+    if (e.ctrlKey || e.metaKey) return;
     const delta = e.deltaY > 0 ? -0.05 : 0.05;
     this.expressionMultiplier = Math.max(0.1, Math.min(1.0, this.expressionMultiplier + delta));
   }
@@ -75,16 +93,12 @@ class NeuralInputBus {
   private handleKeyDown(e: KeyboardEvent) {
     if (this.activeKeys.has(e.key)) return; 
     
-    // Check for pad mapping
     if (this.keyboardMap.keys[e.key] !== undefined) {
       this.activeKeys.add(e.key);
       this.keydownTimes.set(e.key, performance.now());
       
       const padIndex = this.keyboardMap.keys[e.key];
       
-      // Calculate High-Res Velocity
-      // Velocity is derived from current running intensity (based on previous strikes) AND current mouse expression.
-      // We square the expression to give it an exponential curve for audio volume mapping.
       const finalMultiplier = (this.expressionMultiplier * this.expressionMultiplier) * this.runningIntensity;
       const clampedMultiplier = Math.max(0.01, Math.min(1.0, finalMultiplier));
       
@@ -98,7 +112,6 @@ class NeuralInputBus {
       });
     }
 
-    // Check for commands
     if (this.keyboardMap.commands[e.code]) {
       console.log(`[NeuralBus] Command: ${this.keyboardMap.commands[e.code]}`);
     }
@@ -112,13 +125,8 @@ class NeuralInputBus {
       const duration = performance.now() - downTime;
       this.keydownTimes.delete(e.key);
 
-      // Map duration to intensity:
-      // Fast strike (50ms) -> High intensity (1.0)
-      // Slow press (500ms+) -> Low intensity (0.2)
       let intensity = 1.0 - (duration / 500);
       intensity = Math.max(0.2, Math.min(1.0, intensity));
-
-      // Apply Exponential Moving Average (EMA) to smooth the intensity over recent strikes
       this.runningIntensity = (this.runningIntensity * 0.4) + (intensity * 0.6);
     }
   }
@@ -127,9 +135,16 @@ class NeuralInputBus {
     try {
       if (navigator.requestMIDIAccess) {
         this.midiAccess = await navigator.requestMIDIAccess();
-        this.midiAccess.inputs.forEach(input => {
-          input.onmidimessage = this.handleMidiMessage.bind(this);
-        });
+
+        // Initial device scan
+        this.scanDevices();
+
+        // Hot-plug detection
+        this.midiAccess.onstatechange = () => {
+          this.scanDevices();
+          this.emitDeviceChange();
+        };
+
         console.log("[NeuralBus] MIDI Connection Established");
       }
     } catch (err) {
@@ -137,21 +152,93 @@ class NeuralInputBus {
     }
   }
 
-  private handleMidiMessage(message: MIDIMessageEvent) {
+  /** Scan all connected MIDI inputs, bind message handlers, and update device list */
+  private scanDevices() {
+    if (!this.midiAccess) return;
+
+    this._connectedDevices.clear();
+
+    this.midiAccess.inputs.forEach((input, id) => {
+      if (input.state === 'connected') {
+        const deviceName = input.name || `MIDI Input ${id}`;
+        this._connectedDevices.set(id, deviceName);
+        input.onmidimessage = (msg) => this.handleMidiMessage(msg, deviceName);
+      }
+    });
+  }
+
+  private handleMidiMessage(message: MIDIMessageEvent, deviceName: string) {
     if (!message.data) return;
     const [status, data1, data2] = message.data;
     const type = status & 0xf0;
+    const channel = status & 0x0f;
 
-    if (type === 0x90 && data2 > 0) { // Note On
+    // Note On (velocity > 0)
+    if (type === 0x90 && data2 > 0) {
+      // Pad trigger (legacy: notes 36-51 → pad 0-15)
       const padIndex = data1 - 36;
       if (padIndex >= 0 && padIndex < 16) {
         this.emit({
           type: 'midi',
           target: padIndex,
           velocity: Math.floor((data2 / 127) * 65535),
+          note: data1,
+          channel,
+          deviceName,
           timestamp: performance.now()
         });
       }
+
+      // Full-range Note On (for Piano Roll recording)
+      this.emit({
+        type: 'midi_note_on',
+        target: data1,
+        velocity: Math.floor((data2 / 127) * 65535),
+        note: data1,
+        channel,
+        deviceName,
+        timestamp: performance.now()
+      });
+    }
+
+    // Note Off (0x80, or 0x90 with velocity 0)
+    if (type === 0x80 || (type === 0x90 && data2 === 0)) {
+      this.emit({
+        type: 'midi_note_off',
+        target: data1,
+        velocity: 0,
+        note: data1,
+        channel,
+        deviceName,
+        timestamp: performance.now()
+      });
+    }
+
+    // Control Change (CC)
+    if (type === 0xB0) {
+      this.emit({
+        type: 'midi_cc',
+        target: data1, // CC number as target
+        velocity: Math.floor((data2 / 127) * 65535), // 16-bit scaled value
+        cc: data1,
+        channel,
+        deviceName,
+        timestamp: performance.now()
+      });
+    }
+
+    // Pitch Bend
+    if (type === 0xE0) {
+      const pitchBend = ((data2 << 7) | data1) - 8192; // -8192 to 8191
+      this.emit({
+        type: 'midi_cc',
+        target: 128, // Special: pitch bend pseudo-CC
+        velocity: Math.floor(((pitchBend + 8192) / 16383) * 65535),
+        cc: 128,
+        channel,
+        deviceName,
+        timestamp: performance.now()
+      });
     }
   }
 }

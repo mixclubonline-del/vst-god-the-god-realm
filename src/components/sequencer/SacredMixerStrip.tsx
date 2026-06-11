@@ -18,7 +18,9 @@ interface SacredMixerStripProps {
   levels: TrackLevels;
   onSelectTrack: (index: number) => void;
   onSetVolume: (trackIndex: number, volume: number) => void;
+  onSetPan: (trackIndex: number, pan: number) => void;
   onSetFxSend: (trackIndex: number, fx: keyof FXSendState, value: number) => void;
+  onSetEQ: (trackIndex: number, band: 'low' | 'mid' | 'high', value: number) => void;
   onToggleMute: (trackIndex: number) => void;
   onToggleSolo: (trackIndex: number) => void;
 }
@@ -41,7 +43,9 @@ export const SacredMixerStrip: React.FC<SacredMixerStripProps> = ({
   levels,
   onSelectTrack,
   onSetVolume,
+  onSetPan,
   onSetFxSend,
+  onSetEQ,
   onToggleMute,
   onToggleSolo,
 }) => {
@@ -58,7 +62,9 @@ export const SacredMixerStrip: React.FC<SacredMixerStripProps> = ({
             level={levels[idx] || { peak: 0, rms: 0 }}
             onSelect={() => onSelectTrack(idx)}
             onSetVolume={(vol) => onSetVolume(idx, vol)}
+            onSetPan={(pan) => onSetPan(idx, pan)}
             onSetFxSend={(fx, val) => onSetFxSend(idx, fx, val)}
+            onSetEQ={(band, val) => onSetEQ(idx, band, val)}
             onToggleMute={() => onToggleMute(idx)}
             onToggleSolo={() => onToggleSolo(idx)}
           />
@@ -77,9 +83,11 @@ interface MixerChannelProps {
   level: { peak: number; rms: number };
   onSelect: () => void;
   onSetVolume: (vol: number) => void;
+  onSetPan: (pan: number) => void;
   onSetFxSend: (fx: keyof FXSendState, value: number) => void;
   onToggleMute: () => void;
   onToggleSolo: () => void;
+  onSetEQ?: (band: 'low' | 'mid' | 'high', value: number) => void;
 }
 
 const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
@@ -89,9 +97,11 @@ const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
   level,
   onSelect,
   onSetVolume,
+  onSetPan,
   onSetFxSend,
   onToggleMute,
   onToggleSolo,
+  onSetEQ,
 }) => {
   const channelClass = [
     'seq-mixer__strip',
@@ -169,6 +179,83 @@ const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
           </div>
         ))}
       </div>
+
+      {/* Pan Knob */}
+      <div className="seq-mixer__pan-wrap">
+        <div
+          className="seq-mixer__knob"
+          style={{
+            '--knob-color': track.color,
+            '--knob-rotation': `${knobRotation(((track.pan + 1) / 2) * 100)}deg`,
+          } as React.CSSProperties}
+        >
+          <input
+            type="range"
+            className="seq-mixer__knob-input"
+            min={-100}
+            max={100}
+            value={Math.round(track.pan * 100)}
+            onChange={(e) => onSetPan(parseInt(e.target.value) / 100)}
+            title={`Pan: ${track.pan === 0 ? 'C' : track.pan < 0 ? `L${Math.abs(Math.round(track.pan * 100))}` : `R${Math.round(track.pan * 100)}`}`}
+          />
+          <svg className="seq-mixer__knob-svg" viewBox="0 0 36 36">
+            <circle
+              cx="18" cy="18" r="14"
+              fill="none"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="2.5"
+              strokeDasharray="66 22"
+              strokeLinecap="round"
+              transform="rotate(135 18 18)"
+            />
+            <circle
+              cx="18" cy="18" r="14"
+              fill="none"
+              stroke={track.color}
+              strokeWidth="2.5"
+              strokeDasharray={`${((track.pan + 1) / 2) * 66} 88`}
+              strokeLinecap="round"
+              transform="rotate(135 18 18)"
+              style={{ filter: `drop-shadow(0 0 3px ${track.color}66)` }}
+            />
+            <line
+              x1="18" y1="18" x2="18" y2="7"
+              stroke={track.color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              transform={`rotate(${knobRotation(((track.pan + 1) / 2) * 100)} 18 18)`}
+              opacity={0.8}
+            />
+          </svg>
+        </div>
+        <span className="seq-mixer__knob-label">PAN</span>
+      </div>
+
+      {/* 3-Band EQ Mini Sliders */}
+      {onSetEQ && (
+        <div className="seq-mixer__eq-wrap">
+          {(['low', 'mid', 'high'] as const).map(band => {
+            const val = band === 'low' ? track.eqLow : band === 'mid' ? track.eqMid : track.eqHigh;
+            const label = band === 'low' ? 'LO' : band === 'mid' ? 'MID' : 'HI';
+            return (
+              <div key={band} className="seq-mixer__eq-band">
+                <input
+                  type="range"
+                  className="seq-mixer__eq-slider"
+                  min={-12}
+                  max={12}
+                  step={0.5}
+                  value={val}
+                  onChange={(e) => onSetEQ(band, parseFloat(e.target.value))}
+                  title={`${label}: ${val > 0 ? '+' : ''}${val.toFixed(1)} dB`}
+                  style={{ '--eq-color': track.color } as React.CSSProperties}
+                />
+                <span className="seq-mixer__eq-label">{label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Volume Fader */}
       <div className="seq-mixer__fader-wrap">

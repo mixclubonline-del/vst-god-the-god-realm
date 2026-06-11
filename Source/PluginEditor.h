@@ -20,9 +20,14 @@ private:
     void timerCallback() override;
     juce::String buildMeteringJson();
     juce::String buildTelemetryJson();
+    void browseForLibraryPath();
+    static juce::WebBrowserComponent::Options createWebBrowserOptions (VSTGodTheGodRealmAudioProcessorEditor* editor);
+    void handleWebViewMessage (const juce::Array<juce::var>& args, juce::WebBrowserComponent::NativeFunctionCompletion completion);
+    std::optional<juce::WebBrowserComponent::Resource> getEmbeddedUIResource (const juce::String& url);
 
     VSTGodTheGodRealmAudioProcessor& audioProcessor;
     juce::WebBrowserComponent webComponent;
+    std::unique_ptr<juce::FileChooser> fileChooser;
 
     int frameCounter = 0;
 

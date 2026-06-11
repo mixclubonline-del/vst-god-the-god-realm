@@ -1,0 +1,27 @@
+{
+  "name": "Mythic Lead",
+  "category": "Instrument",
+  "godId": "zeus",
+  "voiceMode": "MONO",
+  "fui": "recessed-hardware",
+  "parameters": [
+    { "id": "drive", "name": "Drive", "min": 0, "max": 100, "default": 40, "target": "satDrive" },
+    { "id": "level", "name": "Level", "min": 0, "max": 100, "default": 65, "target": "bodyGain" },
+    { "id": "lo-cut", "name": "Lo", "min": 0, "max": 100, "default": 30, "target": "subOscGain" },
+    { "id": "cutoff", "name": "Cutoff", "min": 0, "max": 100, "default": 60, "target": "filterFreq" },
+    { "id": "res", "name": "Res", "min": 0, "max": 100, "default": 35, "target": "filterQ" },
+    { "id": "detune", "name": "Detune", "min": 0, "max": 100, "default": 20, "target": "detuneCents" },
+    { "id": "attack", "name": "Attack", "min": 0, "max": 100, "default": 5, "target": "attack" },
+    { "id": "decay", "name": "Decay", "min": 0, "max": 100, "default": 30, "target": "decay" },
+    { "id": "sustain", "name": "Sustain", "min": 0, "max": 100, "default": 50, "target": "sustain" },
+    { "id": "release", "name": "Release", "min": 0, "max": 100, "default": 25, "target": "release" },
+    { "id": "saturation", "name": "Saturation", "min": 0, "max": 100, "default": 30, "target": "satMix" },
+    { "id": "master", "name": "Master", "min": 0, "max": 100, "default": 70, "target": "masterGain" }
+  ],
+  "fxDefaults": {
+    "reverb": 0.2,
+    "chorus": 0.15,
+    "delay": 0.25,
+    "saturation": 0.35
+  }
+}

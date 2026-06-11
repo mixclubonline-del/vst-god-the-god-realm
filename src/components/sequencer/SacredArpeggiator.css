@@ -1,0 +1,352 @@
+/* ═══════════════════════════════════════════════════
+   SACRED ARPEGGIATOR — God Realm Pattern Generator
+   ═══════════════════════════════════════════════════ */
+
+.sacred-arp {
+  border-top: 1px solid rgba(168, 85, 247, 0.1);
+  background: linear-gradient(180deg, rgba(6, 3, 14, 0.96) 0%, rgba(12, 6, 28, 0.94) 100%);
+  padding: 8px 12px;
+  animation: arpReveal 0.3s ease-out;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.sacred-arp--active {
+  opacity: 1;
+  border-top-color: rgba(168, 85, 247, 0.25);
+}
+
+@keyframes arpReveal {
+  from { height: 0; opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── Header ─── */
+.sacred-arp__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sacred-arp__power {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sacred-arp__power:hover {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.sacred-arp__power--on {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: rgba(255, 215, 0, 0.9);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+.sacred-arp__title {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.sacred-arp--active .sacred-arp__title {
+  color: rgba(168, 85, 247, 0.7);
+}
+
+.sacred-arp__status {
+  margin-left: auto;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sacred-arp__running {
+  color: rgba(52, 211, 153, 0.8);
+  animation: arpRunPulse 1s ease-in-out infinite;
+}
+
+@keyframes arpRunPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.sacred-arp__holding {
+  color: rgba(255, 215, 0, 0.5);
+}
+
+.sacred-arp__idle {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Body ─── */
+.sacred-arp__body {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.sacred-arp__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sacred-arp__label {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+}
+
+/* ─── Mode Grid ─── */
+.sacred-arp__mode-grid {
+  display: flex;
+  gap: 3px;
+}
+
+.sacred-arp__mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 32px;
+}
+
+.sacred-arp__mode-btn:hover {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.sacred-arp__mode-btn--active {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.15);
+}
+
+.sacred-arp__mode-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.sacred-arp__mode-label {
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.sacred-arp__mode-btn--active .sacred-arp__mode-label {
+  color: rgba(255, 215, 0, 0.7);
+}
+
+/* ─── Rate Grid ─── */
+.sacred-arp__rate-grid {
+  display: flex;
+  gap: 2px;
+}
+
+.sacred-arp__rate-btn {
+  padding: 3px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 7px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-arp__rate-btn:hover {
+  background: rgba(56, 189, 248, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sacred-arp__rate-btn--active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: rgba(56, 189, 248, 0.9);
+}
+
+/* ─── Octave + Gate ─── */
+.sacred-arp__knobs-row {
+  flex-direction: row !important;
+  gap: 16px !important;
+}
+
+.sacred-arp__knob-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+.sacred-arp__octave-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sacred-arp__oct-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.sacred-arp__oct-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sacred-arp__oct-value {
+  font-size: 14px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 215, 0, 0.7);
+  min-width: 14px;
+  text-align: center;
+}
+
+.sacred-arp__gate-slider {
+  width: 60px;
+  height: 4px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  outline: none;
+}
+
+.sacred-arp__gate-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.7);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  cursor: pointer;
+}
+
+.sacred-arp__gate-value {
+  font-size: 7px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Rhythm Pattern ─── */
+.sacred-arp__rhythm-row {
+  display: flex;
+  gap: 3px;
+}
+
+.sacred-arp__rhythm-step {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-arp__rhythm-step:hover {
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.sacred-arp__rhythm-step--on {
+  background: rgba(168, 85, 247, 0.35);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.2);
+}
+
+.sacred-arp__rhythm-presets {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.sacred-arp__rhythm-preset {
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: transparent;
+  font-size: 6px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+
+.sacred-arp__rhythm-preset:hover {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── Sequence Visualization ─── */
+.sacred-arp__seq-viz {
+  flex-basis: 100%;
+}
+
+.sacred-arp__seq-notes {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.sacred-arp__seq-note {
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 7px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.25);
+  transition: all 0.1s;
+}
+
+.sacred-arp__seq-note--active {
+  background: rgba(255, 215, 0, 0.15);
+  color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
+}
+
+.sacred-arp__seq-more {
+  font-size: 7px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.15);
+  padding: 1px 4px;
+}

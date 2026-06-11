@@ -2,9 +2,9 @@
  * SacredSongTimeline — Arrangement row for Song Mode.
  * Displays a horizontal chain of pattern blocks that the sequencer will play
  * through sequentially. Each block shows pattern A/B, repeat count, and can
- * be added/removed/reordered.
+ * be added/removed/reordered (via drag-and-drop).
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import type { SongBlock } from './useSequencerEngine';
 
 interface SacredSongTimelineProps {
@@ -17,6 +17,7 @@ interface SacredSongTimelineProps {
   onUpdateBlock: (index: number, changes: Partial<Omit<SongBlock, 'id'>>) => void;
   onSetPosition: (position: number) => void;
   onSetPlaybackMode: (mode: 'pattern' | 'song') => void;
+  onReorderBlock: (fromIndex: number, toIndex: number) => void;
 }
 
 export const SacredSongTimeline: React.FC<SacredSongTimelineProps> = ({
@@ -29,8 +30,13 @@ export const SacredSongTimeline: React.FC<SacredSongTimelineProps> = ({
   onUpdateBlock,
   onSetPosition,
   onSetPlaybackMode,
+  onReorderBlock,
 }) => {
   const isSongMode = playbackMode === 'song';
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragSourceIndex = useRef<number | null>(null);
+  const [editingLabelIndex, setEditingLabelIndex] = useState<number | null>(null);
+  const labelInputRef = useRef<HTMLInputElement>(null);
 
   const handleRepeatChange = useCallback((index: number, delta: number) => {
     const block = arrangement[index];
@@ -44,6 +50,59 @@ export const SacredSongTimeline: React.FC<SacredSongTimelineProps> = ({
     if (!block) return;
     onUpdateBlock(index, { pattern: block.pattern === 'A' ? 'B' : 'A' });
   }, [arrangement, onUpdateBlock]);
+
+  /* ─── Drag & Drop handlers ─── */
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
+    dragSourceIndex.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.4';
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    setDragOverIndex(null);
+    dragSourceIndex.current = null;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragSourceIndex.current !== null && dragSourceIndex.current !== index) {
+      setDragOverIndex(index);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverIndex(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    if (dragSourceIndex.current !== null && dragSourceIndex.current !== toIndex) {
+      onReorderBlock(dragSourceIndex.current, toIndex);
+    }
+    dragSourceIndex.current = null;
+  }, [onReorderBlock]);
+
+  /* ─── Label editing ─── */
+  const handleLabelDoubleClick = useCallback((index: number) => {
+    setEditingLabelIndex(index);
+    setTimeout(() => labelInputRef.current?.focus(), 50);
+  }, []);
+
+  const handleLabelCommit = useCallback((index: number) => {
+    if (labelInputRef.current) {
+      const newLabel = labelInputRef.current.value.trim();
+      onUpdateBlock(index, { label: newLabel || undefined });
+    }
+    setEditingLabelIndex(null);
+  }, [onUpdateBlock]);
 
   return (
     <div className={`seq-song-timeline ${isSongMode ? 'seq-song-timeline--active' : ''}`}>
@@ -61,12 +120,21 @@ export const SacredSongTimeline: React.FC<SacredSongTimelineProps> = ({
         {arrangement.map((block, idx) => (
           <div
             key={block.id}
+            draggable
             className={`seq-song-timeline__block ${
               isSongMode && isPlaying && songPosition === idx
                 ? 'seq-song-timeline__block--playing'
                 : ''
-            } ${songPosition === idx ? 'seq-song-timeline__block--current' : ''}`}
+            } ${songPosition === idx ? 'seq-song-timeline__block--current' : ''} ${
+              dragOverIndex === idx ? 'seq-song-timeline__block--drag-over' : ''
+            }`}
             onClick={() => onSetPosition(idx)}
+            onDragStart={(e) => handleDragStart(e, idx)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, idx)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, idx)}
+            onDoubleClick={() => handleLabelDoubleClick(idx)}
           >
             <div className="seq-song-timeline__block-header">
               <span className="seq-song-timeline__block-index">{idx + 1}</span>
@@ -99,8 +167,23 @@ export const SacredSongTimeline: React.FC<SacredSongTimelineProps> = ({
               >+</button>
             </div>
 
-            {block.label && (
-              <span className="seq-song-timeline__block-label">{block.label}</span>
+            {editingLabelIndex === idx ? (
+              <input
+                ref={labelInputRef}
+                className="seq-song-timeline__label-input"
+                defaultValue={block.label || ''}
+                placeholder="Label..."
+                onBlur={() => handleLabelCommit(idx)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleLabelCommit(idx);
+                  if (e.key === 'Escape') setEditingLabelIndex(null);
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span className="seq-song-timeline__block-label">
+                {block.label || `Block ${idx + 1}`}
+              </span>
             )}
           </div>
         ))}

@@ -1,0 +1,180 @@
+/* ═══════════════════════════════════════════════════
+   SACRED MASTER METER — Spectrum & Metering Panel
+   Midnight Ember Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+/* ─── Panel Container ─── */
+.sacred-meter {
+  position: relative;
+  background: linear-gradient(180deg,
+    rgba(14, 4, 4, 0.95) 0%,
+    rgba(8, 2, 2, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 215, 0, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 215, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sacred-meter--compact {
+  height: 120px;
+  min-height: 120px;
+}
+
+.sacred-meter--expanded {
+  height: 280px;
+  min-height: 280px;
+}
+
+/* ─── Tab Bar ─── */
+.sacred-meter__tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 6px;
+  height: 26px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.sacred-meter__tab {
+  font-size: 8px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px 4px 0 0;
+}
+
+.sacred-meter__tab:hover {
+  color: rgba(255, 215, 0, 0.6);
+  background: rgba(255, 215, 0, 0.03);
+}
+
+.sacred-meter__tab--active {
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.06);
+  border-bottom: 2px solid #FFD700;
+}
+
+.sacred-meter__tab-spacer {
+  flex: 1;
+}
+
+.sacred-meter__lufs-readout {
+  font-size: 9px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: #FFD700;
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.sacred-meter__lufs-readout--quiet {
+  color: rgba(255, 215, 0, 0.3);
+}
+
+.sacred-meter__expand-btn {
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.sacred-meter__expand-btn:hover {
+  color: rgba(255, 215, 0, 0.6);
+  border-color: rgba(255, 215, 0, 0.15);
+}
+
+/* ─── Canvas Area ─── */
+.sacred-meter__canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.sacred-meter__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Correlation Bar (always visible below canvas) ─── */
+.sacred-meter__correlation {
+  height: 14px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.sacred-meter__corr-label {
+  font-size: 7px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.sacred-meter__corr-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.sacred-meter__corr-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sacred-meter__corr-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  transition: left 0.08s, width 0.08s, background 0.2s;
+}
+
+.sacred-meter__corr-value {
+  font-size: 7px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}

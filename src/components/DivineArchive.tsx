@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Play, Square, Plus, Bookmark, LayoutGrid, List, Sparkles, Music } from 'lucide-react';
 import { RelicWaveform } from './RelicWaveform';
+import { THRONE_DOMAINS } from '../data/throneDomains';
 import './DivineArchive.css';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -256,6 +257,25 @@ export const DivineArchive: React.FC<DivineArchiveProps> = ({
     });
   }, []);
 
+  // ─── Double-click relic → load to active pad + auto-advance ──────────────
+  const handleRelicDoubleClick = useCallback((sample: MergedSample) => {
+    if (!engineRef.current) return;
+    engineRef.current.loadSampleByPath(sample.path, activePad);
+    console.log(`📌 Recalled "${sample.name}" → Pad ${activePad + 1}`);
+    // Auto-advance to next pad
+    onActivePadChange?.((activePad + 1) % 16);
+  }, [engineRef, activePad, onActivePadChange]);
+
+  // ─── Drag start from relic card ──────────────────────────────────────────
+  const handleRelicDragStart = useCallback((e: React.DragEvent, sample: MergedSample) => {
+    e.dataTransfer.setData('application/x-god-relic', JSON.stringify({
+      path: sample.path,
+      name: sample.name,
+      category: sample.category,
+    }));
+    e.dataTransfer.effectAllowed = 'copy';
+  }, []);
+
   // ─── Cleanup on unmount ──────────────────────────────────────────────────
 
   useEffect(() => {
@@ -404,6 +424,9 @@ export const DivineArchive: React.FC<DivineArchiveProps> = ({
                       setSelectedSample(sample);
                       playPreview(sample);
                     }}
+                    onDoubleClick={() => handleRelicDoubleClick(sample)}
+                    draggable
+                    onDragStart={(e) => handleRelicDragStart(e as any, sample)}
                   >
                     <div className="da-relic-wave">
                       <RelicWaveform mode="mini" />
@@ -584,24 +607,46 @@ export const DivineArchive: React.FC<DivineArchiveProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* ── Sacred Pad Bank ── */}
+      {/* ── Sacred Pad Bank — Throne-aware ── */}
       <div className="da-pad-bank">
-        {Array.from({ length: 16 }, (_, i) => (
-          <div
-            key={i}
-            className={[
-              'da-pad',
-              activePad === i ? 'active' : '',
-              loadedPadNames[i] ? 'loaded' : '',
-            ].join(' ')}
-            onClick={() => onActivePadChange?.(i)}
-          >
-            <span className="da-pad-num">{i + 1}</span>
-            {loadedPadNames[i] && (
-              <span className="da-pad-sample">{loadedPadNames[i]}</span>
-            )}
-          </div>
-        ))}
+        {Array.from({ length: 16 }, (_, i) => {
+          const domain = THRONE_DOMAINS[i];
+          return (
+            <div
+              key={i}
+              className={[
+                'da-pad',
+                activePad === i ? 'active' : '',
+                loadedPadNames[i] ? 'loaded' : '',
+              ].join(' ')}
+              style={{ '--da-pad-color': domain.color } as React.CSSProperties}
+              onClick={() => onActivePadChange?.(i)}
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes('application/x-god-relic')) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'copy';
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const relicData = e.dataTransfer.getData('application/x-god-relic');
+                if (relicData && engineRef.current) {
+                  const relic = JSON.parse(relicData);
+                  engineRef.current.loadSampleByPath(relic.path, i);
+                  console.log(`📌 Dropped "${relic.name}" → Pad ${i + 1}`);
+                }
+              }}
+            >
+              <span className="da-pad-sigil">{domain.sigil}</span>
+              <span className="da-pad-num">{i + 1}</span>
+              {loadedPadNames[i] ? (
+                <span className="da-pad-sample">{loadedPadNames[i]}</span>
+              ) : (
+                <span className="da-pad-domain">{domain.name}</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

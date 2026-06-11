@@ -6,6 +6,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSequencerEngine } from './useSequencerEngine';
+import { useAutomationRecorder } from '../../hooks/useAutomationRecorder';
 import { SacredSequencerHeader } from './SacredSequencerHeader';
 import { SacredTrackLane } from './SacredTrackLane';
 import { SacredGraphEditor } from './SacredGraphEditor';
@@ -13,19 +14,42 @@ import { SacredStepDetail } from './SacredStepDetail';
 import type { SequencerState, StepState } from './useSequencerEngine';
 import { sampleManager } from './SampleManager';
 import { SacredMasterPanel } from './SacredMasterPanel';
-import { GodRealmSampleChopper } from '../GodRealmSampleChopper';
+import { SacredChopper } from '../GodRealmSampleChopper';
 import { ExportEngine } from '../../audio/ExportEngine';
 import { PantheonSynthEngine } from '../../audio/PantheonSynthEngine';
 import { FXRack } from '../../audio/FXRack';
 import { SacredMixerStrip } from './SacredMixerStrip';
 import { SacredFXRackPanel } from './SacredFXRackPanel';
 import { SacredSongTimeline } from './SacredSongTimeline';
+import { SelectionToolbar } from './SelectionToolbar';
+import { DivineParticleField } from './DivineParticleField';
 import { SacredProjectDrawer } from './SacredProjectDrawer';
 import { useTrackMetering } from './useTrackMetering';
 import { useProjectManager } from './useProjectManager';
 import type { FXSendState, AutomationParam } from './useSequencerEngine';
 import { nativeAudio, StepBridgePayload } from '../../native/bridge';
 import { useJuceBridge } from '@/hooks/useJuceBridge';
+import { neuralInputBus } from '../../services/neuralInputBus';
+import type { GodRealmSamplerEngine } from '@/services/samplerEngine';
+import { useMidiMapping } from './useMidiMapping';
+import { SacredMidiMapper } from './SacredMidiMapper';
+import { SacredPianoRoll } from './SacredPianoRoll';
+import type { GhostTrackNotes } from './SacredPianoRoll';
+import { useMidiNoteInput } from './useMidiNoteInput';
+import { useArpeggiator } from './useArpeggiator';
+import { SacredArpeggiator } from './SacredArpeggiator';
+import { SacredScaleChord } from './SacredScaleChord';
+import { SacredSidechain } from './SacredSidechain';
+import { useSidechain } from './useSidechain';
+import { DEFAULT_SCALE_CONFIG, isNoteInScale, snapToScale, detectChord } from '../../audio/MusicTheoryEngine';
+import type { ScaleConfig } from '../../audio/MusicTheoryEngine';
+import type { PianoRollNote } from './useSequencerEngine';
+import { bounceTrack } from '../../audio/TrackBounceEngine';
+import type { BounceProgress } from '../../audio/TrackBounceEngine';
+import { AudioInputRecorder } from '../../audio/AudioInputRecorder';
+import type { RecordingState } from '../../audio/AudioInputRecorder';
+import { MasterAnalyzer } from '../../audio/MasterAnalyzer';
+import { SacredMasterMeter } from './SacredMasterMeter';
 import './SacredSequencer.css';
 
 interface SacredSequencerProps {
@@ -34,6 +58,8 @@ interface SacredSequencerProps {
   // Lifted Engine Props
   engine: ReturnType<typeof useSequencerEngine>;
   buffers: Record<number, AudioBuffer>;
+  // Phase 6: God Engine ref for cross-engine voice routing
+  godEngine?: React.RefObject<GodRealmSamplerEngine | null>;
 }
 
 export const SacredSequencer: React.FC<SacredSequencerProps> = ({
@@ -41,6 +67,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   update,
   engine,
   buffers,
+  godEngine,
 }) => {
   const { state, dispatch, play, stop, togglePlay, setOnTrigger, setOnAutomation, audioCtx, masterChain, fxRack, undo, redo, canUndo, canRedo, clearHistory } = engine;
   const isLoadedRef = useRef(true);
@@ -70,12 +97,140 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   const [showMixer, setShowMixer] = useState(false);
   const [showFxPanel, setShowFxPanel] = useState(false);
   const [showProjectDrawer, setShowProjectDrawer] = useState(false);
+  const [showMidiMapper, setShowMidiMapper] = useState(false);
+  const [showPianoRoll, setShowPianoRoll] = useState(false);
+
+  // ─── Phase 9: Live Automation Recorder ───
+  const { recordAutomation } = useAutomationRecorder({
+    isRecording: state.isRecording,
+    isPlaying: state.isPlaying || juceIsPlaying,
+    currentStep: state.currentStep >= 0 ? state.currentStep : juceStep,
+    dispatch,
+  });
+  const [midiNoteArmed, setMidiNoteArmed] = useState(false);
+  const [showArpeggiator, setShowArpeggiator] = useState(false);
+  const [showScaleChord, setShowScaleChord] = useState(false);
+  const [scaleConfig, setScaleConfig] = useState<ScaleConfig>({ ...DEFAULT_SCALE_CONFIG });
+  const [showSidechain, setShowSidechain] = useState(false);
+  const [showMeter, setShowMeter] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // ─── Track Bounce/Freeze State ───
+  const frozenBuffersRef = useRef<Record<number, AudioBuffer>>({});
+  const [bouncingTrack, setBouncingTrack] = useState<number | null>(null);
+  const [bounceProgress, setBounceProgress] = useState(0);
+  const recorderRef = useRef<AudioInputRecorder | null>(null);
+  const [recordingState, setRecordingState] = useState<{ isRecording: boolean; duration: number; peakLevel: number } | null>(null);
+
+  // ─── Master Analyzer ───
+  const analyzerRef = useRef<MasterAnalyzer | null>(null);
+
+  useEffect(() => {
+    // AudioContext + MasterChain are created lazily on first play(),
+    // so we re-check on every isPlaying change to catch the first init.
+    if (!audioCtx.current || !masterChain.current) return;
+    if (analyzerRef.current) return; // already initialized
+
+    const analyzer = new MasterAnalyzer(audioCtx.current);
+    analyzer.connect(masterChain.current.output);
+    analyzerRef.current = analyzer;
+
+    return () => {
+      analyzer.dispose();
+      analyzerRef.current = null;
+    };
+  }, [state.isPlaying]); // re-check when playback state changes
+
+  // ─── MIDI Controller Mapping ───
+  const midi = useMidiMapping();
+
+  // Register mappable parameters
+  useEffect(() => {
+    // Global params
+    midi.registerTarget({
+      id: 'seq.bpm', label: 'BPM', group: 'Transport',
+      min: 30, max: 300,
+      getValue: () => state.bpm,
+      setValue: (v) => dispatch({ type: 'SET_BPM', bpm: Math.round(v) }),
+    });
+    midi.registerTarget({
+      id: 'seq.swing', label: 'Swing', group: 'Transport',
+      min: 0, max: 100,
+      getValue: () => state.swing,
+      setValue: (v) => dispatch({ type: 'SET_SWING', swing: Math.round(v) }),
+    });
+
+    // Per-track params (first 8 tracks)
+    const trackCount = Math.min(state.tracks.length, 8);
+    for (let i = 0; i < trackCount; i++) {
+      const trackName = state.tracks[i]?.name ?? `Track ${i + 1}`;
+      midi.registerTarget({
+        id: `track.${i}.volume`, label: `${trackName} Vol`, group: 'Mixer',
+        min: 0, max: 1,
+        getValue: () => state.tracks[i]?.volume ?? 0.8,
+        setValue: (v) => dispatch({ type: 'SET_TRACK_VOLUME', trackIndex: i, volume: v }),
+      });
+      midi.registerTarget({
+        id: `track.${i}.pan`, label: `${trackName} Pan`, group: 'Mixer',
+        min: -1, max: 1,
+        getValue: () => state.tracks[i]?.pan ?? 0,
+        setValue: (v) => dispatch({ type: 'SET_TRACK_PAN', trackIndex: i, pan: v }),
+      });
+      midi.registerTarget({
+        id: `track.${i}.mute`, label: `${trackName} Mute`, group: 'Mixer',
+        min: 0, max: 1, isToggle: true,
+        getValue: () => state.tracks[i]?.muted ? 1 : 0,
+        setValue: (v) => dispatch({ type: 'TOGGLE_MUTE', trackIndex: i }),
+      });
+    }
+
+    // FX params
+    midi.registerTarget({
+      id: 'fx.reverb', label: 'FX Reverb', group: 'Effects',
+      min: 0, max: 1,
+      getValue: () => 0.5,
+      setValue: (v) => {
+        if (fxRack.current) fxRack.current.setReverbReturn(v);
+      },
+    });
+    midi.registerTarget({
+      id: 'fx.delay', label: 'FX Delay', group: 'Effects',
+      min: 0, max: 1,
+      getValue: () => 0.3,
+      setValue: (v) => {
+        if (fxRack.current) fxRack.current.setDelayReturn(v);
+      },
+    });
+
+    return () => {
+      // Cleanup on unmount
+      midi.unregisterTarget('seq.bpm');
+      midi.unregisterTarget('seq.swing');
+      for (let i = 0; i < 8; i++) {
+        midi.unregisterTarget(`track.${i}.volume`);
+        midi.unregisterTarget(`track.${i}.pan`);
+        midi.unregisterTarget(`track.${i}.mute`);
+      }
+      midi.unregisterTarget('fx.reverb');
+      midi.unregisterTarget('fx.delay');
+    };
+  // Re-register when tracks change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.tracks.length]);
 
   // ─── Project Manager ───
   const projectManager = useProjectManager(state, dispatch, clearHistory);
 
   // ─── Track Metering ───
   const trackLevels = useTrackMetering(fxRack, state.isPlaying, state.tracks.length);
+
+  // ─── Sidechain Compression ───
+  const sidechain = useSidechain({
+    fxRack: fxRack.current,
+    ctx: audioCtx.current,
+    trackCount: state.tracks.length,
+    selectedTrack: state.selectedTrack,
+  });
 
   // ─── Synth Engine Pool ───
   // One PantheonSynthEngine per synth track, lazily created and cached by track index.
@@ -138,11 +293,35 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
 
   // Sample + Synth trigger logic
   useEffect(() => {
-    setOnTrigger((trackIndex, step, time) => {
+    setOnTrigger((trackIndex, step, time, polyStep) => {
       const track = state.tracks[trackIndex];
       if (!audioCtx.current || !masterChain.current || !track) return;
+
+      // ─── Astral Dais Bridge: emit throne trigger for pad flash ───
+      if (track.sourceType === 'sample' && trackIndex < 16) {
+        window.dispatchEvent(new CustomEvent('throne-trigger', {
+          detail: { padIndex: trackIndex },
+        }));
+      }
       
       const ctx = audioCtx.current;
+
+      // ─── Frozen Track: play bounced buffer on step 0 only ───
+      if (track.isFrozen && frozenBuffersRef.current[trackIndex]) {
+        // Only trigger the frozen buffer on step 0 to play the full pattern once
+        if (polyStep === 0) {
+          const frozenBuf = frozenBuffersRef.current[trackIndex];
+          const source = ctx.createBufferSource();
+          source.buffer = frozenBuf;
+          const gain = ctx.createGain();
+          gain.gain.value = track.volume * 0.8;
+          const panner = ctx.createStereoPanner();
+          panner.pan.value = track.pan;
+          source.connect(gain).connect(panner).connect(masterChain.current!.input);
+          source.start(time);
+        }
+        return; // Skip live processing for frozen tracks
+      }
 
       // ─── Get or create per-track FX send nodes ───
       const sends = fxRack.current?.createTrackSends(trackIndex, track.fxSends);
@@ -154,9 +333,49 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         const engine = getSynthEngine(trackIndex, track.synthConfig.godId);
         if (!engine) return;
 
-        // Resolve MIDI note: noteMap[stepIndex] + octave offset
+        const octaveOffset = track.synthConfig.octave * 12;
+
+        // ─── Piano Roll Mode: scan pianoRollNotes for this step ───
+        if (track.synthConfig.usePianoRoll && track.synthConfig.pianoRollNotes?.length) {
+          const stepDuration = 60 / state.bpm / 4; // duration of one step in seconds
+          const currentStepIdx = step.sliceIndex; // step index from the sequencer
+
+          // Find all notes that START on this step (within 0.5 step tolerance for quantized playback)
+          const notesAtStep = track.synthConfig.pianoRollNotes.filter(n =>
+            Math.floor(n.startStep) === currentStepIdx
+          );
+
+          for (const prNote of notesAtStep) {
+            const midiNote = prNote.note + octaveOffset;
+            engine.noteOn(midiNote, prNote.velocity);
+
+            // Schedule noteOff based on actual note duration
+            const durationMs = Math.max(50, prNote.duration * stepDuration * 1000);
+            setTimeout(() => {
+              engine.noteOff(midiNote);
+            }, durationMs);
+          }
+
+          // JUCE bridge — send first note info
+          if (notesAtStep.length > 0) {
+            const stepBridgePayload: StepBridgePayload = {
+              velocity: notesAtStep[0].velocity,
+              pitch: step.pitch,
+              pan: step.pan,
+              decay: step.decay,
+              sliceIndex: step.sliceIndex,
+              sourceType: 'synth',
+              synthNote: notesAtStep[0].note + octaveOffset,
+              synthGodId: track.synthConfig.godId,
+            };
+            nativeAudio.triggerStep(trackIndex, stepBridgePayload, time);
+          }
+          return;
+        }
+
+        // ─── Legacy noteMap mode ───
         const baseNote = track.synthConfig.noteMap[step.sliceIndex] ?? 60; // C4 fallback
-        const midiNote = baseNote + (track.synthConfig.octave * 12);
+        const midiNote = baseNote + octaveOffset;
         const velocity = step.velocity;
 
         // Trigger note
@@ -183,7 +402,27 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         return;
       }
 
-      // ═══ SAMPLE TRACK ROUTING (existing logic) ═══
+      // ═══ SAMPLE TRACK ROUTING ═══
+      // Phase 6: Delegate to God Engine if available (uses per-slot DSP chain)
+      if (godEngine?.current) {
+        godEngine.current.triggerPadAtTime(trackIndex, time, step.velocity, step.pitch, step.decay);
+
+        // Phase 4: Forward step trigger to JUCE for native playback
+        const stepBridgePayload: StepBridgePayload = {
+          velocity: step.velocity,
+          pitch: step.pitch,
+          pan: step.pan,
+          decay: step.decay,
+          sliceIndex: step.sliceIndex,
+          sourceType: track.sourceType || 'sample',
+          synthNote: undefined,
+          synthGodId: undefined,
+        };
+        nativeAudio.triggerStep(trackIndex, stepBridgePayload, time);
+        return;
+      }
+
+      // Legacy fallback: create buffer source directly (when no God Engine)
       if (!buffers[trackIndex]) return;
       
       const originalBuffer = buffers[trackIndex];
@@ -260,9 +499,10 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       const decayTime = 0.05 + step.decay * 2.0; 
       gain.gain.exponentialRampToValueAtTime(0.001, time + decayTime);
 
-      // Panning
+      // Panning (step pan + track-level pan)
       const panner = ctx.createStereoPanner();
-      panner.pan.setValueAtTime(step.pan, time);
+      const combinedPan = Math.max(-1, Math.min(1, step.pan + track.pan));
+      panner.pan.setValueAtTime(combinedPan, time);
 
       // Routing — through per-track FX sends
       source.connect(gain).connect(panner);
@@ -339,6 +579,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   }, [setOnAutomation, dispatch]);
 
 
+
   // Keyboard shortcuts — comprehensive DAW workflow
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -369,11 +610,32 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             return;
           case 'c':
             e.preventDefault();
-            dispatch({ type: 'COPY_TRACK_PATTERN' });
+            if ((state.selectedSteps ?? []).length > 0) {
+              dispatch({ type: 'COPY_SELECTED_STEPS' });
+            } else {
+              dispatch({ type: 'COPY_TRACK_PATTERN' });
+            }
             return;
           case 'v':
             e.preventDefault();
-            dispatch({ type: 'PASTE_TRACK_PATTERN' });
+            if (state.clipboardSteps && state.clipboardSteps.length > 0) {
+              const ss = state.selectedSteps ?? [];
+              const startIdx = ss.length > 0
+                ? Math.min(...ss)
+                : 0;
+              dispatch({ type: 'PASTE_SELECTED_STEPS', startIndex: startIdx });
+            } else {
+              dispatch({ type: 'PASTE_TRACK_PATTERN' });
+            }
+            return;
+          case 'a':
+            e.preventDefault();
+            // Cmd+A: select all steps
+            dispatch({
+              type: 'SELECT_STEP_RANGE',
+              from: 0,
+              to: state.stepCount - 1,
+            });
             return;
         }
         return;
@@ -381,9 +643,20 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
 
       // ─── Single-key shortcuts ───
       switch (e.code) {
+        case 'Escape':
+          if (isFullscreen) {
+            e.preventDefault();
+            setIsFullscreen(false);
+          }
+          setStepDetail(null);
+          setChopperTrackIndex(null);
+          setShowProjectDrawer(false);
+          dispatch({ type: 'CLEAR_SELECTION' });
+          return;
         case 'Space':
           e.preventDefault();
           togglePlay();
+          return;
           break;
         case 'KeyM':
           dispatch({ type: 'TOGGLE_MUTE', trackIndex: state.selectedTrack });
@@ -407,15 +680,20 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           e.preventDefault();
           dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack + 1) % state.tracks.length });
           break;
-        case 'Escape':
-          setStepDetail(null);
-          setChopperTrackIndex(null);
-          setShowProjectDrawer(false);
+        case 'r':
+        case 'R':
+          if (!e.metaKey && !e.ctrlKey) {
+            dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' });
+          }
           break;
         case 'Delete':
         case 'Backspace':
           if (!e.metaKey && !e.ctrlKey) {
-            dispatch({ type: 'CLEAR_TRACK', trackIndex: state.selectedTrack });
+            if ((state.selectedSteps ?? []).length > 0) {
+              dispatch({ type: 'DELETE_SELECTED_STEPS' });
+            } else {
+              dispatch({ type: 'CLEAR_TRACK', trackIndex: state.selectedTrack });
+            }
           }
           break;
         // Number keys 1-8 select tracks
@@ -431,9 +709,13 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [togglePlay, undo, redo, dispatch, state.selectedTrack, state.tracks.length, projectManager]);
+  }, [togglePlay, undo, redo, dispatch, state.selectedTrack, state.tracks.length, projectManager, isFullscreen]);
 
   /* ─── Dispatch Helpers ─── */
+  const handleToggleMute = useCallback((trackIndex: number) => {
+    dispatch({ type: 'TOGGLE_MUTE', trackIndex });
+  }, [dispatch]);
+
   const handleToggleStep = useCallback((trackIndex: number, stepIndex: number) => {
     dispatch({ type: 'TOGGLE_STEP', trackIndex, stepIndex });
     
@@ -504,6 +786,157 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
     setStepDetail({ trackIndex, stepIndex, position });
   }, []);
 
+  /* ─── Phase D: Sample Drag-and-Drop Loading ─── */
+  const handleSampleDrop = useCallback(async (trackIndex: number, file: File) => {
+    if (!audioCtx.current) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const audioBuffer = await audioCtx.current.decodeAudioData(arrayBuffer);
+
+      // Store in the buffers map
+      buffers[trackIndex] = audioBuffer;
+
+      // Auto-convert to sample track if not already
+      const track = state.tracks[trackIndex];
+      if (track.sourceType !== 'sample') {
+        dispatch({ type: 'SET_TRACK_SOURCE', trackIndex, sourceType: 'sample' as const });
+      }
+
+      // Rename track to the file name (strip extension, uppercase, truncate)
+      const name = file.name.replace(/\.[^/.]+$/, '').toUpperCase().slice(0, 12);
+      dispatch({ type: 'RENAME_TRACK', trackIndex, name });
+
+      // Log sample info
+      const duration = audioBuffer.duration.toFixed(2);
+      const channels = audioBuffer.numberOfChannels;
+      const sampleRate = audioBuffer.sampleRate;
+      console.log(`[SacredSequencer] Sample loaded: ${file.name} (${duration}s, ${channels}ch, ${sampleRate}Hz)`);
+    } catch (err) {
+      console.error('[SacredSequencer] Failed to decode audio file:', err);
+    }
+  }, [audioCtx, buffers, dispatch, state.tracks]);
+
+  /* ═══ Track Bounce/Freeze Handlers ═══ */
+
+  const handleFreezeTrack = useCallback(async (trackIndex: number) => {
+    if (bouncingTrack !== null) return; // already bouncing
+    const track = state.tracks[trackIndex];
+    if (!track || track.isFrozen) return;
+
+    setBouncingTrack(trackIndex);
+    setBounceProgress(0);
+
+    try {
+      const pattern = state.activePattern === 'A' ? track.patternA : track.patternB;
+      const trackBuffer = buffers[trackIndex] || null;
+
+      const rendered = await bounceTrack(
+        track,
+        pattern,
+        trackBuffer,
+        {
+          bpm: state.bpm,
+          stepCount: state.stepCount,
+          sampleRate: audioCtx.current?.sampleRate ?? 44100,
+          tailSeconds: 1.0,
+        },
+        (progress: BounceProgress) => {
+          setBounceProgress(progress.percent);
+        }
+      );
+
+      // Store the frozen buffer
+      frozenBuffersRef.current[trackIndex] = rendered;
+
+      // Mark track as frozen in state
+      dispatch({ type: 'FREEZE_TRACK', trackIndex });
+
+      console.log(`[SacredSequencer] Track ${trackIndex} frozen: ${rendered.duration.toFixed(2)}s`);
+    } catch (err) {
+      console.error('[SacredSequencer] Freeze failed:', err);
+    } finally {
+      setBouncingTrack(null);
+      setBounceProgress(0);
+    }
+  }, [bouncingTrack, state.tracks, state.activePattern, state.bpm, state.stepCount, buffers, audioCtx, dispatch]);
+
+  const handleUnfreezeTrack = useCallback((trackIndex: number) => {
+    // Remove frozen buffer and restore live processing
+    delete frozenBuffersRef.current[trackIndex];
+    dispatch({ type: 'UNFREEZE_TRACK', trackIndex });
+    console.log(`[SacredSequencer] Track ${trackIndex} unfrozen`);
+  }, [dispatch]);
+
+  /* ═══ Audio Input Recording Handlers ═══ */
+
+  const handleStartRecording = useCallback(async () => {
+    // Find the record-armed track
+    const armedIdx = state.tracks.findIndex(t => t.isRecordArmed);
+    if (armedIdx < 0) return;
+
+    try {
+      const recorder = new AudioInputRecorder({
+        channelCount: 1,
+        sampleRate: audioCtx.current?.sampleRate ?? 44100,
+        maxDurationSeconds: 120,
+        onLevel: (levelState) => {
+          setRecordingState({
+            isRecording: levelState.isRecording,
+            duration: levelState.duration,
+            peakLevel: levelState.peakLevel,
+          });
+        },
+      });
+
+      await recorder.start(audioCtx.current || undefined);
+      recorderRef.current = recorder;
+    } catch (err) {
+      console.error('[SacredSequencer] Recording failed:', err);
+      setRecordingState(null);
+    }
+  }, [state.tracks, audioCtx]);
+
+  const handleStopRecording = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+
+    const armedIdx = state.tracks.findIndex(t => t.isRecordArmed);
+    const recordedBuffer = recorder.stop();
+    recorder.dispose();
+    recorderRef.current = null;
+    setRecordingState(null);
+
+    if (recordedBuffer && armedIdx >= 0) {
+      // Assign recorded buffer to the armed track
+      buffers[armedIdx] = recordedBuffer;
+
+      // Auto-convert to sample track if needed
+      if (state.tracks[armedIdx].sourceType !== 'sample') {
+        dispatch({ type: 'SET_TRACK_SOURCE', trackIndex: armedIdx, sourceType: 'sample' as const });
+      }
+
+      // Rename track to indicate recording
+      const timestamp = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      dispatch({ type: 'RENAME_TRACK', trackIndex: armedIdx, name: `REC ${timestamp}` });
+
+      // Disarm
+      dispatch({ type: 'TOGGLE_RECORD_ARM', trackIndex: armedIdx });
+
+      console.log(`[SacredSequencer] Recording captured: ${recordedBuffer.duration.toFixed(2)}s → Track ${armedIdx}`);
+    }
+  }, [state.tracks, buffers, dispatch]);
+
+  // Auto-start/stop recording when play state changes and a track is armed
+  useEffect(() => {
+    const hasArmedTrack = state.tracks.some(t => t.isRecordArmed);
+    if (state.isPlaying && hasArmedTrack && !recorderRef.current) {
+      handleStartRecording();
+    } else if (!state.isPlaying && recorderRef.current) {
+      handleStopRecording();
+    }
+  }, [state.isPlaying, state.tracks, handleStartRecording, handleStopRecording]);
+
+
   const handleUpdateStepProp = useCallback((prop: keyof StepState, value: any) => {
     if (!stepDetail) return;
     dispatch({
@@ -543,8 +976,111 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
     }
   }, [state]);
 
+  /* ─── Stem Export (per-track WAVs) ─── */
+  const [isExportingStems, setIsExportingStems] = useState(false);
+  const handleExportStems = useCallback(async () => {
+    if (!isLoadedRef.current || isExportingStems) return;
+    setIsExportingStems(true);
+    try {
+      console.log('Starting Stem Export...');
+      for (let i = 0; i < state.tracks.length; i++) {
+        const track = state.tracks[i];
+        if (track.muted) continue;
+        const buffer = buffers[i];
+        const blob = await ExportEngine.renderStem(state, i, buffer);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeName = track.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        a.download = `stem_${i + 1}_${safeName}_${state.bpm}bpm.wav`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      console.log('Stem Export Complete.');
+    } catch (err) {
+      console.error('Failed to export stems', err);
+    } finally {
+      setIsExportingStems(false);
+    }
+  }, [state, isExportingStems]);
+
+  /* ─── Metronome (click track) ─── */
+  const [metronomeOn, setMetronomeOn] = useState(false);
+  const metronomeRef = useRef<{ osc: OscillatorNode | null; gain: GainNode | null }>({ osc: null, gain: null });
+
+  const triggerMetronomeClick = useCallback((isDownbeat: boolean) => {
+    if (!metronomeOn || !audioCtx.current) return;
+    const ctx = audioCtx.current;
+    const t = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = isDownbeat ? 1000 : 800; // higher pitch on downbeats
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(isDownbeat ? 0.25 : 0.15, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }, [metronomeOn]);
+
   const selectedTrack = state.tracks[state.selectedTrack];
   const selectedPattern = state.activePattern === 'A' ? selectedTrack?.patternA : selectedTrack?.patternB;
+
+  // ─── MIDI Note Input (Live Audition + Piano Roll Recording) ───
+  const selectedSynthEngine = selectedTrack?.sourceType === 'synth' && selectedTrack?.synthConfig
+    ? getSynthEngine(state.selectedTrack, selectedTrack.synthConfig.godId)
+    : null;
+
+  // ─── Arpeggiator ───
+  const arp = useArpeggiator({
+    synthEngine: selectedSynthEngine,
+    bpm: state.bpm,
+    octave: selectedTrack?.synthConfig?.octave ?? 0,
+    enabled: selectedTrack?.sourceType === 'synth',
+  });
+
+  const midiNoteInput = useMidiNoteInput({
+    isArmed: midiNoteArmed && selectedTrack?.sourceType === 'synth',
+    isRecording: state.isRecording ?? false,
+    isPlaying: state.isPlaying,
+    currentStep: state.currentStep,
+    stepCount: state.stepCount,
+    bpm: state.bpm,
+    octave: selectedTrack?.synthConfig?.octave ?? 0,
+    // When arp is enabled, don't let MIDI input play directly — route through arp
+    synthEngine: arp.config.enabled ? null : selectedSynthEngine,
+    onAddNote: (note: PianoRollNote) => {
+      dispatch({ type: 'ADD_PIANO_NOTE', trackIndex: state.selectedTrack, note });
+      // Auto-enable Piano Roll mode
+      if (!selectedTrack?.synthConfig?.usePianoRoll) {
+        dispatch({ type: 'TOGGLE_PIANO_ROLL_MODE', trackIndex: state.selectedTrack });
+      }
+      // Auto-show Piano Roll panel
+      if (!showPianoRoll) setShowPianoRoll(true);
+    },
+    scaleConfig,
+  });
+
+  // Route MIDI notes through arpeggiator when enabled
+  useEffect(() => {
+    if (!arp.config.enabled || !midiNoteArmed) return;
+    // We piggyback on the MIDI input bus directly for arp routing
+    const handleArpNote = (event: any) => {
+      if (event.note === undefined) return;
+      if (event.type === 'midi_note_on') {
+        const velocity7bit = Math.round((event.velocity / 65535) * 127);
+        arp.arpNoteOn(event.note, velocity7bit);
+      }
+      if (event.type === 'midi_note_off') {
+        arp.arpNoteOff(event.note);
+      }
+    };
+    const unsub = neuralInputBus.addListener(handleArpNote);
+    return () => unsub();
+  }, [arp.config.enabled, midiNoteArmed, arp.arpNoteOn, arp.arpNoteOff]);
 
   /* ─── Trap Beat Presets ─── */
   const TRAP_PRESETS = [
@@ -608,7 +1144,10 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
     : '-10px';
 
   return (
-    <div className={`seq-container ${state.isFillMode ? 'seq-container--fill' : ''}`}>
+    <div className={`seq-container ${state.isFillMode ? 'seq-container--fill' : ''} ${isFullscreen ? 'seq-container--fullscreen' : ''}`}>
+      {/* God Realm: Ambient Divine Particle Field */}
+      <DivineParticleField count={18} isPlaying={state.isPlaying} />
+
       {/* Header / Transport */}
       <SacredSequencerHeader
         state={state}
@@ -657,6 +1196,32 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         onToggleProjectDrawer={() => setShowProjectDrawer(prev => !prev)}
         isRecording={state.isRecording}
         onToggleRecord={() => dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' })}
+        onExportStems={handleExportStems}
+        isExportingStems={isExportingStems}
+        metronomeOn={metronomeOn}
+        onToggleMetronome={() => setMetronomeOn(prev => !prev)}
+        showMidiMapper={showMidiMapper}
+        isMidiLearning={midi.isLearning}
+        onToggleMidiMapper={() => setShowMidiMapper(prev => !prev)}
+        showPianoRoll={showPianoRoll}
+        isSynthTrack={selectedTrack.sourceType === 'synth'}
+        onTogglePianoRoll={() => setShowPianoRoll(prev => !prev)}
+        midiNoteArmed={midiNoteArmed}
+        hasActiveMidiInput={midiNoteInput.hasActiveInput}
+        onToggleMidiArm={() => setMidiNoteArmed(prev => !prev)}
+        showArpeggiator={showArpeggiator}
+        arpEnabled={arp.config.enabled}
+        onToggleArpPanel={() => setShowArpeggiator(prev => !prev)}
+        showScaleChord={showScaleChord}
+        scaleEnabled={scaleConfig.enabled}
+        onToggleScalePanel={() => setShowScaleChord(prev => !prev)}
+        showSidechain={showSidechain}
+        sidechainEnabled={sidechain.config.enabled}
+        onToggleSidechain={() => setShowSidechain(prev => !prev)}
+        showMeter={showMeter}
+        onToggleMeter={() => setShowMeter(prev => !prev)}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={() => setIsFullscreen(prev => !prev)}
       />
 
       {/* Playhead Position Bar */}
@@ -698,6 +1263,8 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onOpenStepDetail={(stepIdx, pos) => handleOpenStepDetail(i, stepIdx, pos)}
             onOpenChopper={() => setChopperTrackIndex(i)}
             onRandomize={() => dispatch({ type: 'RANDOMIZE_TRACK', trackIndex: i })}
+            onHumanize={() => dispatch({ type: 'HUMANIZE_TRACK', trackIndex: i, amount: 15 })}
+            onQuantize={() => dispatch({ type: 'QUANTIZE_TRACK', trackIndex: i })}
             onClear={() => dispatch({ type: 'CLEAR_TRACK', trackIndex: i })}
             onToggleMute={() => dispatch({ type: 'TOGGLE_MUTE', trackIndex: i })}
             onToggleSolo={() => dispatch({ type: 'TOGGLE_SOLO', trackIndex: i })}
@@ -739,8 +1306,64 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onSetAutomationCurveType={(trackIndex, param, curveType) =>
               dispatch({ type: 'SET_AUTOMATION_CURVE_TYPE', trackIndex, param, curveType })
             }
+            /* Track reorder */
+            onMoveTrackUp={i > 0 ? () => dispatch({ type: 'REORDER_TRACKS', fromIndex: i, toIndex: i - 1 }) : undefined}
+            onMoveTrackDown={i < state.tracks.length - 1 ? () => dispatch({ type: 'REORDER_TRACKS', fromIndex: i, toIndex: i + 1 }) : undefined}
+            /* Sample drop */
+            onSampleDrop={(file) => handleSampleDrop(i, file)}
+            /* Track pan */
+            trackPan={track.pan}
+            onSetTrackPan={(pan) => dispatch({ type: 'SET_TRACK_PAN', trackIndex: i, pan })}
+            /* Per-track swing */
+            trackSwing={track.swing}
+            onSetTrackSwing={(swing) => dispatch({ type: 'SET_TRACK_SWING', trackIndex: i, swing })}
+            /* Phase C: Multi-step selection */
+            selectedSteps={state.selectedTrack === i ? (state.selectedSteps ?? []) : []}
+            onSelectStep={(stepIndex, additive, range) =>
+              dispatch({ type: 'SELECT_STEP', stepIndex, additive, range })
+            }
+            /* Phase D: Waveform + Ghost Notes */
+            buffer={buffers[i] || null}
+            ghostSteps={state.tracks
+              .filter((_, idx) => idx !== i)
+              .map(t => ({
+                color: t.color,
+                pattern: (state.activePattern === 'A' ? t.patternA : t.patternB)
+                  .slice(0, state.stepCount) as { enabled: boolean }[],
+              }))}
+            /* Phase 5: Polyrhythm */
+            onSetPolymetricLength={(len) => dispatch({ type: 'SET_POLYMETRIC_LENGTH', trackIndex: i, length: len })}
+            /* Track Bounce/Freeze */
+            onFreezeTrack={() => handleFreezeTrack(i)}
+            onUnfreezeTrack={() => handleUnfreezeTrack(i)}
+            onToggleRecordArm={() => dispatch({ type: 'TOGGLE_RECORD_ARM', trackIndex: i })}
+            isBouncing={bouncingTrack === i}
+            bounceProgress={bouncingTrack === i ? bounceProgress : 0}
+            recordingState={track.isRecordArmed ? recordingState : null}
           />
         ))}
+
+        {/* ─── Add Track Button ─── */}
+        {state.tracks.length < 16 && (
+          <div className="seq-add-track-row">
+            <button
+              className="seq-add-track-btn"
+              onClick={() => dispatch({ type: 'ADD_TRACK', sourceType: 'sample' })}
+              title="Add Sample Track"
+            >
+              <span className="seq-add-track-btn__icon">+</span>
+              <span className="seq-add-track-btn__label">ADD TRACK</span>
+            </button>
+            <button
+              className="seq-add-track-btn seq-add-track-btn--synth"
+              onClick={() => dispatch({ type: 'ADD_TRACK', sourceType: 'synth' })}
+              title="Add Synth Track"
+            >
+              <span className="seq-add-track-btn__icon">⚡</span>
+              <span className="seq-add-track-btn__label">ADD SYNTH</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Mixer Strip — FL Studio-style per-track mixer */}
@@ -752,32 +1375,33 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           onSelectTrack={(idx) => dispatch({ type: 'SELECT_TRACK', index: idx })}
           onSetVolume={(trackIndex, volume) => {
             dispatch({ type: 'SET_TRACK_VOLUME', trackIndex, volume });
-            // Live record: capture volume changes as automation
-            if (state.isRecording && state.isPlaying && state.currentStep >= 0) {
-              dispatch({
-                type: 'RECORD_AUTOMATION_SNAPSHOT',
-                trackIndex, param: 'volume',
-                step: state.currentStep,
-                value: Math.min(1, volume / 1.5),  // normalize to 0-1
-              });
-            }
+            recordAutomation(trackIndex, 'volume', Math.min(1, Math.max(0, volume / 1.5)));
+          }}
+          onSetPan={(trackIndex, pan) => {
+            dispatch({ type: 'SET_TRACK_PAN', trackIndex, pan });
+            recordAutomation(trackIndex, 'pan', (Math.max(-1, Math.min(1, pan)) + 1) / 2);
           }}
           onSetFxSend={(trackIndex, fx, value) => {
             dispatch({ type: 'SET_FX_SEND', trackIndex, fx, value });
-            // Live record: capture FX send changes as automation
-            if (state.isRecording && state.isPlaying && state.currentStep >= 0) {
-              const fxParamMap: Record<string, AutomationParam> = {
-                reverb: 'fxReverb', chorus: 'fxChorus', delay: 'fxDelay', saturation: 'fxSaturation',
+            const fxParamMap: Record<string, AutomationParam> = {
+              reverb: 'fxReverb', chorus: 'fxChorus', delay: 'fxDelay', saturation: 'fxSaturation',
+            };
+            const autoParam = fxParamMap[fx];
+            if (autoParam) {
+              recordAutomation(trackIndex, autoParam, Math.min(1, Math.max(0, value / 100)));
+            }
+          }}
+          onSetEQ={(trackIndex, band, value) => {
+            dispatch({ type: 'SET_TRACK_EQ', trackIndex, band, value });
+            // Update FXRack EQ in real-time
+            if (fxRack.current) {
+              const track = state.tracks[trackIndex];
+              const eq = {
+                low: band === 'low' ? value : track.eqLow,
+                mid: band === 'mid' ? value : track.eqMid,
+                high: band === 'high' ? value : track.eqHigh,
               };
-              const autoParam = fxParamMap[fx];
-              if (autoParam) {
-                dispatch({
-                  type: 'RECORD_AUTOMATION_SNAPSHOT',
-                  trackIndex, param: autoParam,
-                  step: state.currentStep,
-                  value: value / 100,  // normalize to 0-1
-                });
-              }
+              fxRack.current.updateTrackEQ(trackIndex, eq);
             }
           }}
           onToggleMute={(trackIndex) => dispatch({ type: 'TOGGLE_MUTE', trackIndex })}
@@ -790,6 +1414,51 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         <SacredFXRackPanel fxRack={fxRack} />
       )}
 
+      {/* Master Metering & Spectrum Analyzer */}
+      {showMeter && (
+        <SacredMasterMeter
+          analyzer={analyzerRef.current}
+          isPlaying={state.isPlaying}
+          bpm={state.bpm}
+        />
+      )}
+
+      {/* MIDI Controller Mapping Panel */}
+      {showMidiMapper && (
+        <SacredMidiMapper
+          mappings={midi.mappings}
+          targets={midi.targets}
+          isLearning={midi.isLearning}
+          learningTargetId={midi.learningTargetId}
+          connectedDevices={midi.connectedDevices}
+          ccActivity={midi.ccActivity}
+          onStartLearn={midi.startLearn}
+          onCancelLearn={midi.cancelLearn}
+          onRemoveMapping={midi.removeMapping}
+          onClearAll={midi.clearAll}
+          onClose={() => setShowMidiMapper(false)}
+        />
+      )}
+      {/* Selection Toolbar — floating when steps are selected */}
+      <SelectionToolbar
+        selectedCount={(state.selectedSteps ?? []).length}
+        hasClipboard={!!(state.clipboardSteps ?? []).length}
+        onCopy={() => dispatch({ type: 'COPY_SELECTED_STEPS' })}
+        onPaste={() => {
+          const ss = state.selectedSteps ?? [];
+          const startIdx = ss.length > 0
+            ? Math.min(...ss)
+            : 0;
+          dispatch({ type: 'PASTE_SELECTED_STEPS', startIndex: startIdx });
+        }}
+        onDelete={() => dispatch({ type: 'DELETE_SELECTED_STEPS' })}
+        onReverse={() => dispatch({ type: 'REVERSE_SELECTED_STEPS' })}
+        onDouble={() => dispatch({ type: 'DOUBLE_SELECTED_STEPS' })}
+        onHalve={() => dispatch({ type: 'HALVE_SELECTED_STEPS' })}
+        onRandomizeVelocity={() => dispatch({ type: 'RANDOMIZE_SELECTED_VELOCITY' })}
+        onClear={() => dispatch({ type: 'CLEAR_SELECTION' })}
+      />
+
       {/* Song Timeline — arrangement row */}
       <SacredSongTimeline
         arrangement={state.songArrangement}
@@ -801,6 +1470,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         onUpdateBlock={(index, changes) => dispatch({ type: 'UPDATE_SONG_BLOCK', index, changes })}
         onSetPosition={(position) => dispatch({ type: 'SET_SONG_POSITION', position })}
         onSetPlaybackMode={(mode) => dispatch({ type: 'SET_PLAYBACK_MODE', mode })}
+        onReorderBlock={(fromIndex, toIndex) => dispatch({ type: 'REORDER_SONG_BLOCKS', fromIndex, toIndex })}
       />
 
       {/* Graph Editor */}
@@ -814,6 +1484,104 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           noteMap={selectedTrack.synthConfig?.noteMap}
           onSetMode={(mode) => dispatch({ type: 'SET_GRAPH_MODE', mode })}
           onSetValue={handleGraphSetValue}
+        />
+      )}
+
+      {/* Piano Roll — for synth tracks */}
+      {showPianoRoll && selectedTrack.sourceType === 'synth' && selectedTrack.synthConfig && (() => {
+        // Compute ghost notes from all other synth tracks
+        const ghostNotes: GhostTrackNotes[] = state.tracks
+          .map((t, i) => ({ track: t, index: i }))
+          .filter(({ track, index }) =>
+            index !== state.selectedTrack &&
+            track.sourceType === 'synth' &&
+            track.synthConfig?.pianoRollNotes &&
+            track.synthConfig.pianoRollNotes.length > 0
+          )
+          .map(({ track, index }) => ({
+            trackIndex: index,
+            trackName: track.name,
+            trackColor: track.color,
+            notes: track.synthConfig!.pianoRollNotes ?? [],
+          }));
+
+        return (
+        <SacredPianoRoll
+          notes={selectedTrack.synthConfig.pianoRollNotes ?? []}
+          stepCount={state.stepCount}
+          currentStep={state.currentStep}
+          isPlaying={state.isPlaying}
+          trackColor={selectedTrack.color}
+          trackIndex={state.selectedTrack}
+          octave={selectedTrack.synthConfig.octave}
+          liveNotes={midiNoteInput.liveNotes}
+          scaleConfig={scaleConfig}
+          ghostNotes={ghostNotes}
+          onAddNote={(note: PianoRollNote) => {
+            dispatch({ type: 'ADD_PIANO_NOTE', trackIndex: state.selectedTrack, note });
+            // Auto-enable Piano Roll mode when first note is added
+            if (!selectedTrack.synthConfig?.usePianoRoll) {
+              dispatch({ type: 'TOGGLE_PIANO_ROLL_MODE', trackIndex: state.selectedTrack });
+            }
+          }}
+          onRemoveNote={(noteId: string) => {
+            dispatch({ type: 'REMOVE_PIANO_NOTE', trackIndex: state.selectedTrack, noteId });
+          }}
+          onUpdateNote={(noteId: string, changes: Partial<Omit<PianoRollNote, 'id'>>) => {
+            dispatch({ type: 'UPDATE_PIANO_NOTE', trackIndex: state.selectedTrack, noteId, changes });
+          }}
+        />
+        );
+      })()}
+
+      {/* Arpeggiator Panel — for synth tracks */}
+      {showArpeggiator && selectedTrack.sourceType === 'synth' && (
+        <SacredArpeggiator
+          config={arp.config}
+          isRunning={arp.isRunning}
+          currentStep={arp.currentStep}
+          sequence={arp.sequence}
+          heldNoteCount={arp.heldNoteCount}
+          onConfigChange={arp.updateConfig}
+        />
+      )}
+
+      {/* Scale & Chord Panel — for synth tracks */}
+      {showScaleChord && selectedTrack.sourceType === 'synth' && selectedTrack.synthConfig && (
+        <SacredScaleChord
+          config={scaleConfig}
+          onConfigChange={(changes) => setScaleConfig(prev => ({ ...prev, ...changes }))}
+          detectedChord={
+            selectedTrack.synthConfig.pianoRollNotes?.length >= 3
+              ? detectChord(selectedTrack.synthConfig.pianoRollNotes.map(n => n.note))
+              : null
+          }
+          insertStep={Math.max(0, state.currentStep)}
+          onInsertChord={(notes) => {
+            notes.forEach(note => {
+              dispatch({ type: 'ADD_PIANO_NOTE', trackIndex: state.selectedTrack, note });
+            });
+            if (!selectedTrack.synthConfig?.usePianoRoll) {
+              dispatch({ type: 'TOGGLE_PIANO_ROLL_MODE', trackIndex: state.selectedTrack });
+            }
+            if (!showPianoRoll) setShowPianoRoll(true);
+          }}
+        />
+      )}
+
+      {/* Sidechain Compressor Panel */}
+      {showSidechain && (
+        <SacredSidechain
+          config={sidechain.config}
+          onConfigChange={sidechain.updateConfig}
+          availableSources={state.tracks.map((t, i) => ({
+            index: i,
+            name: t.name,
+            icon: t.icon,
+            color: t.color,
+          }))}
+          currentTrackIndex={state.selectedTrack}
+          gainReduction={sidechain.gainReduction}
         />
       )}
 
@@ -877,40 +1645,21 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             >
               ✕
             </button>
-            <GodRealmSampleChopper
-              activePad={chopperTrackIndex}
-              parameterValues={{
-                chopMarkers: state.tracks[chopperTrackIndex]?.sampleParams?.slices?.map((s: any) => s.start) || [0.25, 0.5, 0.75],
-                snapToTransient: true,
-                scopeGlobal: true,
-                chopMode: 'Auto',
-                chopperSpeed: 1.0,
-                chopperPitch: 0,
-                chopperFadeIn: 25,
-                chopperFadeOut: 150,
-                chopperGlide: 10,
-                chopperReverse: state.tracks[chopperTrackIndex]?.sampleParams?.reverse ?? false,
-                chopperSensitivity: 50,
-                chopperTrigger: 'MIDI',
-                chopperDryWet: 75,
-                chopperOutputVolume: -3,
-              }}
-              update={(param: string, value: any) => {
-                if (param === 'chopperReverse') {
-                  dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: chopperTrackIndex, param: 'reverse', value });
-                } else if (param === 'chopMarkers') {
-                  // Map markers back to slices
-                  const slices = (value as number[]).map((start: number, i: number) => ({
-                    start,
-                    end: (value as number[])[i + 1] ?? 1.0,
-                    reverse: false,
-                    loop: false,
-                    volume: 1.0,
-                  }));
-                  dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: chopperTrackIndex, param: 'slices', value: slices });
-                }
-              }}
+            <SacredChopper
+              trackIndex={chopperTrackIndex}
+              trackName={state.tracks[chopperTrackIndex]?.name || 'TRACK'}
+              trackColor={state.tracks[chopperTrackIndex]?.color || '#FFD700'}
               buffer={buffers[chopperTrackIndex] || null}
+              sampleParams={state.tracks[chopperTrackIndex]?.sampleParams}
+              onUpdateParam={(param: string, value: any) => {
+                dispatch({
+                  type: 'SET_SAMPLE_PARAM',
+                  trackIndex: chopperTrackIndex,
+                  param,
+                  value,
+                });
+              }}
+              onClose={() => setChopperTrackIndex(null)}
             />
           </div>
         </div>

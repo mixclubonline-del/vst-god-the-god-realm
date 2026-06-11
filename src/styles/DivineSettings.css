@@ -1,0 +1,421 @@
+/* ═══════════════════════════════════════════════════════
+   DIVINE SETTINGS — The Sacred Configuration
+   ─────────────────────────────────────────────────
+   "Even gods must choose their dominion."
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Settings Overlay Backdrop ─── */
+.divine-settings-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  background: rgba(10, 8, 32, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: dsBackdropIn 0.3s ease forwards;
+}
+
+@keyframes dsBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.divine-settings-backdrop--exiting {
+  animation: dsBackdropOut 0.3s ease forwards;
+}
+@keyframes dsBackdropOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ─── Settings Panel — Slide from Right ─── */
+.divine-settings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90%;
+  z-index: 510;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(22, 16, 58, 0.95) 0%, rgba(14, 10, 36, 0.98) 100%);
+  border-left: 1px solid rgba(255, 215, 0, 0.12);
+  box-shadow:
+    -8px 0 40px rgba(0, 0, 0, 0.6),
+    -2px 0 0 rgba(255, 215, 0, 0.06);
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--god-text, #FFF8E1);
+  animation: dsSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes dsSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.divine-settings--exiting {
+  animation: dsSlideOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes dsSlideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+/* ─── Settings Header ─── */
+.ds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.08);
+}
+
+.ds-header__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ds-header__icon {
+  font-size: 18px;
+  color: #FFD700;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.3));
+}
+
+.ds-header__text {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--god-text-dim, #C5B87A);
+}
+
+.ds-header__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--god-text-muted, #7B6F50);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ds-header__close:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #ff6b6b;
+}
+
+/* ─── Scrollable Content ─── */
+.ds-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.15) transparent;
+}
+.ds-content::-webkit-scrollbar { width: 4px; }
+.ds-content::-webkit-scrollbar-track { background: transparent; }
+.ds-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 2px;
+}
+
+/* ─── Section ─── */
+.ds-section {
+  margin-bottom: 24px;
+}
+
+.ds-section__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.06);
+}
+
+.ds-section__icon {
+  font-size: 14px;
+}
+
+.ds-section__title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--god-text-dim, #C5B87A);
+}
+
+/* ─── Setting Row ─── */
+.ds-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.ds-row:hover {
+  background: rgba(255, 215, 0, 0.04);
+}
+
+.ds-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-row__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--god-text, #FFF8E1);
+}
+
+.ds-row__description {
+  font-size: 9px;
+  color: var(--god-text-muted, #7B6F50);
+  letter-spacing: 0.03em;
+}
+
+/* ─── Toggle Switch ─── */
+.ds-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.ds-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.ds-toggle__track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ds-toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--god-text-muted, #7B6F50);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.ds-toggle input:checked + .ds-toggle__track {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+.ds-toggle input:checked + .ds-toggle__track::after {
+  transform: translateX(18px);
+  background: #FFD700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Select Dropdown ─── */
+.ds-select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--god-text, #FFF8E1);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23C5B87A'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.ds-select:hover { border-color: rgba(255, 215, 0, 0.3); }
+.ds-select:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+.ds-select option {
+  background: #16103A;
+  color: #FFF8E1;
+}
+
+/* ─── Path / File Display ─── */
+.ds-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.ds-path__value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--god-text-muted, #7B6F50);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ds-path__btn {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  color: #FFD700;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ds-path__btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+/* ─── Slider ─── */
+.ds-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.ds-slider input[type="range"] {
+  width: 80px;
+  height: 3px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
+}
+
+.ds-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FFD700;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
+}
+
+.ds-slider__value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #FFD700;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ─── Version Info Footer ─── */
+.ds-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 215, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ds-footer__brand {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.ds-footer__version {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--god-text-muted, #7B6F50);
+  letter-spacing: 0.1em;
+}
+
+.ds-footer__credits {
+  font-size: 8px;
+  color: rgba(255, 248, 225, 0.15);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* ─── Gear Button in Header ─── */
+.vg-settings-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--god-text-muted, #7B6F50);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.vg-settings-btn:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.25);
+  color: #FFD700;
+  transform: rotate(45deg);
+}
+
+/* ─── Reset Button ─── */
+.ds-reset-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.15);
+  border-radius: 6px;
+  color: #ff6b6b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ds-reset-btn:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.3);
+}

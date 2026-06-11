@@ -45,6 +45,7 @@ interface SacredAutomationLaneProps {
   stepCount: number;
   currentStep: number;
   isPlaying: boolean;
+  isRecording?: boolean;
   onSetPoint: (param: AutomationParam, point: AutomationPoint) => void;
   onRemovePoint: (param: AutomationParam, pointIndex: number) => void;
   onSetPoints: (param: AutomationParam, points: AutomationPoint[]) => void;
@@ -64,6 +65,7 @@ export const SacredAutomationLane: React.FC<SacredAutomationLaneProps> = ({
   stepCount,
   currentStep,
   isPlaying,
+  isRecording,
   onSetPoint,
   onRemovePoint,
   onSetPoints,
@@ -227,6 +229,7 @@ export const SacredAutomationLane: React.FC<SacredAutomationLaneProps> = ({
   }, [isPencilMode, lane.points, lane.param, getSVGCoords, xToStep, yToValue, stepToX, valueToY, onSetPoint]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation();
     const { x, y } = getSVGCoords(e);
     const step = xToStep(x);
     const value = yToValue(y);
@@ -326,7 +329,7 @@ export const SacredAutomationLane: React.FC<SacredAutomationLaneProps> = ({
 
   return (
     <div
-      className={`sacred-automation-lane ${lane.enabled ? '' : 'disabled'} ${isDrawing ? 'drawing' : ''}`}
+      className={`sacred-automation-lane ${lane.enabled ? '' : 'disabled'} ${isDrawing ? 'drawing' : ''} ${isRecording ? 'recording' : ''}`}
       style={{ '--auto-color': trackColor } as React.CSSProperties}
     >
       {/* ─── Lane Header ─── */}
@@ -470,7 +473,7 @@ export const SacredAutomationLane: React.FC<SacredAutomationLaneProps> = ({
           <line
             x1={playheadX} y1={0}
             x2={playheadX} y2={LANE_HEIGHT}
-            stroke="rgba(255,200,60,0.8)"
+            stroke={isRecording ? "rgba(239, 68, 68, 0.8)" : "rgba(255,200,60,0.8)"}
             strokeWidth={1.5}
             pointerEvents="none"
           />

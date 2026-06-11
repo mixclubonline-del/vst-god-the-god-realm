@@ -316,11 +316,11 @@ export interface AkashicManifest {
 
 // ─── Neural Input Bus Types ────────────────────────────────────────────────
 
-export type InputType = 'midi' | 'keyboard' | 'neural';
+export type InputType = 'midi' | 'midi_cc' | 'midi_note_on' | 'midi_note_off' | 'keyboard' | 'neural';
 
 export interface NeuralInputEvent {
   type: InputType;
-  /** Target pad index (0-15) */
+  /** Target pad index (0-15) for note events */
   target: number;
   /** High-resolution velocity (0-65535 for MIDI 2.0 readiness) */
   velocity: number;
@@ -328,6 +328,14 @@ export interface NeuralInputEvent {
   pressure?: number;
   /** Pitch bend / Timbre shift */
   timbre?: number;
+  /** Original MIDI note number (if type is 'midi') */
+  note?: number;
+  /** CC number (0-127) for midi_cc events */
+  cc?: number;
+  /** MIDI channel (0-15) */
+  channel?: number;
+  /** Device name for identifying source controller */
+  deviceName?: string;
   timestamp: number;
 }
 
@@ -336,4 +344,50 @@ export interface KeyboardMap {
   keys: Record<string, number>;
   /** Key to command mapping (e.g., 'Space' -> 'Toggle Playback') */
   commands: Record<string, string>;
+}
+
+// ─── MIDI Controller Mapping Types ─────────────────────────────────────────
+
+/** Unique key for a MIDI CC source: "channel:cc" e.g. "0:74" */
+export type MidiCCKey = `${number}:${number}`;
+
+/** A mappable parameter target */
+export interface MidiMappableTarget {
+  /** Unique parameter ID e.g. 'seq.bpm', 'track.0.volume' */
+  id: string;
+  /** Human-readable label */
+  label: string;
+  /** Group for UI organization */
+  group: string;
+  /** Value range */
+  min: number;
+  max: number;
+  /** Current value getter */
+  getValue: () => number;
+  /** Value setter — called when CC is received */
+  setValue: (value: number) => void;
+  /** Whether this is a toggle (CC > 64 = on, <= 64 = off) */
+  isToggle?: boolean;
+}
+
+/** A stored mapping between a CC source and a parameter target */
+export interface MidiMapping {
+  /** The CC source key "channel:cc" */
+  ccKey: MidiCCKey;
+  /** CC number */
+  cc: number;
+  /** MIDI channel */
+  channel: number;
+  /** Target parameter ID */
+  targetId: string;
+  /** Target label (for display when target is not registered) */
+  targetLabel: string;
+  /** Device name that created this mapping */
+  deviceName?: string;
+}
+
+/** Serializable mapping store for persistence */
+export interface MidiMappingStore {
+  version: number;
+  mappings: MidiMapping[];
 }

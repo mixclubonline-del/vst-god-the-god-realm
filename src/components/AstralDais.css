@@ -1,0 +1,914 @@
+/* ============================================================
+   AstralDais.css — The Astral Dais · Sacred Pad Grid
+   A 4×4 divine throne grid for the God Realm sampler.
+   ============================================================ */
+
+/* ----- Custom Properties (Component Scope) ----- */
+:root {
+  --dais-bg: #0a0a0f;
+  --dais-surface: rgba(15, 15, 25, 0.85);
+  --dais-surface-raised: rgba(20, 20, 35, 0.9);
+  --dais-border: rgba(255, 255, 255, 0.06);
+  --dais-border-hover: rgba(255, 255, 255, 0.12);
+  --dais-text: rgba(255, 255, 255, 0.88);
+  --dais-text-dim: rgba(255, 255, 255, 0.45);
+  --dais-text-muted: rgba(255, 255, 255, 0.25);
+  --dais-glass-blur: 18px;
+  --dais-radius: 10px;
+  --dais-radius-lg: 14px;
+  --dais-transition-fast: 120ms ease;
+  --dais-transition: 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* ============================================================
+   MAIN CONTAINER
+   ============================================================ */
+.astral-dais {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
+  background: var(--dais-bg);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(90, 60, 180, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(40, 80, 200, 0.04) 0%, transparent 60%);
+  color: var(--dais-text);
+  padding: 16px;
+  padding-bottom: 8px;
+  box-sizing: border-box;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-y: auto;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.astral-dais__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 14px;
+  padding: 0 4px;
+  user-select: none;
+}
+
+.astral-dais__header h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 0 14px rgba(180, 160, 255, 0.15);
+}
+
+.astral-dais__header span {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--dais-text-dim);
+}
+
+
+/* ============================================================
+   PAD GRID — 4×4
+   ============================================================ */
+.astral-dais__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: var(--dais-radius-lg);
+  background: rgba(8, 8, 16, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+
+/* ============================================================
+   THRONE PAD — Individual Pad
+   ============================================================ */
+.astral-throne {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--dais-surface);
+  backdrop-filter: blur(var(--dais-glass-blur));
+  -webkit-backdrop-filter: blur(var(--dais-glass-blur));
+  border: 1px solid rgba(var(--throne-color-rgb, 255, 255, 255), 0.12);
+  border-radius: var(--dais-radius);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color var(--dais-transition),
+    box-shadow var(--dais-transition),
+    transform var(--dais-transition-fast),
+    background var(--dais-transition);
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* Subtle inner highlight — sacred artifact sheen */
+  background-image:
+    linear-gradient(
+      175deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 40%,
+      transparent 100%
+    );
+}
+
+.astral-throne:hover {
+  border-color: rgba(var(--throne-color-rgb, 255, 255, 255), 0.3);
+  background-color: rgba(18, 18, 30, 0.92);
+  box-shadow:
+    0 0 12px rgba(var(--throne-color-rgb, 120, 100, 220), 0.08),
+    inset 0 0 20px rgba(var(--throne-color-rgb, 120, 100, 220), 0.03);
+}
+
+.astral-throne:active {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
+
+
+/* ----- State: Sealed (empty pad) ----- */
+.astral-throne--sealed {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.astral-throne--sealed .astral-throne__sigil {
+  opacity: 0.25;
+  animation: seal-breathe 3s ease-in-out infinite;
+}
+
+.astral-throne--sealed .astral-throne__name {
+  display: none;
+}
+
+
+/* ----- State: Claimed (loaded sample) ----- */
+.astral-throne--claimed {
+  border-color: rgba(var(--throne-color-rgb, 255, 255, 255), 0.3);
+}
+
+.astral-throne--claimed .astral-throne__sigil {
+  opacity: 0.6;
+}
+
+
+/* ----- State: Selected ----- */
+.astral-throne--selected {
+  border-color: rgba(var(--throne-color-rgb, 255, 255, 255), 0.8);
+  transform: scale(1.02);
+  box-shadow:
+    0 0 20px rgba(var(--throne-color-rgb, 120, 100, 220), 0.35),
+    0 0 40px rgba(var(--throne-color-rgb, 120, 100, 220), 0.15),
+    inset 0 0 16px rgba(var(--throne-color-rgb, 120, 100, 220), 0.06);
+  z-index: 2;
+}
+
+.astral-throne--selected .astral-throne__sigil {
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px rgba(var(--throne-color-rgb, 120, 100, 220), 0.4));
+}
+
+
+/* ----- State: Ignited (trigger flash) ----- */
+.astral-throne--ignited {
+  transform: scale(1.04);
+  transition-duration: 60ms;
+  border-color: var(--throne-color, rgba(255, 255, 255, 0.8)) !important;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--throne-color, #FFD700) 55%, transparent),
+    0 0 40px color-mix(in srgb, var(--throne-color, #FFD700) 25%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--throne-color, #FFD700) 15%, transparent) !important;
+}
+
+.astral-throne--ignited .astral-throne__sigil {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--throne-color, #FFD700) 60%, transparent)) brightness(1.3) !important;
+}
+
+.astral-throne__flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--throne-color, #FFD700) 35%, transparent) 0%,
+    color-mix(in srgb, var(--throne-color, #FFD700) 12%, transparent) 50%,
+    transparent 85%
+  );
+  opacity: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  transition: opacity 50ms ease-out;
+}
+
+.astral-throne--ignited .astral-throne__flash {
+  opacity: 1;
+  animation: throne-ignite 180ms ease-out forwards;
+}
+
+
+/* ============================================================
+   THRONE INNER ELEMENTS
+   ============================================================ */
+
+/* Sigil — centered icon/image */
+.astral-throne__sigil {
+  display: block;
+  max-width: 65%;
+  height: auto;
+  margin: auto;
+  opacity: 0.3;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+/* Pad Number — top-right badge */
+.astral-throne__number {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  font-size: 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.4;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Sequencer Dot — top-left indicator */
+.astral-throne__seq-dot {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(var(--throne-color-rgb, 120, 100, 220), 0.2);
+  transition: background var(--dais-transition), box-shadow var(--dais-transition);
+}
+
+.astral-throne__seq-dot--active {
+  background: rgba(var(--throne-color-rgb, 120, 100, 220), 1);
+  box-shadow: 0 0 6px rgba(var(--throne-color-rgb, 120, 100, 220), 0.6);
+}
+
+/* Sample Name — bottom text */
+.astral-throne__name {
+  position: absolute;
+  bottom: 14px;
+  left: 6px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Domain — label below name */
+.astral-throne__domain {
+  position: absolute;
+  bottom: 5px;
+  left: 6px;
+  right: 6px;
+  font-size: 7px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(var(--throne-color-rgb, 120, 100, 220), 0.75);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+/* Level Meter — thin bar at very bottom */
+.astral-throne__level {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--throne-color-rgb, 120, 100, 220), 0.7),
+    rgba(var(--throne-color-rgb, 120, 100, 220), 1)
+  );
+  border-radius: 0 1px 0 0;
+  transition: width 60ms linear;
+  pointer-events: none;
+}
+
+/* Flash Overlay — moved to ignited state section above */
+
+
+/* ============================================================
+   DETAIL PANEL — Below the Grid
+   ============================================================ */
+.astral-dais__detail {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 12px;
+}
+
+.astral-detail {
+  width: 100%;
+  padding: 16px;
+  background: rgba(12, 12, 22, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--dais-radius-lg);
+  box-sizing: border-box;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Detail Header — sigil + domain + lore */
+.astral-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.astral-detail__header img {
+  width: 28px;
+  height: 28px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.astral-detail__header .astral-detail__domain-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.astral-detail__header .astral-detail__lore {
+  font-size: 9px;
+  font-style: italic;
+  color: var(--dais-text-muted);
+  letter-spacing: 0.03em;
+  margin-left: auto;
+  max-width: 50%;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Waveform Display */
+.astral-detail__waveform {
+  width: 100%;
+  height: 80px;
+  background: rgba(5, 5, 12, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+.astral-detail__waveform::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(5, 5, 12, 0.6) 0%,
+    transparent 8%,
+    transparent 92%,
+    rgba(5, 5, 12, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+/* Knobs Row */
+.astral-detail__knobs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+/* Play Mode Selector */
+.astral-detail__playmode {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 2px;
+  width: fit-content;
+}
+
+.astral-detail__playmode button {
+  background: transparent;
+  border: none;
+  color: var(--dais-text-dim);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color var(--dais-transition-fast), background var(--dais-transition-fast);
+}
+
+.astral-detail__playmode button:hover {
+  color: var(--dais-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.astral-detail__playmode button.active,
+.astral-detail__playmode button[aria-pressed="true"] {
+  color: var(--dais-text);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 8px rgba(120, 100, 220, 0.1);
+}
+
+/* Action Buttons Row */
+.astral-detail__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.astral-detail__actions button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--dais-text-dim);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    color var(--dais-transition-fast),
+    background var(--dais-transition-fast),
+    border-color var(--dais-transition-fast);
+}
+
+.astral-detail__actions button:hover {
+  color: var(--dais-text);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* MIDI Mapping Display */
+.astral-detail__midi {
+  font-size: 8px;
+  font-weight: 500;
+  color: var(--dais-text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* ─── Filter Row ─── */
+.astral-detail__filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.astral-detail__filter-type-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  min-width: 40px;
+  text-align: center;
+}
+
+.astral-detail__filter-type-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── FX Send Knobs ─── */
+.astral-detail__knobs--fx {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  gap: 14px;
+}
+
+/* ─── Synth Layer Toggle ─── */
+.astral-detail__action-btn--active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+}
+
+.astral-detail__synth-layer {
+  position: relative;
+  margin-top: 6px;
+}
+
+.astral-detail__god-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--god-color, #fff) 20%, transparent);
+  border-radius: 5px;
+  color: color-mix(in srgb, var(--god-color, #fff) 80%, white);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.astral-detail__god-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: color-mix(in srgb, var(--god-color, #fff) 35%, transparent);
+}
+
+.astral-detail__god-picker-arrow {
+  margin-left: auto;
+  font-size: 7px;
+  opacity: 0.5;
+}
+
+.astral-detail__god-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 20, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 4px;
+  margin-bottom: 4px;
+  z-index: 20;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.astral-detail__god-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s ease;
+}
+
+.astral-detail__god-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--god-color, #fff);
+}
+
+.astral-detail__god-option--active {
+  background: color-mix(in srgb, var(--god-color, #fff) 12%, transparent);
+  color: var(--god-color, #fff);
+  border-left: 2px solid var(--god-color, #fff);
+}
+
+
+/* ============================================================
+   KEYFRAME ANIMATIONS
+   ============================================================ */
+
+/* Sealed pad sigil breathing pulse */
+@keyframes seal-breathe {
+  0%, 100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Throne trigger flash — bright burst that fades */
+@keyframes throne-ignite {
+  0% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+  30% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .astral-dais {
+    padding: 10px;
+  }
+
+  .astral-dais__grid {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .astral-throne__name {
+    font-size: 7px;
+  }
+
+  .astral-throne__sigil {
+    max-width: 55%;
+  }
+
+  .astral-throne__domain {
+    font-size: 6px;
+  }
+
+  .astral-detail {
+    padding: 12px;
+  }
+
+  .astral-detail__waveform {
+    height: 60px;
+  }
+
+  .astral-detail__knobs {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .astral-dais__grid {
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .astral-throne__domain {
+    display: none;
+  }
+
+  .astral-throne__name {
+    bottom: 5px;
+  }
+
+  .astral-dais__header h2 {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+  }
+
+  .astral-detail__header .astral-detail__lore {
+    display: none;
+  }
+}
+
+
+/* ============================================================
+   MINI SEQUENCER STRIP — Collapsible Step View
+   ============================================================ */
+.mini-seq-container {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 8px;
+}
+
+/* Toggle Bar */
+.mini-seq__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px;
+  background: rgba(12, 12, 22, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: var(--dais-text-dim);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.mini-seq__toggle:hover {
+  background: rgba(18, 18, 30, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--dais-text);
+}
+
+.mini-seq__toggle-chevron {
+  font-size: 10px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.5;
+}
+.mini-seq__toggle--expanded .mini-seq__toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.mini-seq__toggle-label {
+  flex: 1;
+  text-align: left;
+}
+
+.mini-seq__toggle-count {
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(255, 215, 0, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.mini-seq__toggle-playing {
+  font-size: 8px;
+  color: #22c55e;
+  animation: mini-seq-playing-pulse 1s ease-in-out infinite;
+}
+@keyframes mini-seq-playing-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Collapsible Strip */
+.mini-seq {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mini-seq--expanded {
+  max-height: 320px;
+}
+
+.mini-seq__tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0 4px;
+}
+
+/* Track Row */
+.mini-seq__track {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+}
+.mini-seq__track--muted {
+  opacity: 0.3;
+}
+
+.mini-seq__track-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.mini-seq__track-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px color-mix(in srgb, var(--track-color, #FFD700) 40%, transparent);
+}
+
+.mini-seq__track-label {
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--dais-text-muted);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Step Grid */
+.mini-seq__steps {
+  display: grid;
+  grid-template-columns: repeat(var(--step-count, 16), 1fr);
+  gap: 2px;
+  flex: 1;
+}
+
+.mini-seq__step {
+  width: 100%;
+  aspect-ratio: 1.4;
+  min-height: 12px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s, box-shadow 0.1s;
+}
+.mini-seq__step:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Beat marker (every 4th step) */
+.mini-seq__step--beat {
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Active Step */
+.mini-seq__step--on {
+  background: color-mix(in srgb, var(--track-color, #FFD700) calc(var(--step-velocity, 0.8) * 70%), rgba(255, 255, 255, 0.08));
+  box-shadow: 0 0 4px color-mix(in srgb, var(--track-color, #FFD700) 25%, transparent);
+}
+.mini-seq__step--on:hover {
+  background: color-mix(in srgb, var(--track-color, #FFD700) 80%, rgba(255, 255, 255, 0.15));
+}
+
+/* Current Step (Playhead) */
+.mini-seq__step--current {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -1px;
+  animation: mini-seq-pulse 0.15s ease-out;
+}
+.mini-seq__step--current.mini-seq__step--on {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--track-color, #FFD700) 50%, transparent);
+}
+
+@keyframes mini-seq-pulse {
+  0% { outline-color: rgba(255, 255, 255, 0.9); }
+  100% { outline-color: rgba(255, 255, 255, 0.5); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .mini-seq__step {
+    min-height: 10px;
+  }
+  .mini-seq__track-info {
+    width: 24px;
+  }
+  .mini-seq__steps {
+    gap: 1px;
+  }
+}
+

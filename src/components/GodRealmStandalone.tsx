@@ -10,8 +10,6 @@ import {
   Share2,
   Download,
   RotateCcw,
-  Play,
-  Square,
   Zap,
   Layers,
   ChevronRight,
@@ -62,8 +60,6 @@ const normalizeRoutingChain = (chain: Array<{ instanceId: string; type: string; 
  */
 export const GodRealmStandalone: React.FC = () => {
   const [logs, setLogs] = useState<{ id: string; time: string; param: string; value: any }[]>([]);
-  const [bpm, setBpm] = useState(140);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState('Plugin');
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'analyzing' | 'compressing' | 'finalizing' | 'complete'>('idle');
@@ -241,26 +237,6 @@ export const GodRealmStandalone: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-8 w-px bg-white/10 mx-2" />
-
-          {/* Transport Controls */}
-          <div className="flex items-center gap-1 bg-white/5 rounded-full p-1 border border-white/5">
-            <button 
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isPlaying ? 'bg-emerald-500 text-black' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-            >
-              {isPlaying ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-            </button>
-            <div className="flex items-center gap-2 px-3">
-               <span className="text-[10px] font-mono font-bold text-white/40 uppercase">BPM</span>
-               <input 
-                 type="number" 
-                 value={bpm} 
-                 onChange={(e) => setBpm(Number(e.target.value))}
-                 className="bg-transparent border-0 w-8 text-xs font-mono font-bold focus:outline-none text-emerald-400"
-               />
-            </div>
-          </div>
         </div>
 
         {/* Workspace Navigation */}

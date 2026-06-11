@@ -1,4 +1,5 @@
 import type { DSPChainModule, DSPModuleType } from './types';
+import type { BufferRegistry } from '../audio/BufferRegistry';
 
 export interface SamplePreviewController {
   path: string;
@@ -335,6 +336,7 @@ export class GodRealmSamplerEngine {
   private activeVoices: Set<SamplerVoice> = new Set();
   private maxVoices = 16;
   public manifest: LibraryManifest | null = null;
+  private _registry: BufferRegistry | null = null; // Phase 2: Unified buffer pool
   
   private moduleNodes: ModuleNode[] = [];
   private masterGain: GainNode | null = null;
@@ -376,10 +378,13 @@ export class GodRealmSamplerEngine {
   private lfoGains: GainNode[] = [];
   private modulationMatrix: Map<string, AudioParam[]> = new Map();
 
+  private currentRoundRobinSlot = 0;
+
   private _detuneCents = 0;
   private _masterVolume = 0.8;
   private _chain: DSPChainModule[] = [];
   private isInitialized = false;
+  private _ownsContext = true;  // Phase 1: tracks whether we own the AudioContext
   private abortController: AbortController | null = null;
 
   // Neural Orchestration
@@ -393,7 +398,8 @@ export class GodRealmSamplerEngine {
   
   // Arp/Gate Engine
   private arpEnabled = false;
-  private arpRate = 0.125; // 1/8 note default
+  private arpNoteDivision = 0.25; // Phase 5: beat-relative (0.25 = quarter note)
+  private arpRate = 0.125; // computed: arpNoteDivision * (60 / _bpm)
   private arpGate = 0.8;
   private arpSwing = 0;
   private arpOctaves = 1;
@@ -401,12 +407,54 @@ export class GodRealmSamplerEngine {
   private currentArpStep = 0;
   private nextStepTime = 0;
   private arpTimerId: any = null;
+  private clockNode: AudioWorkletNode | null = null;
+  private _bpm = 140; // Phase 5: synced from transport
   private heldPads: Set<number> = new Set();
 
-  async init(): Promise<void> {
+  /**
+   * Initialize the engine.
+   * @param externalCtx - Optional shared AudioContext from the plugin.
+   *                      If provided, the engine uses it instead of creating its own.
+   *                      The caller is responsible for closing it.
+   */
+  async init(externalCtx?: AudioContext, registry?: BufferRegistry): Promise<void> {
     if (this.isInitialized) return;
     this.abortController = new AbortController();
-    this.ctx = new AudioContext();
+
+    // Phase 2: Store reference to the shared buffer registry
+    if (registry) {
+      this._registry = registry;
+    }
+
+    // Phase 1: Use shared AudioContext if provided
+    if (externalCtx) {
+      this.ctx = externalCtx;
+      this._ownsContext = false;
+    } else {
+      this.ctx = new AudioContext();
+      this._ownsContext = true;
+    }
+
+    try {
+      // In Vite, ?url explicitly tells the bundler to treat this as an asset URL.
+      // And we use .js because AudioWorklets must be valid JS (browsers can't parse TS).
+      const workletUrl = new URL('../audio/godRealmWorklet.js?url', import.meta.url);
+      await this.ctx.audioWorklet.addModule(workletUrl.href);
+      if (this.ctx.state === 'closed') return; // Component unmounted, abort init
+      
+      this.clockNode = new AudioWorkletNode(this.ctx, 'god-realm-clock-worklet');
+      this.clockNode.port.onmessage = (e) => {
+        if (e.data.type === 'tick') {
+          if (this.arpEnabled) this.scheduler();
+        }
+      };
+      this.clockNode.connect(this.ctx.destination);
+    } catch (err) {
+      console.warn('GodRealmSamplerEngine failed to load Clock Worklet, falling back to setTimeout', err);
+    }
+    
+    if (this.ctx.state === 'closed') return; // Final check before massive node creation
+
     this.irBuffer = generateSyntheticIR(this.ctx, 2.5, 2.8);
     
     this.analyserNode = this.ctx.createAnalyser();
@@ -506,8 +554,8 @@ export class GodRealmSamplerEngine {
     this.masterLimiter.connect(this.masterCeilingGain);
     this.masterCeilingGain.connect(this.masterSoftClipper);
     this.masterSoftClipper.connect(this.analyserNode);
-    // ─── Slot Infrastructure (6 Slots) ───
-    for (let i = 0; i < 6; i++) {
+    // ─── Slot Infrastructure (16 Slots — Phase 3: expanded to match sequencer tracks 1:1) ───
+    for (let i = 0; i < 16; i++) {
       const g = this.ctx.createGain();
       const s = this.ctx.createWaveShaper();
       s.curve = makeVelvetCurve(1.0, 0.5);
@@ -603,17 +651,96 @@ export class GodRealmSamplerEngine {
 
   public async loadSampleByPath(path: string, slotIndex: number, signal?: AbortSignal): Promise<void> {
     if (!this.ctx || slotIndex < 0 || slotIndex >= 16) return;
+
+    // Phase 2: Delegate to BufferRegistry when available
+    if (this._registry) {
+      const buf = await this._registry.loadFromPath(this.ctx, path, slotIndex, undefined, signal);
+      if (buf) {
+        // Keep internal array in sync for voice playback lookups
+        this.buffers[slotIndex] = buf;
+        this.reversedBuffers[slotIndex] = null; // invalidate cached reverse
+      }
+      return;
+    }
+
+    // Legacy fallback: direct loading
     try {
       const response = await fetch(path, { signal });
       if (!response.ok) throw new Error(`Failed to load sample at ${path}`);
       const arrayBuffer = await response.arrayBuffer();
       if (signal?.aborted || !this.ctx) return;
       this.buffers[slotIndex] = await this.ctx.decodeAudioData(arrayBuffer);
+      this.reversedBuffers[slotIndex] = null;
       console.log(`Divine Sound Assigned to Slot ${slotIndex}:`, path.split('/').pop());
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error(`Error loading sample ${path}:`, err);
       }
+    }
+  }
+
+  /**
+   * Load a sample from a File object (e.g., from directory picker or drag-and-drop).
+   * Used by the Kontakt Kit Loader.
+   */
+  public async loadSampleFromFile(file: File, slotIndex: number): Promise<void> {
+    if (!this.ctx || slotIndex < 0 || slotIndex >= 16) return;
+
+    // Phase 2: Delegate to BufferRegistry when available
+    if (this._registry) {
+      const buf = await this._registry.loadFromFile(this.ctx, file, slotIndex);
+      if (buf) {
+        this.buffers[slotIndex] = buf;
+        this.reversedBuffers[slotIndex] = null;
+      }
+      return;
+    }
+
+    // Legacy fallback
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      if (!this.ctx) return;
+      this.buffers[slotIndex] = await this.ctx.decodeAudioData(arrayBuffer);
+      this.reversedBuffers[slotIndex] = null;
+      console.log(`Kit Sample Loaded to Slot ${slotIndex}:`, file.name);
+    } catch (err) {
+      console.error(`Error loading sample file ${file.name}:`, err);
+    }
+  }
+
+  /**
+   * Batch-load multiple samples from File objects into their target slots.
+   * Used by the Kontakt Kit Loader for one-click kit loading.
+   */
+  public async loadKit(samples: { file: File; slotIndex: number }[]): Promise<void> {
+    await Promise.all(samples.map(s => this.loadSampleFromFile(s.file, s.slotIndex)));
+    console.log(`Kit Loaded: ${samples.length} samples assigned`);
+  }
+
+  /**
+   * Preview a sample from a File object (e.g., kit browser audition).
+   */
+  public async previewFile(file: File): Promise<void> {
+    if (!this.ctx || !this.masterGain) return;
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    this.stopPreview();
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = await this.ctx.decodeAudioData(arrayBuffer);
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.masterGain);
+      this.activePreview = source;
+
+      source.onended = () => {
+        if (this.activePreview === source) this.activePreview = null;
+        try { source.disconnect(); } catch {}
+      };
+
+      source.start(0);
+    } catch (err) {
+      console.error('Kit Preview Failed:', err);
     }
   }
 
@@ -684,13 +811,97 @@ export class GodRealmSamplerEngine {
     }
   }
 
-  dispose(): void {
+  public async triggerMidiNote(note: number, velocity: number): Promise<void> {
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+
+    // 1. Gather active/powered slots
+    const activeSlots: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const isPowered = this.lastParams[`slotPower_${i}`] !== false;
+      const hasBuffer = this.buffers[i] !== null;
+      if (isPowered && hasBuffer) {
+        activeSlots.push(i);
+      }
+    }
+
+    if (activeSlots.length === 0) return;
+
+    // 2. Select slot(s) to play based on slotPlayMode
+    const playMode = this.lastParams.slotPlayMode || 0; // 0 = Layer, 1 = RR, 2 = Random
+    let slotsToPlay: number[] = [];
+
+    if (playMode === 0) {
+      // Layer Mode: Play all active slots
+      slotsToPlay = activeSlots;
+    } else if (playMode === 1) {
+      // Round Robin: Cycle through active slots
+      const rrIdx = this.currentRoundRobinSlot;
+      const slot = activeSlots[rrIdx % activeSlots.length];
+      slotsToPlay = [slot];
+      this.currentRoundRobinSlot = (rrIdx + 1) % activeSlots.length;
+    } else {
+      // Random: Pick one active slot at random
+      const randIdx = Math.floor(Math.random() * activeSlots.length);
+      slotsToPlay = [activeSlots[randIdx]];
+    }
+
+    // 3. Trigger each selected slot at the pitch of the MIDI note
+    // MIDI note 60 (C3) is baseline (no transpose).
+    const pitchOffset = note - 60;
+    const globalTune = this.lastParams.tuneSemitones || 0;
+
+    for (const slotIdx of slotsToPlay) {
+      const voice = this.findFreeVoice();
+      const { adsr, filter, pan, rate } = this.getVoiceParams(slotIdx);
+      
+      const tune = this.lastParams[`slotTune_${slotIdx}`] || 50;
+      const fine = this.lastParams[`slotFine_${slotIdx}`] || 50;
+      const slotTuneSemitones = (tune - 50) * 0.48 + (fine - 50) * 0.02;
+      
+      const totalPitchShift = pitchOffset + slotTuneSemitones + globalTune;
+      const finalRate = rate * Math.pow(2, totalPitchShift / 12);
+
+      // Route voice through the slot's DSP chain
+      const slotIdxBounded = slotIdx % this.slotGains.length;
+      if (this.slotGains[slotIdxBounded]) {
+        voice.setDestination(this.slotGains[slotIdxBounded]);
+      }
+
+      const sliceStart = this.lastParams[`slot${slotIdx}_sliceStart`] as number | undefined;
+      const sliceDuration = this.lastParams[`slot${slotIdx}_sliceDuration`] as number | undefined;
+
+      voice.trigger(
+        this.buffers[slotIdx]!,
+        this.ctx.currentTime,
+        sliceStart ?? 0, // start offset
+        sliceDuration, // duration (play full sample if undefined)
+        finalRate,
+        adsr,
+        filter,
+        pan,
+        slotIdx,
+        false // loop
+      );
+
+      // Trigger sub-layers for this slot
+      this.triggerSubOsc(slotIdx);
+      this.triggerMulti808(slotIdx);
+      this.triggerCelestialKeys(slotIdx);
+    }
+  }
+
+  public dispose(): void {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
     }
     
     this.stopPreview();
+    this.stopArp();
+    if (this.clockNode) {
+      this.clockNode.disconnect();
+    }
     
     // Properly stop and disconnect all voices
     for (const voice of this.voices) {
@@ -707,12 +918,42 @@ export class GodRealmSamplerEngine {
     this.lfos.forEach(lfo => { try { lfo.stop(); } catch(e){} });
 
     if (this.ctx) {
-      this.ctx.close();
+      // Phase 1: Only close the context if we created it ourselves
+      if (this._ownsContext) {
+        this.ctx.close();
+      }
       this.ctx = null;
     }
     this.isInitialized = false;
   }
-  // Removed orphaned code block
+
+  /**
+   * Phase 3: Route the engine's final output to an external destination
+   * (e.g., the Celestial Forge MasterChain input) instead of ctx.destination.
+   *
+   * The God Engine's internal processing chain (body/soul/saturator/silk/M-S/limiter)
+   * acts as a "sampler bus", and the external destination is the sovereign master.
+   */
+  routeOutput(destination: AudioNode): void {
+    if (!this.ctx || !this.analyserNode) return;
+    try {
+      this.analyserNode.disconnect(this.ctx.destination);
+    } catch (_) {
+      // May not be connected to destination yet
+    }
+    this.analyserNode.connect(destination);
+    console.log('[God Engine] Output routed to Celestial Forge');
+  }
+
+  /**
+   * Phase 5: Sync BPM from the unified transport.
+   * Recalculates arp timing to stay locked to the beat.
+   */
+  setBpm(bpm: number): void {
+    this._bpm = Math.max(20, Math.min(300, bpm));
+    // Recalculate arpRate from the stored note division
+    this.arpRate = this.arpNoteDivision * (60 / this._bpm);
+  }
   
 
 
@@ -797,8 +1038,10 @@ export class GodRealmSamplerEngine {
       };
     }
 
-    // Scope Logic: Global vs Slice
-    const scopeGlobal = this.lastParams.scopeGlobal ?? true;
+    // Zero-Copy Playback Logic
+    const sliceStartParam = this.lastParams[`slot${index}_sliceStart`] as number | undefined;
+    const sliceDurParam = this.lastParams[`slot${index}_sliceDuration`] as number | undefined;
+
     let playStart = Math.max(0, startTime);
     let playDuration = duration;
     
@@ -806,20 +1049,9 @@ export class GodRealmSamplerEngine {
       ? this.reversedBuffers[index]! 
       : this.buffers[index]!;
 
-    if (!scopeGlobal && sourceBuffer) {
-      const bufferDuration = sourceBuffer.duration;
-      const chopMarkers = this.lastParams.chopMarkers || [];
-      const sortedMarkers = [0, ...chopMarkers, 1.0].sort((a,b)=>a-b);
-      
-      const normalizedStart = playStart / bufferDuration;
-      
-      for (let i = 0; i < sortedMarkers.length - 1; i++) {
-        if (normalizedStart >= sortedMarkers[i] - 0.001 && normalizedStart < sortedMarkers[i+1] + 0.001) {
-          playStart = sortedMarkers[i] * bufferDuration;
-          playDuration = (sortedMarkers[i+1] - sortedMarkers[i]) * bufferDuration;
-          break;
-        }
-      }
+    if (sliceStartParam !== undefined && sliceDurParam !== undefined) {
+      playStart = sliceStartParam;
+      playDuration = sliceDurParam;
     }
 
     // If reversed, the start point needs to be flipped relative to the buffer end
@@ -1005,36 +1237,26 @@ export class GodRealmSamplerEngine {
       const end = sortedMarkers[i+1] * buffer.duration;
       const duration = end - start;
 
-      // Extract the slice into a new buffer
-      const startSample = Math.floor(sortedMarkers[i] * buffer.length);
-      const endSample = Math.floor(sortedMarkers[i+1] * buffer.length);
-      const sliceLength = endSample - startSample;
+      if (duration <= 0) continue;
 
-      if (sliceLength <= 0) continue;
-
-      const sliceBuffer = this.ctx.createBuffer(
-        buffer.numberOfChannels,
-        sliceLength,
-        buffer.sampleRate
-      );
-
-      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-        const srcData = buffer.getChannelData(ch).subarray(startSample, endSample);
-        sliceBuffer.getChannelData(ch).set(srcData);
-      }
-
-      // Assign to the pad
-      this.buffers[i] = sliceBuffer;
-      this.reversedBuffers[i] = null; // Clear old reversed buffer
+      // Zero-Copy: Assign the original buffer reference
+      this.buffers[i] = buffer;
+      this.reversedBuffers[i] = this.reversedBuffers[sourceIndex] || null;
       
-      // Update pad specific params if needed
+      // Update pad specific params for zero-copy playback
+      this.lastParams[`slot${i}_sliceStart`] = start;
+      this.lastParams[`slot${i}_sliceDuration`] = duration;
       this.lastParams[`slot${i}_name`] = `Slice ${i+1}`;
     }
     
-    console.log(`Sliced ${sliceCount} parts to pads 0-${sliceCount-1}`);
+    console.log(`Sliced ${sliceCount} parts to pads 0-${sliceCount-1} (Zero-Copy)`);
   }
 
   getBuffer(index: number): AudioBuffer | null {
+    // Phase 2: Delegate to registry when available
+    if (this._registry) {
+      return this._registry.getBuffer(index);
+    }
     return this.buffers[index];
   }
 
@@ -1931,6 +2153,8 @@ export class GodRealmSamplerEngine {
     if (!this.ctx) return;
     this.currentArpStep = 0;
     this.nextStepTime = this.ctx.currentTime;
+    
+    // If we have a Worklet, it's ticking already, but we need to run an initial scheduling pass
     this.scheduler();
   }
 
@@ -1950,7 +2174,10 @@ export class GodRealmSamplerEngine {
       this.currentArpStep = (this.currentArpStep + 1) % this.arpSteps;
     }
     
-    this.arpTimerId = setTimeout(() => this.scheduler(), 25);
+    if (!this.clockNode) {
+      if (this.arpTimerId) clearTimeout(this.arpTimerId);
+      this.arpTimerId = setTimeout(() => this.scheduler(), 25);
+    }
   }
 
   private scheduleStep(step: number, time: number): void {
@@ -1995,6 +2222,57 @@ export class GodRealmSamplerEngine {
     );
   }
 
+  /**
+   * Phase 6: Cross-Engine Voice Routing.
+   * The sequencer calls this to trigger a pad/slot at a precisely scheduled time.
+   * All per-slot DSP (gain → saturator → panner → analyser) is applied.
+   *
+   * @param padIndex - Pad/track index (0-15)
+   * @param time     - AudioContext scheduled time (from sequencer scheduler)
+   * @param velocity - 0-127 velocity
+   * @param pitch    - Semitone offset (-24 to +24, default 0)
+   * @param decay    - Decay factor (0-1, default 0.5)
+   */
+  triggerPadAtTime(
+    padIndex: number,
+    time: number,
+    velocity: number = 127,
+    pitch: number = 0,
+    decay: number = 0.5,
+  ): void {
+    if (!this.ctx || !this.buffers[padIndex]) return;
+
+    const voice = this.findFreeVoice();
+    const { adsr, filter, pan, rate } = this.getVoiceParams(padIndex);
+
+    // Pitch shift from sequencer step
+    const pitchRate = rate * Math.pow(2, pitch / 12);
+
+    // Velocity scaling
+    const velGain = velocity / 127;
+
+    // Route through slot DSP chain
+    const slotIdx = padIndex % this.slotGains.length;
+    if (this.slotGains[slotIdx]) {
+      voice.setDestination(this.slotGains[slotIdx]);
+    }
+
+    // Decay duration
+    const decayDuration = 0.05 + decay * 2.0;
+
+    voice.trigger(
+      this.buffers[padIndex]!,
+      time,
+      0,
+      decayDuration,
+      pitchRate,
+      { ...adsr, sustain: adsr.sustain * velGain },
+      filter,
+      pan,
+      padIndex
+    );
+  }
+
   updateFromParameters(params: Record<string, any>): void {
     if (!this.ctx) return;
     this.lastParams = { ...this.lastParams, ...params };
@@ -2002,7 +2280,7 @@ export class GodRealmSamplerEngine {
     // Arp Controls
     if (params['arpEnabled'] !== undefined) {
       this.arpEnabled = params['arpEnabled'];
-      if (this.arpEnabled && !this.arpTimerId) {
+      if (this.arpEnabled && !this.arpTimerId && !this.clockNode) {
         this.startArp();
       } else if (!this.arpEnabled && this.arpTimerId) {
         this.stopArp();
@@ -2010,9 +2288,11 @@ export class GodRealmSamplerEngine {
     }
 
     if (params['arpRate'] !== undefined) {
-      const rates = [1, 0.5, 0.25, 0.125, 0.0625];
-      const idx = Math.floor((params['arpRate'] / 100) * (rates.length - 1));
-      this.arpRate = rates[idx];
+      // Phase 5: Store as beat-relative division, compute actual rate from BPM
+      const divisions = [4, 2, 1, 0.5, 0.25]; // whole, half, quarter, 8th, 16th (in beats)
+      const idx = Math.floor((params['arpRate'] / 100) * (divisions.length - 1));
+      this.arpNoteDivision = divisions[idx];
+      this.arpRate = this.arpNoteDivision * (60 / this._bpm);
     }
     if (params['arpGate'] !== undefined) this.arpGate = params['arpGate'] / 100;
     if (params['arpSwing'] !== undefined) this.arpSwing = params['arpSwing'] / 100;
@@ -2046,6 +2326,65 @@ export class GodRealmSamplerEngine {
       // Slot texture logic: Handled by Neural Orchestration for blended intelligence
       if (id.startsWith('slotTexture_')) {
         // No manual update here anymore, applyNeuralOrchestration will handle it
+      }
+
+      // Per-slot ADSR envelope — map from UI params (slotAttack_N) to engine format (slotN_attack)
+      if (id.startsWith('slotAttack_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 0.001s – 2.0s (exponential for musical feel)
+        this.lastParams[`slot${idx}_attack`] = 0.001 + (value / 100) * (value / 100) * 2.0;
+      }
+      if (id.startsWith('slotDecay_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 0.01s – 3.0s
+        this.lastParams[`slot${idx}_decay`] = 0.01 + (value / 100) * (value / 100) * 3.0;
+      }
+      if (id.startsWith('slotSustain_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 0.0 – 1.0 (linear)
+        this.lastParams[`slot${idx}_sustain`] = value / 100;
+      }
+      if (id.startsWith('slotRelease_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 0.01s – 5.0s
+        this.lastParams[`slot${idx}_release`] = 0.01 + (value / 100) * (value / 100) * 5.0;
+      }
+
+      // Per-slot Filter — map from UI (slotFilterFreq_N) to engine (slotN_filterFreq)
+      if (id.startsWith('slotFilterType_')) {
+        const idx = parseInt(id.split('_')[1]);
+        this.lastParams[`slot${idx}_filterType`] = value; // BiquadFilterType string
+      }
+      if (id.startsWith('slotFilterFreq_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 20Hz – 20000Hz (logarithmic for musical frequency sweep)
+        const minF = Math.log(20);
+        const maxF = Math.log(20000);
+        const freq = Math.exp(minF + (value / 100) * (maxF - minF));
+        this.lastParams[`slot${idx}_filterFreq`] = freq;
+      }
+      if (id.startsWith('slotFilterQ_')) {
+        const idx = parseInt(id.split('_')[1]);
+        // Map 0-100 → 0.5 – 20 (logarithmic for resonance)
+        this.lastParams[`slot${idx}_filterQ`] = 0.5 + (value / 100) * 19.5;
+      }
+
+      // Per-slot FX Sends — store normalized 0-1 for send bus routing
+      if (id.startsWith('slotFxRev_')) {
+        const idx = parseInt(id.split('_')[1]);
+        this.lastParams[`slot${idx}_fxRev`] = value / 100;
+      }
+      if (id.startsWith('slotFxChr_')) {
+        const idx = parseInt(id.split('_')[1]);
+        this.lastParams[`slot${idx}_fxChr`] = value / 100;
+      }
+      if (id.startsWith('slotFxDly_')) {
+        const idx = parseInt(id.split('_')[1]);
+        this.lastParams[`slot${idx}_fxDly`] = value / 100;
+      }
+      if (id.startsWith('slotFxSat_')) {
+        const idx = parseInt(id.split('_')[1]);
+        this.lastParams[`slot${idx}_fxSat`] = value / 100;
       }
 
       // Bypass toggles
@@ -2379,8 +2718,8 @@ export class GodRealmSamplerEngine {
       const thresholdDb = -1.0 - (energyFactor * 10.5) - (divinePower * 2.5);
       this.masterLimiter.threshold.setTargetAtTime(thresholdDb, now, 0.3);
       
-      // Ratio: Dynamic from 4:1 (transparent) to 50:1 (brickwall)
-      const ratio = 4 + (energyFactor * 46);
+      // Ratio: Dynamic from 4:1 (transparent) to 20:1 (brickwall max for Web Audio API)
+      const ratio = Math.min(20, 4 + (energyFactor * 16));
       this.masterLimiter.ratio.setTargetAtTime(ratio, now, 0.4);
     }
 

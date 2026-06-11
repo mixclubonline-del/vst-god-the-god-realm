@@ -1,418 +1,835 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { GodRealmSamplerEngine } from '@/services/samplerEngine';
+/**
+ * SacredChopper — God Realm Sample Slicer & Editor
+ *
+ * Overhauled: Vanilla CSS, persisted params, Grid/Auto chop modes,
+ * add/remove slice markers, slice preview playback, performance-aware animation.
+ */
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import './SacredChopper.css';
 
-interface GodRealmSampleChopperProps {
-  activePad: number;
-  parameterValues: Record<string, any>;
-  update: (id: string, val: any) => void;
-  /** Optional engine ref — enables live waveform rendering & transient snap */
-  engineRef?: React.MutableRefObject<GodRealmSamplerEngine | null>;
-  /** Optional pre-loaded buffer fallback (used when engineRef isn't available) */
-  buffer?: AudioBuffer | null;
+export interface SacredChopperProps {
+  trackIndex: number;
+  trackName: string;
+  trackColor: string;
+  buffer: AudioBuffer | null;
+  sampleParams: {
+    start: number;
+    end: number;
+    reverse: boolean;
+    slices: { start: number; end: number }[];
+    chopperSpeed: number;
+    chopperPitch: number;
+    chopperFadeIn: number;
+    chopperFadeOut: number;
+    chopperGlide: number;
+    chopperSensitivity: number;
+    chopperTrigger: 'MIDI' | 'Gate' | 'OneShot';
+    chopperDryWet: number;
+    chopperOutputVolume: number;
+    chopMode: 'Manual' | 'Auto' | 'Grid';
+    scopeGlobal: boolean;
+    snapToTransient: boolean;
+    snapToZero: boolean;
+  };
+  onUpdateParam: (param: string, value: any) => void;
+  onClose: () => void;
+  onSpreadToPads?: (slices: { start: number; end: number; sliceStart?: number; sliceDuration?: number; buffer: AudioBuffer }[]) => void;
 }
 
-export const GodRealmSampleChopper: React.FC<GodRealmSampleChopperProps> = ({
-  activePad,
-  parameterValues,
-  update,
-  engineRef,
-  buffer: externalBuffer
-}) => {
-  const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
-  const waveformRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+/** Detect transient peaks in an AudioBuffer */
+function detectTransients(buffer: AudioBuffer, sensitivity: number): number[] {
+  const data = buffer.getChannelData(0);
+  const blockSize = Math.floor(buffer.sampleRate * 0.01); // 10ms blocks
+  const blocks = Math.floor(data.length / blockSize);
+  const energies = new Float32Array(blocks);
 
-  const chopMarkers = parameterValues.chopMarkers || [0.25, 0.5, 0.75];
-  const snapToTransient = parameterValues.snapToTransient ?? true;
-  const scopeGlobal = parameterValues.scopeGlobal ?? true;
-  const chopMode = parameterValues.chopMode || 'Auto';
-
-  const speed = parameterValues.chopperSpeed ?? 1.0;
-  const pitch = parameterValues.chopperPitch ?? 0;
-  const fadeIn = parameterValues.chopperFadeIn ?? 25;
-  const fadeOut = parameterValues.chopperFadeOut ?? 150;
-  const glide = parameterValues.chopperGlide ?? 10;
-  const isReverse = parameterValues.chopperReverse ?? false;
-
-  const sensitivity = parameterValues.chopperSensitivity ?? 50;
-  const triggerMode = parameterValues.chopperTrigger ?? 'MIDI';
-  const dryWet = parameterValues.chopperDryWet ?? 75;
-  const outputVolume = parameterValues.chopperOutputVolume ?? -3;
-
-  // Resolve the active buffer from either the engine or the external prop
-  const getActiveBuffer = useCallback((): AudioBuffer | null => {
-    if (engineRef?.current) {
-      return engineRef.current.getBuffer(activePad);
+  for (let b = 0; b < blocks; b++) {
+    let sum = 0;
+    for (let i = 0; i < blockSize; i++) {
+      const s = data[b * blockSize + i];
+      sum += s * s;
     }
-    return externalBuffer || null;
-  }, [engineRef, activePad, externalBuffer]);
+    energies[b] = sum / blockSize;
+  }
 
-  // Render Lightning Waveform
+  // Find peaks where energy jumps significantly
+  const threshold = (101 - sensitivity) * 0.0002; // higher sensitivity = lower threshold
+  const transients: number[] = [];
+  for (let b = 1; b < blocks; b++) {
+    const diff = energies[b] - energies[b - 1];
+    if (diff > threshold && energies[b] > 0.0001) {
+      const pos = (b * blockSize) / data.length;
+      // Don't place too close to previous
+      if (transients.length === 0 || pos - transients[transients.length - 1] > 0.03) {
+        transients.push(pos);
+      }
+    }
+  }
+  return transients;
+}
+
+/** Generate evenly-spaced grid markers */
+function generateGridMarkers(count: number): number[] {
+  const markers: number[] = [];
+  for (let i = 1; i < count; i++) {
+    markers.push(i / count);
+  }
+  return markers;
+}
+
+/** Find the nearest zero-crossing near a given normalized position */
+function findNearestZeroCrossing(buffer: AudioBuffer, pos: number): number {
+  const data = buffer.getChannelData(0);
+  const sampleIdx = Math.floor(pos * data.length);
+  
+  // Search within +/- 500 samples
+  const searchRange = 500;
+  let minDiff = Infinity;
+  let bestIdx = sampleIdx;
+  
+  for (let i = Math.max(1, sampleIdx - searchRange); i < Math.min(data.length - 1, sampleIdx + searchRange); i++) {
+    // Zero crossing: sign change
+    if ((data[i - 1] < 0 && data[i] >= 0) || (data[i - 1] >= 0 && data[i] < 0)) {
+      const diff = Math.abs(i - sampleIdx);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestIdx = i;
+      }
+    }
+  }
+  
+  return bestIdx / data.length;
+}
+
+const CHOP_MODES = ['Manual', 'Auto', 'Grid'] as const;
+const GRID_PRESETS = [4, 8, 16, 32] as const;
+
+export const SacredChopper: React.FC<SacredChopperProps> = ({
+  trackIndex,
+  trackName,
+  trackColor,
+  buffer,
+  sampleParams,
+  onUpdateParam,
+  onClose,
+  onSpreadToPads,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const animFrameRef = useRef<number>(0);
+  const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
+  const [playingSlice, setPlayingSlice] = useState<number | null>(null);
+  const previewSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const previewCtxRef = useRef<AudioContext | null>(null);
+  const [spreadState, setSpreadState] = useState<'idle' | 'spreading' | 'done'>('idle');
+  const minimapCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [viewWindow, setViewWindow] = useState<[number, number]>([0, 1]);
+
+  // Extract current params
+  const chopMarkers = useMemo(() =>
+    (sampleParams.slices || []).map(s => s.start).filter(v => v > 0 && v < 1),
+    [sampleParams.slices]
+  );
+  const chopMode = sampleParams.chopMode || 'Manual';
+  const isReverse = sampleParams.reverse;
+
+  // ─── Waveform Rendering ───
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    const buffer = getActiveBuffer();
-
     if (!canvas || !ctx) return;
-
-    let animationFrameId: number;
 
     const width = canvas.width;
     const height = canvas.height;
 
-    // If no buffer, render ambient lightning
     if (!buffer) {
-      const renderAmbient = () => {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1.0;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw ambient noise lines
-        const drawAmbientPath = (color: string, blur: number, alpha: number) => {
-          ctx.beginPath();
-          ctx.moveTo(0, height / 2);
-          for (let i = 0; i < width; i++) {
-            const y = height / 2 + (Math.random() - 0.5) * 20;
-            ctx.lineTo(i, y);
-          }
-          ctx.strokeStyle = color;
-          ctx.globalAlpha = alpha;
-          ctx.lineWidth = 1;
-          ctx.shadowBlur = blur;
-          ctx.shadowColor = color;
-          ctx.globalCompositeOperation = 'screen';
-          ctx.stroke();
-        };
-        drawAmbientPath('#a855f7', 15, 0.3);
-        drawAmbientPath('#ff6600', 8, 0.2);
-
-        // Center text
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 0.3;
-        ctx.font = 'bold 14px monospace';
-        ctx.fillStyle = '#a88cff';
-        ctx.textAlign = 'center';
-        ctx.fillText('AWAITING DIVINE SAMPLE', width / 2, height / 2);
-
-        animationFrameId = requestAnimationFrame(renderAmbient);
-      };
-      renderAmbient();
-      return () => cancelAnimationFrame(animationFrameId);
+      // Static ambient — no animation loop
+      ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalAlpha = 0.25;
+      ctx.font = 'bold 14px monospace';
+      ctx.fillStyle = '#a88cff';
+      ctx.textAlign = 'center';
+      ctx.fillText('DROP OR LOAD A SAMPLE', width / 2, height / 2);
+      ctx.globalAlpha = 1;
+      return;
     }
 
     const data = buffer.getChannelData(0);
-    const step = Math.floor(data.length / width);
-    
-    // Pre-calculate peaks for performance
+    const startIndex = Math.floor(viewWindow[0] * data.length);
+    const endIndex = Math.floor(viewWindow[1] * data.length);
+    const windowLen = endIndex - startIndex;
+    const step = Math.max(1, windowLen / width);
     const peaks = new Float32Array(width);
     for (let i = 0; i < width; i++) {
       let peak = 0;
-      for (let j = 0; j < step; j++) {
-        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+      const count = Math.max(1, Math.floor(step));
+      const offset = startIndex + Math.floor(i * step);
+      for (let j = 0; j < count; j++) {
+        if (offset + j < data.length) {
+          peak = Math.max(peak, Math.abs(data[offset + j] || 0));
+        }
       }
       peaks[i] = peak;
     }
 
+    // Single animated frame with reduced jitter (not re-rendering every frame)
+    let frame = 0;
     const renderWaveform = () => {
-      // Clear with slight opacity to create motion trails
+      frame++;
+      // Only re-render every 3rd frame to save CPU
+      if (frame % 3 !== 0) {
+        animFrameRef.current = requestAnimationFrame(renderWaveform);
+        return;
+      }
+
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = 1.0;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.fillRect(0, 0, width, height);
 
-      // Draw dual glowing paths with variable jitter and alpha
-      const drawPath = (color: string, blur: number, isMirror: boolean, jitterAmount: number, alpha: number = 1.0, widthOverride: number = 1.5) => {
+      const drawPath = (color: string, blur: number, isMirror: boolean, jitter: number, alpha: number, w: number) => {
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
-        
         for (let i = 0; i < width; i++) {
-          const peak = peaks[i];
-          // Add volatile jitter for lightning effect
-          const jitter = (Math.random() - 0.5) * peak * jitterAmount;
-          const yOffset = peak * (height / 2 * 0.8) + jitter;
-          const y = isMirror ? (height / 2) + yOffset : (height / 2) - yOffset;
-          
-          ctx.lineTo(i, y);
+          const p = peaks[i];
+          const j = (Math.random() - 0.5) * p * jitter;
+          const yOff = p * (height / 2 * 0.8) + j;
+          ctx.lineTo(i, isMirror ? (height / 2) + yOff : (height / 2) - yOff);
         }
-
         ctx.strokeStyle = color;
         ctx.globalAlpha = alpha;
-        ctx.lineWidth = widthOverride;
+        ctx.lineWidth = w;
         ctx.shadowBlur = blur;
         ctx.shadowColor = color;
         ctx.globalCompositeOperation = 'screen';
         ctx.stroke();
       };
 
-      // Base Amethyst Glow (Wide bloom, slow pulse)
-      drawPath('#a855f7', 20, false, 5, 0.6, 2.0);
-      drawPath('#a855f7', 20, true, 5, 0.6, 2.0);
-      
-      // Secondary Magenta/Orange Blend
-      drawPath('#d946ef', 12, false, 15, 0.8, 1.5);
-      drawPath('#d946ef', 12, true, 15, 0.8, 1.5);
-      
-      // Core Ember Lightning (High volatility, sharp arcs)
-      drawPath('#ff6600', 6, false, 35, 1.0, 1.0);
-      drawPath('#ff6600', 6, true, 35, 1.0, 1.0);
-      
-      // Additional super-bright white core
-      ctx.globalCompositeOperation = 'lighter';
-      drawPath('#ffffff', 3, false, 8, 1.0, 0.8);
-      drawPath('#ffffff', 3, true, 8, 1.0, 0.8);
+      drawPath('#a855f7', 18, false, 4, 0.5, 2);
+      drawPath('#a855f7', 18, true, 4, 0.5, 2);
+      drawPath('#d946ef', 10, false, 12, 0.7, 1.5);
+      drawPath('#d946ef', 10, true, 12, 0.7, 1.5);
+      drawPath('#ff6600', 5, false, 28, 0.9, 1);
+      drawPath('#ff6600', 5, true, 28, 0.9, 1);
 
-      animationFrameId = requestAnimationFrame(renderWaveform);
+      // Reset composite
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+
+      // Draw slice region shading
+      const allPositions = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+      for (let i = 0; i < allPositions.length - 1; i++) {
+        const x1 = allPositions[i] * width;
+        const x2 = allPositions[i + 1] * width;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(168, 85, 247, 0.03)' : 'rgba(255, 102, 0, 0.03)';
+        ctx.fillRect(x1, 0, x2 - x1, height);
+      }
+
+      animFrameRef.current = requestAnimationFrame(renderWaveform);
     };
 
     renderWaveform();
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [buffer, chopMarkers, viewWindow]);
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [activePad, getActiveBuffer]);
+  // ─── Minimap Rendering ───
+  useEffect(() => {
+    const canvas = minimapCanvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx || !buffer) return;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+    
+    const data = buffer.getChannelData(0);
+    const step = Math.floor(data.length / width);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2);
+    for (let i = 0; i < width; i++) {
+      let peak = 0;
+      for (let j = 0; j < step; j++) {
+        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+      }
+      const yOff = peak * (height / 2);
+      ctx.lineTo(i, height / 2 - yOff);
+    }
+    for (let i = width - 1; i >= 0; i--) {
+      let peak = 0;
+      for (let j = 0; j < step; j++) {
+        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+      }
+      const yOff = peak * (height / 2);
+      ctx.lineTo(i, height / 2 + yOff);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }, [buffer]);
 
+  // ─── Interaction & Zooming ───
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    if (!buffer) return;
+    const zoomFactor = Math.exp(e.deltaY * 0.003);
+    const rect = waveformRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    // Zoom around mouse cursor
+    const mouseX = (e.clientX - rect.left) / rect.width;
+    const centerPos = viewWindow[0] + mouseX * (viewWindow[1] - viewWindow[0]);
+    
+    let newLen = (viewWindow[1] - viewWindow[0]) * zoomFactor;
+    newLen = Math.max(0.01, Math.min(1, newLen));
+    
+    let newStart = centerPos - (mouseX * newLen);
+    let newEnd = centerPos + ((1 - mouseX) * newLen);
+    
+    if (newStart < 0) { newEnd -= newStart; newStart = 0; }
+    if (newEnd > 1) { newStart -= (newEnd - 1); newEnd = 1; }
+    
+    setViewWindow([Math.max(0, newStart), Math.min(1, newEnd)]);
+  }, [viewWindow, buffer]);
+
+  const handleMinimapDrag = useCallback((e: React.MouseEvent) => {
+    if (e.buttons !== 1) return;
+    const rect = minimapCanvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const len = viewWindow[1] - viewWindow[0];
+    let center = (e.clientX - rect.left) / rect.width;
+    let newStart = center - len / 2;
+    let newEnd = center + len / 2;
+    if (newStart < 0) { newStart = 0; newEnd = len; }
+    if (newEnd > 1) { newEnd = 1; newStart = 1 - len; }
+    setViewWindow([newStart, newEnd]);
+  }, [viewWindow]);
+
+  // ─── Slice Helpers ───
+  const updateSlicesFromMarkers = useCallback((markers: number[]) => {
+    const sorted = [...markers].sort((a, b) => a - b);
+    const allPos = [0, ...sorted, 1];
+    const slices = [];
+    for (let i = 0; i < allPos.length - 1; i++) {
+      slices.push({ start: allPos[i], end: allPos[i + 1] });
+    }
+    onUpdateParam('slices', slices);
+    onUpdateParam('chopMarkers', sorted);
+  }, [onUpdateParam]);
+
+  // ─── Marker Dragging ───
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (draggingMarker === null || !waveformRef.current) return;
-    
     const rect = waveformRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    let pos = Math.max(0, Math.min(1, x / rect.width));
-    
-    if (snapToTransient && engineRef?.current) {
-      // Find nearest transient logic
-      const transients = engineRef.current.getTransients(activePad);
-      if (transients && transients.length > 0) {
-        let nearest = transients[0];
-        let minDiff = Math.abs(pos - nearest);
-        for (const t of transients) {
-          const diff = Math.abs(pos - t);
-          if (diff < minDiff) {
-            minDiff = diff;
-            nearest = t;
-          }
-        }
-        if (minDiff < 0.05) pos = nearest; // Snap threshold
+    const relPos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    let pos = viewWindow[0] + relPos * (viewWindow[1] - viewWindow[0]);
+
+    // Calculate a 10-pixel snap threshold in normalized units
+    const snapThreshold = 10 / rect.width * (viewWindow[1] - viewWindow[0]);
+
+    // Snap to transient if enabled
+    if (sampleParams.snapToTransient && buffer) {
+      const transients = detectTransients(buffer, sampleParams.chopperSensitivity);
+      let nearest = pos;
+      let minDiff = Infinity;
+      for (const t of transients) {
+        const d = Math.abs(pos - t);
+        if (d < minDiff) { minDiff = d; nearest = t; }
       }
+      if (minDiff < snapThreshold) pos = nearest;
     }
     
+    // Snap to zero crossing if enabled
+    if (sampleParams.snapToZero && buffer) {
+      pos = findNearestZeroCrossing(buffer, pos);
+    }
+
     const nextMarkers = [...chopMarkers];
     nextMarkers[draggingMarker] = pos;
-    update('chopMarkers', nextMarkers);
-  }, [draggingMarker, chopMarkers, snapToTransient, activePad, update, engineRef]);
+    updateSlicesFromMarkers(nextMarkers);
+  }, [draggingMarker, chopMarkers, sampleParams.snapToTransient, sampleParams.snapToZero, sampleParams.chopperSensitivity, buffer, viewWindow, updateSlicesFromMarkers]);
 
   const handleMouseUp = useCallback(() => {
     setDraggingMarker(null);
   }, []);
 
+  const handleMarkerDoubleClick = useCallback((index: number) => {
+    if (!buffer) return;
+    const currentMs = chopMarkers[index] * buffer.duration * 1000;
+    const newMsStr = window.prompt(`Enter exact offset for Slice Marker ${index + 1} (ms):`, currentMs.toFixed(2));
+    if (!newMsStr) return;
+    const newMs = parseFloat(newMsStr);
+    if (isNaN(newMs)) return;
+    
+    // Convert back to normalized 0-1 range
+    let newPos = (newMs / 1000) / buffer.duration;
+    
+    // Optional: still snap to zero crossing if enabled
+    if (sampleParams.snapToZero) {
+      newPos = findNearestZeroCrossing(buffer, newPos);
+    }
+    
+    // Clamp to valid range so we don't pass the adjacent markers
+    const sorted = [...chopMarkers].sort((a, b) => a - b);
+    const sortedIdx = sorted.indexOf(chopMarkers[index]);
+    
+    const prevPos = sortedIdx > 0 ? sorted[sortedIdx - 1] : 0;
+    const nextPos = sortedIdx < sorted.length - 1 ? sorted[sortedIdx + 1] : 1;
+    
+    const clampedPos = Math.max(prevPos + 0.0001, Math.min(newPos, nextPos - 0.0001));
+    
+    const nextMarkers = [...chopMarkers];
+    nextMarkers[index] = clampedPos;
+    updateSlicesFromMarkers(nextMarkers);
+  }, [buffer, chopMarkers, sampleParams.snapToZero, updateSlicesFromMarkers]);
+
+  const addMarker = useCallback(() => {
+    if (chopMarkers.length >= 31) return;
+    // Find the largest gap and split it
+    const sorted = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+    let maxGap = 0, maxIdx = 0;
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const gap = sorted[i + 1] - sorted[i];
+      if (gap > maxGap) { maxGap = gap; maxIdx = i; }
+    }
+    const newPos = (sorted[maxIdx] + sorted[maxIdx + 1]) / 2;
+    updateSlicesFromMarkers([...chopMarkers, newPos]);
+  }, [chopMarkers, updateSlicesFromMarkers]);
+
+  const removeLastMarker = useCallback(() => {
+    if (chopMarkers.length === 0) return;
+    const next = [...chopMarkers];
+    next.pop();
+    updateSlicesFromMarkers(next);
+  }, [chopMarkers, updateSlicesFromMarkers]);
+
+  // ─── Grid / Auto Chop ───
+  const applyGridChop = useCallback((sliceCount: number) => {
+    const markers = generateGridMarkers(sliceCount);
+    onUpdateParam('chopMode', 'Grid');
+    updateSlicesFromMarkers(markers);
+  }, [onUpdateParam, updateSlicesFromMarkers]);
+
+  const applyAutoChop = useCallback(() => {
+    if (!buffer) return;
+    setSpreadState('spreading');
+    
+    const worker = new Worker(new URL('../workers/chopper.worker.ts', import.meta.url), { type: 'module' });
+    worker.onmessage = (e) => {
+      onUpdateParam('chopMode', 'Auto');
+      updateSlicesFromMarkers(e.data.markers);
+      setSpreadState('idle');
+      worker.terminate();
+    };
+    
+    worker.postMessage({
+      channelData: buffer.getChannelData(0),
+      sampleRate: buffer.sampleRate,
+      duration: buffer.duration,
+      sensitivity: sampleParams.chopperSensitivity,
+      minSpacing: 0.1
+    });
+  }, [buffer, sampleParams.chopperSensitivity, onUpdateParam, updateSlicesFromMarkers]);
+
+  // ─── Slice Preview Playback ───
+  const previewSlice = useCallback((sliceIndex: number) => {
+    if (!buffer) return;
+
+    // Create or reuse AudioContext
+    if (!previewCtxRef.current) {
+      previewCtxRef.current = new AudioContext();
+    }
+    const ctx = previewCtxRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    // Stop previous
+    if (previewSourceRef.current) {
+      try { previewSourceRef.current.stop(); } catch {}
+      previewSourceRef.current = null;
+    }
+
+    const sorted = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+    const start = sorted[sliceIndex] ?? 0;
+    const end = sorted[sliceIndex + 1] ?? 1;
+    const offset = start * buffer.duration;
+    const duration = (end - start) * buffer.duration;
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = sampleParams.chopperSpeed;
+    source.connect(ctx.destination);
+    source.start(0, offset, duration);
+    previewSourceRef.current = source;
+    setPlayingSlice(sliceIndex);
+
+    source.onended = () => {
+      setPlayingSlice(null);
+      previewSourceRef.current = null;
+    };
+  }, [buffer, chopMarkers, sampleParams.chopperSpeed]);
+
+  // Cleanup preview on unmount
+  useEffect(() => {
+    return () => {
+      if (previewSourceRef.current) {
+        try { previewSourceRef.current.stop(); } catch {}
+      }
+    };
+  }, []);
+
+  // ─── Sample Info ───
+  const sampleInfo = useMemo(() => {
+    if (!buffer) return null;
+    return {
+      duration: buffer.duration.toFixed(2) + 's',
+      channels: buffer.numberOfChannels + 'ch',
+      rate: (buffer.sampleRate / 1000).toFixed(1) + 'kHz',
+    };
+  }, [buffer]);
+
+  // ─── Slice Segments for bar ───
+  const sliceSegments = useMemo(() => {
+    const sorted = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+    const segs = [];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      segs.push({ start: sorted[i], end: sorted[i + 1], width: sorted[i + 1] - sorted[i] });
+    }
+    return segs;
+  }, [chopMarkers]);
+
+  // ─── Knob Helper ───
+  const renderKnob = (label: string, paramKey: string, value: number, min: number, max: number, unit: string, color: string, displayOverride?: string) => {
+    const pct = (value - min) / (max - min);
+    const rotation = -135 + pct * 270;
+    return (
+      <div className="sacred-chopper__knob">
+        <div className="sacred-chopper__knob-ring">
+          <div
+            className="sacred-chopper__knob-arc"
+            style={{ background: `conic-gradient(from 225deg, ${color} ${pct * 270}deg, transparent 0)` }}
+          />
+          <div
+            className="sacred-chopper__knob-pointer"
+            style={{ backgroundColor: color, transform: `rotate(${rotation}deg)`, boxShadow: `0 0 5px ${color}` }}
+          />
+          <input
+            type="range"
+            className="sacred-chopper__knob-input"
+            min={min} max={max} step={max - min > 10 ? 1 : 0.01}
+            value={value}
+            onChange={e => onUpdateParam(paramKey, +e.target.value)}
+            style={{ writingMode: 'vertical-lr' } as any}
+          />
+        </div>
+        <span className="sacred-chopper__knob-label">{label}</span>
+        <span className="sacred-chopper__knob-value">{displayOverride ?? value}{unit}</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="vg-panel vg-chopper animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
-      <div className="vg-section-head flex justify-between items-center shrink-0">
-        <span className="text-xl font-bold tracking-[0.2em] text-[#e0d6ff] shadow-sm uppercase">Divine Sample Chopper</span>
-        <div className="flex gap-4 items-center">
-          <div className="text-[10px] font-mono text-[#a88cff] uppercase tracking-wider">Mode: {chopMode} Detection</div>
-          <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_#ff6600]" />
+    <div className="sacred-chopper">
+      {/* Header */}
+      <div className="sacred-chopper__header">
+        <span className="sacred-chopper__title">Sample Chopper — {trackName}</span>
+        <div className="sacred-chopper__header-info">
+          {sampleInfo && (
+            <div className="sacred-chopper__sample-info">
+              <span>{sampleInfo.duration}</span>
+              <span>{sampleInfo.channels}</span>
+              <span>{sampleInfo.rate}</span>
+            </div>
+          )}
+          <span className="sacred-chopper__mode-badge">{chopMode}</span>
+          <div className="sacred-chopper__status-dot" />
         </div>
       </div>
 
-      <div className="flex-1 bg-black/80 rounded-xl border border-[#3a2b5c] relative group/chopper overflow-hidden mt-3 shadow-[inset_0_0_40px_rgba(40,20,80,0.5)]">
-        {/* Cinematic Waveform */}
-        <div 
-          className="absolute inset-0 cursor-crosshair"
-          ref={waveformRef}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          <canvas 
-            ref={canvasRef}
-            width={1000}
-            height={300}
-            className="w-full h-full p-6 object-fill"
-          />
+      {/* Waveform */}
+      <div
+        className="sacred-chopper__waveform"
+        ref={waveformRef}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+      >
+        <canvas ref={canvasRef} width={1000} height={280} className="sacred-chopper__canvas" />
+        {!buffer && <div className="sacred-chopper__empty-text">Awaiting Sample</div>}
 
-          {/* Slice Markers */}
-          <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none">
-            {chopMarkers.map((pos: number, i: number) => (
-              <g 
-                key={i} 
-                className="cursor-ew-resize group/marker pointer-events-auto"
-                onMouseDown={(e) => { e.stopPropagation(); setDraggingMarker(i); }}
+        {/* Slice Markers */}
+        <svg className="sacred-chopper__markers-svg" preserveAspectRatio="none">
+          {chopMarkers.map((pos, i) => {
+            if (pos < viewWindow[0] || pos > viewWindow[1]) return null;
+            const viewPos = (pos - viewWindow[0]) / (viewWindow[1] - viewWindow[0]);
+            return (
+              <g
+                key={i}
+                className="sacred-chopper__marker"
+                onMouseDown={e => { e.stopPropagation(); setDraggingMarker(i); }}
+                onDoubleClick={e => { e.stopPropagation(); handleMarkerDoubleClick(i); }}
               >
-                <line 
-                  x1={`${pos * 100}%`} y1="0" x2={`${pos * 100}%`} y2="100%" 
-                  stroke={draggingMarker === i ? "#ff6600" : "#a855f7"} 
-                  strokeWidth={draggingMarker === i ? "2" : "1"}
-                  strokeOpacity={0.6}
-                  className="transition-colors"
+                <line
+                  x1={`${viewPos * 100}%`} y1="0" x2={`${viewPos * 100}%`} y2="100%"
+                  stroke={draggingMarker === i ? '#ff6600' : '#a855f7'}
+                  strokeWidth={draggingMarker === i ? 2 : 1}
+                  strokeOpacity={0.7}
                 />
-                <rect 
-                  x={`calc(${pos * 100}% - 12px)`} y="calc(100% - 30px)" width="24" height="20" rx="4" 
-                  fill={draggingMarker === i ? "#ff6600" : "rgba(20,10,40,0.9)"}
-                  stroke={draggingMarker === i ? "#ffaa00" : "#a855f7"}
+                <rect
+                  x={`${viewPos * 100}%`} y="100%"
+                  width="20" height="18" rx="3"
+                  transform="translate(-10, -26)"
+                  fill={draggingMarker === i ? '#ff6600' : 'rgba(20,10,40,0.9)'}
+                  stroke={draggingMarker === i ? '#ffaa00' : '#a855f7'}
                   strokeWidth="1"
-                  className="transition-all shadow-[0_0_10px_rgba(168,85,247,0.4)]"
                 />
                 <text 
-                  x={`${pos * 100}%`} y="calc(100% - 16px)" textAnchor="middle" 
-                  className="text-[11px] font-black fill-white pointer-events-none"
+                  x={`${viewPos * 100}%`} y="100%" 
+                  transform="translate(0, -13)" 
+                  textAnchor="middle"
                 >
                   {i + 1}
                 </text>
               </g>
-            ))}
-          </svg>
-        </div>
+            );
+          })}
+        </svg>
       </div>
 
-      {/* Control Panel - Middle Rail */}
-      <div className="h-28 flex items-center justify-between px-6 mt-4 bg-gradient-to-b from-[#1a103c] to-black rounded-xl border border-[#3a2b5c] shadow-lg shrink-0">
-        
+      {/* Minimap */}
+      <div 
+        className="sacred-chopper__minimap" 
+        onMouseDown={handleMinimapDrag} 
+        onMouseMove={handleMinimapDrag}
+      >
+        <canvas ref={minimapCanvasRef} width={800} height={32} className="sacred-chopper__minimap-canvas" />
+        {buffer && (
+          <div 
+            className="sacred-chopper__minimap-window" 
+            style={{ 
+              left: `${viewWindow[0] * 100}%`, 
+              width: `${(viewWindow[1] - viewWindow[0]) * 100}%` 
+            }} 
+          />
+        )}
+      </div>
+
+      {/* Slice Preview Bar */}
+      {chopMarkers.length > 0 && (
+        <div className="sacred-chopper__slice-bar">
+          {sliceSegments.map((seg, i) => (
+            <div
+              key={i}
+              className={`sacred-chopper__slice ${playingSlice === i ? 'sacred-chopper__slice--playing' : ''}`}
+              style={{ flex: seg.width }}
+              onClick={() => previewSlice(i)}
+              title={`Slice ${i + 1}: ${(seg.start * 100).toFixed(0)}% → ${(seg.end * 100).toFixed(0)}%`}
+            >
+              {i + 1}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Marker Controls */}
+      <div className="sacred-chopper__marker-controls">
+        <button className="sacred-chopper__marker-btn" onClick={addMarker}>+ Add Slice</button>
+        <button className="sacred-chopper__marker-btn sacred-chopper__marker-btn--danger" onClick={removeLastMarker}>− Remove</button>
+        <div className="sacred-chopper__divider" style={{ height: 16 }} />
+        {GRID_PRESETS.map(n => (
+          <button key={n} className="sacred-chopper__marker-btn" onClick={() => applyGridChop(n)}>
+            {n}
+          </button>
+        ))}
+        <button className="sacred-chopper__marker-btn" onClick={applyAutoChop}>Auto</button>
+        <span className="sacred-chopper__marker-count">{chopMarkers.length} markers · {sliceSegments.length} slices</span>
+      </div>
+
+      {/* Controls Rail */}
+      <div className="sacred-chopper__controls">
         {/* Toggles */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-[#a88cff] uppercase tracking-wider w-16">Scope</span>
-            <div className="flex items-center bg-black/50 p-1 rounded-full border border-[#3a2b5c]">
-              <button 
-                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${scopeGlobal ? 'bg-[#a855f7] text-white shadow-[0_0_10px_#a855f7]' : 'text-white/40 hover:text-white/80'}`}
-                onClick={() => update('scopeGlobal', true)}
+        <div className="sacred-chopper__section">
+          <div className="sacred-chopper__toggles">
+            <div className="sacred-chopper__toggle-row">
+              <span className="sacred-chopper__toggle-label">Scope</span>
+              <div className="sacred-chopper__scope-toggle">
+                <button
+                  className={`sacred-chopper__scope-btn ${sampleParams.scopeGlobal ? 'sacred-chopper__scope-btn--active' : ''}`}
+                  onClick={() => onUpdateParam('scopeGlobal', true)}
+                >Global</button>
+                <button
+                  className={`sacred-chopper__scope-btn ${!sampleParams.scopeGlobal ? 'sacred-chopper__scope-btn--active' : ''}`}
+                  onClick={() => onUpdateParam('scopeGlobal', false)}
+                >Slice</button>
+              </div>
+            </div>
+            <div className="sacred-chopper__toggle-row">
+              <span className="sacred-chopper__toggle-label">Snap (Transient)</span>
+              <div
+                className={`sacred-chopper__toggle ${sampleParams.snapToTransient ? 'sacred-chopper__toggle--on' : ''}`}
+                onClick={() => onUpdateParam('snapToTransient', !sampleParams.snapToTransient)}
               >
-                Global
-              </button>
-              <button 
-                className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${!scopeGlobal ? 'bg-[#ff6600] text-white shadow-[0_0_10px_#ff6600]' : 'text-white/40 hover:text-white/80'}`}
-                onClick={() => update('scopeGlobal', false)}
+                <div className="sacred-chopper__toggle-dot" />
+              </div>
+            </div>
+            <div className="sacred-chopper__toggle-row">
+              <span className="sacred-chopper__toggle-label">Snap (Zero-Cross)</span>
+              <div
+                className={`sacred-chopper__toggle ${sampleParams.snapToZero ? 'sacred-chopper__toggle--on' : ''}`}
+                onClick={() => onUpdateParam('snapToZero', !sampleParams.snapToZero)}
               >
-                Slice
-              </button>
+                <div className="sacred-chopper__toggle-dot" />
+              </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-[#a88cff] uppercase tracking-wider w-16">Snap</span>
-            <button 
-              className={`w-12 h-6 rounded-full border relative transition-all ${snapToTransient ? 'bg-[#ff6600]/20 border-[#ff6600]' : 'bg-black/50 border-[#3a2b5c]'}`}
-              onClick={() => update('snapToTransient', !snapToTransient)}
-            >
-              <div className={`absolute top-[2px] w-4 h-4 rounded-full transition-all ${snapToTransient ? 'bg-[#ff6600] left-[26px] shadow-[0_0_8px_#ff6600]' : 'bg-white/30 left-[2px]'}`} />
-            </button>
-          </div>
         </div>
 
-        <div className="w-px h-16 bg-gradient-to-b from-transparent via-[#3a2b5c] to-transparent mx-2" />
+        <div className="sacred-chopper__divider" />
 
-        {/* Rotary Knobs */}
-        <div className="flex gap-8">
-          <Knob label="Speed" value={speed} min={0.25} max={2.0} unit="x" update={update} paramKey="chopperSpeed" color="#a855f7" />
-          <Knob label="Fade In" value={fadeIn} min={0} max={500} unit="ms" update={update} paramKey="chopperFadeIn" color="#ff6600" />
-          <Knob label="Fade Out" value={fadeOut} min={0} max={1000} unit="ms" update={update} paramKey="chopperFadeOut" color="#ff6600" />
-          <Knob label="Pitch" value={pitch} min={-24} max={24} unit="st" update={update} paramKey="chopperPitch" color="#a855f7" displayValue={pitch > 0 ? `+${pitch}` : `${pitch}`} />
-          <Knob label="Glide" value={glide} min={0} max={200} unit="ms" update={update} paramKey="chopperGlide" color="#a855f7" />
+        {/* Knobs */}
+        <div className="sacred-chopper__knob-group">
+          {renderKnob('Speed', 'chopperSpeed', sampleParams.chopperSpeed, 0.25, 2.0, 'x', '#a855f7')}
+          {renderKnob('Fade In', 'chopperFadeIn', sampleParams.chopperFadeIn, 0, 500, 'ms', '#ff6600')}
+          {renderKnob('Fade Out', 'chopperFadeOut', sampleParams.chopperFadeOut, 0, 1000, 'ms', '#ff6600')}
+          {renderKnob('Pitch', 'chopperPitch', sampleParams.chopperPitch, -24, 24, 'st', '#a855f7',
+            sampleParams.chopperPitch > 0 ? `+${sampleParams.chopperPitch}` : `${sampleParams.chopperPitch}`)}
+          {renderKnob('Glide', 'chopperGlide', sampleParams.chopperGlide, 0, 200, 'ms', '#a855f7')}
         </div>
 
-        <div className="w-px h-16 bg-gradient-to-b from-transparent via-[#3a2b5c] to-transparent mx-2" />
+        <div className="sacred-chopper__divider" />
 
-        {/* Reverse Button */}
-        <button 
-          className={`px-6 py-3 rounded-lg border font-bold text-xs uppercase tracking-widest transition-all ${isReverse ? 'bg-[#ff6600]/20 border-[#ff6600] text-[#ff6600] shadow-[0_0_15px_rgba(255,102,0,0.3)]' : 'bg-black/50 border-[#3a2b5c] text-white/50 hover:border-[#a855f7]/50'}`}
-          onClick={() => update('chopperReverse', !isReverse)}
+        {/* Reverse */}
+        <button
+          className={`sacred-chopper__reverse-btn ${isReverse ? 'sacred-chopper__reverse-btn--active' : ''}`}
+          onClick={() => onUpdateParam('reverse', !isReverse)}
         >
           Reverse
         </button>
-
       </div>
 
       {/* Bottom Rail */}
-      <div className="h-16 flex items-center justify-between px-6 mt-3 bg-[#0d071d] rounded-xl border border-[#2a1b4c] shrink-0">
-        
-        <div className="flex gap-6 items-center">
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-[#a88cff] uppercase tracking-widest">Chop Mode</span>
-            <div className="flex bg-black/50 border border-[#2a1b4c] rounded">
-              {['Manual', 'Auto', 'Grid'].map(m => (
-                <button 
-                  key={m}
-                  className={`px-3 py-1 text-[10px] uppercase font-bold transition-colors ${chopMode === m ? 'bg-[#3a2b5c] text-white' : 'text-white/40 hover:text-white/80'}`}
-                  onClick={() => update('chopMode', m)}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-1 w-32">
-            <span className="text-[9px] font-black text-[#a88cff] uppercase tracking-widest">Sensitivity</span>
-            <input type="range" className="w-full accent-[#ff6600]" min={0} max={100} value={sensitivity} onChange={(e) => update('chopperSensitivity', +e.target.value)} />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-[#a88cff] uppercase tracking-widest">Trigger</span>
-            <select 
-              className="bg-black/50 border border-[#2a1b4c] rounded px-3 py-1 text-[10px] text-white uppercase font-bold outline-none"
-              value={triggerMode}
-              onChange={(e) => update('chopperTrigger', e.target.value)}
-            >
-              <option value="MIDI">MIDI</option>
-              <option value="Gate">Gate</option>
-              <option value="OneShot">One-Shot</option>
-            </select>
+      <div className="sacred-chopper__bottom">
+        {/* Chop Mode */}
+        <div className="sacred-chopper__section">
+          <span className="sacred-chopper__section-label">Chop Mode</span>
+          <div className="sacred-chopper__mode-selector">
+            {CHOP_MODES.map(m => (
+              <button
+                key={m}
+                className={`sacred-chopper__mode-btn ${chopMode === m ? 'sacred-chopper__mode-btn--active' : ''}`}
+                onClick={() => {
+                  onUpdateParam('chopMode', m);
+                  if (m === 'Auto') applyAutoChop();
+                }}
+              >
+                {m}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex gap-8 items-center">
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-black text-[#a88cff] uppercase tracking-widest">Dry/Wet</span>
-            <div className="flex items-center gap-2">
-              <input type="range" className="w-16 accent-[#a855f7]" min={0} max={100} value={dryWet} onChange={(e) => update('chopperDryWet', +e.target.value)} />
-              <span className="text-[10px] text-white w-8">{dryWet}%</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-black text-[#a88cff] uppercase tracking-widest">Output Volume</span>
-            <div className="flex items-center gap-2">
-              <input type="range" className="w-24 accent-[#a855f7]" min={-24} max={12} value={outputVolume} onChange={(e) => update('chopperOutputVolume', +e.target.value)} />
-              <span className="text-[10px] text-white w-8">{outputVolume > 0 ? `+${outputVolume}` : outputVolume}dB</span>
-            </div>
+        {/* Sensitivity */}
+        <div className="sacred-chopper__slider-group">
+          <span className="sacred-chopper__slider-label">Sensitivity</span>
+          <div className="sacred-chopper__slider-row">
+            <input
+              type="range" className="sacred-chopper__slider" min={0} max={100}
+              value={sampleParams.chopperSensitivity}
+              onChange={e => onUpdateParam('chopperSensitivity', +e.target.value)}
+            />
+            <span className="sacred-chopper__slider-value">{sampleParams.chopperSensitivity}</span>
           </div>
         </div>
 
-      </div>
-    </div>
-  );
-};
+        {/* Trigger */}
+        <div className="sacred-chopper__section">
+          <span className="sacred-chopper__section-label">Trigger</span>
+          <select
+            className="sacred-chopper__select"
+            value={sampleParams.chopperTrigger}
+            onChange={e => onUpdateParam('chopperTrigger', e.target.value)}
+          >
+            <option value="MIDI">MIDI</option>
+            <option value="Gate">Gate</option>
+            <option value="OneShot">One-Shot</option>
+          </select>
+        </div>
 
-// Internal Knob Component mirroring the style
-const Knob = ({ label, value, min, max, unit, update, paramKey, color, displayValue }: any) => {
-  const rotation = -135 + ((value - min) / (max - min)) * 270;
-  return (
-    <div className="flex flex-col items-center gap-2 relative">
-      <div className="w-12 h-12 rounded-full border-2 border-[#2a1b4c] relative bg-[#1a103c] shadow-inner flex items-center justify-center">
-        <div 
-          className="absolute w-full h-full rounded-full"
-          style={{
-            background: `conic-gradient(from 225deg, ${color} ${((value - min) / (max - min)) * 270}deg, transparent 0)`,
-            opacity: 0.3
-          }}
-        />
-        <div 
-          className="w-[2px] h-3 absolute top-1 rounded-full origin-[center_20px]"
-          style={{ 
-            backgroundColor: color, 
-            transform: `rotate(${rotation}deg)`,
-            boxShadow: `0 0 5px ${color}`
-          }} 
-        />
-        <input 
-          type="range" 
-          className="absolute inset-0 opacity-0 cursor-ns-resize" 
-          min={min} max={max} step={max - min > 10 ? 1 : 0.01}
-          value={value} 
-          onChange={(e) => update(paramKey, +e.target.value)} 
-          style={{ writingMode: 'vertical-lr' } as any}
-        />
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="text-[10px] font-bold text-[#e0d6ff] tracking-wider uppercase">{label}</span>
-        <span className="text-[9px] text-[#a88cff] font-mono">{displayValue !== undefined ? displayValue : value}{unit}</span>
+        {/* Dry/Wet */}
+        <div className="sacred-chopper__slider-group">
+          <span className="sacred-chopper__slider-label">Dry/Wet</span>
+          <div className="sacred-chopper__slider-row">
+            <input
+              type="range" className="sacred-chopper__slider sacred-chopper__slider--purple" min={0} max={100}
+              value={sampleParams.chopperDryWet}
+              onChange={e => onUpdateParam('chopperDryWet', +e.target.value)}
+            />
+            <span className="sacred-chopper__slider-value">{sampleParams.chopperDryWet}%</span>
+          </div>
+        </div>
+
+        {/* Output Volume */}
+        <div className="sacred-chopper__slider-group">
+          <span className="sacred-chopper__slider-label">Output</span>
+          <div className="sacred-chopper__slider-row">
+            <input
+              type="range" className="sacred-chopper__slider sacred-chopper__slider--purple" min={-24} max={12}
+              value={sampleParams.chopperOutputVolume}
+              onChange={e => onUpdateParam('chopperOutputVolume', +e.target.value)}
+            />
+            <span className="sacred-chopper__slider-value">
+              {sampleParams.chopperOutputVolume > 0 ? `+${sampleParams.chopperOutputVolume}` : sampleParams.chopperOutputVolume}dB
+            </span>
+          </div>
+        </div>
+
+        {/* Spread to Dais */}
+        {onSpreadToPads && buffer && chopMarkers.length > 0 && (
+          <button
+            className={`sacred-chopper__spread-btn ${spreadState !== 'idle' ? `sacred-chopper__spread-btn--${spreadState}` : ''}`}
+            disabled={spreadState === 'spreading'}
+            onClick={() => {
+              if (!buffer || !onSpreadToPads) return;
+              setSpreadState('spreading');
+              const sorted = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+              const sliceData: { start: number; end: number; sliceStart?: number; sliceDuration?: number; buffer: AudioBuffer }[] = [];
+              const ctx = previewCtxRef.current || new AudioContext();
+              if (!previewCtxRef.current) previewCtxRef.current = ctx;
+
+              for (let i = 0; i < sorted.length - 1 && i < 16; i++) {
+                const sliceStart = sorted[i] * buffer.duration;
+                const sliceEnd = sorted[i + 1] * buffer.duration;
+                const duration = sliceEnd - sliceStart;
+                if (duration <= 0) continue;
+                
+                sliceData.push({ 
+                  start: sorted[i], 
+                  end: sorted[i + 1], 
+                  sliceStart,
+                  sliceDuration: duration,
+                  buffer: buffer // Zero-Copy!
+                });
+              }
+              onSpreadToPads(sliceData);
+              setSpreadState('done');
+              setTimeout(() => setSpreadState('idle'), 2000);
+            }}
+          >
+            <span className="sacred-chopper__spread-icon">
+              {spreadState === 'done' ? '✔' : spreadState === 'spreading' ? '⦻' : '🔱'}
+            </span>
+            <span className="sacred-chopper__spread-label">
+              {spreadState === 'done'
+                ? `${Math.min(sliceSegments.length, 16)} SLICES → DAIS`
+                : spreadState === 'spreading'
+                ? 'SPREADING...'
+                : `SPREAD TO DAIS (${Math.min(sliceSegments.length, 16)})`}
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

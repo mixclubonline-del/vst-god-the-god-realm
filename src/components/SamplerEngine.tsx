@@ -71,10 +71,35 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
             <h2 className="text-4xl font-black text-white leading-none">THE FORGE</h2>
             <span className="text-[10px] font-bold text-red-500 tracking-[0.4em] uppercase mt-1">Multi-Layer Synthesis Realm</span>
           </div>
-          <div className="flex gap-4">
-            <div className="flex flex-col items-end">
+          <div className="flex gap-4 items-center">
+            {/* Play Mode Selector */}
+            <div className="flex flex-col items-start mr-2">
+              <span className="text-[8px] font-bold text-white/30 uppercase mb-1">Play Mode</span>
+              <div className="flex bg-black/40 p-0.5 rounded-md border border-white/5 gap-0.5">
+                {['Layer', 'RR', 'Rnd'].map((mode, idx) => {
+                  const active = (parameterValues.slotPlayMode || 0) === idx;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => update('slotPlayMode', idx)}
+                      className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase transition-all ${
+                        active 
+                          ? 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' 
+                          : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end border-l border-white/10 pl-4">
               <span className="text-[8px] font-bold text-white/30 uppercase">Active Slots</span>
-              <span className="text-xl font-black text-white">6 / 6</span>
+              <span className="text-xl font-black text-white">
+                {activeSlots.filter((_, i) => parameterValues[`slotPower_${i}`] !== false).length} / 6
+              </span>
             </div>
           </div>
         </div>

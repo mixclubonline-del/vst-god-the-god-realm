@@ -1,0 +1,737 @@
+/* ═══════════════════════════════════════════════════════════
+ *  DivineTransport.css — Floating Global Transport for The God Realm
+ *  Premium Midnight Ember aesthetic with contextual realm morphing.
+ * ═══════════════════════════════════════════════════════════ */
+
+/* ─── CSS Custom Properties ─── */
+.divine-transport {
+  --transport-accent: #FFD700;
+  --transport-bg: hsla(240, 12%, 5%, 0.88);
+  --transport-border: rgba(255, 215, 0, 0.12);
+  --transport-text: hsl(0, 0%, 92%);
+  --transport-text-dim: hsl(240, 5%, 48%);
+  --transport-surface: hsla(240, 10%, 8%, 0.6);
+  --transport-divider: hsla(0, 0%, 100%, 0.06);
+  --transport-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --beat-duration: 0.43s;
+}
+
+/* ─── Container ─── */
+.divine-transport {
+  /* position/top/bottom/left/right set via inline anchorStyles() */
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  height: 48px;
+
+  background: var(--transport-bg);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid var(--transport-border);
+  border-radius: 999px;
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  /* Sacred geometry background pattern */
+  background-image:
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(255, 215, 0, 0.015) 30deg,
+      transparent 60deg
+    );
+
+  /* Entrance */
+  transition: all 0.4s var(--transport-spring);
+  will-change: transform, opacity;
+
+  font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+  user-select: none;
+}
+
+/* Hover lift */
+.divine-transport:hover {
+  border-color: rgba(255, 215, 0, 0.2);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* ─── Playing State — Beat Pulse ─── */
+.divine-transport--playing {
+  animation: divine-beat-pulse var(--beat-duration) ease-out infinite;
+}
+
+@keyframes divine-beat-pulse {
+  0% {
+    border-color: rgba(255, 215, 0, 0.3);
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.6),
+      0 0 20px rgba(255, 215, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  12% {
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.6),
+      0 0 32px rgba(255, 215, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  100% {
+    border-color: var(--transport-border);
+    box-shadow:
+      0 8px 40px rgba(0, 0, 0, 0.6),
+      0 0 20px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* ─── Recording State ─── */
+.divine-transport--recording {
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.divine-transport--recording.divine-transport--playing {
+  animation: divine-rec-border-pulse var(--beat-duration) ease-out infinite;
+}
+
+@keyframes divine-rec-border-pulse {
+  0% { border-color: rgba(239, 68, 68, 0.35); }
+  12% { border-color: rgba(239, 68, 68, 0.55); }
+  100% { border-color: rgba(239, 68, 68, 0.2); }
+}
+
+/* ─── Collapsed State ─── */
+.divine-transport--collapsed {
+  gap: 2px;
+  padding: 6px 12px;
+}
+
+.divine-transport--collapsed .divine-transport__position,
+.divine-transport--collapsed .divine-transport__realm,
+.divine-transport--collapsed .divine-transport__divider:nth-child(n+3),
+.divine-transport--collapsed .divine-transport__metronome,
+.divine-transport--collapsed .divine-transport__status {
+  display: none;
+}
+
+/* ─── Section Containers ─── */
+.divine-transport__core {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.divine-transport__tempo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.divine-transport__position {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.divine-transport__realm-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+/* ─── Divider ─── */
+.divine-transport__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--transport-divider);
+  flex-shrink: 0;
+}
+
+/* ─── Transport Buttons ─── */
+.divine-transport__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--transport-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--transport-spring);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.divine-transport__btn:hover {
+  color: var(--transport-text);
+  background: hsla(0, 0%, 100%, 0.06);
+}
+
+.divine-transport__btn:active {
+  transform: scale(0.92);
+}
+
+.divine-transport__btn svg {
+  width: 12px;
+  height: 12px;
+  transition: all 0.2s var(--transport-spring);
+}
+
+/* Stop Button */
+.divine-transport__btn--stop:hover {
+  color: hsl(0, 0%, 85%);
+}
+
+/* Play Button */
+.divine-transport__btn--play {
+  width: 36px;
+  height: 36px;
+  background: hsla(45, 100%, 50%, 0.06);
+  border: 1px solid hsla(45, 100%, 50%, 0.1);
+}
+
+.divine-transport__btn--play:hover {
+  background: hsla(45, 100%, 50%, 0.12);
+  border-color: hsla(45, 100%, 50%, 0.2);
+  color: hsl(45, 100%, 70%);
+}
+
+.divine-transport__btn--play.divine-transport__btn--active {
+  background: hsla(45, 100%, 50%, 0.15);
+  border-color: hsla(45, 100%, 50%, 0.35);
+  color: hsl(45, 100%, 65%);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.15);
+}
+
+.divine-transport__btn--play.divine-transport__btn--active svg {
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
+}
+
+/* Record Button */
+.divine-transport__btn--rec {
+  color: hsl(0, 60%, 50%);
+}
+
+.divine-transport__btn--rec:hover {
+  color: hsl(0, 75%, 55%);
+  background: hsla(0, 75%, 50%, 0.08);
+}
+
+.divine-transport__btn--rec.divine-transport__btn--active {
+  color: hsl(0, 80%, 60%);
+  background: hsla(0, 80%, 50%, 0.12);
+  animation: divine-rec-pulse 1.5s ease-in-out infinite;
+}
+
+.divine-transport__btn--rec.divine-transport__btn--active svg circle {
+  fill: hsl(0, 80%, 55%);
+}
+
+@keyframes divine-rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* ─── BPM Display ─── */
+.divine-transport__bpm-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: ns-resize;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  min-width: 56px;
+}
+
+.divine-transport__bpm-group:hover {
+  background: hsla(0, 0%, 100%, 0.04);
+}
+
+.divine-transport__bpm-value {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--transport-accent);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  transition: color 0.3s ease;
+}
+
+.divine-transport__bpm-label {
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--transport-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  line-height: 1;
+}
+
+.divine-transport__bpm-input {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--transport-accent);
+  background: hsla(0, 0%, 100%, 0.06);
+  border: 1px solid hsla(45, 100%, 50%, 0.2);
+  border-radius: 4px;
+  width: 50px;
+  text-align: center;
+  outline: none;
+  padding: 1px 2px;
+}
+
+.divine-transport__bpm-input:focus {
+  border-color: hsla(45, 100%, 50%, 0.4);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.1);
+}
+
+/* Tap Tempo */
+.divine-transport__tap {
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--transport-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid hsla(0, 0%, 100%, 0.06);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.divine-transport__tap:hover {
+  color: var(--transport-text);
+  background: hsla(0, 0%, 100%, 0.04);
+  border-color: hsla(0, 0%, 100%, 0.12);
+}
+
+.divine-transport__tap:active {
+  transform: scale(0.95);
+  background: hsla(45, 100%, 50%, 0.08);
+}
+
+/* ─── Position Display ─── */
+.divine-transport__step-display {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--transport-text-dim);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.divine-transport__step-current {
+  color: var(--transport-text);
+  font-weight: 700;
+}
+
+.divine-transport__pattern-badge {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  transition: all 0.2s ease;
+}
+
+.divine-transport__pattern-badge--a {
+  color: hsl(45, 100%, 65%);
+  background: hsla(45, 100%, 50%, 0.1);
+  border: 1px solid hsla(45, 100%, 50%, 0.15);
+}
+
+.divine-transport__pattern-badge--b {
+  color: hsl(270, 80%, 70%);
+  background: hsla(270, 80%, 50%, 0.1);
+  border: 1px solid hsla(270, 80%, 50%, 0.15);
+}
+
+/* ─── Realm Badge ─── */
+.divine-transport__realm {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  transition: all 0.4s var(--transport-spring);
+  color: var(--transport-accent);
+  background: color-mix(in srgb, var(--transport-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--transport-accent) 15%, transparent);
+}
+
+.divine-transport__realm-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* ─── Metronome Button (reuses __btn pattern) ─── */
+.divine-transport__btn--metronome {
+  width: 28px;
+  height: 28px;
+  color: var(--transport-text-dim);
+}
+
+.divine-transport__btn--metronome:hover {
+  color: var(--transport-text);
+  background: hsla(0, 0%, 100%, 0.06);
+}
+
+.divine-transport__btn--metronome-active {
+  color: var(--transport-accent) !important;
+  background: color-mix(in srgb, var(--transport-accent) 8%, transparent);
+}
+
+.divine-transport__btn--metronome-active svg line,
+.divine-transport__btn--metronome-active svg path {
+  filter: drop-shadow(0 0 3px var(--transport-accent));
+}
+
+/* ─── Status LED ─── */
+.divine-transport__status {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 2px;
+}
+
+.divine-transport__status-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(140, 60%, 45%);
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.4);
+  animation: divine-led-breathe 3s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.divine-transport__status-led--idle {
+  background: hsl(40, 80%, 50%);
+  box-shadow: 0 0 6px rgba(255, 165, 0, 0.3);
+}
+
+@keyframes divine-led-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* ─── Collapse Toggle ─── */
+.divine-transport__collapse {
+  width: 20px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--transport-text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.divine-transport:hover .divine-transport__collapse {
+  opacity: 1;
+}
+
+.divine-transport__collapse:hover {
+  color: var(--transport-text);
+  background: hsla(0, 0%, 100%, 0.05);
+}
+
+.divine-transport__collapse svg {
+  width: 10px;
+  height: 10px;
+}
+
+.divine-transport--collapsed .divine-transport__collapse svg {
+  /* Chevron flip is handled inline via React prop */
+}
+
+/* ─── Collapsed: hide everything except core + BPM ─── */
+.divine-transport--collapsed .divine-transport__position,
+.divine-transport--collapsed .divine-transport__realm-section,
+.divine-transport--collapsed .divine-transport__context,
+.divine-transport--collapsed .divine-transport__btn--metronome,
+.divine-transport--collapsed .divine-transport__status {
+  display: none;
+}
+
+.divine-transport--collapsed .divine-transport__divider:nth-child(n+3) {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   Context-Specific Realm Controls
+   ═══════════════════════════════════════════════════ */
+
+.divine-transport__context {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+/* ─── Pattern A/B Toggles ─── */
+.divine-transport__context-patterns {
+  display: flex;
+  gap: 2px;
+  background: hsla(0, 0%, 100%, 0.03);
+  border-radius: 4px;
+  padding: 1px;
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+}
+
+.divine-transport__context-pat {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--transport-text-dim);
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 8px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divine-transport__context-pat:hover {
+  color: var(--transport-text);
+  background: hsla(0, 0%, 100%, 0.06);
+}
+
+.divine-transport__context-pat--active {
+  color: var(--transport-accent);
+  background: color-mix(in srgb, var(--transport-accent) 12%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--transport-accent) 15%, transparent);
+}
+
+/* ─── Context Tags ─── */
+.divine-transport__context-tag {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--transport-text-dim);
+  letter-spacing: 0.08em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: hsla(0, 0%, 100%, 0.03);
+  border: 1px solid hsla(0, 0%, 100%, 0.04);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.divine-transport__context-tag--fill {
+  color: hsl(45, 100%, 65%);
+  background: hsla(45, 100%, 50%, 0.1);
+  border-color: hsla(45, 100%, 50%, 0.2);
+  animation: fill-context-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes fill-context-pulse {
+  0%, 100% { background: hsla(45, 100%, 50%, 0.08); }
+  50% { background: hsla(45, 100%, 50%, 0.18); }
+}
+
+.divine-transport__context-tag--track {
+  color: color-mix(in srgb, var(--transport-accent) 80%, white);
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divine-transport__context-tag--warn {
+  color: hsl(0, 70%, 60%);
+  background: hsla(0, 70%, 50%, 0.08);
+  border-color: hsla(0, 70%, 50%, 0.15);
+}
+
+/* ─── Export Progress Bar ─── */
+.divine-transport__context-progress {
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: hsla(0, 0%, 100%, 0.06);
+  overflow: hidden;
+}
+
+.divine-transport__context-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--transport-accent), hsl(140, 60%, 50%));
+  transition: width 0.3s ease;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--transport-accent) 30%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════
+   Drag Grip
+   ═══════════════════════════════════════════════════ */
+
+.divine-transport__grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+.divine-transport:hover .divine-transport__grip {
+  opacity: 0.4;
+}
+
+.divine-transport__grip:hover {
+  opacity: 0.7 !important;
+}
+
+.divine-transport__grip:active {
+  cursor: grabbing;
+}
+
+.divine-transport__grip-dots {
+  display: grid;
+  grid-template-columns: repeat(3, 3px);
+  grid-template-rows: repeat(2, 3px);
+  gap: 2px;
+}
+
+.divine-transport__grip-dots span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--transport-text-dim);
+  transition: background 0.15s ease;
+}
+
+.divine-transport__grip:hover .divine-transport__grip-dots span {
+  background: var(--transport-text);
+}
+
+/* ─── Dragging State ─── */
+.divine-transport--dragging {
+  opacity: 0.85;
+  cursor: grabbing !important;
+  transition: none !important;
+  animation: none !important;
+  box-shadow:
+    0 16px 64px rgba(0, 0, 0, 0.8),
+    0 0 32px rgba(255, 215, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.divine-transport--dragging * {
+  cursor: grabbing !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   Keyboard Shortcut Hint
+   ═══════════════════════════════════════════════════ */
+
+.divine-transport-hint {
+  position: fixed;
+  z-index: 999;
+  cursor: pointer;
+}
+
+.divine-transport-hint__content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: hsla(240, 12%, 8%, 0.85);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', -apple-system, sans-serif;
+  white-space: nowrap;
+}
+
+.divine-transport-hint__key {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--god-primary, #FFD700);
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 4px;
+  padding: 2px 6px;
+  letter-spacing: 0.03em;
+}
+
+.divine-transport-hint__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.divine-transport-hint__label--dim {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
+.divine-transport-hint__sep {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 10px;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .divine-transport {
+    height: 44px;
+    padding: 4px 6px;
+  }
+
+  .divine-transport__btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .divine-transport__btn--play {
+    width: 32px;
+    height: 32px;
+  }
+
+  .divine-transport__bpm-value {
+    font-size: 12px;
+  }
+
+  .divine-transport__realm,
+  .divine-transport__context {
+    display: none;
+  }
+
+  .divine-transport__grip {
+    display: none;
+  }
+}

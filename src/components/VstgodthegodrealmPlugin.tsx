@@ -8,6 +8,10 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '@/styles/VSTGODTheGodRealm-theme.css';
+import { DivineLoadingScreen, DIVINE_STAGES } from './DivineLoadingScreen';
+import { DivineSettings } from './DivineSettings';
+import { DivineSetupWizard } from './DivineSetupWizard';
+import { nativeAudio } from '../native/bridge';
 import type { DSPChainModule } from '@/services/types';
 import { SoundSlot } from './SoundSlot';
 import { MultiControlPanel } from './MultiControlPanel';
@@ -17,10 +21,10 @@ import { CelestialTabs } from './ui/CelestialTabs';
 import { DivineKnob } from './ui/DivineKnob';
 import { DivineSlider } from './ui/DivineSlider';
 import { CelestialForge } from './CelestialForge';
-import { GodRealmSampleChopper } from './GodRealmSampleChopper';
-import { SamplerEngine } from './SamplerEngine';
+import { SacredChopper } from './GodRealmSampleChopper';
+import { AstralDais } from './AstralDais';
+import { DEFAULT_MIDI_MAP } from '../data/throneDomains';
 import { KitExporter } from './KitExporter';
-import { PresetLibrarySidebar } from './PresetLibrarySidebar';
 import { CelestialBrowser } from './CelestialBrowser';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
 import { NebulaXYPad } from './NebulaXYPad';
@@ -41,6 +45,28 @@ import { useJuceBridge } from '@/hooks/useJuceBridge';
 import type { Midi2NoteEvent } from '@/native/bridge';
 import { GodRealmSamplerEngine } from '@/services/samplerEngine';
 import { neuralInputBus } from '@/services/neuralInputBus';
+import { BufferRegistry } from '@/audio/BufferRegistry';
+import { useBufferRegistry } from '@/hooks/useBufferRegistry';
+import { MasterChain } from '@/audio/VelvetCurveEngine';
+import { KontaktKitBrowser } from './KontaktKitBrowser';
+import { DivineTransport } from './ui/DivineTransport';
+import type { TransportContextData } from './ui/DivineTransport';
+import type { SlotMapping } from '@/services/kontaktKitLoader';
+import { SessionSealDrawer, QuickRecallBar } from './SessionSealDrawer';
+import { realmSessionManager, type RealmSnapshot } from '@/services/RealmSessionManager';
+import { useKeyboardPads } from '../hooks/useKeyboardPads';
+import { useWebMidi } from '../hooks/useWebMidi';
+import { NerveMonitor } from './NerveMonitor';
+import '../components/NerveMonitor.css';
+import { PluginWindowProvider } from '@/contexts/PluginWindowContext';
+import { PluginWindowLayer } from './plugins/FloatingPluginWindow';
+import { PluginWindowBar } from './plugins/PluginWindowBar';
+import '@/styles/FloatingPlugin.css';
+import { MidiMappingModal, type MidiCCMapping } from './MidiMappingModal';
+import '@/styles/MidiMappingModal.css';
+
+import { PresetDropdown } from './ui/PresetDropdown';
+import { usePresetService, presetService, type UnifiedPreset } from '@/services/presetService';
 
 interface VstgodthegodrealmPluginProps {
   isOpen: boolean;
@@ -137,6 +163,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   /* ─── Sequencer Drawer & Export Overlay State ─── */
   const [isSequencerOpen, setIsSequencerOpen] = useState(false);
   const [isExportOverlayOpen, setIsExportOverlayOpen] = useState(false);
+  const [isKitBrowserOpen, setIsKitBrowserOpen] = useState(false);
 
   /* ─── Phase 4: Realm Transition State ─── */
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -172,22 +199,118 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const globalBpm = parameterValues.globalBpm || 140.00;
   const activePad = parameterValues.activePad || 0;
   const [isNeuralPanelOpen, setIsNeuralPanelOpen] = useState(false);
+
+  /* ─── Session Seal State ─── */
+  const [isSessionDrawerOpen, setIsSessionDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeSessionName, setActiveSessionName] = useState<string | null>(() => realmSessionManager.getActiveSession());
+  const [recentSessions, setRecentSessions] = useState<string[]>(() => realmSessionManager.getRecentSessions());
+
+  /* ─── Astral Dais State ─── */
+  const [midiMap, setMidiMap] = useState<number[]>(DEFAULT_MIDI_MAP);
+  const [triggerFlash, setTriggerFlash] = useState<boolean[]>(Array(16).fill(false));
+
+  const handleMidiMapChange = useCallback((padIndex: number, note: number) => {
+    setMidiMap(prev => {
+      const next = [...prev];
+      next[padIndex] = note;
+      return next;
+    });
+  }, []);
+
+  /* ─── MIDI Mapping Modal State ─── */
+  const [isMidiModalOpen, setIsMidiModalOpen] = useState(false);
+  const [ccMappings, setCCMappings] = useState<MidiCCMapping[]>([
+    { ccNumber: 1, targetParam: 'modWheel', targetLabel: 'Mod Wheel', min: 0, max: 127 },
+    { ccNumber: 7, targetParam: 'masterVol', targetLabel: 'Master Volume', min: 0, max: 127 },
+  ]);
+
+  const handleNavigateToTab = useCallback((tabName: string, options?: { padIndex?: number }) => {
+    if (options?.padIndex !== undefined && onParameterChange) {
+      onParameterChange('activePad', options.padIndex);
+    }
+    setPendingTab(tabName);
+  }, [onParameterChange]);
+
+  /* ─── Throne Trigger Flash (Sequencer → Pad visual bridge) ─── */
+  useEffect(() => {
+    const flashTimers: ReturnType<typeof setTimeout>[] = [];
+    const handleThroneTrigger = (e: Event) => {
+      const { padIndex } = (e as CustomEvent<{ padIndex: number }>).detail;
+      if (padIndex < 0 || padIndex >= 16) return;
+      setTriggerFlash(prev => {
+        const next = [...prev];
+        next[padIndex] = true;
+        return next;
+      });
+      const timer = setTimeout(() => {
+        setTriggerFlash(prev => {
+          const next = [...prev];
+          next[padIndex] = false;
+          return next;
+        });
+      }, 150);
+      flashTimers.push(timer);
+    };
+    window.addEventListener('throne-trigger', handleThroneTrigger);
+    return () => {
+      window.removeEventListener('throne-trigger', handleThroneTrigger);
+      flashTimers.forEach(clearTimeout);
+    };
+  }, []);
   const [draggingMarker, setDraggingMarker] = useState<number | null>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
 
-  /* ─── Phase 5: Oracle’s Vision (Audio Engine) ─── */
-  const engine = useSequencerEngine();
+  /* ─── Phase 1: Sovereign AudioContext (Shared by both engines) ─── */
+  /* Created lazily — starts suspended until first user gesture (play, pad tap, etc.) */
+  const sovereignCtx = useRef<AudioContext | null>(null);
+  const celestialForgeChain = useRef<MasterChain | null>(null);
+
+  const ensureSovereignCtx = useCallback(() => {
+    if (!sovereignCtx.current && typeof window !== 'undefined') {
+      sovereignCtx.current = new AudioContext();
+    }
+    // Phase 3: Celestial Forge — create alongside context
+    if (!celestialForgeChain.current && sovereignCtx.current) {
+      celestialForgeChain.current = new MasterChain(sovereignCtx.current);
+      celestialForgeChain.current.connect(sovereignCtx.current.destination);
+    }
+    return sovereignCtx.current;
+  }, []);
+
+  /* ─── Sequencer Engine (uses Sovereign Context + Celestial Forge) ─── */
+  const engine = useSequencerEngine(sovereignCtx, celestialForgeChain);
   const { masterChain } = engine;
   
   // Connect the analyser to the design system CSS variables
-  useAudioAnalyser(masterChain.current?.analyser || null);
+  // Phase 3: Use the Celestial Forge chain's analyser (it's the shared master)
+  useAudioAnalyser(celestialForgeChain.current?.analyser || masterChain.current?.analyser || null);
   
-  const [buffers, setBuffers] = useState<Record<number, AudioBuffer>>({});
-  const [isBuffersLoaded, setIsBuffersLoaded] = useState(false);
+  /* ─── Phase 2: Unified Buffer Registry (replaces React state buffers) ─── */
+  const registryRef = useRef<BufferRegistry | null>(null);
+  if (!registryRef.current) {
+    registryRef.current = new BufferRegistry(16);
+  }
+  const registry = registryRef.current;
+  const buffers = useBufferRegistry(registry);
+  const isBuffersLoaded = Object.keys(buffers).length > 0;
+
+  // ─── Metronome (lifted from SacredSequencer for transport access) ───
+  const [metronomeOn, setMetronomeOn] = useState(false);
 
   /* ─── God Realm Sampler Engine (86KB DSP Powerhouse) ─── */
   const godEngine = useRef<GodRealmSamplerEngine | null>(null);
   const [engineEpoch, setEngineEpoch] = useState(0);
+
+  /* ─── Divine Loading Screen State ─── */
+  const [loadingStage, setLoadingStage] = useState('awaken');
+  const [loadingComplete, setLoadingComplete] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+
+  /* ─── Divine Setup Wizard State ─── */
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [activeSettings, setActiveSettings] = useState<any>(null);
+  const setupCompletedRef = useRef(false);
 
   // Initialize the engine on mount — always re-creates on Strict Mode re-mount
   useEffect(() => {
@@ -195,33 +318,71 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
     const boot = async () => {
       try {
+        // ── Stage 1: Awakening ──
+        setLoadingStage('awaken');
+        ensureSovereignCtx();
+
+        // ── Stage 2: Bridge ──
+        setLoadingStage('bridge');
         const eng = new GodRealmSamplerEngine();
-        await eng.init();
+        await eng.init(sovereignCtx.current ?? undefined, registry);
         if (cancelled) { eng.dispose(); return; }
         godEngine.current = eng;
 
-        // Sync the engine's loaded buffers into React state for waveform rendering
-        const loadedBuffers: Record<number, AudioBuffer> = {};
-        for (let i = 0; i < 16; i++) {
-          const buf = eng.getBuffer(i);
-          if (buf) loadedBuffers[i] = buf;
+        // ── Settings Check & Setup Wizard ──
+        console.log('[God Plugin] Checking settings...');
+        const waitForSettings = () => new Promise<any>((resolve) => {
+          console.log('[God Plugin] Subscribing to settings and sending GET_SETTINGS...');
+          const unsubscribe = nativeAudio.subscribeSettings((settings) => {
+            console.log('[God Plugin] Settings received:', JSON.stringify(settings));
+            unsubscribe();
+            resolve(settings);
+          });
+          nativeAudio.getSettings();
+        });
+
+        const settings = await waitForSettings();
+        console.log('[God Plugin] waitForSettings resolved settings:', JSON.stringify(settings));
+        if (cancelled) return;
+        setActiveSettings(settings);
+
+
+
+        // ── Stage 3: Samples ──
+        setLoadingStage('samples');
+
+        // ── Stage 4: Mastering chain ──
+        setLoadingStage('mastering');
+        if (celestialForgeChain.current) {
+          eng.routeOutput(celestialForgeChain.current.input);
         }
+
+        // ── Stage 5: UI manifest ──
+        setLoadingStage('ui');
+
         if (!cancelled) {
-          setBuffers(loadedBuffers);
-          setIsBuffersLoaded(true);
-          setEngineEpoch(prev => prev + 1); // Signal meter loop to start
-          console.log('[God Engine] Initialized — %d sacred samples loaded', Object.keys(loadedBuffers).length);
+          setEngineEpoch(prev => prev + 1);
+          // ── Stage 6: Ready ──
+          setLoadingStage('ready');
+          setLoadingComplete(true);
+          if (import.meta.env.DEV) {
+            console.log('[God Engine] Initialized — %d sacred samples loaded via BufferRegistry', registry.loadedCount);
+          }
         }
       } catch (err) {
         if (cancelled) return;
         console.error('[God Engine] Initialization failed, falling back to SampleManager', err);
-        if (engine.audioCtx.current) {
+        // Phase 2: Fallback — load via SampleManager into the registry
+        const ctx = sovereignCtx.current || engine.audioCtx.current;
+        if (ctx) {
           try {
-            const fallbackBuffers = await sampleManager.loadKit(engine.audioCtx.current);
+            const fallbackBuffers = await sampleManager.loadKit(ctx);
             if (!cancelled) {
-              setBuffers(fallbackBuffers);
-              setIsBuffersLoaded(true);
-              console.log('[God Engine] Fallback: SampleManager loaded');
+              // Push fallback buffers into the registry
+              for (const [slot, buf] of Object.entries(fallbackBuffers)) {
+                registry.setBuffer(Number(slot), buf, `Sample ${Number(slot) + 1}`);
+              }
+              console.log('[God Engine] Fallback: SampleManager loaded into registry');
             }
           } catch (fallbackErr) {
             console.error('[God Engine] Fallback also failed', fallbackErr);
@@ -239,20 +400,60 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         godEngine.current = null;
         console.log('[God Engine] Disposed');
       }
+      // Phase 1: Close the Sovereign AudioContext on unmount
+      if (sovereignCtx.current) {
+        sovereignCtx.current.close();
+        sovereignCtx.current = null;
+      }
+      // Phase 3: Invalidate the Celestial Forge so it gets recreated with the new context
+      celestialForgeChain.current = null;
     };
   }, []);
 
-  /* ─── Neural Input Bus (Keyboard Z-M / MIDI Triggering) ─── */
+  // Open Setup Wizard after the Loading Screen has finished transitioning out
+  useEffect(() => {
+    if (!showLoadingScreen && activeSettings) {
+      const libraryPath = activeSettings.sampleLibraryPath;
+      const needsSetup = !libraryPath || libraryPath === '~/Library/Audio/Samples/VST GOD/' || libraryPath === '';
+      if (needsSetup && !setupCompletedRef.current) {
+        console.log('[God Plugin] Loading screen dismissed. Opening Setup Wizard...');
+        setShowSetupWizard(true);
+      }
+    }
+  }, [showLoadingScreen, activeSettings]);
+
+  // Phase 5: Sync BPM from transport → God Engine arpeggiator
+  useEffect(() => {
+    godEngine.current?.setBpm(engine.state.bpm);
+  }, [engine.state.bpm]);
+
   useEffect(() => {
     const unsubscribe = neuralInputBus.addListener((event) => {
       const eng = godEngine.current;
       if (!eng) return;
 
-      // Trigger the engine's polyphonic voice system
-      eng.playBufferPart(event.target, 0);
+      // Resume AudioContext on first user interaction (Chrome autoplay policy)
+      if (sovereignCtx.current?.state === 'suspended') {
+        sovereignCtx.current.resume();
+      }
 
-      // Visual feedback: update activePad to reflect the triggered pad
-      if (onParameterChange) onParameterChange('activePad', event.target);
+      if (event.type === 'midi' && event.note !== undefined) {
+        // Pad-range MIDI notes (36-51 → pad 0-15)
+        eng.triggerMidiNote(event.note, event.velocity);
+      } else if (event.type === 'midi_note_on' && event.note !== undefined) {
+        // Full-range MIDI keys (e.g. FLkey keyboard C2-C4+)
+        eng.triggerMidiNote(event.note, event.velocity);
+      } else if (event.type === 'midi_note_off') {
+        // Note Off — future: release sustained voices
+      } else if (event.type !== 'midi_cc') {
+        // Computer keyboard / pad click → trigger specific slot
+        eng.playBufferPart(event.target, 0);
+      }
+
+      // Phase 1: Visual feedback — expanded to 16 pads
+      if (event.type !== 'midi_cc' && event.type !== 'midi_note_off') {
+        if (onParameterChange) onParameterChange('activePad', event.target % 16);
+      }
     });
 
     return unsubscribe;
@@ -297,6 +498,38 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const slotLevels = liveSlotLevels;
   const arpStep = liveArpStep || bridgeState.arpStep;
 
+  // ─── Global Keyboard Shortcuts ───
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't capture shortcuts when user is typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          engine.togglePlay();
+          break;
+        case 'KeyR':
+          if (!e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            engine.dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' });
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [engine]);
+
+  /* ─── Phase 5: Nerve System — Live Input Hooks ─── */
+  const handleKeyboardPadTrigger = useCallback((padIndex: number) => {
+    if (onParameterChange) onParameterChange('activePad', padIndex % 16);
+  }, [onParameterChange]);
+
+  const keyboardPadState = useKeyboardPads(godEngine, handleKeyboardPadTrigger);
+  const webMidiState = useWebMidi(godEngine, midiMap, handleKeyboardPadTrigger);
+
   // Derive per-slot MIDI activity: slot i ↔ MIDI channel i
   const midiActivity = useMemo(() => {
     const activity = new Array(6).fill(false);
@@ -308,70 +541,32 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     return activity;
   }, [activeMidiNotes]);
 
+  // --- Unified Preset System ---
+  const presetSvc = usePresetService();
+  const allPresets = presetSvc.getAll();
+  const activePresetId = parameterValues.currentPresetId || (allPresets[0]?.id ?? null);
+  const activePreset = presetSvc.getById(activePresetId);
+  const currentName = activePreset ? activePreset.name : (parameterValues.currentPresetName || 'Unknown Preset');
 
-  const [presets, setPresets] = useState(() => {
-    const saved = localStorage.getItem('vst-god-realm-presets');
-    const base = saved ? JSON.parse(saved) : DEFAULT_PRESETS;
-    // Map to new interface if needed
-    return base.map((p: any, i: number) => ({
-      ...p,
-      id: p.id || `preset-${i}`,
-      tags: p.tags || [p.type, 'Sacred', 'Ancient'],
-      lastModified: p.lastModified || new Date().toISOString(),
-      energyLevel: p.energyLevel || (40 + Math.random() * 60)
-    }));
-  });
+  // One-time capture of factory defaults based on initial parameters
+  useEffect(() => {
+    presetSvc.captureFactoryDefaults(parameterValues);
+  }, []); // Run once on mount
 
   const includedPresets = useMemo(() => {
     const fromProps = parameterValues.includedPresets || [];
-    return presets.map((_: any, i: number) => i < fromProps.length ? fromProps[i] : true);
-  }, [parameterValues.includedPresets, presets]);
-
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {
-      'All Presets': presets.length,
-      'Favorites': presets.filter((p: any) => p.fav).length,
-      'User Presets': presets.filter((p: any) => p.author !== 'VST GOD').length,
-    };
-    
-    presets.forEach((p: any) => {
-      if (p.type) {
-        counts[p.type] = (counts[p.type] || 0) + 1;
-      }
-    });
-    
-    return counts;
-  }, [presets]);
-
-  const filteredPresets = useMemo(() => {
-    return presets.map((p: any, originalIndex: number) => ({ ...p, originalIndex }))
-      .filter((p: any) => {
-        const matchesSearch = p.name.toLowerCase().includes(presetSearch.toLowerCase()) ||
-                              p.type.toLowerCase().includes(presetSearch.toLowerCase()) ||
-                              p.author.toLowerCase().includes(presetSearch.toLowerCase());
-        
-        let matchesCategory = true;
-        if (selectedCategory === 'Favorites') matchesCategory = p.fav;
-        else if (selectedCategory === 'User Presets') matchesCategory = p.author !== 'VST GOD';
-        else if (selectedCategory !== 'All Presets') matchesCategory = p.type === selectedCategory;
-        
-        return matchesSearch && matchesCategory;
-      });
-  }, [presets, presetSearch, selectedCategory]);
+    return allPresets.map((_: any, i: number) => i < fromProps.length ? fromProps[i] : true);
+  }, [parameterValues.includedPresets, allPresets]);
 
   const [vaultMessage, setVaultMessage] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('vst-god-realm-presets', JSON.stringify(presets));
-  }, [presets]);
 
   // --- Neural Morph Logic (Phase 5) ---
   useEffect(() => {
     if (parameterValues.morphFactor !== undefined && parameterValues.morphFactor > 0) {
       // Morph logic now handled in JUCE backend
     }
-  }, [parameterValues.morphFactor, selectedPreset, presets]);
+  }, [parameterValues.morphFactor, activePresetId]);
 
   const update = useCallback((id: string, val: any) => {
     if (onParameterChange) onParameterChange(id, val);
@@ -382,6 +577,117 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       godEngine.current.updateFromParameters({ [id]: val });
     }
   }, [onParameterChange]);
+
+  /* ─── Session Seal: Collect & Apply Snapshots ─── */
+  const collectSnapshot = useCallback((name: string): RealmSnapshot => {
+    // Gather pad assignments from BufferRegistry
+    const padAssignments = registry.loadedSlots.map(slot => ({
+      slotIndex: slot,
+      path: registry.getPath(slot),
+      name: registry.getName(slot),
+      isFileDrop: registry.getPath(slot).startsWith('file://'),
+    }));
+
+    // Sequencer state (strip transient fields)
+    const { isPlaying, currentStep, cycleCount, clipboardPattern, ...seqState } = engine.state;
+
+    return {
+      version: 1,
+      name,
+      savedAt: new Date().toISOString(),
+      sequencerState: seqState,
+      padAssignments,
+      pantheonGod: (parameterValues.electricPantheonGod as string) || 'olympus',
+      pantheonMacros: {
+        energy: parameterValues.pantheonEnergy ?? 50,
+        divinity: parameterValues.pantheonDivinity ?? 50,
+        width: parameterValues.pantheonWidth ?? 50,
+        realm: parameterValues.pantheonRealm ?? 50,
+      },
+      parameterValues: { ...parameterValues },
+      daisState: {
+        activePad,
+        playModes: [],
+        midiMap: midiMap.reduce((acc, note, idx) => { acc[idx] = note; return acc; }, {} as Record<number, number>),
+      },
+    };
+  }, [registry, engine.state, parameterValues, activePad, midiMap]);
+
+  const applySnapshot = useCallback(async (snapshot: RealmSnapshot) => {
+    // 1. Restore sequencer state
+    if (snapshot.sequencerState) {
+      engine.dispatch({
+        type: 'LOAD_PROJECT_STATE',
+        payload: {
+          ...snapshot.sequencerState,
+          isPlaying: false,
+          currentStep: -1,
+          cycleCount: 0,
+          clipboardPattern: null,
+        },
+      });
+    }
+
+    // 2. Restore parameter values (covers effects, mastering, all knobs)
+    if (snapshot.parameterValues) {
+      Object.entries(snapshot.parameterValues).forEach(([key, val]) => {
+        update(key, val);
+      });
+    }
+
+    // 3. Restore pad assignments (re-fetch from paths)
+    if (snapshot.padAssignments && sovereignCtx.current) {
+      registry.clearAll();
+      for (const pad of snapshot.padAssignments) {
+        if (pad.isFileDrop) {
+          console.warn(`[SessionSeal] Pad ${pad.slotIndex} ("${pad.name}") was a file drop — must re-drop manually`);
+          continue;
+        }
+        try {
+          await registry.loadFromPath(sovereignCtx.current, pad.path, pad.slotIndex, pad.name);
+        } catch (err) {
+          console.warn(`[SessionSeal] Failed to reload pad ${pad.slotIndex}:`, err);
+        }
+      }
+    }
+
+    // 4. Restore Dais state
+    if (snapshot.daisState) {
+      update('activePad', snapshot.daisState.activePad);
+      if (snapshot.daisState.midiMap) {
+        const newMap = [...DEFAULT_MIDI_MAP];
+        Object.entries(snapshot.daisState.midiMap).forEach(([idx, note]) => {
+          newMap[Number(idx)] = Number(note);
+        });
+        setMidiMap(newMap);
+      }
+    }
+
+    setActiveSessionName(snapshot.name);
+    setRecentSessions(realmSessionManager.getRecentSessions());
+    console.log(`[SessionSeal] Restored: "${snapshot.name}"`);
+  }, [engine, update, registry, setMidiMap]);
+
+  const handleSessionSave = useCallback(async (name: string) => {
+    const snapshot = collectSnapshot(name);
+    await realmSessionManager.saveSession(snapshot);
+    setActiveSessionName(name);
+    setRecentSessions(realmSessionManager.getRecentSessions());
+  }, [collectSnapshot]);
+
+  const handleSessionLoad = useCallback(async (name: string) => {
+    const snapshot = await realmSessionManager.loadSession(name);
+    if (snapshot) {
+      await applySnapshot(snapshot);
+    }
+  }, [applySnapshot]);
+
+  const handleQuickRecall = useCallback(async (name: string) => {
+    const snapshot = await realmSessionManager.loadSession(name);
+    if (snapshot) {
+      await applySnapshot(snapshot);
+    }
+  }, [applySnapshot]);
 
   const handleRealmTransition = useCallback((newTab: string) => {
     if (newTab === displayedTab) return;
@@ -414,55 +720,100 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     update('lastArchiveRecall', `${relic.name} -> Pad ${padIndex + 1}`);
     showMessage(`Recalled ${relic.name} to Pad ${padIndex + 1}`);
 
-    // 2. Actually load the audio buffer into the engine AND React state
+    // 2. Load the audio buffer into the engine (registry is updated automatically via Phase 2)
     const eng = godEngine.current;
     if (eng) {
       try {
         await eng.loadSampleByPath(samplePath, padIndex);
-        const loadedBuffer = eng.getBuffer(padIndex);
-        if (loadedBuffer) {
-          setBuffers(prev => ({ ...prev, [padIndex]: loadedBuffer }));
-          console.log(`[God Engine] Buffer loaded for Pad ${padIndex}: ${relic.name}`);
-        }
+        console.log(`[God Engine] Buffer loaded for Pad ${padIndex}: ${relic.name}`);
       } catch (err) {
         console.error(`[God Engine] Failed to load buffer for ${relic.name}:`, err);
       }
     }
+
+    // Phase 4: One-Touch Pad → Track — sync sequencer track with the recalled relic
+    if (padIndex < engine.state.tracks.length) {
+      // Rename the sequencer track to match the relic
+      engine.dispatch({ type: 'RENAME_TRACK', trackIndex: padIndex, name: relic.name });
+      // Ensure the track is set to 'sample' source type
+      if (engine.state.tracks[padIndex].sourceType !== 'sample') {
+        engine.dispatch({ type: 'SET_TRACK_SOURCE', trackIndex: padIndex, sourceType: 'sample' });
+      }
+    }
+  }, [update, engine]);
+
+  const handleLoadKit = useCallback(async (mappings: SlotMapping[]) => {
+    const eng = godEngine.current;
+    if (!eng) return;
+
+    const samplesToLoad = mappings
+      .filter(m => m.sample !== null)
+      .map(m => ({ file: m.sample!.file, slotIndex: m.slotIndex }));
+
+    await eng.loadKit(samplesToLoad);
+
+    // Phase 2 + 4: Buffers go into registry, AND sync sequencer track names
+    for (const mapping of mappings) {
+      if (mapping.sample) {
+        const sampleName = mapping.sample.name.replace(/\.[^.]+$/, '');
+        update(`slotName_${mapping.slotIndex}`, sampleName);
+        update(`slotCategory_${mapping.slotIndex}`, mapping.sample.category);
+        update(`slotPath_${mapping.slotIndex}`, mapping.sample.path);
+
+        // Phase 4: Sync sequencer track name
+        if (mapping.slotIndex < engine.state.tracks.length) {
+          engine.dispatch({ type: 'RENAME_TRACK', trackIndex: mapping.slotIndex, name: sampleName });
+        }
+      }
+    }
+
+    showMessage(`KIT LOADED — ${samplesToLoad.length} SAMPLES ASSIGNED`);
   }, [update]);
 
-  const handleLoadPreset = useCallback(() => {
-    const p = presets[selectedPreset];
-    if (!p) return;
-    
-    // State logic is delegated to the host
-    if (p.state && p.state.params) {
-      Object.entries(p.state.params).forEach(([id, val]) => {
-        update(id, val);
+  const handlePresetSelect = useCallback((preset: UnifiedPreset) => {
+    update('currentPresetId', preset.id);
+    update('currentPresetName', preset.name);
+    if (preset.state?.params) {
+      Object.entries(preset.state.params).forEach(([key, val]) => {
+        if (key !== 'currentPresetId' && key !== 'currentPresetName') {
+          update(key, val);
+        }
       });
     }
-    update('currentPresetName', p.name);
-    showMessage(`Loaded: ${p.name}`);
-  }, [presets, selectedPreset, update]);
+  }, [update]);
+
+  const handlePresetNext = useCallback(() => {
+    handlePresetSelect(presetSvc.getNext(activePresetId));
+  }, [presetSvc, activePresetId, handlePresetSelect]);
+
+  const handlePresetPrev = useCallback(() => {
+    handlePresetSelect(presetSvc.getPrev(activePresetId));
+  }, [presetSvc, activePresetId, handlePresetSelect]);
+
+  const handleToggleFavorite = useCallback((id: string) => {
+    presetSvc.toggleFavorite(id);
+  }, [presetSvc]);
+
+  const handleLoadPreset = useCallback(() => {
+    if (activePreset) {
+      handlePresetSelect(activePreset);
+      showMessage(`Loaded: ${activePreset.name}`);
+    }
+  }, [activePreset, handlePresetSelect]);
 
   const handleSavePreset = useCallback(() => {
-    const currentState = { params: parameterValues };
-    const nextPresets = [...presets];
-    if (nextPresets[selectedPreset]) {
-      nextPresets[selectedPreset] = {
-        ...nextPresets[selectedPreset],
-        state: currentState
-      };
-      setPresets(nextPresets);
-      showMessage(`Saved: ${nextPresets[selectedPreset].name}`);
+    if (activePreset && activePreset.source !== 'pantheon') {
+      presetSvc.save({ ...activePreset, state: { params: parameterValues } });
+      showMessage(`Saved: ${activePreset.name}`);
+    } else {
+      showMessage('Cannot save Pantheon presets. Use Save As.');
     }
-  }, [presets, selectedPreset, parameterValues]);
+  }, [activePreset, presetSvc, parameterValues]);
 
   const handleSaveAsPreset = useCallback(() => {
-    const name = prompt('Enter Preset Name:', `New Preset ${presets.length + 1}`);
+    const name = prompt('Enter Preset Name:', `New Preset ${allPresets.length + 1}`);
     if (!name) return;
-
-    const currentState = { params: parameterValues };
-    const newPreset = {
+    const newPreset: UnifiedPreset = {
       id: `preset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name,
       type: 'User',
@@ -472,27 +823,26 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       tags: ['User', 'Custom'],
       lastModified: new Date().toISOString(),
       energyLevel: 40 + Math.random() * 60,
-      state: currentState
+      source: 'user',
+      state: { params: parameterValues }
     };
-
-    setPresets([...presets, newPreset]);
-    update('selectedPreset', presets.length);
-    update('currentPresetName', name);
+    presetSvc.save(newPreset);
+    handlePresetSelect(newPreset);
     showMessage(`Created: ${name}`);
-  }, [presets, update, parameterValues]);
+  }, [allPresets.length, parameterValues, presetSvc, handlePresetSelect]);
 
   const handleDeletePreset = useCallback(() => {
-    if (presets.length <= 1) return;
-    if (!confirm(`Delete preset "${presets[selectedPreset]?.name}"?`)) return;
-
-    const nextPresets = presets.filter((_: any, i: number) => i !== selectedPreset);
-    setPresets(nextPresets);
-    update('selectedPreset', 0);
-    showMessage('Preset Deleted');
-  }, [presets, selectedPreset, update]);
+    if (activePreset && activePreset.source !== 'pantheon') {
+      if (confirm(`Delete preset "${activePreset.name}"?`)) {
+        presetSvc.delete(activePreset.id);
+        handlePresetSelect(allPresets[0]);
+        showMessage('Preset Deleted');
+      }
+    }
+  }, [activePreset, presetSvc, handlePresetSelect, allPresets]);
 
   const handleExportVault = useCallback(() => {
-    const data = JSON.stringify(presets, null, 2);
+    const data = presetSvc.exportAll();
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -500,7 +850,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     a.download = `GodRealm_Vault_Backup_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     showMessage('Vault Exported');
-  }, [presets]);
+  }, [presetSvc]);
 
   const handleImportVault = useCallback(() => {
     const input = document.createElement('input');
@@ -513,7 +863,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       try {
         const imported = JSON.parse(text);
         if (Array.isArray(imported)) {
-          setPresets(imported);
+          imported.forEach(p => presetSvc.save(p));
           showMessage('Vault Restored');
         }
       } catch (err) {
@@ -522,13 +872,12 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       update('btnRestoreVault', false);
     };
     input.click();
-  }, [update]);
+  }, [presetSvc, update]);
 
   const handleRestoreDefaults = useCallback(() => {
     if (!confirm('This will reset your library to factory defaults. Continue?')) return;
-    setPresets(DEFAULT_PRESETS);
-    localStorage.removeItem('vst-god-realm-presets');
-    showMessage('VAULT RESET TO DEFAULTS');
+    localStorage.removeItem('vst-god-realm-presets-v2');
+    window.location.reload();
   }, []);
 
   const handleCloudSync = useCallback(() => {
@@ -552,18 +901,18 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [isSyncing, update]);
 
   const handleExportPreset = useCallback(() => {
-    const p = presets[selectedPreset];
-    if (!p) return;
-    const data = JSON.stringify(p, null, 2);
+    if (!activePreset) return;
+    const data = presetSvc.exportPreset(activePreset.id);
+    if (!data) return;
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `GodRealm_${p.name.replace(/\s+/g, '_')}.json`;
+    a.download = `GodRealm_${activePreset.name.replace(/\s+/g, '_')}.json`;
     a.click();
-    showMessage(`EXPORTED: ${p.name}`);
+    showMessage(`EXPORTED: ${activePreset.name}`);
     update('btnExportPreset', false);
-  }, [presets, selectedPreset, update]);
+  }, [activePreset, presetSvc, update]);
 
   const handleImportPreset = useCallback(() => {
     const input = document.createElement('input');
@@ -574,10 +923,10 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       if (!file) return;
       const text = await file.text();
       try {
-        const imported = JSON.parse(text);
-        if (imported.name && imported.state) {
-          setPresets((prev: any) => [...prev, imported]);
-          showMessage(`IMPORTED: ${imported.name}`);
+        const p = presetSvc.importPreset(text);
+        if (p) {
+          showMessage(`IMPORTED: ${p.name}`);
+          handlePresetSelect(p);
         } else {
           alert('Invalid Preset File');
         }
@@ -587,14 +936,14 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       update('btnImportPreset', false);
     };
     input.click();
-  }, [update]);
+  }, [presetSvc, handlePresetSelect, update]);
 
   const handleExportKit = useCallback(() => {
     const kitData = {
       kitName,
       kitAuthor,
       kitDescription,
-      presets: presets.filter((_: any, i: number) => includedPresets[i]),
+      presets: allPresets.filter((_: any, i: number) => includedPresets[i]),
       exportedAt: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(kitData, null, 2)], { type: 'application/json' });
@@ -604,7 +953,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
     a.download = `${kitName.replace(/\s+/g, '_')}_GodKit.json`;
     a.click();
     showMessage('Kit Exported!');
-  }, [kitName, kitAuthor, kitDescription, presets, includedPresets]);
+  }, [kitName, kitAuthor, kitDescription, allPresets, includedPresets]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (draggingMarker === null || !waveformRef.current) return;
@@ -639,15 +988,62 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   );
 
   return (
+    <PluginWindowProvider>
     <div 
       className={wrapperClassName}
       onClick={embedded ? undefined : onClose}
     >
       <div 
-        className="vg-plugin" 
+        className="vg-hardware-rack" 
         style={{ width, height, maxWidth: embedded ? '100%' : undefined, maxHeight: embedded ? '100%' : undefined }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Left Rack Ear */}
+        <div className="vg-rack-ear vg-rack-ear--left">
+          <div className="vg-rack-screw-slot">
+            <div className="vg-rack-screw vg-rack-screw--top" />
+          </div>
+          <div className="vg-rack-power">
+            <div className="vg-rack-power-led" />
+            <span className="vg-rack-power-label">POWER</span>
+          </div>
+          <div className="vg-rack-handle" />
+          <div className="vg-rack-screw-slot">
+            <div className="vg-rack-screw vg-rack-screw--bottom" />
+          </div>
+        </div>
+
+        {/* Main Plugin Body */}
+        <div className="vg-plugin">
+        {/* ═══ DIVINE SETUP WIZARD ═══ */}
+        {showSetupWizard && (
+          <DivineSetupWizard
+            initialSettings={activeSettings}
+            onComplete={(completedSettings) => {
+              try {
+                const stored = localStorage.getItem('vst-god-divine-settings') || '{}';
+                const parsed = JSON.parse(stored);
+                localStorage.setItem('vst-god-divine-settings', JSON.stringify({
+                  ...parsed,
+                  ...completedSettings
+                }));
+              } catch (e) {
+                // ignore
+              }
+              setupCompletedRef.current = true;
+              setShowSetupWizard(false);
+            }}
+          />
+        )}
+
+        {/* ═══ DIVINE LOADING SCREEN ═══ */}
+        {showLoadingScreen && (
+          <DivineLoadingScreen
+            currentStage={loadingStage}
+            isReady={loadingComplete}
+            onTransitionComplete={() => setShowLoadingScreen(false)}
+          />
+        )}
         {/* Background ambient glow */}
         <div className="vg-ambient-glow" />
 
@@ -679,12 +1075,16 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <span className="vg-logo-vst">VST</span>
             <span className="vg-logo-god">GOD</span>
           </div>
-          <div className="vg-preset-nav">
-            <span className="vg-preset-label">PRESET</span>
-            <button className="vg-nav-arrow" onClick={() => update('presetPrev', true)}>◀</button>
-            <span className="vg-preset-current">{currentPresetName}</span>
-            <button className="vg-nav-arrow" onClick={() => update('presetNext', true)}>▶</button>
-            <button className="vg-nav-arrow vg-nav-copy" onClick={() => update('presetCopy', true)}>📋</button>
+          <div className="vg-preset-dropdown-container">
+            <PresetDropdown
+              presets={allPresets}
+              activePresetId={activePresetId}
+              currentName={currentName}
+              onSelect={handlePresetSelect}
+              onPrev={handlePresetPrev}
+              onNext={handlePresetNext}
+              onToggleFavorite={handleToggleFavorite}
+            />
           </div>
         </div>
 
@@ -724,6 +1124,25 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               variant="celestial"
             />
           </div>
+
+          <button
+            className="vg-header-close"
+            onClick={() => setIsSessionDrawerOpen(true)}
+            aria-label="Session Seal"
+            title="Session Seal — Save/Load Realm"
+            style={{ fontSize: '14px', marginRight: '4px' }}
+          >
+            🔱
+          </button>
+
+          <button
+            className="vg-settings-btn"
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label="Settings"
+            title="Sacred Configuration"
+          >
+            ⚙
+          </button>
           
           <button className="vg-header-close" onClick={onClose} aria-label="Close Plugin">
             ✕
@@ -736,7 +1155,18 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           tabs={TABS}
           activeTab={activeTab}
           onTabChange={handleRealmTransition}
+          isPlaying={engine.state.isPlaying}
+          currentStep={engine.state.currentStep}
+          totalSteps={engine.state.stepCount}
         />
+
+      {/* ═══════════ QUICK RECALL BAR ═══════════ */}
+      <QuickRecallBar
+        recentSessions={recentSessions}
+        activeSession={activeSessionName}
+        onRecall={handleQuickRecall}
+        onOpenDrawer={() => setIsSessionDrawerOpen(true)}
+      />
 
       {/* ═══════════ MAIN CONTENT ═══════════ */}
       <main
@@ -771,17 +1201,21 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           style={{ display: 'contents' }}
         >
         {displayedTab === 'Multi-Realm' && (
-          <SamplerEngine
+          <AstralDais
+            godEngine={godEngine}
+            registry={registry}
+            buffers={buffers}
+            sequencerState={engine.state}
+            slotLevels={slotLevels}
             parameterValues={parameterValues}
             update={update}
-            slotLevels={slotLevels}
-            arpStep={arpStep}
-            vortexAnchors={vortexAnchors}
-            midiActivity={midiActivity}
-            onNeuralForge={() => setIsNeuralPanelOpen(true)}
-            isNeuralPanelOpen={isNeuralPanelOpen}
-            onCloseNeuralPanel={() => setIsNeuralPanelOpen(false)}
-            onApplyNeuralSuggestion={handleApplyNeuralSuggestion}
+            triggerFlash={triggerFlash}
+            midiMap={midiMap}
+            onMidiMapChange={handleMidiMapChange}
+            onNavigateToTab={handleNavigateToTab}
+            onToggleStep={(trackIndex, stepIndex) => {
+              engine.dispatch({ type: 'TOGGLE_STEP', trackIndex, stepIndex });
+            }}
           />
         )}
 
@@ -798,12 +1232,69 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
         {/* ─── SAMPLE CHOPPER TAB (Original Prototype) ─── */}
         {displayedTab === 'Sample Chopper' && (
-          <GodRealmSampleChopper
-            activePad={activePad}
-            parameterValues={parameterValues}
-            update={update}
-            engineRef={godEngine}
+          <SacredChopper
+            trackIndex={activePad}
+            trackName={`PAD ${activePad + 1}`}
+            trackColor={'#a855f7'}
             buffer={buffers[activePad] || null}
+            sampleParams={{
+              start: 0,
+              end: 1,
+              reverse: parameterValues.chopperReverse ?? false,
+              slices: (parameterValues.chopMarkers || [0.25, 0.5, 0.75]).map((pos: number, i: number, arr: number[]) => ({
+                start: pos,
+                end: arr[i + 1] ?? 1.0,
+              })),
+              chopperSpeed: parameterValues.chopperSpeed ?? 1.0,
+              chopperPitch: parameterValues.chopperPitch ?? 0,
+              chopperFadeIn: parameterValues.chopperFadeIn ?? 25,
+              chopperFadeOut: parameterValues.chopperFadeOut ?? 150,
+              chopperGlide: parameterValues.chopperGlide ?? 10,
+              chopperSensitivity: parameterValues.chopperSensitivity ?? 50,
+              chopperTrigger: parameterValues.chopperTrigger ?? 'MIDI',
+              chopperDryWet: parameterValues.chopperDryWet ?? 75,
+              chopperOutputVolume: parameterValues.chopperOutputVolume ?? -3,
+              chopMode: parameterValues.chopMode ?? 'Manual',
+              scopeGlobal: parameterValues.scopeGlobal ?? true,
+              snapToTransient: parameterValues.snapToTransient ?? true,
+              snapToZero: parameterValues.snapToZero ?? true,
+            }}
+            onUpdateParam={(param, value) => update(param, value)}
+            onClose={() => handleRealmTransition('Multi-Realm')}
+            onSpreadToPads={(slices) => {
+              // 1. Ensure sequencer has enough tracks
+              for (let i = engine.state.tracks.length; i < slices.length && i < 16; i++) {
+                engine.dispatch({ type: 'ADD_TRACK', sourceType: 'sample', name: `Slice ${i + 1}` });
+              }
+
+              // 2. Load each slice buffer into the registry (Zero-Copy) and update sequencer tracks
+              slices.forEach((slice, i) => {
+                if (i < 16) {
+                  registry.setBuffer(i, slice.buffer, `Slice ${i + 1}`);
+                  if (slice.sliceStart !== undefined) update(`slot${i}_sliceStart`, slice.sliceStart);
+                  if (slice.sliceDuration !== undefined) update(`slot${i}_sliceDuration`, slice.sliceDuration);
+                  
+                  // Configure the sequencer track
+                  engine.dispatch({ type: 'SET_TRACK_SOURCE', trackIndex: i, sourceType: 'sample' });
+                  engine.dispatch({ type: 'RENAME_TRACK', trackIndex: i, name: `Slice ${i + 1}` });
+                  
+                  // Optionally, set the slice start/end in the sequencer track's sampleParams so UI reflects it
+                  engine.dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: i, param: 'start', value: slice.start });
+                  engine.dispatch({ type: 'SET_SAMPLE_PARAM', trackIndex: i, param: 'end', value: slice.end });
+                }
+              });
+              console.log(`🔱 Spread ${slices.length} slices to Astral Dais and Sequencer`);
+              // Navigate to Multi-Realm / Sequencer
+              handleRealmTransition('Sequencer');
+              // Staggered throne flash
+              slices.forEach((_, i) => {
+                if (i < 16) {
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('throne-trigger', { detail: { padIndex: i } }));
+                  }, i * 60);
+                }
+              });
+            }}
           />
         )}
 
@@ -822,7 +1313,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             parameterValues={parameterValues}
             update={update}
             moduleLevels={moduleLevels}
-            analyser={masterChain.current?.analyser || null}
+            analyser={celestialForgeChain.current?.analyser || masterChain.current?.analyser || null}
           />
         )}
 
@@ -834,6 +1325,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               update={update}
               engine={engine}
               buffers={buffers}
+              godEngine={godEngine}
             />
           </div>
         )}
@@ -865,33 +1357,20 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
         {/* ─── PRESET VAULT TAB ─── */}
         {displayedTab === 'Preset Vault' && (
-          <EternalPresetVault 
-            presets={presets}
-            selectedPresetIndex={selectedPreset}
-            onSelectPreset={(idx) => update('selectedPreset', idx)}
-            onToggleFavorite={(idx) => {
-              const next = [...presets];
-              next[idx] = { ...next[idx], fav: !next[idx].fav };
-              setPresets(next);
-            }}
+          <EternalPresetVault
+            presets={allPresets}
+            selectedPresetIndex={allPresets.findIndex(p => p.id === activePresetId) === -1 ? 0 : allPresets.findIndex(p => p.id === activePresetId)}
+            onSelectPreset={(idx) => handlePresetSelect(allPresets[idx])}
+            onToggleFavorite={(idx) => handleToggleFavorite(allPresets[idx].id)}
             onLoadPreset={handleLoadPreset}
             onSavePreset={handleSavePreset}
             onSaveAsPreset={handleSaveAsPreset}
-            onDeletePreset={() => {
-              if (confirm('Banish this ritual from the vault forever?')) {
-                const next = presets.filter((_: any, i: number) => i !== selectedPreset);
-                setPresets(next);
-                if (selectedPreset >= next.length) update('selectedPreset', Math.max(0, next.length - 1));
-              }
-            }}
+            onDeletePreset={handleDeletePreset}
             onCloudSync={handleCloudSync}
             isSyncing={isSyncing}
             kitExporter={
               <KitExporter 
-                kitName={kitName}
-                kitAuthor={kitAuthor}
-                kitDescription={kitDescription}
-                presets={presets}
+                presets={allPresets}
                 includedPresets={includedPresets}
                 onToggleIncluded={(idx) => {
                   const next = [...includedPresets];
@@ -900,6 +1379,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                 }}
                 onExport={handleExportKit}
                 update={update}
+                kitName={parameterValues.kitName || "My Kit"}
+                kitAuthor={parameterValues.kitAuthor || "Author"}
+                kitDescription={parameterValues.kitDescription || ""}
               />
             }
           />
@@ -937,6 +1419,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
                 update={update}
                 engine={engine}
                 buffers={buffers}
+                godEngine={godEngine}
               />
             </div>
           </motion.div>
@@ -984,6 +1467,39 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         )}
       </AnimatePresence>
 
+      {/* ═══════════ KONTAKT KIT BROWSER (Modal) ═══════════ */}
+      <KontaktKitBrowser
+        isOpen={isKitBrowserOpen}
+        onClose={() => setIsKitBrowserOpen(false)}
+        onLoadKit={handleLoadKit}
+        onPreview={(file) => godEngine.current?.previewFile(file)}
+      />
+
+      {/* ═══════════ DIVINE TRANSPORT — Global Floating Transport ═══════════ */}
+      <DivineTransport
+        isPlaying={engine.state.isPlaying}
+        isRecording={engine.state.isRecording}
+        bpm={engine.state.bpm}
+        currentStep={engine.state.currentStep}
+        totalSteps={engine.state.stepCount}
+        activePattern={engine.state.activePattern}
+        onPlay={engine.play}
+        onStop={engine.stop}
+        onTogglePlay={engine.togglePlay}
+        onToggleRecord={() => engine.dispatch({ type: 'TOGGLE_AUTOMATION_RECORD' })}
+        onSetBpm={(b) => engine.dispatch({ type: 'SET_BPM', bpm: b })}
+        onSetPattern={(p) => engine.dispatch({ type: 'SET_PATTERN', pattern: p })}
+        activeRealm={displayedTab}
+        metronomeOn={metronomeOn}
+        onToggleMetronome={() => setMetronomeOn(prev => !prev)}
+        contextData={{
+          swing: engine.state.swing,
+          stepCount: engine.state.stepCount,
+          selectedTrackName: engine.state.tracks[engine.state.selectedTrack]?.name,
+          isFillMode: engine.state.isFillMode,
+        } as TransportContextData}
+      />
+
       {/* ═══════════ FOOTER BAR (Cleaned Up) ═══════════ */}
       <footer className="vg-footer">
         <div className="vg-footer-left">
@@ -1002,14 +1518,32 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <span>SEQUENCER</span>
           </button>
           <button
+            className={`vg-foot-btn-action ${isKitBrowserOpen ? 'active' : ''}`}
+            onClick={() => setIsKitBrowserOpen(true)}
+          >
+            <span className="vg-foot-btn-icon">📂</span>
+            <span>KIT LOADER</span>
+          </button>
+          <button
             className={`vg-foot-btn-action vg-foot-accent ${isExportOverlayOpen ? 'active' : ''}`}
             onClick={() => setIsExportOverlayOpen(true)}
           >
             <span className="vg-foot-btn-icon">⚡</span>
             <span>EXPORT</span>
           </button>
+          <button
+            className={`vg-foot-btn-action ${isMidiModalOpen ? 'active' : ''}`}
+            onClick={() => setIsMidiModalOpen(true)}
+          >
+            <span className="vg-foot-btn-icon">🎹</span>
+            <span>MIDI MAP</span>
+          </button>
         </div>
         <div className="vg-footer-right">
+          <NerveMonitor
+            midiState={webMidiState}
+            keyboardActive={keyboardPadState.isActive}
+          />
           <div className="vg-foot-info">
             <span>PLUGIN INFO</span>
             <span className="vg-foot-sub">Version 1.0.0</span>
@@ -1018,8 +1552,51 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       </footer>
 
 
+      {/* ═══════════ SESSION SEAL DRAWER ═══════════ */}
+      <SessionSealDrawer
+        isOpen={isSessionDrawerOpen}
+        onClose={() => setIsSessionDrawerOpen(false)}
+        activeSession={activeSessionName}
+        onSave={handleSessionSave}
+        onLoad={handleSessionLoad}
+      />
+
+      {/* ═══════════ FLOATING PLUGIN WINDOWS ═══════════ */}
+      <PluginWindowLayer />
+      <PluginWindowBar />
+
+      {/* ═══════════ MIDI MAPPING MODAL ═══════════ */}
+      <MidiMappingModal
+        isOpen={isMidiModalOpen}
+        onClose={() => setIsMidiModalOpen(false)}
+        noteMap={midiMap}
+        onNoteMapChange={setMidiMap}
+        ccMappings={ccMappings}
+        onCCMappingsChange={setCCMappings}
+        midiDevices={webMidiState.devices.map(d => ({ id: d.id, name: d.name }))}
+      />
+
+      {/* ═══════════ DIVINE SETTINGS PANEL ═══════════ */}
+      <DivineSettings
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
+      </div>
+
+      {/* Right Rack Ear */}
+      <div className="vg-rack-ear vg-rack-ear--right">
+        <div className="vg-rack-screw-slot">
+          <div className="vg-rack-screw vg-rack-screw--top" />
+        </div>
+        <div className="vg-rack-handle" />
+        <div className="vg-rack-screw-slot">
+          <div className="vg-rack-screw vg-rack-screw--bottom" />
+        </div>
+      </div>
+      </div>
     </div>
-    </div>
+    </PluginWindowProvider>
   );
 };
 

@@ -127,11 +127,16 @@ declare global {
     // Phase 4: New inbound callbacks from JUCE
     __godRealmWaveformAnalysis?: (data: WaveformAnalysisState) => void;
     __godRealmSpectralData?: (data: SpectralDataState) => void;
+    // Phase 4.4: Settings & Library Setup
+    __godRealmSettingsUpdate?: (settings: any) => void;
+    __godRealmLibraryPathSelected?: (path: string) => void;
   }
 }
 
 class NativeAudioBridge {
   private listeners: Set<(state: Partial<EngineState>) => void> = new Set();
+  private settingsListeners: Set<(settings: any) => void> = new Set();
+  private pathListeners: Set<(path: string) => void> = new Set();
   
   // Current accumulated state
   private currentState: EngineState = {
@@ -193,6 +198,17 @@ class NativeAudioBridge {
       window.__godRealmSpectralData = (data: SpectralDataState) => {
         this.currentState.spectralData = data;
         this.notifyListeners({ spectralData: data } as Partial<EngineState>);
+      };
+
+      // ─── Phase 4.4: Settings & Library Setup callbacks ───
+      window.__godRealmSettingsUpdate = (settings: any) => {
+        console.log('[NativeBridge] __godRealmSettingsUpdate invoked with settings:', JSON.stringify(settings));
+        this.settingsListeners.forEach(l => l(settings));
+      };
+
+      window.__godRealmLibraryPathSelected = (path: string) => {
+        console.log('[NativeBridge] __godRealmLibraryPathSelected invoked with path:', path);
+        this.pathListeners.forEach(l => l(path));
       };
 
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
@@ -479,6 +495,72 @@ class NativeAudioBridge {
       else if (window.sendToJuce) window.sendToJuce(msg);
     } else {
       console.log('[NativeBridge Sim] Sub-osc params:', { freq: frequency.toFixed(1), drive: drive.toFixed(2) });
+    }
+  }
+
+  public subscribeSettings(callback: (settings: any) => void) {
+    this.settingsListeners.add(callback);
+    return () => {
+      this.settingsListeners.delete(callback);
+    };
+  }
+
+  public subscribePath(callback: (path: string) => void) {
+    this.pathListeners.add(callback);
+    return () => {
+      this.pathListeners.delete(callback);
+    };
+  }
+
+  public getSettings() {
+    console.log('[NativeBridge] getSettings() called');
+    const msg = { type: 'GET_SETTINGS' };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      setTimeout(() => {
+        try {
+          const stored = localStorage.getItem('godRealmSettings') || '{}';
+          if (window.__godRealmSettingsUpdate) {
+            window.__godRealmSettingsUpdate(JSON.parse(stored));
+          }
+        } catch (e) {
+          if (window.__godRealmSettingsUpdate) {
+            window.__godRealmSettingsUpdate({});
+          }
+        }
+      }, 100);
+    }
+  }
+
+  public saveSettings(settings: any) {
+    const msg = { type: 'SAVE_SETTINGS', payload: settings };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      try {
+        localStorage.setItem('godRealmSettings', JSON.stringify(settings));
+        console.log('[NativeBridge Sim] Settings saved:', settings);
+      } catch (e) {
+        console.error('[NativeBridge Sim] Failed to save settings to localStorage:', e);
+      }
+    }
+  }
+
+  public browseLibraryPath() {
+    const msg = { type: 'BROWSE_LIBRARY_PATH' };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      setTimeout(() => {
+        const mockPath = '/Users/mockuser/Library/Audio/Samples/VST GOD';
+        if (window.__godRealmLibraryPathSelected) {
+          window.__godRealmLibraryPathSelected(mockPath);
+        }
+      }, 500);
     }
   }
 }

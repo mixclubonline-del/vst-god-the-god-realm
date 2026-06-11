@@ -84,6 +84,47 @@ class SampleManager {
     return buffers;
   }
 
+  /**
+   * Load an AudioBuffer from a File/Blob (drag-and-drop or file picker).
+   * Caches by filename for deduplication.
+   */
+  async loadFromFile(ctx: AudioContext, file: File): Promise<AudioBuffer> {
+    const key = `file://${file.name}_${file.size}_${file.lastModified}`;
+    if (this.cache.has(key)) return this.cache.get(key)!;
+    if (this.loading.has(key)) return this.loading.get(key)!;
+
+    const promise = (async () => {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        this.cache.set(key, audioBuffer);
+        return audioBuffer;
+      } catch (err) {
+        console.error(`[SampleManager] Failed to decode file: ${file.name}`, err);
+        throw err;
+      } finally {
+        this.loading.delete(key);
+      }
+    })();
+
+    this.loading.set(key, promise);
+    return promise;
+  }
+
+  /**
+   * Get human-readable info about an AudioBuffer.
+   */
+  getSampleInfo(buffer: AudioBuffer): { duration: string; channels: number; sampleRate: number; size: string } {
+    const duration = buffer.duration.toFixed(2) + 's';
+    const channels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const bytes = buffer.length * channels * 4; // 32-bit float
+    const size = bytes > 1048576
+      ? (bytes / 1048576).toFixed(1) + ' MB'
+      : (bytes / 1024).toFixed(0) + ' KB';
+    return { duration, channels, sampleRate, size };
+  }
+
   getDivineKit() {
     return DIVINE_TRAP_KIT;
   }

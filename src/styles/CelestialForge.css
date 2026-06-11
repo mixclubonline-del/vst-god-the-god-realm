@@ -29,7 +29,7 @@
   background-image: 
     radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.15) 0%, transparent 80%),
     url('/plugins/backgrounds/celestial-forge.png'),
-    url('https://www.transparenttextures.com/patterns/dark-leather.png');
+    url('/plugins/textures/dark-leather.png');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay, normal, multiply;
@@ -112,7 +112,7 @@
 .vg-forge-glyphs {
   position: absolute;
   inset: 0;
-  background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+  background-image: url('/plugins/textures/stardust.png');
   opacity: 0.15;
   mix-blend-mode: color-dodge;
   z-index: 1;

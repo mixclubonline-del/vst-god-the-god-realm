@@ -101,6 +101,13 @@ public:
     void loadSampleForTrack(int trackIdx, const juce::String& path);
     void updateStep(int trackIdx, const juce::String& patternName, int stepIdx, const juce::var& stepData);
     void updateTrackSlices(int trackIdx, const juce::var& sliceData);
+    void triggerStep(int trackIdx, float velocity, float pitch, float pan, float decay, float startNorm, float endNorm, bool reverse, int sliceIndex);
+    void updateTransportState(bool isPlaying, double bpm);
+
+    // Settings I/O
+    juce::String loadSettingsFromDisk();
+    void saveSettingsToDisk (const juce::String& settingsJson);
+    juce::File getConfigFile();
 
     juce::CriticalSection stepLock;
 
@@ -128,9 +135,10 @@ private:
     void deserializeTracks(juce::XmlElement* xml);
 
     VelvetCurve velvetChain;
-    SamplerEngine sampler;
+    SacredSamplerEngine sampler;
     
     std::vector<Track> tracks;
+    juce::String sampleLibraryPath;
     
     double lastSixteenthNote = -1.0;
     int sequencerCycleCount = 0;
@@ -154,6 +162,10 @@ private:
     Midi2NoteEvent midiEventBuffer[kMaxMidiEvents];
     std::atomic<int> midiEventWritePos { 0 };
     std::atomic<int> midiEventReadPos { 0 };
+
+    // ─── Round Robin & Random Sample Playback ───
+    std::atomic<int> currentRoundRobinSlot { 0 };
+    juce::Random randomGen;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VSTGodTheGodRealmAudioProcessor)
 };

@@ -1,0 +1,28 @@
+{
+  "name": "Divine Texture",
+  "category": "Instrument",
+  "godId": "poseidon",
+  "morphGodId": "chronos",
+  "voiceMode": "POLY",
+  "fui": "fluid-orb",
+  "parameters": [
+    { "id": "organic", "name": "Organic", "min": 0, "max": 100, "default": 50, "target": "energy" },
+    { "id": "growth", "name": "Growth", "min": 0, "max": 100, "default": 45, "target": "divinity" },
+    { "id": "resonance", "name": "Resonance", "min": 0, "max": 100, "default": 40, "target": "filterQ" },
+    { "id": "roots", "name": "Roots", "min": 0, "max": 100, "default": 55, "target": "subOscGain" },
+    { "id": "harmonics", "name": "Harmonics", "min": 0, "max": 100, "default": 50, "target": "modIndex" },
+    { "id": "mystic", "name": "Mystic", "min": 0, "max": 100, "default": 35, "target": "chorusMix" },
+    { "id": "vine", "name": "Vine", "min": 0, "max": 100, "default": 40, "target": "delayMix" },
+    { "id": "divine", "name": "Divine", "min": 0, "max": 100, "default": 50, "target": "realm" },
+    { "id": "layer-blend", "name": "Layer Blend", "min": 0, "max": 100, "default": 50, "target": "morphBlend" },
+    { "id": "filter-cutoff", "name": "Filter", "min": 0, "max": 100, "default": 65, "target": "filterFreq" },
+    { "id": "reverb-mix", "name": "Reverb", "min": 0, "max": 100, "default": 55, "target": "reverbMix" },
+    { "id": "output-level", "name": "Output", "min": 0, "max": 100, "default": 70, "target": "masterGain" }
+  ],
+  "fxDefaults": {
+    "reverb": 0.55,
+    "chorus": 0.4,
+    "delay": 0.35,
+    "saturation": 0.15
+  }
+}

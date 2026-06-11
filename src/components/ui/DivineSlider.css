@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 8px;
   user-select: none;
+  touch-action: none;
   cursor: pointer;
   min-width: 120px;
 }

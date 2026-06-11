@@ -1,3 +1,0 @@
-/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-subbuild/CMakeFiles/juce-populate.dir
-/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-subbuild/CMakeFiles/edit_cache.dir
-/Volumes/PRIME APP SSD/Projects/vst-god-the-god-realm/build/_deps/juce-subbuild/CMakeFiles/rebuild_cache.dir

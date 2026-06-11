@@ -1,0 +1,298 @@
+/* ═══════════════════════════════════════════════════
+   SACRED SCALE & CHORD — Musical Intelligence Panel
+   ═══════════════════════════════════════════════════ */
+
+.sacred-scale {
+  border-top: 1px solid rgba(52, 211, 153, 0.08);
+  background: linear-gradient(180deg, rgba(4, 12, 8, 0.96) 0%, rgba(6, 18, 12, 0.94) 100%);
+  padding: 8px 12px;
+  animation: scaleReveal 0.3s ease-out;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.sacred-scale--active {
+  opacity: 1;
+  border-top-color: rgba(52, 211, 153, 0.2);
+}
+
+@keyframes scaleReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Header ─── */
+.sacred-scale__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sacred-scale__power {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sacred-scale__power:hover {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.sacred-scale__power--on {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+.sacred-scale__title {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sacred-scale--active .sacred-scale__title {
+  color: rgba(52, 211, 153, 0.6);
+}
+
+.sacred-scale__key {
+  font-size: 10px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 215, 0, 0.7);
+  margin-left: 4px;
+}
+
+.sacred-scale__detected {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(56, 189, 248, 0.8);
+  animation: chordPulse 0.6s ease-out;
+}
+
+@keyframes chordPulse {
+  0% { opacity: 0; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Body ─── */
+.sacred-scale__body {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.sacred-scale__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sacred-scale__label {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Root Note Grid ─── */
+.sacred-scale__root-grid {
+  display: flex;
+  gap: 2px;
+}
+
+.sacred-scale__root-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 7px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sacred-scale__root-btn--sharp {
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.sacred-scale__root-btn:hover {
+  background: rgba(52, 211, 153, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sacred-scale__root-btn--active {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.15);
+}
+
+/* ─── Scale Type Groups ─── */
+.sacred-scale__scale-groups {
+  display: flex;
+  gap: 6px;
+}
+
+.sacred-scale__scale-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sacred-scale__group-label {
+  font-size: 5px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.sacred-scale__scale-btns {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.sacred-scale__scale-btn {
+  padding: 2px 4px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 6px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-scale__scale-btn:hover {
+  background: rgba(52, 211, 153, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.sacred-scale__scale-btn--active {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: rgba(52, 211, 153, 0.8);
+}
+
+/* ─── Diatonic Chord Grid ─── */
+.sacred-scale__chords-section {
+  flex-basis: 100%;
+}
+
+.sacred-scale__chord-grid {
+  display: flex;
+  gap: 4px;
+}
+
+.sacred-scale__chord-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 36px;
+}
+
+.sacred-scale__chord-btn:hover {
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.2);
+  transform: translateY(-1px);
+}
+
+.sacred-scale__chord-btn:active {
+  transform: translateY(0);
+  background: rgba(52, 211, 153, 0.15);
+}
+
+.sacred-scale__chord-degree {
+  font-size: 7px;
+  font-weight: 900;
+  color: rgba(255, 215, 0, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.sacred-scale__chord-name {
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sacred-scale__chord-btn:hover .sacred-scale__chord-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ─── Progression Grid ─── */
+.sacred-scale__progs-section {
+  flex-basis: 100%;
+}
+
+.sacred-scale__prog-grid {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sacred-scale__prog-btn {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.01);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-scale__prog-btn:hover {
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.15);
+}
+
+.sacred-scale__prog-btn:active {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.sacred-scale__prog-name {
+  font-size: 8px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.sacred-scale__prog-desc {
+  font-size: 6px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.sacred-scale__prog-btn:hover .sacred-scale__prog-name {
+  color: rgba(56, 189, 248, 0.7);
+}

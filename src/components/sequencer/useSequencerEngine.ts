@@ -6,7 +6,7 @@
  * Sacred Sequence Ascension — Universal Track Architecture
  * Supports sample, synth, and bus track types with dynamic add/remove (up to 16).
  */
-import { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { useUndoableReducer } from './useUndoableReducer';
 import { MasterChain, MasterParams } from '../../audio/VelvetCurveEngine';
 import { FXRack } from '../../audio/FXRack';
@@ -34,12 +34,28 @@ export interface StepState {
   sliceIndex: number;     // Index of the slice to play (0 = full sample or slice 1)
 }
 
+/** A single note in the piano roll */
+export interface PianoRollNote {
+  id: string;
+  note: number;         // MIDI note 0-127
+  startStep: number;    // Fractional step position (e.g. 3.25)
+  duration: number;     // Length in steps (min 0.25)
+  velocity: number;     // 0-127
+}
+
+let _pianoNoteIdCounter = 0;
+export function generatePianoNoteId(): string {
+  return `pn-${Date.now()}-${_pianoNoteIdCounter++}`;
+}
+
 export interface SynthTrackConfig {
   godId: ElectricPantheonGodId;
   octave: number;               // -2 to +2
   voiceMode: VoiceMode;
   macros: { energy: number; divinity: number; width: number; realm: number };
   noteMap: number[];            // per-step MIDI note (60 = C4), length = MAX_STEPS
+  pianoRollNotes: PianoRollNote[];  // Full piano roll note data
+  usePianoRoll: boolean;            // true = use pianoRollNotes, false = use noteMap
 }
 
 export interface BusTrackConfig {
@@ -119,6 +135,11 @@ export interface TrackState {
   muted: boolean;
   soloed: boolean;
   volume: number;
+  pan: number;                // -1 to 1 (track-level pan)
+  swing: number;              // 0 = use global, 1-100 = per-track override
+  eqLow: number;              // -12 to +12 dB
+  eqMid: number;              // -12 to +12 dB
+  eqHigh: number;             // -12 to +12 dB
   polymetricLength: number;
   patternA: StepState[];
   patternB: StepState[];
@@ -134,8 +155,25 @@ export interface TrackState {
     loopStart: number;
     loopEnd: number;
     slices: { start: number; end: number; reverse?: boolean; loop?: boolean; volume?: number }[];
+    /* Chopper params — persisted */
+    chopperSpeed: number;
+    chopperPitch: number;
+    chopperFadeIn: number;
+    chopperFadeOut: number;
+    chopperGlide: number;
+    chopperSensitivity: number;
+    chopperTrigger: 'MIDI' | 'Gate' | 'OneShot';
+    chopperDryWet: number;
+    chopperOutputVolume: number;
+    chopMode: 'Manual' | 'Auto' | 'Grid';
+    scopeGlobal: boolean;
+    snapToTransient: boolean;
+    snapToZero: boolean;
   };
   automationLanes: AutomationLane[];
+  /* Track Bounce/Freeze */
+  isFrozen: boolean;
+  isRecordArmed: boolean;
 }
 
 /* ═══ Song Mode Types ═══ */
@@ -168,20 +206,25 @@ export interface SequencerState {
   songRepeatCount: number; // how many repeats of current block have played
   /* Clipboard */
   clipboardPattern: StepState[] | null;
+  /* Multi-step selection */
+  selectedSteps: number[];        // indices of selected steps on the active track
+  selectionAnchor: number | null; // anchor point for shift-click range selection
+  clipboardSteps: StepState[] | null; // copied step range
 }
+import { THRONE_DOMAINS } from '../../data/throneDomains';
 
 /* ═══ Default Data ═══ */
 const DEFAULT_TRACKS: { name: string; color: string; icon: string; sourceType: TrackSourceType; godId?: ElectricPantheonGodId }[] = [
-  { name: 'KICK',     color: '#FFD700', icon: '💥', sourceType: 'sample' },
-  { name: 'SNARE',    color: '#60A5FA', icon: '🥁', sourceType: 'sample' },
-  { name: 'HI-HAT',   color: '#F5B041', icon: '🔔', sourceType: 'sample' },
-  { name: '808',      color: '#E74C3C', icon: '🔶', sourceType: 'sample' },
-  { name: 'PERC',     color: '#9B59B6', icon: '✦',  sourceType: 'sample' },
+  { name: 'KICK',     color: THRONE_DOMAINS[0].color,  icon: THRONE_DOMAINS[0].sigil,  sourceType: 'sample' },   // Thunder ⚡
+  { name: 'SNARE',    color: THRONE_DOMAINS[1].color,  icon: THRONE_DOMAINS[1].sigil,  sourceType: 'sample' },   // Tides 🌊
+  { name: 'HI-HAT',   color: THRONE_DOMAINS[3].color,  icon: THRONE_DOMAINS[3].sigil,  sourceType: 'sample' },   // Crystal 💎
+  { name: '808',      color: THRONE_DOMAINS[2].color,  icon: THRONE_DOMAINS[2].sigil,  sourceType: 'sample' },   // Inferno 🔥
+  { name: 'PERC',     color: THRONE_DOMAINS[4].color,  icon: THRONE_DOMAINS[4].sigil,  sourceType: 'sample' },   // Eden 🌿
   { name: 'MELODY',   color: '#FFD700', icon: '⚡', sourceType: 'synth', godId: 'olympus' },
   { name: 'CHORDS',   color: '#A855F7', icon: '⚡', sourceType: 'synth', godId: 'athena' },
   { name: 'LEAD',     color: '#3B82F6', icon: '⚡', sourceType: 'synth', godId: 'zeus' },
   { name: 'PAD',      color: '#14B8A6', icon: '⚡', sourceType: 'synth', godId: 'poseidon' },
-  { name: 'FX HIT',   color: '#22C55E', icon: '🌊', sourceType: 'sample' },
+  { name: 'FX HIT',   color: THRONE_DOMAINS[11].color, icon: THRONE_DOMAINS[11].sigil, sourceType: 'sample' },  // Wrath ⚔️
 ];
 
 function createDefaultStep(): StepState {
@@ -201,7 +244,20 @@ function createDefaultSampleParams() {
     loop: false,
     loopStart: 0,
     loopEnd: 1,
-    slices: [],
+    slices: [] as { start: number; end: number; reverse?: boolean; loop?: boolean; volume?: number }[],
+    chopperSpeed: 1.0,
+    chopperPitch: 0,
+    chopperFadeIn: 25,
+    chopperFadeOut: 150,
+    chopperGlide: 10,
+    chopperSensitivity: 50,
+    chopperTrigger: 'MIDI' as const,
+    chopperDryWet: 75,
+    chopperOutputVolume: -3,
+    chopMode: 'Manual' as const,
+    scopeGlobal: true,
+    snapToTransient: true,
+    snapToZero: true,
   };
 }
 
@@ -216,6 +272,8 @@ function createDefaultSynthConfig(godId: ElectricPantheonGodId = 'olympus', step
     voiceMode: 'poly',
     macros: { energy: 50, divinity: 50, width: 50, realm: 50 },
     noteMap: Array.from({ length: stepCount }, () => 60), // C4 default
+    pianoRollNotes: [],
+    usePianoRoll: false,
   };
 }
 
@@ -233,6 +291,11 @@ function createDefaultTrack(
     id: generateTrackId(),
     name: info.name, color: info.color, icon: info.icon,
     muted: false, soloed: false, volume: 0.8,
+    pan: 0,
+    swing: 0,
+    eqLow: 0,
+    eqMid: 0,
+    eqHigh: 0,
     polymetricLength: stepCount,
     patternA: Array.from({ length: stepCount }, () => createDefaultStep()),
     patternB: Array.from({ length: stepCount }, () => createDefaultStep()),
@@ -242,6 +305,8 @@ function createDefaultTrack(
     fxSends: createDefaultFXSends(),
     sampleParams: createDefaultSampleParams(),
     automationLanes: [],
+    isFrozen: false,
+    isRecordArmed: false,
   };
 }
 
@@ -283,6 +348,9 @@ function createInitialState(): SequencerState {
     songPosition: 0,
     songRepeatCount: 0,
     clipboardPattern: null,
+    selectedSteps: [],
+    selectionAnchor: null,
+    clipboardSteps: null,
   };
 }
 
@@ -290,6 +358,8 @@ function createInitialState(): SequencerState {
 type SeqAction =
   | { type: 'PLAY' }
   | { type: 'STOP' }
+  | { type: 'TOGGLE_PLAY' }
+  | { type: 'TOGGLE_AUTOMATION_RECORD' }
   | { type: 'SET_BPM'; bpm: number }
   | { type: 'SET_SWING'; swing: number }
   | { type: 'SET_SWING_PRESET'; preset: SequencerState['swingPreset'] }
@@ -349,7 +419,34 @@ type SeqAction =
   | { type: 'TOGGLE_AUTOMATION_ENABLED'; trackIndex: number; param: AutomationParam }
   | { type: 'SET_AUTOMATION_CURVE_TYPE'; trackIndex: number; param: AutomationParam; curveType: AutomationLane['curveType'] }
   | { type: 'RECORD_AUTOMATION_SNAPSHOT'; trackIndex: number; param: AutomationParam; step: number; value: number }
-  | { type: 'TOGGLE_AUTOMATION_RECORD' };
+  /* Phase A/B: FL Studio Quality Upgrade */
+  | { type: 'SET_TRACK_PAN'; trackIndex: number; pan: number }
+  | { type: 'SET_TRACK_SWING'; trackIndex: number; swing: number }
+  | { type: 'HUMANIZE_TRACK'; trackIndex: number; amount: number }
+  | { type: 'QUANTIZE_TRACK'; trackIndex: number }
+  | { type: 'SET_TRACK_EQ'; trackIndex: number; band: 'low' | 'mid' | 'high'; value: number }
+  /* Phase C: Multi-step selection + Bus Routing */
+  | { type: 'SELECT_STEP'; stepIndex: number; additive: boolean; range: boolean }
+  | { type: 'SELECT_STEP_RANGE'; from: number; to: number }
+  | { type: 'CLEAR_SELECTION' }
+  | { type: 'COPY_SELECTED_STEPS' }
+  | { type: 'PASTE_SELECTED_STEPS'; startIndex: number }
+  | { type: 'DELETE_SELECTED_STEPS' }
+  | { type: 'SET_BUS_INPUT_TRACKS'; trackIndex: number; inputTrackIds: string[] }
+  /* Phase D: Selection Toolbar Actions */
+  | { type: 'REVERSE_SELECTED_STEPS' }
+  | { type: 'DOUBLE_SELECTED_STEPS' }
+  | { type: 'HALVE_SELECTED_STEPS' }
+  | { type: 'RANDOMIZE_SELECTED_VELOCITY' }
+  /* Piano Roll */
+  | { type: 'ADD_PIANO_NOTE'; trackIndex: number; note: PianoRollNote }
+  | { type: 'REMOVE_PIANO_NOTE'; trackIndex: number; noteId: string }
+  | { type: 'UPDATE_PIANO_NOTE'; trackIndex: number; noteId: string; changes: Partial<Omit<PianoRollNote, 'id'>> }
+  | { type: 'TOGGLE_PIANO_ROLL_MODE'; trackIndex: number }
+  /* Track Bounce/Freeze */
+  | { type: 'FREEZE_TRACK'; trackIndex: number }
+  | { type: 'UNFREEZE_TRACK'; trackIndex: number }
+  | { type: 'TOGGLE_RECORD_ARM'; trackIndex: number };
 
 function getActivePattern(track: TrackState, pattern: 'A' | 'B'): StepState[] {
   return pattern === 'A' ? track.patternA : track.patternB;
@@ -367,6 +464,10 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       return { ...state, isPlaying: true, currentStep: -1 };
     case 'STOP':
       return { ...state, isPlaying: false, isRecording: false, currentStep: -1 };
+    case 'TOGGLE_PLAY':
+      return { ...state, isPlaying: !state.isPlaying, currentStep: state.isPlaying ? -1 : state.currentStep };
+    case 'TOGGLE_AUTOMATION_RECORD':
+      return { ...state, isRecording: !state.isRecording };
     case 'SET_BPM':
       return { ...state, bpm: Math.max(20, Math.min(300, action.bpm)) };
     case 'SET_SWING':
@@ -521,7 +622,18 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
     case 'LOAD_PATTERN':
       return { ...state, tracks: action.tracks };
     case 'LOAD_PROJECT_STATE':
-      return { ...state, ...action.payload, isPlaying: false, currentStep: -1, cycleCount: 0, clipboardPattern: null };
+      return {
+        ...state,
+        ...action.payload,
+        isPlaying: false,
+        currentStep: -1,
+        cycleCount: 0,
+        clipboardPattern: null,
+        // Ensure Phase C/D fields always present (old saves lack them)
+        selectedSteps: [],
+        selectionAnchor: null,
+        clipboardSteps: null,
+      };
 
     /* ─── Sacred Sequence Ascension: Dynamic Track Actions ─── */
     case 'ADD_TRACK': {
@@ -864,8 +976,267 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       });
       return { ...state, tracks };
     }
-    case 'TOGGLE_AUTOMATION_RECORD':
-      return { ...state, isRecording: !state.isRecording };
+
+    /* ═══ Phase A/B: FL Studio Quality Upgrade Actions ═══ */
+    case 'SET_TRACK_PAN': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], pan: Math.max(-1, Math.min(1, action.pan)) };
+      return { ...state, tracks };
+    }
+    case 'SET_TRACK_SWING': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], swing: Math.max(0, Math.min(100, action.swing)) };
+      return { ...state, tracks };
+    }
+    case 'HUMANIZE_TRACK': {
+      // Randomize velocity ±amount and micro-timing ±amount/2 for enabled steps
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      const pattern = getActivePattern(track, state.activePattern);
+      const humanized = pattern.map(step => {
+        if (!step.enabled) return step;
+        const velJitter = Math.round((Math.random() - 0.5) * 2 * action.amount);
+        const microJitter = Math.round((Math.random() - 0.5) * action.amount);
+        return {
+          ...step,
+          velocity: Math.max(1, Math.min(127, step.velocity + velJitter)),
+          microTiming: Math.max(-50, Math.min(50, step.microTiming + microJitter)),
+        };
+      });
+      tracks[action.trackIndex] = setActivePattern(track, state.activePattern, humanized);
+      return { ...state, tracks };
+    }
+    case 'QUANTIZE_TRACK': {
+      // Reset all micro-timing to 0 (snap to grid)
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      const pattern = getActivePattern(track, state.activePattern);
+      const quantized = pattern.map(step => ({ ...step, microTiming: 0 }));
+      tracks[action.trackIndex] = setActivePattern(track, state.activePattern, quantized);
+      return { ...state, tracks };
+    }
+    case 'SET_TRACK_EQ': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      const clamped = Math.max(-12, Math.min(12, action.value));
+      if (action.band === 'low') track.eqLow = clamped;
+      else if (action.band === 'mid') track.eqMid = clamped;
+      else track.eqHigh = clamped;
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+
+    /* ─── Phase C: Multi-step Selection ─── */
+    case 'SELECT_STEP': {
+      const { stepIndex, additive, range } = action;
+      if (range && state.selectionAnchor !== null) {
+        // Shift+click: select range from anchor to stepIndex
+        const from = Math.min(state.selectionAnchor, stepIndex);
+        const to = Math.max(state.selectionAnchor, stepIndex);
+        const rangeSteps = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+        return { ...state, selectedSteps: rangeSteps };
+      }
+      if (additive) {
+        // Ctrl+click: toggle individual step in selection
+        const exists = state.selectedSteps.includes(stepIndex);
+        const selectedSteps = exists
+          ? state.selectedSteps.filter(s => s !== stepIndex)
+          : [...state.selectedSteps, stepIndex].sort((a, b) => a - b);
+        return { ...state, selectedSteps, selectionAnchor: stepIndex };
+      }
+      // Plain click: select single step
+      return { ...state, selectedSteps: [stepIndex], selectionAnchor: stepIndex };
+    }
+    case 'SELECT_STEP_RANGE': {
+      const from = Math.min(action.from, action.to);
+      const to = Math.max(action.from, action.to);
+      const rangeSteps = Array.from({ length: to - from + 1 }, (_, i) => from + i);
+      return { ...state, selectedSteps: rangeSteps, selectionAnchor: action.from };
+    }
+    case 'CLEAR_SELECTION':
+      return { ...state, selectedSteps: [], selectionAnchor: null };
+    case 'COPY_SELECTED_STEPS': {
+      if (state.selectedSteps.length === 0) return state;
+      const track = state.tracks[state.selectedTrack];
+      const pattern = getActivePattern(track, state.activePattern);
+      const copied = state.selectedSteps
+        .filter(i => i >= 0 && i < pattern.length)
+        .sort((a, b) => a - b)
+        .map(i => ({ ...pattern[i] }));
+      return { ...state, clipboardSteps: copied };
+    }
+    case 'PASTE_SELECTED_STEPS': {
+      if (!state.clipboardSteps || state.clipboardSteps.length === 0) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      const startIdx = action.startIndex;
+      for (let i = 0; i < state.clipboardSteps.length && startIdx + i < pattern.length; i++) {
+        pattern[startIdx + i] = { ...state.clipboardSteps[i] };
+      }
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks };
+    }
+    case 'DELETE_SELECTED_STEPS': {
+      if (state.selectedSteps.length === 0) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      for (const idx of state.selectedSteps) {
+        if (idx >= 0 && idx < pattern.length) {
+          pattern[idx] = { ...pattern[idx], enabled: false, velocity: 80 };
+        }
+      }
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks, selectedSteps: [] };
+    }
+
+    /* ─── Phase C: Bus Routing ─── */
+    case 'SET_BUS_INPUT_TRACKS': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      if (track.sourceType !== 'bus') return state;
+      track.busConfig = { inputTrackIds: action.inputTrackIds };
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+
+    /* ─── Phase D: Selection Toolbar Actions ─── */
+    case 'REVERSE_SELECTED_STEPS': {
+      if (state.selectedSteps.length < 2) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      const sorted = [...state.selectedSteps].sort((a, b) => a - b);
+      const stepsData = sorted.map(i => ({ ...pattern[i] }));
+      stepsData.reverse();
+      sorted.forEach((idx, i) => { pattern[idx] = stepsData[i]; });
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks };
+    }
+    case 'DOUBLE_SELECTED_STEPS': {
+      if (state.selectedSteps.length === 0) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      const sorted = [...state.selectedSteps].sort((a, b) => a - b);
+      const offset = sorted.length;
+      for (let i = 0; i < sorted.length; i++) {
+        const destIdx = sorted[i] + offset;
+        if (destIdx < pattern.length) {
+          pattern[destIdx] = { ...pattern[sorted[i]] };
+        }
+      }
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks };
+    }
+    case 'HALVE_SELECTED_STEPS': {
+      if (state.selectedSteps.length < 2) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      const sorted = [...state.selectedSteps].sort((a, b) => a - b);
+      // Disable every other step in the selection
+      sorted.forEach((idx, i) => {
+        if (i % 2 === 1) {
+          pattern[idx] = { ...pattern[idx], enabled: false };
+        }
+      });
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks };
+    }
+    case 'RANDOMIZE_SELECTED_VELOCITY': {
+      if (state.selectedSteps.length === 0) return state;
+      const tracks = [...state.tracks];
+      const track = tracks[state.selectedTrack];
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      for (const idx of state.selectedSteps) {
+        if (idx >= 0 && idx < pattern.length && pattern[idx].enabled) {
+          pattern[idx] = {
+            ...pattern[idx],
+            velocity: Math.round(40 + Math.random() * 87), // 40-127
+          };
+        }
+      }
+      tracks[state.selectedTrack] = setActivePattern(track, state.activePattern, pattern);
+      return { ...state, tracks };
+    }
+
+    /* ═══ Piano Roll ═══ */
+    case 'ADD_PIANO_NOTE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: {
+          ...track.synthConfig,
+          pianoRollNotes: [...track.synthConfig.pianoRollNotes, action.note],
+        },
+      };
+      return { ...state, tracks };
+    }
+    case 'REMOVE_PIANO_NOTE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: {
+          ...track.synthConfig,
+          pianoRollNotes: track.synthConfig.pianoRollNotes.filter(n => n.id !== action.noteId),
+        },
+      };
+      return { ...state, tracks };
+    }
+    case 'UPDATE_PIANO_NOTE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: {
+          ...track.synthConfig,
+          pianoRollNotes: track.synthConfig.pianoRollNotes.map(n =>
+            n.id === action.noteId ? { ...n, ...action.changes } : n
+          ),
+        },
+      };
+      return { ...state, tracks };
+    }
+    case 'TOGGLE_PIANO_ROLL_MODE': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      if (!track.synthConfig) return state;
+      tracks[action.trackIndex] = {
+        ...track,
+        synthConfig: {
+          ...track.synthConfig,
+          usePianoRoll: !track.synthConfig.usePianoRoll,
+        },
+      };
+      return { ...state, tracks };
+    }
+
+    /* ═══ Track Bounce/Freeze ═══ */
+    case 'FREEZE_TRACK': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], isFrozen: true };
+      return { ...state, tracks };
+    }
+    case 'UNFREEZE_TRACK': {
+      const tracks = [...state.tracks];
+      tracks[action.trackIndex] = { ...tracks[action.trackIndex], isFrozen: false };
+      return { ...state, tracks };
+    }
+    case 'TOGGLE_RECORD_ARM': {
+      const tracks = [...state.tracks];
+      const track = tracks[action.trackIndex];
+      // Only one track can be record-armed at a time
+      const nextArmed = !track.isRecordArmed;
+      tracks.forEach((t, i) => { tracks[i] = { ...t, isRecordArmed: i === action.trackIndex ? nextArmed : false }; });
+      return { ...state, tracks };
+    }
 
     default:
       return state;
@@ -876,6 +1247,11 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
 function applySwing(stepIndex: number, stepDuration: number, swingAmount: number): number {
   if (swingAmount === 0 || stepIndex % 2 === 0) return 0;
   return stepDuration * (swingAmount / 200); // Shift odd steps forward
+}
+
+/** Get effective swing for a track (per-track override or global) */
+function getTrackSwing(track: TrackState, globalSwing: number): number {
+  return track.swing > 0 ? track.swing : globalSwing;
 }
 
 function shouldTrigger(step: StepState, isFillMode: boolean, cycleCount: number): boolean {
@@ -905,7 +1281,10 @@ const HISTORY_IGNORE_ACTIONS = [
 ];
 
 /* ═══ Hook ═══ */
-export function useSequencerEngine() {
+export function useSequencerEngine(
+  sharedAudioCtx?: React.RefObject<AudioContext | null>,
+  sharedMasterChain?: React.RefObject<MasterChain | null>,
+) {
   const { state, dispatch, undo, redo, canUndo, canRedo, clearHistory } =
     useUndoableReducer(sequencerReducer, createInitialState(), {
       maxHistory: 50,
@@ -914,6 +1293,7 @@ export function useSequencerEngine() {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const schedulerIdRef = useRef<number | null>(null);
+  const clockNodeRef = useRef<AudioWorkletNode | null>(null);
   const nextStepTimeRef = useRef(0);
   const currentStepRef = useRef(-1);
   const masterChainRef = useRef<MasterChain | null>(null);
@@ -943,9 +1323,9 @@ export function useSequencerEngine() {
   }, [state]);
 
   // Trigger callback — override from parent to play actual samples
-  const onTriggerRef = useRef<((trackIndex: number, step: StepState, time: number) => void) | null>(null);
+  const onTriggerRef = useRef<((trackIndex: number, step: StepState, time: number, polyStep: number) => void) | null>(null);
 
-  const setOnTrigger = useCallback((fn: (trackIndex: number, step: StepState, time: number) => void) => {
+  const setOnTrigger = useCallback((fn: (trackIndex: number, step: StepState, time: number, polyStep: number) => void) => {
     onTriggerRef.current = fn;
   }, []);
 
@@ -1000,8 +1380,9 @@ export function useSequencerEngine() {
         const step = pattern[polyStep];
         if (!shouldTrigger(step, s.isFillMode, s.cycleCount)) return;
 
-        // Calculate timing with swing and micro-timing
-        const swingOffset = applySwing(stepIdx, stepDuration, s.swing);
+        // Calculate timing with swing (per-track or global) and micro-timing
+        const effectiveSwing = getTrackSwing(track, s.swing);
+        const swingOffset = applySwing(stepIdx, stepDuration, effectiveSwing);
         const microOffset = stepDuration * (step.microTiming / 100);
         const triggerTime = nextStepTimeRef.current + swingOffset + microOffset;
 
@@ -1029,13 +1410,13 @@ export function useSequencerEngine() {
             const subStep = { ...step, velocity: subVelocity };
 
             if (onTriggerRef.current) {
-              onTriggerRef.current(trackIdx, subStep, subTime);
+              onTriggerRef.current(trackIdx, subStep, subTime, polyStep);
             }
           }
         } else {
           // Normal Trigger
           if (onTriggerRef.current) {
-            onTriggerRef.current(trackIdx, step, triggerTime);
+            onTriggerRef.current(trackIdx, step, triggerTime, polyStep);
           }
         }
       });
@@ -1049,27 +1430,61 @@ export function useSequencerEngine() {
     }
   }, []);
 
-  const play = useCallback(() => {
+  const initAudio = async () => {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext();
-      masterChainRef.current = new MasterChain(audioCtxRef.current);
-      masterChainRef.current.connect(audioCtxRef.current.destination);
+      // Phase 1: Use shared AudioContext if provided, otherwise create our own
+      if (sharedAudioCtx?.current) {
+        audioCtxRef.current = sharedAudioCtx.current;
+      } else {
+        audioCtxRef.current = new AudioContext();
+      }
+
+      // Phase 3: Load the highly-accurate Clock Worklet
+      try {
+        const workletUrl = new URL('../../audio/godRealmWorklet.js?url', import.meta.url);
+        await audioCtxRef.current.audioWorklet.addModule(workletUrl.href);
+        clockNodeRef.current = new AudioWorkletNode(audioCtxRef.current, 'god-realm-clock-worklet');
+        clockNodeRef.current.port.onmessage = (e) => {
+          if (e.data.type === 'tick') {
+            scheduleStep();
+          }
+        };
+        clockNodeRef.current.connect(audioCtxRef.current.destination);
+      } catch (err) {
+        console.warn('GodRealmClockWorklet failed to load, falling back to setInterval clock:', err);
+      }
+
+      // Phase 3: Use shared MasterChain (Celestial Forge) if provided
+      if (sharedMasterChain?.current) {
+        masterChainRef.current = sharedMasterChain.current;
+      } else {
+        masterChainRef.current = new MasterChain(audioCtxRef.current);
+        masterChainRef.current.connect(audioCtxRef.current.destination);
+      }
       masterChainRef.current.updateParams(stateRef.current.master);
       // Insert FXRack between tracks and MasterChain
       fxRackRef.current = new FXRack(audioCtxRef.current, masterChainRef.current.input);
       fxRackRef.current.updateBPM(stateRef.current.bpm);
     }
     if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
+      await audioCtxRef.current.resume();
     }
+  };
+
+  const play = useCallback(async () => {
+    await initAudio();
 
     currentStepRef.current = -1;
-    nextStepTimeRef.current = audioCtxRef.current.currentTime + 0.05;
+    // Only set nextStepTime once we're sure audio is running
+    nextStepTimeRef.current = audioCtxRef.current!.currentTime + 0.05;
     dispatch({ type: 'PLAY' });
 
-    // Start scheduler loop
-    if (schedulerIdRef.current) clearInterval(schedulerIdRef.current);
-    schedulerIdRef.current = window.setInterval(scheduleStep, SCHEDULE_INTERVAL);
+    // If the Worklet loaded, it is already ticking in the background. 
+    // If not, fallback to setInterval.
+    if (!clockNodeRef.current) {
+      if (schedulerIdRef.current) clearInterval(schedulerIdRef.current);
+      schedulerIdRef.current = window.setInterval(scheduleStep, SCHEDULE_INTERVAL);
+    }
   }, [scheduleStep]);
 
   const stop = useCallback(() => {
@@ -1089,7 +1504,13 @@ export function useSequencerEngine() {
   useEffect(() => {
     return () => {
       if (schedulerIdRef.current) clearInterval(schedulerIdRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close();
+      if (clockNodeRef.current) {
+        clockNodeRef.current.disconnect();
+      }
+      // Only close the AudioContext if we created it (not shared from parent)
+      if (audioCtxRef.current && !sharedAudioCtx?.current) {
+        audioCtxRef.current.close();
+      }
     };
   }, []);
 

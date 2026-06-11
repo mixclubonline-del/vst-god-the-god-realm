@@ -717,23 +717,40 @@
   min-width: 0;
 }
 
-.da-pad:hover { background: rgba(255, 215, 0,0.04); border-color: rgba(255, 215, 0,0.15); }
+.da-pad:hover {
+  background: color-mix(in srgb, var(--da-pad-color, #FFD700) 6%, transparent);
+  border-color: color-mix(in srgb, var(--da-pad-color, #FFD700) 25%, transparent);
+}
 
 .da-pad.active {
-  background: rgba(255, 215, 0,0.1);
-  border-color: rgba(255, 215, 0,0.35);
-  box-shadow: 0 0 15px rgba(255, 215, 0,0.1);
+  background: color-mix(in srgb, var(--da-pad-color, #FFD700) 12%, transparent);
+  border-color: color-mix(in srgb, var(--da-pad-color, #FFD700) 45%, transparent);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--da-pad-color, #FFD700) 15%, transparent);
 }
 
-.da-pad.loaded { border-color: rgba(194,150,35,0.2); }
+.da-pad.loaded {
+  border-color: color-mix(in srgb, var(--da-pad-color, #FFD700) 25%, transparent);
+}
+
+.da-pad-sigil {
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+.da-pad.active .da-pad-sigil { opacity: 0.8; }
+.da-pad.loaded .da-pad-sigil { opacity: 0.5; }
 
 .da-pad-num {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 800;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.2);
+  font-variant-numeric: tabular-nums;
 }
 
-.da-pad.active .da-pad-num { color: var(--god-primary); }
+.da-pad.active .da-pad-num {
+  color: var(--da-pad-color, var(--god-primary));
+}
 
 .da-pad-sample {
   font-size: 7px;
@@ -744,6 +761,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 3px;
+}
+
+.da-pad-domain {
+  font-size: 6px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--da-pad-color, #FFD700) 40%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 2px;
 }
 
 /* ─── Empty State ─── */

@@ -34,6 +34,41 @@ interface SacredSequencerHeaderProps {
   /* Phase 6b — Automation Record */
   isRecording: boolean;
   onToggleRecord: () => void;
+  /* Phase A: Stem Export + Metronome */
+  onExportStems?: () => void;
+  isExportingStems?: boolean;
+  metronomeOn?: boolean;
+  onToggleMetronome?: () => void;
+  /* MIDI Mapping */
+  showMidiMapper?: boolean;
+  isMidiLearning?: boolean;
+  onToggleMidiMapper?: () => void;
+  /* Piano Roll */
+  showPianoRoll?: boolean;
+  isSynthTrack?: boolean;
+  onTogglePianoRoll?: () => void;
+  /* MIDI Note Input */
+  midiNoteArmed?: boolean;
+  hasActiveMidiInput?: boolean;
+  onToggleMidiArm?: () => void;
+  /* Arpeggiator */
+  showArpeggiator?: boolean;
+  arpEnabled?: boolean;
+  onToggleArpPanel?: () => void;
+  /* Scale & Chord */
+  showScaleChord?: boolean;
+  scaleEnabled?: boolean;
+  onToggleScalePanel?: () => void;
+  /* Sidechain */
+  showSidechain?: boolean;
+  sidechainEnabled?: boolean;
+  onToggleSidechain?: () => void;
+  /* Master Meter */
+  showMeter?: boolean;
+  onToggleMeter?: () => void;
+  /* Fullscreen */
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const SWING_PRESETS: { id: SequencerState['swingPreset']; label: string }[] = [
@@ -71,9 +106,36 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
   onToggleProjectDrawer,
   isRecording,
   onToggleRecord,
+  onExportStems,
+  isExportingStems,
+  metronomeOn,
+  onToggleMetronome,
+  showMidiMapper,
+  isMidiLearning,
+  onToggleMidiMapper,
+  showPianoRoll,
+  isSynthTrack,
+  onTogglePianoRoll,
+  midiNoteArmed,
+  hasActiveMidiInput,
+  onToggleMidiArm,
+  showArpeggiator,
+  arpEnabled,
+  onToggleArpPanel,
+  showScaleChord,
+  scaleEnabled,
+  onToggleScalePanel,
+  showSidechain,
+  sidechainEnabled,
+  onToggleSidechain,
+  showMeter,
+  onToggleMeter,
+  isFullscreen,
+  onToggleFullscreen,
 }) => {
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const bpmInputRef = useRef<HTMLInputElement>(null);
+  const bpmDragRef = useRef({ isDragging: false, startY: 0, startBpm: 0 });
 
   // Tap tempo
   const tapTimesRef = useRef<number[]>([]);
@@ -113,34 +175,63 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
     }
   }, [onSetBpm]);
 
+  // BPM scroll handler — mouse wheel to adjust
+  const handleBpmWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -1 : 1;
+    const step = e.shiftKey ? 10 : 1;
+    onSetBpm(state.bpm + delta * step);
+  }, [onSetBpm, state.bpm]);
+
+  // BPM drag handler — vertical drag to adjust
+  const handleBpmDragStart = useCallback((e: React.PointerEvent) => {
+    if (isEditingBpm) return;
+    e.preventDefault();
+    e.stopPropagation();
+    bpmDragRef.current = { isDragging: true, startY: e.clientY, startBpm: state.bpm };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [isEditingBpm, state.bpm]);
+
+  const handleBpmDragMove = useCallback((e: React.PointerEvent) => {
+    if (!bpmDragRef.current.isDragging) return;
+    e.stopPropagation();
+    const delta = bpmDragRef.current.startY - e.clientY;
+    const sensitivity = e.shiftKey ? 0.5 : 0.2;
+    const newBpm = Math.round(bpmDragRef.current.startBpm + delta * sensitivity);
+    onSetBpm(newBpm);
+  }, [onSetBpm]);
+
+  const handleBpmDragEnd = useCallback((e: React.PointerEvent) => {
+    bpmDragRef.current.isDragging = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, []);
+
   return (
     <div className={`seq-header ${state.isFillMode ? 'seq-header--fill' : ''}`}>
-      {/* Transport */}
+      {/* Transport Status — controls live in floating DivineTransport */}
       <div className="seq-header__transport">
-        <button
-          className={`seq-transport-btn seq-transport-btn--play ${state.isPlaying ? 'seq-transport-btn--active' : ''}`}
-          onClick={onTogglePlay}
-          title={state.isPlaying ? 'Stop' : 'Play'}
+        <div
+          className={`seq-transport-indicator ${state.isPlaying ? 'seq-transport-indicator--playing' : ''}`}
+          title={state.isPlaying ? 'Playing — use transport bar to stop' : 'Stopped — use transport bar to play'}
         >
           {state.isPlaying ? (
-            <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="1" fill="currentColor"/></svg>
+            <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="1,0 9,5 1,10" fill="currentColor"/></svg>
           ) : (
-            <svg width="14" height="14" viewBox="0 0 14 14"><polygon points="3,1 13,7 3,13" fill="currentColor"/></svg>
+            <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="1" fill="currentColor"/></svg>
           )}
-        </button>
+        </div>
 
-        {/* Record Automation */}
         <button
-          className={`seq-transport-btn seq-transport-btn--rec ${isRecording ? 'seq-transport-btn--rec-active' : ''}`}
+          className={`seq-transport-btn seq-record-btn ${isRecording ? 'seq-transport-btn--recording' : ''}`}
           onClick={onToggleRecord}
-          title={isRecording ? 'Disarm Automation Record (R)' : 'Arm Automation Record (R)'}
+          title="Record Automation (R)"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14">
-            <circle cx="7" cy="7" r="5" fill={isRecording ? '#EF4444' : 'none'} stroke={isRecording ? '#EF4444' : 'currentColor'} strokeWidth="1.5" />
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="5" fill={isRecording ? "#EF4444" : "currentColor"} />
           </svg>
         </button>
 
-        {/* Undo/Redo */}
+        {/* Undo/Redo — sequencer-specific operations */}
         <button
           className={`seq-transport-btn seq-undo-btn ${!canUndo ? 'seq-transport-btn--disabled' : ''}`}
           onClick={onUndo}
@@ -159,8 +250,16 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         </button>
       </div>
 
-      {/* BPM Display */}
-      <div className="seq-header__bpm" onDoubleClick={handleBpmDoubleClick}>
+      {/* BPM Display — scroll + drag to adjust */}
+      <div
+        className="seq-header__bpm"
+        onDoubleClick={handleBpmDoubleClick}
+        onWheel={handleBpmWheel}
+        onPointerDown={handleBpmDragStart}
+        onPointerMove={handleBpmDragMove}
+        onPointerUp={handleBpmDragEnd}
+        style={{ cursor: isEditingBpm ? 'text' : 'ns-resize' }}
+      >
         {isEditingBpm ? (
           <input
             ref={bpmInputRef}
@@ -281,6 +380,95 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         EXPORT
       </button>
 
+      {/* Stem Export */}
+      {onExportStems && (
+        <button
+          className={`seq-stem-export-btn ${isExportingStems ? 'seq-stem-export-btn--busy' : ''}`}
+          onClick={onExportStems}
+          disabled={isExportingStems}
+          title="Export individual track stems as WAV files"
+        >
+          {isExportingStems ? '⏳' : '🎚️'} STEMS
+        </button>
+      )}
+
+      {/* Metronome */}
+      {onToggleMetronome && (
+        <button
+          className={`seq-metronome-btn ${metronomeOn ? 'seq-metronome-btn--active' : ''}`}
+          onClick={onToggleMetronome}
+          title={metronomeOn ? 'Metronome OFF' : 'Metronome ON'}
+        >
+          🔔
+        </button>
+      )}
+
+      {/* MIDI Mapping */}
+      {onToggleMidiMapper && (
+        <button
+          className={`seq-header__btn seq-midi-btn ${showMidiMapper ? 'seq-midi-btn--active' : ''} ${isMidiLearning ? 'seq-midi-btn--learning' : ''}`}
+          onClick={onToggleMidiMapper}
+          title={showMidiMapper ? 'Hide MIDI Mapping' : 'Show MIDI Mapping'}
+        >
+          🎛️
+        </button>
+      )}
+
+      {/* Piano Roll — synth tracks only */}
+      {isSynthTrack && onTogglePianoRoll && (
+        <button
+          className={`seq-header__btn seq-pianoroll-btn ${showPianoRoll ? 'seq-pianoroll-btn--active' : ''}`}
+          onClick={onTogglePianoRoll}
+          title={showPianoRoll ? 'Hide Piano Roll' : 'Show Piano Roll'}
+        >
+          🎹
+        </button>
+      )}
+
+      {/* MIDI Note Input Arm — synth tracks only */}
+      {isSynthTrack && onToggleMidiArm && (
+        <button
+          className={`seq-header__btn seq-midi-arm-btn ${midiNoteArmed ? 'seq-midi-arm-btn--armed' : ''} ${hasActiveMidiInput ? 'seq-midi-arm-btn--active' : ''}`}
+          onClick={onToggleMidiArm}
+          title={midiNoteArmed ? 'Disarm MIDI Input' : 'Arm MIDI Note Input (Record)'}
+        >
+          🎙️
+        </button>
+      )}
+
+      {/* Arpeggiator Toggle — synth tracks only */}
+      {isSynthTrack && onToggleArpPanel && (
+        <button
+          className={`seq-header__btn seq-arp-btn ${showArpeggiator ? 'seq-arp-btn--open' : ''} ${arpEnabled ? 'seq-arp-btn--active' : ''}`}
+          onClick={onToggleArpPanel}
+          title={showArpeggiator ? 'Hide Arpeggiator' : 'Show Arpeggiator'}
+        >
+          ARP
+        </button>
+      )}
+
+      {/* Scale & Chord Toggle — synth tracks only */}
+      {isSynthTrack && onToggleScalePanel && (
+        <button
+          className={`seq-header__btn seq-scale-btn ${showScaleChord ? 'seq-scale-btn--open' : ''} ${scaleEnabled ? 'seq-scale-btn--active' : ''}`}
+          onClick={onToggleScalePanel}
+          title={showScaleChord ? 'Hide Scale & Chords' : 'Show Scale & Chords'}
+        >
+          🎼
+        </button>
+      )}
+
+      {/* Sidechain Toggle */}
+      {onToggleSidechain && (
+        <button
+          className={`seq-header__btn seq-sc-btn ${showSidechain ? 'seq-sc-btn--open' : ''} ${sidechainEnabled ? 'seq-sc-btn--active' : ''}`}
+          onClick={onToggleSidechain}
+          title={showSidechain ? 'Hide Sidechain' : 'Show Sidechain'}
+        >
+          SC
+        </button>
+      )}
+
       {/* Mixer Toggle */}
       <button
         className={`seq-mixer-toggle ${showMixer ? 'seq-mixer-toggle--active' : ''}`}
@@ -305,6 +493,31 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         <span style={{ fontSize: '12px' }}>✨</span>
         <span>FX</span>
       </button>
+
+      {/* Master Meter Toggle */}
+      {onToggleMeter && (
+        <button
+          className={`seq-mixer-toggle ${showMeter ? 'seq-mixer-toggle--active' : ''}`}
+          onClick={onToggleMeter}
+          title={showMeter ? 'Hide Master Meter' : 'Show Master Meter'}
+          style={{ color: showMeter ? '#FFD700' : undefined }}
+        >
+          <span style={{ fontSize: '12px' }}>📊</span>
+          <span>METER</span>
+        </button>
+      )}
+
+      {/* Fullscreen Toggle */}
+      {onToggleFullscreen && (
+        <button
+          className={`seq-mixer-toggle ${isFullscreen ? 'seq-mixer-toggle--active' : ''}`}
+          onClick={onToggleFullscreen}
+          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+        >
+          <span style={{ fontSize: '12px' }}>{isFullscreen ? '↙️' : '↗️'}</span>
+          <span>FULL</span>
+        </button>
+      )}
     </div>
   );
 };

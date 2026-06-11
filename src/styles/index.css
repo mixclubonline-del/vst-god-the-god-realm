@@ -208,6 +208,19 @@
   100% { transform: scaleY(1); }
 }
 
+/* EQ bars inside relic orb — room-accent colored */
+.da-relic-orb .da-eq-bars {
+  height: 16px;
+  gap: 2px;
+  padding: 0;
+}
+
+.da-relic-orb .da-eq-bar {
+  width: 2px;
+  background: var(--room-accent, var(--god-primary));
+  box-shadow: 0 0 4px var(--room-accent, var(--god-primary));
+}
+
 /* Playing Row Glow */
 .da-row-playing {
   background: rgba(255, 215, 0, 0.06) !important;
@@ -365,16 +378,20 @@
   background-image: var(--room-image);
   background-size: cover;
   background-position: center;
-  opacity: 0.15;
-  filter: blur(40px) saturate(1.5);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 0;
+  will-change: opacity, transform;
 }
 
 .da-hall-shell > * {
   position: relative;
   z-index: 1;
+}
+
+/* Ensure bg-overlay stays out of grid flow */
+.da-hall-shell > .da-bg-overlay {
+  position: absolute;
+  z-index: 0;
 }
 
 .da-hall-state {
@@ -509,11 +526,32 @@
 
 .da-room:hover .da-room-bg,
 .da-room.is-active .da-room-bg {
-  opacity: 0.15;
+  opacity: 0.20;
   filter: grayscale(0) brightness(0.8);
 }
 
-.da-room > span {
+/* Room fill bar — shows relative relic count */
+.da-room-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: var(--room-fill, 0%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--room-accent), color-mix(in srgb, var(--room-accent) 40%, transparent));
+  opacity: 0.3;
+  transition: opacity 0.3s ease, width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  border-radius: 0 1px 0 0;
+}
+
+.da-room:hover .da-room-fill,
+.da-room.is-active .da-room-fill {
+  opacity: 0.7;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--room-accent) 30%, transparent);
+}
+
+.da-room > span,
+.da-room > div:not(.da-room-bg):not(.da-room-fill) {
   position: relative;
   z-index: 1;
 }
@@ -530,10 +568,25 @@
   transform: translateX(4px);
 }
 
+.da-room-sigil,
 .da-room-name,
 .da-room-tone,
 .da-room-count {
   display: block;
+}
+
+.da-room-sigil {
+  color: var(--room-accent);
+  opacity: 0.5;
+  margin-bottom: 4px;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  line-height: 0;
+}
+
+.da-room:hover .da-room-sigil,
+.da-room.is-active .da-room-sigil {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px var(--room-accent));
 }
 
 .da-room-name {
@@ -672,6 +725,7 @@
 
 .da-relic {
   --room-accent: var(--god-primary);
+  --room-image: none;
   position: relative;
   min-width: 0;
   min-height: 132px;
@@ -688,6 +742,41 @@
   text-align: left;
   overflow: hidden;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+/* Shelf view: relic hero image strip at top */
+.da-relic-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background-image: var(--room-image);
+  background-size: cover;
+  background-position: center 30%;
+  opacity: 0.12;
+  filter: grayscale(0.4) brightness(0.5) saturate(1.2);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.da-relic-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 20%, rgba(5,5,6,1) 100%);
+  pointer-events: none;
+}
+
+.da-relic:hover .da-relic-hero {
+  opacity: 0.22;
+  filter: grayscale(0.1) brightness(0.6) saturate(1.6);
+}
+
+.da-relic.is-selected .da-relic-hero {
+  opacity: 0.25;
+  filter: grayscale(0) brightness(0.65) saturate(1.8);
 }
 
 .da-relic-list .da-relic {
@@ -851,13 +940,24 @@
 }
 
 .da-inspector-header {
-  height: 140px;
+  height: 160px;
   position: relative;
   background-image: var(--room-image);
   background-size: cover;
   background-position: center;
   display: grid;
   place-items: center;
+  overflow: hidden;
+}
+
+/* Waveform Oracle canvas — fills header, sits above bg image but below gradient */
+.da-waveform-oracle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .da-inspector-header::after {
@@ -865,6 +965,37 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, transparent 40%, rgba(10, 10, 12, 1));
+  z-index: 2;
+}
+
+/* Inspector orb sits above waveform + gradient */
+.da-inspector-orb {
+  z-index: 3;
+}
+
+/* Pulsing orb when playing */
+.da-inspector-orb.is-pulsing {
+  animation: da-orb-pulse 1.5s ease-in-out infinite;
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--room-accent) 40%, transparent),
+    0 0 40px color-mix(in srgb, var(--room-accent) 15%, transparent);
+}
+
+@keyframes da-orb-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 16px color-mix(in srgb, var(--room-accent) 40%, transparent); }
+  50% { transform: scale(1.08); box-shadow: 0 0 24px color-mix(in srgb, var(--room-accent) 55%, transparent), 0 0 50px color-mix(in srgb, var(--room-accent) 20%, transparent); }
+}
+
+/* Playing state border glow on inspector card */
+.da-inspector-card.is-playing {
+  border-color: color-mix(in srgb, var(--room-accent) 30%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    inset 0 0 30px color-mix(in srgb, var(--room-accent) 3%, transparent),
+    0 12px 40px rgba(0,0,0,0.6),
+    0 0 30px rgba(0,0,0,0.3),
+    0 0 4px color-mix(in srgb, var(--room-accent) 25%, transparent);
 }
 
 .da-inspector-card > *:not(.da-inspector-header) {
@@ -909,13 +1040,15 @@
 }
 
 .da-aura-ring {
-  min-height: 110px;
+  min-height: 120px;
   flex: 0 0 auto;
   border: 1px solid color-mix(in srgb, var(--room-accent) 42%, transparent);
   border-radius: 999px;
   box-shadow:
     inset 0 0 30px color-mix(in srgb, var(--room-accent) 10%, transparent),
     0 0 22px color-mix(in srgb, var(--room-accent) 14%, transparent);
+  position: relative;
+  overflow: visible;
 }
 
 .da-inspector-card dl {
@@ -972,6 +1105,27 @@
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Keyboard shortcut badges */
+.da-inspector-actions button kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  color: rgba(255, 215, 0, 0.5);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-left: auto;
 }
 
 .da-inspector-actions button:hover,

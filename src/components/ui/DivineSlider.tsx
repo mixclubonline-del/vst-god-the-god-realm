@@ -69,6 +69,8 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     isDragging.current = true;
     handleUpdate(e.clientX, e.clientY);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -76,11 +78,13 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging.current) return;
+    e.stopPropagation();
     handleUpdate(e.clientX, e.clientY);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     isDragging.current = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   return (

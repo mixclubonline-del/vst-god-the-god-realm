@@ -1,0 +1,23 @@
+{
+  "name": "Ethereal Pluck",
+  "category": "Instrument",
+  "godId": "apollo",
+  "voiceMode": "POLY",
+  "fui": "scan-grid",
+  "parameters": [
+    { "id": "crystal-tone", "name": "Crystal Tone", "min": 0, "max": 100, "default": 55, "target": "modIndex" },
+    { "id": "prism-resonance", "name": "Prism Resonance", "min": 0, "max": 100, "default": 40, "target": "filterQ" },
+    { "id": "shimmer-decay", "name": "Shimmer Decay", "min": 0, "max": 100, "default": 65, "target": "reverbMix" },
+    { "id": "magical-attack", "name": "Magical Attack", "min": 0, "max": 100, "default": 20, "target": "attack" },
+    { "id": "body-level", "name": "Body Level", "min": 0, "max": 100, "default": 50, "target": "bodyGain" },
+    { "id": "air-level", "name": "Air Level", "min": 0, "max": 100, "default": 45, "target": "chorusMix" },
+    { "id": "master-volume", "name": "Master Volume", "min": 0, "max": 100, "default": 70, "target": "masterGain" },
+    { "id": "stereo-width", "name": "Stereo Width", "min": 0, "max": 100, "default": 60, "target": "width" }
+  ],
+  "fxDefaults": {
+    "reverb": 0.45,
+    "chorus": 0.3,
+    "delay": 0.25,
+    "saturation": 0.1
+  }
+}

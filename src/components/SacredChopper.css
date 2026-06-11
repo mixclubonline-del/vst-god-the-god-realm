@@ -1,0 +1,621 @@
+/* ═══════════════════════════════════════════════════
+   SACRED CHOPPER — Sample Slicer & Editor
+   Midnight Ember Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+.sacred-chopper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(14, 4, 4, 0.98) 0%, rgba(20, 6, 8, 0.96) 100%);
+  color: #fff;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ─── Header ─── */
+.sacred-chopper__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  flex-shrink: 0;
+}
+
+.sacred-chopper__title {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(224, 214, 255, 0.9);
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+.sacred-chopper__header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sacred-chopper__sample-info {
+  display: flex;
+  gap: 8px;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(168, 140, 255, 0.5);
+}
+
+.sacred-chopper__mode-badge {
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(168, 140, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.sacred-chopper__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6600;
+  box-shadow: 0 0 8px #ff6600;
+}
+
+/* ─── Waveform Display ─── */
+.sacred-chopper__waveform {
+  flex: 1;
+  min-height: 160px;
+  max-height: 300px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(58, 43, 92, 0.5);
+  margin: 0 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(40, 20, 80, 0.5);
+  cursor: crosshair;
+}
+
+.sacred-chopper__canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sacred-chopper__markers-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sacred-chopper__marker {
+  cursor: ew-resize;
+  pointer-events: auto;
+}
+
+.sacred-chopper__marker line {
+  transition: stroke 0.15s, stroke-width 0.15s;
+}
+
+.sacred-chopper__marker text {
+  font-size: 10px;
+  font-weight: 900;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.sacred-chopper__empty-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(168, 140, 255, 0.3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ─── Minimap ─── */
+.sacred-chopper__minimap {
+  position: relative;
+  height: 32px;
+  margin: 8px 12px 0;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(58, 43, 92, 0.4);
+  overflow: hidden;
+  cursor: ew-resize;
+}
+
+.sacred-chopper__minimap-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sacred-chopper__minimap-window {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(168, 85, 247, 0.2);
+  border-left: 2px solid #a855f7;
+  border-right: 2px solid #a855f7;
+  pointer-events: none;
+  box-shadow: inset 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+/* ─── Slice Bar ─── */
+.sacred-chopper__slice-bar {
+  display: flex;
+  height: 28px;
+  margin: 6px 12px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(58, 43, 92, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.sacred-chopper__slice {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-right: 1px solid rgba(58, 43, 92, 0.2);
+  position: relative;
+}
+
+.sacred-chopper__slice:last-child {
+  border-right: none;
+}
+
+.sacred-chopper__slice:hover {
+  background: rgba(168, 85, 247, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sacred-chopper__slice--playing {
+  background: rgba(168, 85, 247, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  animation: slicePlayPulse 0.6s ease-out;
+}
+
+@keyframes slicePlayPulse {
+  0% { box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.5); }
+  100% { box-shadow: inset 0 0 0 transparent; }
+}
+
+/* ─── Marker Controls ─── */
+.sacred-chopper__marker-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 12px 0;
+}
+
+.sacred-chopper__marker-btn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-chopper__marker-btn:hover {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sacred-chopper__marker-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.sacred-chopper__marker-count {
+  font-size: 8px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(168, 140, 255, 0.4);
+  margin-left: auto;
+}
+
+/* ─── Controls Rail ─── */
+.sacred-chopper__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  margin: 6px 12px 0;
+  background: linear-gradient(180deg, rgba(26, 16, 60, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(58, 43, 92, 0.4);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.sacred-chopper__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sacred-chopper__section-label {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(168, 140, 255, 0.4);
+  text-transform: uppercase;
+}
+
+.sacred-chopper__divider {
+  width: 1px;
+  height: 50px;
+  background: linear-gradient(180deg, transparent, rgba(58, 43, 92, 0.6), transparent);
+  flex-shrink: 0;
+}
+
+/* ─── Toggle Switches ─── */
+.sacred-chopper__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sacred-chopper__toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sacred-chopper__toggle-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(168, 140, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: 44px;
+}
+
+.sacred-chopper__toggle {
+  width: 36px;
+  height: 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(58, 43, 92, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.sacred-chopper__toggle-dot {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.2s;
+}
+
+.sacred-chopper__toggle--on {
+  background: rgba(255, 102, 0, 0.2);
+  border-color: #ff6600;
+}
+
+.sacred-chopper__toggle--on .sacred-chopper__toggle-dot {
+  left: 20px;
+  background: #ff6600;
+  box-shadow: 0 0 8px #ff6600;
+}
+
+/* ─── Scope Toggle ─── */
+.sacred-chopper__scope-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(58, 43, 92, 0.4);
+  padding: 2px;
+}
+
+.sacred-chopper__scope-btn {
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sacred-chopper__scope-btn--active {
+  background: rgba(168, 85, 247, 0.6);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+/* ─── Knobs ─── */
+.sacred-chopper__knob-group {
+  display: flex;
+  gap: 14px;
+}
+
+.sacred-chopper__knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.sacred-chopper__knob-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(42, 27, 76, 0.8);
+  position: relative;
+  background: rgba(26, 16, 60, 0.8);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sacred-chopper__knob-arc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.sacred-chopper__knob-pointer {
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  position: absolute;
+  top: 3px;
+  transform-origin: center 18px;
+}
+
+.sacred-chopper__knob-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: ns-resize;
+  border-radius: 50%;
+}
+
+.sacred-chopper__knob-label {
+  font-size: 7px;
+  font-weight: 800;
+  color: rgba(224, 214, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.sacred-chopper__knob-value {
+  font-size: 8px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(168, 140, 255, 0.6);
+}
+
+/* ─── Bottom Rail ─── */
+.sacred-chopper__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  margin: 6px 12px 8px;
+  background: rgba(13, 7, 29, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(42, 27, 76, 0.5);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+/* ─── Mode Selector ─── */
+.sacred-chopper__mode-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(42, 27, 76, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sacred-chopper__mode-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-chopper__mode-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sacred-chopper__mode-btn--active {
+  background: rgba(58, 43, 92, 0.8);
+  color: #fff;
+}
+
+/* ─── Slider Group ─── */
+.sacred-chopper__slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sacred-chopper__slider-label {
+  font-size: 7px;
+  font-weight: 900;
+  color: rgba(168, 140, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.sacred-chopper__slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sacred-chopper__slider {
+  width: 80px;
+  height: 4px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  outline: none;
+}
+
+.sacred-chopper__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff6600;
+  border: 1px solid rgba(255, 102, 0, 0.4);
+  cursor: pointer;
+}
+
+.sacred-chopper__slider--purple::-webkit-slider-thumb {
+  background: #a855f7;
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.sacred-chopper__slider-value {
+  font-size: 8px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ─── Reverse Button ─── */
+.sacred-chopper__reverse-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(58, 43, 92, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sacred-chopper__reverse-btn:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.sacred-chopper__reverse-btn--active {
+  background: rgba(255, 102, 0, 0.2);
+  border-color: #ff6600;
+  color: #ff6600;
+  box-shadow: 0 0 15px rgba(255, 102, 0, 0.3);
+}
+
+/* ─── Trigger Select ─── */
+.sacred-chopper__select {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(42, 27, 76, 0.5);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  outline: none;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sacred-chopper__select option {
+  background: #1a103c;
+  color: #fff;
+}
+
+/* ─── Spread to Dais Button ─── */
+.sacred-chopper__spread-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(212, 165, 116, 0.08) 100%);
+  color: #ffd700;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.sacred-chopper__spread-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(212, 165, 116, 0.15) 100%);
+  border-color: rgba(255, 215, 0, 0.55);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.sacred-chopper__spread-btn:active {
+  transform: scale(0.97);
+}
+
+.sacred-chopper__spread-btn--done {
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  animation: spreadPulse 0.6s ease-out;
+}
+
+.sacred-chopper__spread-btn--spreading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@keyframes spreadPulse {
+  0% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
+  100% { box-shadow: 0 0 0 transparent; }
+}
+
+.sacred-chopper__spread-icon {
+  font-size: 12px;
+}
+
+.sacred-chopper__spread-label {
+  font-size: 9px;
+}

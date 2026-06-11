@@ -25,6 +25,21 @@ juce_add_plugin(VSTGodTheGodRealm
 juce_generate_juce_header(VSTGodTheGodRealm)
 target_compile_features(VSTGodTheGodRealm PUBLIC cxx_std_20)
 
+target_compile_definitions(VSTGodTheGodRealm
+    PUBLIC
+        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+        JUCE_VST3_CAN_REPLACE_VST2=0
+)
+
+# Gather all WebUI build files in dist/
+file(GLOB_RECURSE webui_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "dist/*")
+
+# Create BinaryData target
+juce_add_binary_data(VSTGodTheGodRealm_BinaryData
+    SOURCES
+        ${webui_files}
+)
+
 target_sources(VSTGodTheGodRealm
     PRIVATE
         Source/PluginProcessor.cpp
@@ -33,8 +48,10 @@ target_sources(VSTGodTheGodRealm
 
 target_link_libraries(VSTGodTheGodRealm
     PRIVATE
+        VSTGodTheGodRealm_BinaryData
         juce::juce_audio_utils
         juce::juce_gui_extra
+        juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

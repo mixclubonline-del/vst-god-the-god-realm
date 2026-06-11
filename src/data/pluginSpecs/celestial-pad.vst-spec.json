@@ -1,0 +1,27 @@
+{
+  "name": "Celestial Pad",
+  "category": "Instrument",
+  "godId": "poseidon",
+  "voiceMode": "POLY",
+  "fui": "holo-slider",
+  "parameters": [
+    { "id": "depth", "name": "Depth", "min": 0, "max": 100, "default": 60, "target": "reverbMix" },
+    { "id": "drift", "name": "Drift", "min": 0, "max": 100, "default": 50, "target": "chorusMix" },
+    { "id": "warmth", "name": "Warmth", "min": 0, "max": 100, "default": 55, "target": "filterFreq" },
+    { "id": "bloom", "name": "Bloom", "min": 0, "max": 100, "default": 65, "target": "attack" },
+    { "id": "sustain-hold", "name": "Sustain", "min": 0, "max": 100, "default": 80, "target": "sustain" },
+    { "id": "release-tail", "name": "Release", "min": 0, "max": 100, "default": 75, "target": "release" },
+    { "id": "shimmer", "name": "Shimmer", "min": 0, "max": 100, "default": 45, "target": "divinity" },
+    { "id": "space", "name": "Space", "min": 0, "max": 100, "default": 60, "target": "width" },
+    { "id": "body-tone", "name": "Body", "min": 0, "max": 100, "default": 50, "target": "bodyGain" },
+    { "id": "sub-layer", "name": "Sub Layer", "min": 0, "max": 100, "default": 30, "target": "subOscGain" },
+    { "id": "delay-echo", "name": "Echo", "min": 0, "max": 100, "default": 35, "target": "delayMix" },
+    { "id": "master-volume", "name": "Master", "min": 0, "max": 100, "default": 70, "target": "masterGain" }
+  ],
+  "fxDefaults": {
+    "reverb": 0.6,
+    "chorus": 0.45,
+    "delay": 0.3,
+    "saturation": 0.1
+  }
+}

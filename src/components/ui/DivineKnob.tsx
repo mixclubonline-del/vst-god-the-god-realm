@@ -84,6 +84,8 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   const rotation = ((displayValue - min) / (max - min)) * 280 - 140;
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     isDragging.current = true;
     startY.current = e.clientY;
     startValue.current = displayValue;
@@ -92,6 +94,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging.current) return;
+    e.stopPropagation();
 
     const deltaY = startY.current - e.clientY;
     const range = max - min;
@@ -103,8 +106,9 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     emit(newValue);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     isDragging.current = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   const handleDoubleClick = () => {

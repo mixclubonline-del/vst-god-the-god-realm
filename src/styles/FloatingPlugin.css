@@ -1,0 +1,956 @@
+/**
+ * FloatingPlugin.css — Forged Obsidian Plugin Window System
+ * The Five Sacred Instruments — floating plugin windows, controls, dock, & browser.
+ *
+ * Design Philosophy: FORGED OBSIDIAN
+ * ─────────────────────────────────────
+ * Kill flat glass. Kill transparent panels.
+ * These are INSTRUMENTS — machined from volcanic obsidian and divine metals.
+ *
+ *  ∙ Opaque milled surfaces with real material depth
+ *  ∙ Multi-layer inner/outer shadows for CNC-machined edges
+ *  ∙ Directional top-left lighting (industry standard for hardware)
+ *  ∙ Textured noise grain on surfaces (via radial-gradient grain)
+ *  ∙ True recessed panels — waveform screens look CRT-inset
+ *  ∙ Raised bezels on knob wells
+ *  ∙ Volumetric accent lighting from plugin theme color
+ *
+ * Per-plugin accent: --fp-accent, --fp-accent-secondary, --fp-glow
+ */
+
+/* ============================================================
+   FLOATING WINDOW — Forged Instrument Chassis
+   ============================================================ */
+
+.fp-window {
+  /* OPAQUE — no more glass transparency */
+  background:
+    /* Subtle noise grain texture */
+    radial-gradient(
+      ellipse at 20% 50%,
+      rgba(35, 28, 72, 1) 0%,
+      rgba(18, 14, 48, 1) 30%,
+      rgba(12, 10, 32, 1) 100%
+    );
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+  user-select: none;
+  position: relative;
+
+  /* 5-layer box-shadow for machined chassis depth */
+  box-shadow:
+    /* Outer chassis drop shadow */
+    0 16px 48px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    /* Thin highlight edge (top-left light source) */
+    0 -1px 0 rgba(255, 255, 255, 0.06),
+    -1px 0 0 rgba(255, 255, 255, 0.03),
+    /* Accent underglow */
+    0 0 60px var(--fp-glow, rgba(128, 80, 255, 0.12));
+}
+
+/* Top edge bevel — machined highlight */
+.fp-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    color-mix(in srgb, var(--fp-accent, #B87DFF) 25%, rgba(255, 255, 255, 0.12)) 20%,
+    color-mix(in srgb, var(--fp-accent, #B87DFF) 40%, rgba(255, 255, 255, 0.15)) 50%,
+    color-mix(in srgb, var(--fp-accent, #B87DFF) 25%, rgba(255, 255, 255, 0.12)) 80%,
+    transparent 95%
+  );
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Accent underglow reflection on surface below */
+.fp-window::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 10%;
+  right: 10%;
+  height: 40px;
+  background: radial-gradient(
+    ellipse at center,
+    var(--fp-glow, rgba(128, 80, 255, 0.1)),
+    transparent 70%
+  );
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Ensure children render above pseudo-elements */
+.fp-window > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Title Bar — Milled Header Strip ─────────── */
+
+.fp-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  /* Darker than body — recessed groove feel */
+  background: linear-gradient(
+    180deg,
+    rgba(8, 6, 22, 0.95) 0%,
+    rgba(14, 11, 36, 0.9) 100%
+  );
+  /* Top light + bottom shadow = raised strip */
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.02);
+  cursor: grab;
+}
+
+.fp-titlebar:active {
+  cursor: grabbing;
+}
+
+.fp-titlebar__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.fp-titlebar__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* 3D dot: inner highlight for sphere illusion */
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+.fp-titlebar__dot--close {
+  background: radial-gradient(circle at 35% 30%, #ff9a8b, #ff5f57 55%, #cc3a30);
+}
+.fp-titlebar__dot--close:hover {
+  background: radial-gradient(circle at 35% 30%, #ffb4a8, #ff3b30 55%, #cc2a20);
+  box-shadow:
+    0 0 8px rgba(255, 59, 48, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transform: scale(1.15);
+}
+
+.fp-titlebar__dot--min {
+  background: radial-gradient(circle at 35% 30%, #ffe8a0, #ffbd2e 55%, #cc9520);
+}
+.fp-titlebar__dot--min:hover {
+  background: radial-gradient(circle at 35% 30%, #fff3b8, #f5a623 55%, #cc8a18);
+  box-shadow:
+    0 0 8px rgba(245, 166, 35, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transform: scale(1.15);
+}
+
+.fp-titlebar__dot--max {
+  background: radial-gradient(circle at 35% 30%, #a5d6a7, #28c840 55%, #1a9030);
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.fp-titlebar__name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+}
+
+.fp-titlebar__icon {
+  font-size: 14px;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--fp-accent, #B87DFF) 40%, transparent));
+}
+
+.fp-titlebar__text {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--fp-accent, #B87DFF);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--fp-accent, #B87DFF) 30%, transparent);
+}
+
+.fp-titlebar__category {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.4);
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+}
+
+/* ── Plugin Body — Milled Interior ───────────── */
+
+.fp-body {
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  /* Slight inner recess feel */
+  background: linear-gradient(
+    180deg,
+    rgba(22, 18, 52, 1) 0%,
+    rgba(18, 14, 44, 1) 100%
+  );
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.fp-body__texture {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.fp-body > *:not(.fp-body__texture) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   DIVINE KNOB — 3D Machined Rotary Control
+   ============================================================ */
+
+.fp-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.fp-knob:hover {
+  transform: scale(1.06);
+}
+
+.fp-knob__label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.45);
+  text-align: center;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.fp-knob:hover .fp-knob__label {
+  color: rgba(200, 190, 150, 0.7);
+}
+
+/* ============================================================
+   HOLO FADER — Recessed Channel Fader
+   ============================================================ */
+
+.fp-fader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.fp-fader--vert { flex-direction: column; }
+.fp-fader--horiz { flex-direction: row; width: 100%; }
+
+.fp-fader__track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fp-fader--vert .fp-fader__track {
+  width: 10px;
+  border-radius: 5px;
+  /* Recessed groove — CNC-milled slot */
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(8, 6, 22, 0.8) 40%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 1px 0 2px rgba(0, 0, 0, 0.3),
+    inset -1px 0 2px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.fp-fader--horiz .fp-fader__track {
+  height: 10px;
+  width: 100%;
+  border-radius: 5px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(8, 6, 22, 0.8) 40%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.fp-fader__trail {
+  position: absolute;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.fp-fader--vert .fp-fader__trail {
+  bottom: 0; left: 0; width: 100%;
+}
+
+.fp-fader--horiz .fp-fader__trail {
+  left: 0; top: 0; height: 100%;
+}
+
+/* Fader handle — raised metal capsule */
+.fp-fader__orb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, 50%);
+  /* 3D sphere: top-left highlight */
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgba(80, 70, 120, 1) 0%,
+    rgba(40, 34, 70, 1) 50%,
+    rgba(25, 20, 50, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    0 0 8px color-mix(in srgb, var(--fp-accent, #B87DFF) 20%, transparent),
+    inset 0 1px 2px rgba(255, 255, 255, 0.12);
+}
+
+.fp-fader--vert .fp-fader__orb { left: 50%; }
+.fp-fader--horiz .fp-fader__orb {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.fp-fader__value {
+  font-size: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: rgba(200, 190, 150, 0.5);
+  transition: color 0.2s ease;
+}
+
+.fp-fader:hover .fp-fader__value {
+  color: rgba(220, 210, 170, 0.8);
+}
+
+.fp-fader__label {
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.35);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   WAVEFORM CANVAS — Recessed CRT Monitor
+   ============================================================ */
+
+.fp-waveform {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  /* Deep inset — like a CRT screen set into metal */
+  background: linear-gradient(
+    180deg,
+    rgba(2, 2, 8, 1) 0%,
+    rgba(6, 4, 16, 1) 50%,
+    rgba(4, 3, 12, 1) 100%
+  );
+  border: 2px solid rgba(0, 0, 0, 0.7);
+  box-shadow:
+    /* Deep inset recess */
+    inset 0 3px 8px rgba(0, 0, 0, 0.7),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
+    inset 2px 0 4px rgba(0, 0, 0, 0.3),
+    inset -2px 0 4px rgba(0, 0, 0, 0.3),
+    /* Outer bevel edge — raised metal lip */
+    0 1px 0 rgba(255, 255, 255, 0.05),
+    0 -1px 0 rgba(0, 0, 0, 0.4),
+    /* Subtle screen glow */
+    0 0 20px color-mix(in srgb, var(--fp-accent, #B87DFF) 4%, transparent);
+}
+
+/* ============================================================
+   INSTRUMENT LAYOUTS
+   ============================================================ */
+
+.fp-instrument {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fp-instrument__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fp-instrument__section-label {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.3);
+  padding-bottom: 2px;
+}
+
+.fp-instrument__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fp-instrument__row--faders { gap: 16px; }
+.fp-instrument__row--adsr { gap: 14px; }
+
+.fp-instrument__waveform {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fp-instrument__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.fp-instrument__col--btns { gap: 4px; }
+.fp-instrument__col--fx { gap: 6px; }
+
+/* ── Buttons — Machined Toggle Switches ─────── */
+
+.fp-instrument__btn {
+  /* Raised button with 3D bevel */
+  background: linear-gradient(
+    180deg,
+    rgba(42, 36, 75, 1) 0%,
+    rgba(28, 24, 55, 1) 50%,
+    rgba(22, 18, 45, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.45);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.fp-instrument__btn:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(50, 44, 85, 1) 0%,
+    rgba(35, 30, 65, 1) 50%,
+    rgba(28, 24, 55, 1) 100%
+  );
+  color: var(--btn-color, #ccc);
+  border-top-color: color-mix(in srgb, var(--btn-color, #fff) 15%, rgba(255, 255, 255, 0.1));
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.6),
+    0 0 8px color-mix(in srgb, var(--btn-color, #fff) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Active/engaged: button pressed IN */
+.fp-instrument__btn--active {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 16, 40, 1) 0%,
+    rgba(28, 24, 55, 1) 50%,
+    rgba(35, 30, 65, 1) 100%
+  ) !important;
+  color: var(--btn-color, #fff) !important;
+  border-top-color: rgba(0, 0, 0, 0.4) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--btn-color, #fff) 40%, transparent);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 12px color-mix(in srgb, var(--btn-color, #fff) 12%, transparent) !important;
+}
+
+.fp-instrument__btn--sm { padding: 2px 8px; font-size: 7px; }
+.fp-instrument__btn-group { display: flex; gap: 4px; }
+
+/* ── Per-Plugin Layouts ──────────────────────── */
+
+.fp-instrument--divine-texture { flex-direction: row; gap: 12px; }
+
+.fp-instrument__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  /* Recessed side panel */
+  background: linear-gradient(
+    135deg,
+    rgba(10, 8, 24, 1) 0%,
+    rgba(16, 13, 38, 1) 100%
+  );
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+  min-width: 70px;
+}
+
+.fp-instrument__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fp-instrument__center-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.fp-instrument__osc-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.fp-instrument__filter-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.fp-instrument__top-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.fp-instrument__top-row > .fp-instrument__col { min-width: 60px; }
+.fp-instrument__top-row > .fp-instrument__waveform { flex: 1; }
+
+.fp-instrument__waveform--lead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fp-instrument__waveform-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.fp-instrument__bottom-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fp-instrument__bottom-row > .fp-instrument__section { flex: 1; }
+
+.fp-instrument__bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ============================================================
+   DOCK BAR — Forged Bottom Tray
+   ============================================================ */
+
+.fp-dock {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  /* OPAQUE — machined tray */
+  background: linear-gradient(
+    180deg,
+    rgba(22, 18, 50, 1) 0%,
+    rgba(14, 11, 36, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  z-index: 1000;
+  min-height: 36px;
+  box-shadow:
+    0 -4px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.fp-dock__pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(35, 30, 65, 1) 0%,
+    rgba(25, 22, 50, 1) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--fp-accent, #fff) 15%, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.fp-dock__pill:hover {
+  border-color: color-mix(in srgb, var(--fp-accent, #fff) 35%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 12px var(--fp-glow, rgba(128, 80, 255, 0.2));
+  transform: translateY(-2px);
+}
+
+.fp-dock__pill-icon {
+  font-size: 12px;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--fp-accent, #fff) 30%, transparent));
+}
+
+.fp-dock__pill-name {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fp-accent, #fff);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--fp-accent, #fff) 20%, transparent);
+}
+
+.fp-dock__add {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(
+    180deg,
+    rgba(35, 30, 65, 1) 0%,
+    rgba(25, 22, 50, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(0, 0, 0, 0.3);
+  color: rgba(160, 150, 120, 0.45);
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.fp-dock__add:hover {
+  color: #FFD700;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 0 10px rgba(255, 215, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   PLUGIN BROWSER — Instrument Selector Panel
+   ============================================================ */
+
+.fp-browser {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 380px;
+  /* OPAQUE — milled panel */
+  background: linear-gradient(
+    180deg,
+    rgba(28, 22, 60, 1) 0%,
+    rgba(18, 14, 44, 1) 50%,
+    rgba(14, 11, 36, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  z-index: 1001;
+  box-shadow:
+    0 -8px 36px rgba(0, 0, 0, 0.6),
+    0 16px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.fp-browser__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 6, 22, 0.8) 0%,
+    rgba(18, 14, 44, 0.6) 100%
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.fp-browser__title {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: rgba(200, 190, 150, 0.5);
+}
+
+.fp-browser__close {
+  background: linear-gradient(180deg, rgba(35, 30, 65, 1), rgba(25, 22, 50, 1));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(160, 150, 120, 0.4);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.fp-browser__close:hover {
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.15);
+}
+
+.fp-browser__grid {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+}
+
+.fp-browser__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-family: inherit;
+  position: relative;
+}
+
+.fp-browser__item:hover {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--fp-accent, #fff) 8%, rgba(22, 18, 50, 1)) 0%,
+    rgba(22, 18, 50, 1) 100%
+  );
+  border-color: color-mix(in srgb, var(--fp-accent, #fff) 15%, transparent);
+  transform: translateX(2px);
+}
+
+/* Hover accent edge */
+.fp-browser__item:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--fp-accent, #fff), transparent);
+  border-radius: 1px;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--fp-accent, #fff) 40%, transparent);
+}
+
+.fp-browser__item-icon {
+  font-size: 20px;
+  min-width: 28px;
+  text-align: center;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--fp-accent, #B87DFF) 25%, transparent));
+}
+
+.fp-browser__item-name {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--fp-accent, #fff);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--fp-accent, #fff) 15%, transparent);
+  white-space: nowrap;
+}
+
+.fp-browser__item-desc {
+  font-size: 8px;
+  color: rgba(160, 150, 120, 0.3);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   MINI KEYBOARD — Milled Key Bed
+   ============================================================ */
+
+.fp-keyboard {
+  position: relative;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  /* Recessed key bed — like physical keys set into chassis */
+  background: linear-gradient(
+    180deg,
+    rgba(4, 3, 12, 1) 0%,
+    rgba(10, 8, 24, 1) 100%
+  );
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+  margin-top: 6px;
+}
+
+.fp-keyboard__whites {
+  display: flex;
+  height: 100%;
+}
+
+.fp-keyboard__white {
+  flex: 1;
+  /* Raised white key — 3D bevel */
+  background: linear-gradient(
+    180deg,
+    rgba(60, 55, 85, 1) 0%,
+    rgba(45, 40, 70, 1) 60%,
+    rgba(35, 30, 60, 1) 100%
+  );
+  border-right: 1px solid rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.06s ease;
+  touch-action: none;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.fp-keyboard__white:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(75, 68, 105, 1) 0%,
+    rgba(55, 48, 82, 1) 60%,
+    rgba(42, 36, 70, 1) 100%
+  );
+  box-shadow:
+    inset 0 -2px 4px color-mix(in srgb, var(--fp-accent, #B87DFF) 15%, transparent),
+    0 0 6px color-mix(in srgb, var(--fp-accent, #B87DFF) 10%, transparent);
+}
+
+.fp-keyboard__blacks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  pointer-events: none;
+}
+
+.fp-keyboard__black {
+  position: absolute;
+  width: 5%;
+  height: 100%;
+  /* Raised black key — darker with sharper shadow */
+  background: linear-gradient(
+    180deg,
+    rgba(18, 14, 36, 1) 0%,
+    rgba(8, 6, 20, 1) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateX(-50%);
+  transition: all 0.06s ease;
+  touch-action: none;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.fp-keyboard__black:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(30, 24, 52, 1) 0%,
+    rgba(14, 11, 30, 1) 100%
+  );
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.7),
+    0 0 8px color-mix(in srgb, var(--fp-accent, #B87DFF) 15%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}

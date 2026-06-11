@@ -297,9 +297,10 @@ export class ExportEngine {
     const decayTime = 0.05 + step.decay * 2.0; 
     gain.gain.exponentialRampToValueAtTime(0.001, time + decayTime);
 
-    // Panning
+    // Panning (step pan + track-level pan)
     const panner = ctx.createStereoPanner();
-    panner.pan.setValueAtTime(step.pan, time);
+    const combinedPan = Math.max(-1, Math.min(1, step.pan + (track.pan ?? 0)));
+    panner.pan.setValueAtTime(combinedPan, time);
 
     // Route through per-track FX sends
     source.connect(gain).connect(panner);

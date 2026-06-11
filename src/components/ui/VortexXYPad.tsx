@@ -52,12 +52,15 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     handleUpdate(e.clientX, e.clientY);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (e.buttons !== 1) return;
+    e.stopPropagation();
     handleUpdate(e.clientX, e.clientY);
   };
 

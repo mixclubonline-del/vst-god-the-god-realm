@@ -10,9 +10,13 @@ interface SacredStepProps {
   isPlaying: boolean;
   isDownbeat: boolean;       // Every 4th step
   isFillOnly: boolean;       // Trig condition is 'fill'
+  isSelected?: boolean;      // Multi-step selection highlight
   onToggle: () => void;
   onVelocityChange: (velocity: number) => void;
   onOpenDetail?: (position: { x: number; y: number }) => void;
+  onSelect?: (stepIndex: number, additive: boolean, range: boolean) => void;
+  onPointerDownAction?: (index: number, currentState: boolean) => void;
+  onPointerEnterAction?: (index: number, currentState: boolean) => void;
 }
 
 export const SacredStep: React.FC<SacredStepProps> = React.memo(({
@@ -23,9 +27,13 @@ export const SacredStep: React.FC<SacredStepProps> = React.memo(({
   isPlaying,
   isDownbeat,
   isFillOnly,
+  isSelected = false,
   onToggle,
   onVelocityChange,
   onOpenDetail,
+  onSelect,
+  onPointerDownAction,
+  onPointerEnterAction,
 }) => {
   const isDragging = useRef(false);
   const startY = useRef(0);
@@ -33,31 +41,70 @@ export const SacredStep: React.FC<SacredStepProps> = React.memo(({
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button === 2) return; // Skip right-click
+    // Note: Do not preventDefault or we block pointer events on children sometimes, but we do want to prevent scrolling on touch devices.
+    // Instead of setPointerCapture immediately, we wait for vertical move.
+    e.stopPropagation();
     isDragging.current = false;
     startY.current = e.clientY;
     startVel.current = step.velocity;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [step.velocity]);
+    
+    // Ctrl+click or Meta+click: additive selection
+    if ((e.ctrlKey || e.metaKey) && onSelect) {
+      onSelect(stepIndex, true, false);
+      return;
+    }
+    // Shift+click with onSelect: range selection
+    if (e.shiftKey && onSelect) {
+      onSelect(stepIndex, false, true);
+      return;
+    }
+    // Shift+click without onSelect: open detail (legacy)
+    if (e.shiftKey && onOpenDetail) {
+      onOpenDetail({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    if (onPointerDownAction) {
+      onPointerDownAction(stepIndex, step.enabled);
+    } else {
+      onToggle(); // Fallback if no painting parent
+    }
+  }, [step.velocity, step.enabled, stepIndex, onSelect, onOpenDetail, onToggle, onPointerDownAction]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (e.buttons === 0) {
+      isDragging.current = false;
+      return;
+    }
     const delta = startY.current - e.clientY;
-    if (Math.abs(delta) > 3) isDragging.current = true;
+    if (!isDragging.current && Math.abs(delta) > 10) {
+      isDragging.current = true;
+      try {
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      } catch (err) {}
+    }
     if (!isDragging.current) return;
-
+    
+    e.stopPropagation();
     const newVel = Math.max(1, Math.min(127, startVel.current + delta));
     onVelocityChange(newVel);
   }, [onVelocityChange]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (!isDragging.current) {
-      if (e.shiftKey && onOpenDetail) {
-        onOpenDetail({ x: e.clientX, y: e.clientY });
-      } else {
-        onToggle();
-      }
+    if (isDragging.current) {
+      isDragging.current = false;
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch (err) {}
     }
-    isDragging.current = false;
-  }, [onToggle, onOpenDetail]);
+  }, []);
+
+  const handlePointerEnter = useCallback((e: React.PointerEvent) => {
+    if (isDragging.current) return;
+    if (e.buttons > 0 && onPointerEnterAction) {
+      onPointerEnterAction(stepIndex, step.enabled);
+    }
+  }, [stepIndex, step.enabled, onPointerEnterAction]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +124,7 @@ export const SacredStep: React.FC<SacredStepProps> = React.memo(({
     isFillOnly ? 'seq-step--fill' : '',
     step.retrigRate ? 'seq-step--retrig' : '',
     step.probability < 100 ? 'seq-step--unstable' : '',
+    isSelected ? 'seq-step--selected' : '',
   ].filter(Boolean).join(' ');
 
   // Retrig Subdivision Rendering
@@ -112,6 +160,7 @@ export const SacredStep: React.FC<SacredStepProps> = React.memo(({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerEnter={handlePointerEnter}
       onContextMenu={handleContextMenu}
       data-step={stepIndex}
       data-track={trackIndex}

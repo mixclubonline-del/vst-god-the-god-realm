@@ -64,3 +64,33 @@
   font-size: 14px;
   opacity: 0.8;
 }
+
+/* ─── Transport Awareness Badges ─── */
+.tab-transport-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: tabDotPulse 1s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes tabDotPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #22c55e; }
+  50% { opacity: 0.4; box-shadow: 0 0 4px #22c55e; }
+}
+
+.tab-transport-step {
+  font-size: 8px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: #22c55e;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  flex-shrink: 0;
+  white-space: nowrap;
+}

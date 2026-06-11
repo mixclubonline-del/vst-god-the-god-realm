@@ -23,8 +23,18 @@
   position: relative;
   height: 100%;
   min-height: 400px;
+  /* God Realm: Ethereal border shimmer */
+  animation: godRealmBorderShimmer 8s ease-in-out infinite;
 }
 
+@keyframes godRealmBorderShimmer {
+  0%, 100% { border-color: rgba(255, 215, 0, 0.08); }
+  25% { border-color: rgba(168, 85, 247, 0.12); }
+  50% { border-color: rgba(56, 189, 248, 0.1); }
+  75% { border-color: rgba(255, 215, 0, 0.15); }
+}
+
+/* Divine top beam */
 .seq-container::before {
   content: '';
   position: absolute;
@@ -38,11 +48,68 @@
     transparent 100%
   );
   z-index: 10;
+  animation: divineBeamPulse 4s ease-in-out infinite;
+}
+
+@keyframes divineBeamPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Sacred Geometry Background — rotating sigil behind content */
+.seq-container::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background-image:
+    /* Outer circle */
+    radial-gradient(circle at center, transparent 38%, rgba(255, 215, 0, 0.015) 38.5%, transparent 39%),
+    radial-gradient(circle at center, transparent 28%, rgba(168, 85, 247, 0.01) 28.5%, transparent 29%),
+    radial-gradient(circle at center, transparent 18%, rgba(56, 189, 248, 0.008) 18.5%, transparent 19%),
+    /* Vesica Piscis arcs */
+    radial-gradient(circle at 35% 50%, transparent 22%, rgba(255, 215, 0, 0.012) 22.5%, transparent 23%),
+    radial-gradient(circle at 65% 50%, transparent 22%, rgba(255, 215, 0, 0.012) 22.5%, transparent 23%),
+    /* Triangle points */
+    conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg, rgba(168, 85, 247, 0.006) 1deg, transparent 2deg,
+      transparent 59deg, rgba(168, 85, 247, 0.006) 60deg, transparent 61deg,
+      transparent 119deg, rgba(168, 85, 247, 0.006) 120deg, transparent 121deg,
+      transparent 179deg, rgba(168, 85, 247, 0.006) 180deg, transparent 181deg,
+      transparent 239deg, rgba(168, 85, 247, 0.006) 240deg, transparent 241deg,
+      transparent 299deg, rgba(168, 85, 247, 0.006) 300deg, transparent 301deg,
+      transparent 360deg
+    );
+  pointer-events: none;
+  z-index: 0;
+  animation: sacredGeometryRotate 120s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes sacredGeometryRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .seq-container--fill {
   border-color: rgba(255, 215, 0, 0.25);
   box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.04);
+}
+
+.seq-container--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  background: linear-gradient(170deg,
+    hsla(252, 40%, 8%, 0.98) 0%,
+    hsla(256, 45%, 5%, 1) 40%,
+    hsla(260, 50%, 2%, 1) 100%
+  );
 }
 
 /* ═══════════════════════════════════════════════════
@@ -115,6 +182,31 @@
   50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.6), 0 0 48px rgba(239, 68, 68, 0.18); }
 }
 
+/* Transport Status Indicator (read-only, controls live in DivineTransport) */
+.seq-transport-indicator {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.seq-transport-indicator--playing {
+  color: var(--god-primary, #FFD700);
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.25);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+  animation: divine-pulse 1.5s infinite;
+}
+.seq-transport-indicator--recording {
+  animation: rec-pulse 1.2s infinite;
+}
+
 /* BPM */
 .seq-header__bpm {
   display: flex;
@@ -125,6 +217,8 @@
   border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
 }
 .seq-header__bpm-value {
   font-size: 16px;
@@ -492,10 +586,19 @@
   background: rgba(100, 80, 200, 0.06);
 }
 .seq-lane--selected {
-  background: rgba(100, 80, 200, 0.08);
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--lane-color) 6%, transparent) 0%,
+      rgba(100, 80, 200, 0.06) 30%,
+      transparent 100%
+    );
+  box-shadow:
+    inset 0 0 40px color-mix(in srgb, var(--lane-color) 3%, transparent),
+    inset 2px 0 20px color-mix(in srgb, var(--lane-color) 5%, transparent);
 }
 .seq-lane--selected .seq-lane__header {
   border-right-color: var(--lane-color);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--lane-color) 30%, transparent);
 }
 .seq-lane--muted {
   opacity: 0.35;
@@ -583,6 +686,37 @@
   gap: 1px;
   flex: 1;
   padding: 3px 0;
+  position: relative;
+}
+
+/* Polyrhythm Handle */
+.seq-lane__poly-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px; /* center it on the boundary */
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.seq-lane__grid:hover .seq-lane__poly-handle,
+.seq-lane__poly-handle:hover {
+  opacity: 1;
+}
+
+.seq-lane__poly-handle-line {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  box-shadow: 0 0 10px currentColor, 0 0 4px rgba(255, 255, 255, 0.8);
+}
+.seq-lane__poly-handle:hover .seq-lane__poly-handle-line {
+  width: 4px;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -624,18 +758,31 @@
 .seq-step--on {
   background: color-mix(in srgb, var(--step-color) 15%, rgba(30, 20, 60, 0.8));
   border-color: color-mix(in srgb, var(--step-color) 40%, transparent);
-  box-shadow: 
+  box-shadow:
     inset 0 0 15px color-mix(in srgb, var(--step-color) 10%, transparent),
     0 0 8px color-mix(in srgb, var(--step-color) 20%, transparent),
+    0 0 20px color-mix(in srgb, var(--step-color) 8%, transparent),
     var(--divine-glow);
+  animation: runicPulse 3s ease-in-out infinite;
+}
+
+@keyframes runicPulse {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.15) saturate(1.2);
+  }
 }
 
 .seq-step--on:hover {
   background: color-mix(in srgb, var(--step-color) 25%, rgba(30, 20, 60, 0.8));
   border-color: color-mix(in srgb, var(--step-color) 60%, transparent);
-  box-shadow: 
+  box-shadow:
     inset 0 0 20px color-mix(in srgb, var(--step-color) 15%, transparent),
-    0 0 15px color-mix(in srgb, var(--step-color) 30%, transparent);
+    0 0 15px color-mix(in srgb, var(--step-color) 30%, transparent),
+    0 0 35px color-mix(in srgb, var(--step-color) 12%, transparent);
+  filter: brightness(1.2);
 }
 
 /* Velocity Energy Core */
@@ -669,21 +816,55 @@
   background: rgba(255,255,255,0.02);
 }
 
-/* Playhead Flash — intense aether burst */
+/* Playhead Flash — DIVINE LIGHT BEAM */
 .seq-step--playing {
   z-index: 3;
 }
 
+.seq-step--playing.seq-step--on {
+  filter: brightness(1.4) saturate(1.3);
+}
+
 .seq-step__flash {
   position: absolute;
-  inset: -2px;
-  background: white;
-  border-radius: 4px;
-  filter: blur(4px);
+  inset: -4px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 215, 0, 0.4) 30%,
+    rgba(168, 85, 247, 0.15) 60%,
+    transparent 100%
+  );
+  border-radius: 6px;
+  filter: blur(6px);
   pointer-events: none;
 }
 
-/* Soul Particles */
+/* Sacred Ring — appears on the playing step */
+.seq-step--playing::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 6px;
+  animation: sacredRingExpand 0.3s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes sacredRingExpand {
+  from {
+    inset: 0px;
+    opacity: 0.8;
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  to {
+    inset: -6px;
+    opacity: 0;
+    border-color: rgba(255, 215, 0, 0.1);
+  }
+}
+
+/* Soul Particles — divine emanation */
 .seq-step__particles {
   position: absolute;
   top: 50%; left: 50%;
@@ -700,7 +881,7 @@
   width: 3px; height: 3px;
   border-radius: 50%;
   filter: blur(1px);
-  box-shadow: 0 0 6px currentColor;
+  box-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
 }
 
 /* Probability Aura */
@@ -1439,6 +1620,42 @@
 }
 
 /* Name Group (for name + octave + god label) */
+
+/* ─── Throne Domain Badge (Astral Dais Bridge) ─── */
+.seq-lane__throne-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px 1px 2px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid color-mix(in srgb, var(--throne-badge-color, #FFD700) 30%, transparent);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.seq-lane:hover .seq-lane__throne-badge {
+  border-color: color-mix(in srgb, var(--throne-badge-color, #FFD700) 55%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--throne-badge-color, #FFD700) 20%, transparent);
+}
+.seq-lane__throne-sigil {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+  border-radius: 3px;
+}
+.seq-lane:hover .seq-lane__throne-sigil {
+  opacity: 1;
+}
+.seq-lane__throne-number {
+  font-size: 7px;
+  font-weight: 900;
+  color: var(--throne-badge-color, #FFD700);
+  letter-spacing: 0.5px;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
 .seq-lane__name-group {
   display: flex;
   align-items: baseline;
@@ -3429,4 +3646,1026 @@
 @keyframes recPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 4px #ef4444; }
   50% { opacity: 0.4; box-shadow: 0 0 8px #ef4444; }
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase A: Add Track Button
+   ═══════════════════════════════════════════════════ */
+
+.seq-add-track-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.03);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.seq-add-track-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px dashed rgba(255, 215, 0, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 215, 0, 0.03);
+  color: rgba(255, 215, 0, 0.4);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.seq-add-track-btn:hover {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.35);
+  color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.seq-add-track-btn:active {
+  transform: translateY(0);
+}
+
+.seq-add-track-btn--synth {
+  border-color: rgba(96, 165, 250, 0.15);
+  background: rgba(96, 165, 250, 0.03);
+  color: rgba(96, 165, 250, 0.4);
+}
+
+.seq-add-track-btn--synth:hover {
+  background: rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.08);
+}
+
+.seq-add-track-btn__icon {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.seq-add-track-btn__label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase A: Track Reorder Arrows
+   ═══════════════════════════════════════════════════ */
+
+.seq-lane__reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-left: 2px;
+}
+
+.seq-lane__reorder-btn {
+  width: 14px;
+  height: 11px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.seq-lane__reorder-btn:hover:not(:disabled) {
+  color: var(--god-primary);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.seq-lane__reorder-btn--disabled,
+.seq-lane__reorder-btn:disabled {
+  opacity: 0.15;
+  cursor: default;
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase B: Mixer Pan Knob
+   ═══════════════════════════════════════════════════ */
+
+.seq-mixer__pan-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.seq-mixer__pan-wrap .seq-mixer__knob {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.seq-mixer__pan-wrap .seq-mixer__knob-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: grab;
+  z-index: 2;
+}
+
+.seq-mixer__pan-wrap .seq-mixer__knob-input:active {
+  cursor: grabbing;
+}
+
+.seq-mixer__pan-wrap .seq-mixer__knob-svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase A: Humanize / Quantize Action Buttons
+   ═══════════════════════════════════════════════════ */
+
+.seq-lane__action-btn {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: none;
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.seq-lane__action-btn:hover {
+  color: var(--god-primary);
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   Stem Export Button
+   ═══════════════════════════════════════════════════ */
+
+.seq-stem-export-btn {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+}
+
+.seq-stem-export-btn:hover {
+  color: var(--god-primary);
+  border-color: rgba(255, 215, 0, 0.3);
+  background: rgba(255, 215, 0, 0.06);
+}
+
+.seq-stem-export-btn--busy {
+  color: rgba(255, 215, 0, 0.6);
+  border-color: rgba(255, 215, 0, 0.25);
+  animation: divine-pulse 1.5s infinite;
+  cursor: wait;
+}
+
+.seq-stem-export-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* ═══════════════════════════════════════════════════
+   Metronome Button
+   ═══════════════════════════════════════════════════ */
+
+.seq-metronome-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.4;
+}
+
+.seq-metronome-btn:hover {
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.seq-metronome-btn--active {
+  opacity: 1;
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+}
+
+/* ═══ MIDI Mapping Button ═══ */
+.seq-midi-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.4;
+}
+
+.seq-midi-btn:hover {
+  opacity: 0.7;
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.seq-midi-btn--active {
+  opacity: 1;
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+}
+
+.seq-midi-btn--learning {
+  opacity: 1;
+  animation: midiLearnPulse 1s ease-in-out infinite;
+}
+
+@keyframes midiLearnPulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
+    border-color: rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* ═══ Piano Roll Button ═══ */
+.seq-pianoroll-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.4;
+}
+
+.seq-pianoroll-btn:hover {
+  opacity: 0.7;
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.seq-pianoroll-btn--active {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+/* ═══ MIDI Note Arm Button ═══ */
+.seq-midi-arm-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.4;
+}
+
+.seq-midi-arm-btn:hover {
+  opacity: 0.7;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.seq-midi-arm-btn--armed {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.seq-midi-arm-btn--active {
+  animation: midiNoteInputPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes midiNoteInputPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.25); }
+  50% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.6), 0 0 4px rgba(255, 200, 200, 0.3); }
+}
+
+/* ═══ Arpeggiator Button ═══ */
+.seq-arp-btn {
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+
+.seq-arp-btn:hover {
+  opacity: 0.8;
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.seq-arp-btn--open {
+  opacity: 1;
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.seq-arp-btn--active {
+  opacity: 1;
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+}
+
+/* ═══ Scale & Chord Button ═══ */
+.seq-scale-btn {
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+
+.seq-scale-btn:hover {
+  opacity: 0.8;
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.seq-scale-btn--open {
+  opacity: 1;
+  background: rgba(52, 211, 153, 0.08);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.seq-scale-btn--active {
+  opacity: 1;
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+}
+
+/* ═══ Sidechain Button ═══ */
+.seq-sc-btn {
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+
+.seq-sc-btn:hover {
+  opacity: 0.8;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.seq-sc-btn--open {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.seq-sc-btn--active {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: rgba(239, 68, 68, 0.9);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase B: Per-Track 3-Band EQ
+   ═══════════════════════════════════════════════════ */
+
+.seq-mixer__eq-wrap {
+  display: flex;
+  gap: 3px;
+  padding: 4px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  margin-bottom: 4px;
+}
+
+.seq-mixer__eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.seq-mixer__eq-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  outline: none;
+  transform: rotate(-90deg);
+  transform-origin: center center;
+  margin: 16px 0;
+}
+
+.seq-mixer__eq-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--eq-color, #FFD700);
+  cursor: grab;
+  border: none;
+  box-shadow: 0 0 4px var(--eq-color, rgba(255, 215, 0, 0.4));
+}
+
+.seq-mixer__eq-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 8px var(--eq-color, rgba(255, 215, 0, 0.6));
+}
+
+.seq-mixer__eq-label {
+  font-size: 6px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase C: Multi-Step Selection Highlight
+   ═══════════════════════════════════════════════════ */
+
+.seq-step--selected {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: -1px;
+  z-index: 5;
+  box-shadow:
+    0 0 10px rgba(56, 189, 248, 0.25),
+    inset 0 0 8px rgba(56, 189, 248, 0.1);
+}
+
+.seq-step--selected.seq-step--on {
+  outline-color: rgba(56, 189, 248, 0.9);
+  box-shadow:
+    0 0 15px rgba(56, 189, 248, 0.35),
+    inset 0 0 12px rgba(56, 189, 248, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase C: Song Block Drag-Over Indicator
+   ═══════════════════════════════════════════════════ */
+
+.seq-song-timeline__block--drag-over {
+  outline: 2px dashed rgba(255, 215, 0, 0.6);
+  outline-offset: 2px;
+  background: rgba(255, 215, 0, 0.08) !important;
+  transform: scale(1.04);
+}
+
+.seq-song-timeline__block[draggable] {
+  cursor: grab;
+}
+
+.seq-song-timeline__block[draggable]:active {
+  cursor: grabbing;
+}
+
+/* Block Label Input */
+.seq-song-timeline__label-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 3px;
+  color: #fff;
+  font-size: 8px;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+  text-align: center;
+}
+
+.seq-song-timeline__label-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase C: Bus Routing Badge
+   ═══════════════════════════════════════════════════ */
+
+.seq-lane__bus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  font-size: 7px;
+  font-weight: 800;
+  color: rgba(96, 165, 250, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.seq-lane__bus-badge--active {
+  background: rgba(96, 165, 250, 0.2);
+  color: rgba(96, 165, 250, 0.9);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase D: Sample Drop Zone (Enhanced)
+   ═══════════════════════════════════════════════════ */
+
+.seq-lane--drag-over {
+  outline: 2px dashed rgba(255, 215, 0, 0.5);
+  outline-offset: -2px;
+  background: rgba(255, 215, 0, 0.04) !important;
+  animation: dropZonePulse 1s ease-in-out infinite;
+}
+
+@keyframes dropZonePulse {
+  0%, 100% { outline-color: rgba(255, 215, 0, 0.3); }
+  50% { outline-color: rgba(255, 215, 0, 0.7); }
+}
+
+/* Drop overlay (real element, not pseudo) */
+.seq-lane__drop-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 6px;
+  animation: dropOverlayFadeIn 0.15s ease-out;
+}
+
+@keyframes dropOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.seq-lane__drop-text {
+  color: rgba(255, 215, 0, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+/* File Picker (load) button */
+.seq-lane__action-btn--load {
+  opacity: 0.3;
+  transition: all 0.2s;
+}
+
+.seq-lane__action-btn--load:hover {
+  opacity: 0.8;
+  background: rgba(255, 215, 0, 0.08);
+  transform: scale(1.1);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase D: Mini Waveform
+   ═══════════════════════════════════════════════════ */
+
+.seq-waveform {
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.seq-waveform--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.seq-waveform__empty-label {
+  font-size: 7px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase D: Selection Toolbar
+   ═══════════════════════════════════════════════════ */
+
+.seq-sel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: linear-gradient(
+    135deg,
+    rgba(30, 30, 50, 0.95),
+    rgba(20, 20, 40, 0.95)
+  );
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(56, 189, 248, 0.08);
+  margin: 4px 12px;
+  animation: selToolbarSlideIn 0.2s ease-out;
+}
+
+@keyframes selToolbarSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.seq-sel-toolbar__count {
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(56, 189, 248, 0.9);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+.seq-sel-toolbar__divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.seq-sel-toolbar__btn {
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 9px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.seq-sel-toolbar__btn:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.seq-sel-toolbar__btn--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(239, 68, 68, 0.9);
+}
+
+.seq-sel-toolbar__btn--dim {
+  opacity: 0.4;
+}
+
+.seq-sel-toolbar__btn--dim:hover {
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════
+   Phase D: Ghost Notes
+   ═══════════════════════════════════════════════════ */
+
+.seq-lane__ghost-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  opacity: 0.2;
+  transition: opacity 0.15s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.seq-lane__ghost-btn:hover {
+  opacity: 0.5;
+}
+
+.seq-lane__ghost-btn--active {
+  opacity: 0.7;
+}
+
+.seq-lane__ghost-overlay {
+  display: grid;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.5;
+}
+
+.seq-lane__ghost-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.seq-lane__ghost-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+/* ═══════════════════════════════════════════════════
+   GOD REALM DIVINE ENHANCEMENTS
+   ═══════════════════════════════════════════════════ */
+
+/* Track Color Bar — Divine Energy Flow */
+.seq-lane__color-bar {
+  animation: divineEnergyFlow 4s ease-in-out infinite;
+}
+
+@keyframes divineEnergyFlow {
+  0%, 100% {
+    box-shadow: 0 0 6px var(--lane-color), inset 0 0 4px var(--lane-color);
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 12px var(--lane-color), inset 0 0 8px var(--lane-color), 0 0 25px color-mix(in srgb, var(--lane-color) 30%, transparent);
+    opacity: 1;
+  }
+}
+
+/* Track Header — Divine Name Radiance */
+.seq-lane__name {
+  text-shadow: 0 0 12px color-mix(in srgb, var(--lane-color) 15%, transparent);
+  transition: text-shadow 0.3s ease;
+}
+
+.seq-lane:hover .seq-lane__name {
+  text-shadow: 0 0 20px color-mix(in srgb, var(--lane-color) 30%, transparent);
+}
+
+/* Downbeat Markers — Sacred Accents */
+.seq-step--downbeat {
+  border-top: 1px solid rgba(255, 215, 0, 0.06);
+}
+
+.seq-step--downbeat.seq-step--on {
+  border-top-color: color-mix(in srgb, var(--step-color) 25%, rgba(255, 215, 0, 0.15));
+}
+
+/* Header Celestial Glow */
+.seq-header {
+  position: relative;
+}
+
+.seq-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(168, 85, 247, 0.15) 30%,
+    rgba(255, 215, 0, 0.2) 50%,
+    rgba(56, 189, 248, 0.15) 70%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* BPM Display — Divine Numerals */
+.seq-header__bpm-value {
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+/* Step Count Badge — Celestial Ring */
+.seq-header__step-count {
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+/* Pattern Selector — Divine Toggle */
+.seq-header__pattern-btn--active {
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+/* God Realm Enchanted Scrollbar */
+.seq-container ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.seq-container ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.seq-container ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.3),
+    rgba(255, 215, 0, 0.2)
+  );
+  border-radius: 4px;
+}
+
+.seq-container ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.5),
+    rgba(255, 215, 0, 0.35)
+  );
+}
+
+/* Mixer Strip — Celestial Meter Enhancement */
+.seq-mixer-strip {
+  transition: box-shadow 0.3s ease;
+}
+
+.seq-mixer-strip:hover {
+  box-shadow:
+    inset 0 0 30px rgba(255, 255, 255, 0.02),
+    0 0 15px rgba(168, 85, 247, 0.05);
+}
+
+/* Song Timeline — Ethereal Block Glow */
+.seq-song-timeline__block {
+  transition: all 0.2s ease;
+}
+
+.seq-song-timeline__block--playing {
+  box-shadow:
+    0 0 15px rgba(255, 215, 0, 0.15),
+    inset 0 0 20px rgba(255, 215, 0, 0.05);
+}
+
+/* Selection Toolbar — Enhanced God Realm Styling */
+.seq-sel-toolbar {
+  border-color: rgba(168, 85, 247, 0.15);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(168, 85, 247, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Energy Core Enhanced — Concentric rings on high velocity */
+.seq-step__energy-core {
+  box-shadow: 0 0 15px currentColor, 0 0 30px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+/* Add Track Button — Sacred Invitation */
+.seq-add-track-row button {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.seq-add-track-row button:hover {
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
+}
+
+/* FX Rack Panel — Cosmic Depth */
+.seq-fx-panel {
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Graph Editor — Sacred Grid Lines */
+.seq-graph__grid-line {
+  stroke: rgba(168, 85, 247, 0.04);
+}
+
+/* Step Grid Separator — every 4th step sacred line */
+.seq-lane__grid {
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════════
+   DIVINE PARTICLE FIELD
+   ═══════════════════════════════════════════════════ */
+
+.divine-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.6;
+  transition: opacity 1s ease;
+}
+
+.divine-particles--active {
+  opacity: 1;
+}
+
+.divine-particles__orb {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  animation: divineAscend linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes divineAscend {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50vh) translateX(15px) scale(1.2);
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(-10px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.divine-particles--active .divine-particles__orb {
+  animation-duration: inherit;
+  filter: brightness(1.3);
 }

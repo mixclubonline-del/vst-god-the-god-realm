@@ -1,0 +1,263 @@
+/* ═══════════════════════════════════════════════════
+   SACRED SIDECHAIN — Per-Track Ducking Compressor
+   ═══════════════════════════════════════════════════ */
+
+.sacred-sc {
+  border-top: 1px solid rgba(239, 68, 68, 0.08);
+  background: linear-gradient(180deg, rgba(14, 4, 4, 0.96) 0%, rgba(20, 6, 8, 0.94) 100%);
+  padding: 8px 12px;
+  animation: scReveal 0.3s ease-out;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.sacred-sc--active {
+  opacity: 1;
+  border-top-color: rgba(239, 68, 68, 0.2);
+}
+
+@keyframes scReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Header ─── */
+.sacred-sc__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sacred-sc__power {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.sacred-sc__power:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.sacred-sc__power--on {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: rgba(255, 215, 0, 0.9);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.sacred-sc__title {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sacred-sc--active .sacred-sc__title {
+  color: rgba(239, 68, 68, 0.6);
+}
+
+/* Mini meter in header */
+.sacred-sc__meter-mini {
+  margin-left: auto;
+  width: 80px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.sacred-sc__meter-bar {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.6), rgba(239, 68, 68, 0.9));
+  border-radius: 2px;
+  transition: width 0.05s linear;
+}
+
+.sacred-sc__meter-label {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 6px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Body ─── */
+.sacred-sc__body {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.sacred-sc__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sacred-sc__label {
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Source Selector ─── */
+.sacred-sc__source-select {
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 8px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  outline: none;
+  min-width: 120px;
+}
+
+.sacred-sc__source-select:focus {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.sacred-sc__source-select option {
+  background: #1a1a2e;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sacred-sc__source-name {
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(239, 68, 68, 0.5);
+}
+
+/* ─── Controls Grid ─── */
+.sacred-sc__controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sacred-sc__knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+
+.sacred-sc__knob-label {
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.sacred-sc__slider {
+  width: 48px;
+  height: 4px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  outline: none;
+}
+
+.sacred-sc__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sacred-sc__slider::-webkit-slider-thumb:hover {
+  background: rgba(239, 68, 68, 0.8);
+  transform: scale(1.2);
+}
+
+.sacred-sc__slider--depth::-webkit-slider-thumb {
+  background: rgba(255, 215, 0, 0.6);
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.sacred-sc__knob-value {
+  font-size: 7px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Full Gain Reduction Meter ─── */
+.sacred-sc__meter-section {
+  flex-basis: 100%;
+}
+
+.sacred-sc__meter-full {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sacred-sc__meter-track {
+  height: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.sacred-sc__meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(52, 211, 153, 0.4) 0%,
+    rgba(255, 215, 0, 0.5) 40%,
+    rgba(239, 68, 68, 0.7) 70%,
+    rgba(239, 68, 68, 0.9) 100%
+  );
+  border-radius: 2px;
+  transition: width 0.05s linear;
+}
+
+.sacred-sc__meter-threshold {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 215, 0, 0.6);
+  pointer-events: none;
+}
+
+.sacred-sc__meter-values {
+  display: flex;
+  justify-content: space-between;
+  font-size: 6px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.sacred-sc__meter-current {
+  color: rgba(239, 68, 68, 0.7);
+  font-weight: 900;
+}

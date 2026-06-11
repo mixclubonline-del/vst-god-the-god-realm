@@ -27,6 +27,17 @@ VSTGodTheGodRealmAudioProcessor::VSTGodTheGodRealmAudioProcessor()
         }
         tracks.push_back(t);
     }
+
+    // Load persisted settings
+    auto settings = loadSettingsFromDisk();
+    if (settings.isNotEmpty())
+    {
+        auto json = juce::JSON::parse(settings);
+        if (json.hasProperty("sampleLibraryPath"))
+        {
+            sampleLibraryPath = json.getProperty("sampleLibraryPath", "").toString();
+        }
+    }
 }
 
 VSTGodTheGodRealmAudioProcessor::~VSTGodTheGodRealmAudioProcessor()
@@ -149,6 +160,90 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         const auto msg = metadata.getMessage();
         if (msg.isNoteOn())
         {
+            // 1. Gather active slots (loaded and powered)
+            std::vector<int> activeSlots;
+            for (int i = 0; i < 6; ++i)
+            {
+                bool isPowered = true;
+                if (auto* param = apvts.getParameter("slotPower_" + juce::String(i)))
+                {
+                    isPowered = param->getValue() > 0.5f;
+                }
+                // Check if sampler voice has sample loaded
+                if (isPowered && sampler.hasSample(i))
+                {
+                    activeSlots.push_back(i);
+                }
+            }
+
+            if (!activeSlots.empty())
+            {
+                // 2. Select slot(s) to play based on slotPlayMode
+                int playMode = 0;
+                if (auto* param = apvts.getParameter("slotPlayMode"))
+                {
+                    playMode = static_cast<int>(param->getNormalisableRange().convertFrom0to1(param->getValue()));
+                }
+
+                std::vector<int> slotsToTrigger;
+                if (playMode == 0) // Layer Mode
+                {
+                    slotsToTrigger = activeSlots;
+                }
+                else if (playMode == 1) // Round Robin
+                {
+                    int rrIdx = currentRoundRobinSlot.load(std::memory_order_relaxed);
+                    int slotIdx = activeSlots[rrIdx % activeSlots.size()];
+                    slotsToTrigger.push_back(slotIdx);
+                    currentRoundRobinSlot.store((rrIdx + 1) % activeSlots.size(), std::memory_order_relaxed);
+                }
+                else if (playMode == 2) // Random
+                {
+                    int randIdx = randomGen.nextInt(static_cast<int>(activeSlots.size()));
+                    slotsToTrigger.push_back(activeSlots[randIdx]);
+                }
+
+                // 3. Trigger each selected slot
+                float velocity = static_cast<float>(msg.getVelocity()) / 127.0f;
+                float pitchOffset = static_cast<float>(msg.getNoteNumber() - 60);
+                float globalTune = *apvts.getRawParameterValue("tuneSemitones");
+
+                for (int slotIdx : slotsToTrigger)
+                {
+                    float tuneVal = 50.0f;
+                    float fineVal = 50.0f;
+                    float panVal = 50.0f;
+                    float volVal = 75.0f;
+                    float textureVal = 40.0f;
+
+                    if (auto* param = apvts.getParameter("slotTune_" + juce::String(slotIdx)))
+                        tuneVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                    if (auto* param = apvts.getParameter("slotFine_" + juce::String(slotIdx)))
+                        fineVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                    if (auto* param = apvts.getParameter("slotPan_" + juce::String(slotIdx)))
+                        panVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                    if (auto* param = apvts.getParameter("slotVol_" + juce::String(slotIdx)))
+                        volVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                    if (auto* param = apvts.getParameter("slotTexture_" + juce::String(slotIdx)))
+                        textureVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+
+                    float slotTuneSemitones = (tuneVal - 50.0f) * 0.48f + (fineVal - 50.0f) * 0.02f;
+                    float finalPitch = pitchOffset + slotTuneSemitones + globalTune;
+                    float finalPan = (panVal - 50.0f) / 50.0f;
+
+                    // Per-slot volume: 0→silence, 75→unity (0dB), 100→+8dB
+                    float slotGain = (volVal <= 0.0f) ? 0.0f
+                                     : juce::Decibels::decibelsToGain((volVal - 75.0f) * 0.32f);
+                    float finalVelocity = velocity * slotGain;
+
+                    // Apply texture (per-voice LPF cutoff)
+                    sampler.setTexture(slotIdx, textureVal);
+
+                    // Trigger the voice
+                    sampler.trigger(slotIdx, finalVelocity, finalPitch, finalPan, 0.5f, 0.0f, 1.0f, false);
+                }
+            }
+
             int wp = midiEventWritePos.load(std::memory_order_relaxed);
             int nextWp = (wp + 1) % kMaxMidiEvents;
             
@@ -234,8 +329,16 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
                                     end = track.slices[step.sliceIndex - 1].end;
                                 }
 
-                                // 4. Micro Timing (simplistic for now - just trigger)
-                                sampler.trigger(t, step.velocity / 127.0f, step.pitch, step.pan, step.decay, start, end, step.reverse, step.retrigRate, samplesPer16th);
+                                // 4. Micro Timing — nudge trigger by sample offset
+                                int microOffsetSamples = 0;
+                                if (step.microTiming != 0)
+                                {
+                                    // microTiming: -50..+50 → fraction of a 16th note
+                                    // Positive = late (human feel), negative = rushed
+                                    float fraction = static_cast<float>(step.microTiming) / 100.0f;
+                                    microOffsetSamples = static_cast<int>(fraction * samplesPer16th);
+                                }
+                                sampler.trigger(t, step.velocity / 127.0f, step.pitch, step.pan, step.decay, start, end, step.reverse, step.retrigRate, samplesPer16th, microOffsetSamples);
                             }
                         }
                     }
@@ -283,6 +386,7 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     // ═══════════════════════════════════════════════════════════
     // Parameter Bridging (Mastering Chain)
     // ═══════════════════════════════════════════════════════════
+    // ─── Mastering DSP Parameters ───
     velvetChain.setInputGain(*apvts.getRawParameterValue("masterInputGain"));
     velvetChain.setDrive(*apvts.getRawParameterValue("masterDrive"));
     
@@ -298,11 +402,25 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     }
     velvetChain.updateEQ(bodyGain, 0.0f, airGain);
 
-    velvetChain.setLimiterThreshold(*apvts.getRawParameterValue("masterDynamicsThreshold"));
-    velvetChain.setLimiterAttack(*apvts.getRawParameterValue("masterAttack"));
-    velvetChain.setLimiterRelease(*apvts.getRawParameterValue("masterRelease"));
-    velvetChain.setLimiterRatio(*apvts.getRawParameterValue("masterDynamicsRatio"));
+    // Cold Extension (sub-bass thickener)
+    velvetChain.setColdExtension(*apvts.getRawParameterValue("masterColdExtension"));
+
+    // Compressor (dynamics shaping — attack, ratio, threshold, release)
+    velvetChain.setCompressorThreshold(*apvts.getRawParameterValue("masterDynamicsThreshold"));
+    velvetChain.setCompressorAttack(*apvts.getRawParameterValue("masterAttack"));
+    velvetChain.setCompressorRelease(*apvts.getRawParameterValue("masterRelease"));
+    velvetChain.setCompressorRatio(*apvts.getRawParameterValue("masterDynamicsRatio"));
+
+    // Limiter (ceiling protector — uses masterCeiling as threshold)
+    float ceilingDb = *apvts.getRawParameterValue("masterCeiling");
+    velvetChain.setLimiterThreshold(ceilingDb);
+
+    // Output volume
     velvetChain.setOutputGain(*apvts.getRawParameterValue("masterVolume"));
+
+    // Stereo Width & Imager
+    velvetChain.setWidth(*apvts.getRawParameterValue("masterWidth"));
+    velvetChain.setImager(*apvts.getRawParameterValue("masterImager"));
 
     // ═══════════════════════════════════════════════════════════
     // Mastering DSP Processing
@@ -447,6 +565,31 @@ void VSTGodTheGodRealmAudioProcessor::updateTrackSlices(int trackIdx, const juce
     }
 }
 
+void VSTGodTheGodRealmAudioProcessor::triggerStep(int trackIdx, float velocity, float pitch, float pan, float decay, float startNorm, float endNorm, bool reverse, int sliceIndex)
+{
+    float start = startNorm;
+    float end = endNorm;
+    
+    const juce::ScopedLock sl(stepLock);
+    if (trackIdx >= 0 && trackIdx < 8)
+    {
+        auto& track = tracks[trackIdx];
+        if (sliceIndex > 0 && sliceIndex <= static_cast<int>(track.slices.size()))
+        {
+            start = track.slices[sliceIndex - 1].start;
+            end = track.slices[sliceIndex - 1].end;
+        }
+    }
+    
+    sampler.trigger(trackIdx, velocity, pitch, pan, decay, start, end, reverse);
+}
+
+void VSTGodTheGodRealmAudioProcessor::updateTransportState(bool isPlaying, double bpm)
+{
+    transport.isPlaying.store(isPlaying, std::memory_order_relaxed);
+    transport.bpm.store(bpm, std::memory_order_relaxed);
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Thread-safe accessors for Editor state push
 // ═══════════════════════════════════════════════════════════════
@@ -585,33 +728,82 @@ juce::AudioProcessorValueTreeState::ParameterLayout VSTGodTheGodRealmAudioProces
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     // --- Master Section ---
-    layout.add(std::make_unique<juce::AudioParameterFloat>("tuneSemitones", "Tune", -24.0f, 24.0f, 0.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterVolume", "Volume", -60.0f, 6.0f, 0.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("globalBpm", "BPM", 20.0f, 300.0f, 140.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("tuneSemitones", 1), "Tune", -24.0f, 24.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterVolume", 1), "Volume", -60.0f, 6.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("globalBpm", 1), "BPM", 20.0f, 300.0f, 140.0f));
 
     // --- Celestial Forge (Mastering) ---
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterInputGain", "Input Gain", -12.0f, 12.0f, 0.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterDrive", "Drive", 0.0f, 100.0f, 20.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterColorTilt", "Color Tilt", 0.0f, 100.0f, 50.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterDynamicsThreshold", "Threshold", -60.0f, 0.0f, -12.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterDynamicsRatio", "Ratio", 1.0f, 10.0f, 2.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterAttack", "Attack", 1.0f, 100.0f, 30.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterRelease", "Release", 10.0f, 1000.0f, 100.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterColdExtension", "Cold Extension", 0.0f, 100.0f, 0.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterCeiling", "Ceiling", -12.0f, 12.0f, -0.1f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterWidth", "Width", 0.0f, 200.0f, 100.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("masterImager", "Imager", -1.0f, 1.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterInputGain", 1), "Input Gain", -12.0f, 12.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterDrive", 1), "Drive", 0.0f, 100.0f, 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterColorTilt", 1), "Color Tilt", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterDynamicsThreshold", 1), "Threshold", -60.0f, 0.0f, -12.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterDynamicsRatio", 1), "Ratio", 1.0f, 10.0f, 2.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterAttack", 1), "Attack", 1.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterRelease", 1), "Release", 10.0f, 1000.0f, 100.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterColdExtension", 1), "Cold Extension", 0.0f, 100.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterCeiling", 1), "Ceiling", -12.0f, 12.0f, -0.1f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterWidth", 1), "Width", 0.0f, 200.0f, 100.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterImager", 1), "Imager", -1.0f, 1.0f, 0.0f));
 
     // --- Navigation & State ---
-    layout.add(std::make_unique<juce::AudioParameterInt>("activeTab", "Active Tab", 0, 7, 0));
-    layout.add(std::make_unique<juce::AudioParameterInt>("selectedPreset", "Selected Preset", 0, 511, 0));
-    layout.add(std::make_unique<juce::AudioParameterInt>("activePattern", "Active Pattern", 0, 1, 0));
-    layout.add(std::make_unique<juce::AudioParameterBool>("isFillMode", "Fill Mode", false));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activeTab", 1), "Active Tab", 0, 7, 0));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("selectedPreset", 1), "Selected Preset", 0, 511, 0));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activePattern", 1), "Active Pattern", 0, 1, 0));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("isFillMode", 1), "Fill Mode", false));
 
     // --- Sample Chopper / Sequencer (Stubs for now) ---
-    layout.add(std::make_unique<juce::AudioParameterFloat>("morphFactor", "Morph Factor", 0.0f, 1.0f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("morphFactor", 1), "Morph Factor", 0.0f, 1.0f, 0.0f));
+
+    // --- 6-Slot Sample Engine Section ---
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("slotPlayMode", 1), "Slot Play Mode", 0, 2, 0));
+    for (int i = 0; i < 6; ++i)
+    {
+        juce::String idSuffix = juce::String(i);
+        layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("slotPower_" + idSuffix, 1), "Slot " + idSuffix + " Power", true));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotVol_" + idSuffix, 1), "Slot " + idSuffix + " Volume", 0.0f, 100.0f, 75.0f));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotPan_" + idSuffix, 1), "Slot " + idSuffix + " Pan", 0.0f, 100.0f, 50.0f));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotTune_" + idSuffix, 1), "Slot " + idSuffix + " Tune", 0.0f, 100.0f, 50.0f));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotTexture_" + idSuffix, 1), "Slot " + idSuffix + " Texture", 0.0f, 100.0f, 40.0f));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotFine_" + idSuffix, 1), "Slot " + idSuffix + " Fine", 0.0f, 100.0f, 50.0f));
+    }
 
     return layout;
+}
+
+juce::File VSTGodTheGodRealmAudioProcessor::getConfigFile()
+{
+    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+        .getChildFile("MixxTech")
+        .getChildFile("VST God")
+        .getChildFile("config.json");
+}
+
+juce::String VSTGodTheGodRealmAudioProcessor::loadSettingsFromDisk()
+{
+    auto file = getConfigFile();
+    if (file.existsAsFile())
+    {
+        return file.loadFileAsString();
+    }
+    return {};
+}
+
+void VSTGodTheGodRealmAudioProcessor::saveSettingsToDisk (const juce::String& settingsJson)
+{
+    auto file = getConfigFile();
+    if (!file.getParentDirectory().exists())
+    {
+        file.getParentDirectory().createDirectory();
+    }
+    
+    file.replaceWithText(settingsJson);
+    
+    // Parse out sampleLibraryPath if available in the JSON
+    auto json = juce::JSON::parse(settingsJson);
+    if (json.hasProperty("sampleLibraryPath"))
+    {
+        sampleLibraryPath = json.getProperty("sampleLibraryPath", "").toString();
+    }
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

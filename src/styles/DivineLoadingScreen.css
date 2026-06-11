@@ -1,0 +1,246 @@
+/* ═══════════════════════════════════════════════════════
+   DIVINE LOADING SCREEN — The Portal of Awakening
+   ─────────────────────────────────────────────────
+   "Before the God Realm, there is the Threshold."
+   ═══════════════════════════════════════════════════════ */
+
+.divine-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  background: #0a0820;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  user-select: none;
+}
+
+/* ─── Video Background — The Star of the Show ─── */
+.divine-loading__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* ─── Sacred Geometry Canvas — Subtle overlay on top of video ─── */
+.divine-loading__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.25;
+  z-index: 2;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* ─── Bottom Overlay — Logo + Progress ─── */
+.divine-loading__overlay {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 40px;
+  /* Gradient fade from transparent to dark at the bottom */
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(10, 8, 32, 0.3) 30%,
+    rgba(10, 8, 32, 0.7) 70%,
+    rgba(10, 8, 32, 0.9) 100%
+  );
+  padding-top: 60px;
+  width: 100%;
+}
+
+/* ─── Logotype ─── */
+.divine-loading__logo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.divine-loading__logo-vst {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 248, 225, 0.9);
+  letter-spacing: 0.15em;
+}
+
+.divine-loading__logo-god {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #FFD700;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 20px rgba(255, 215, 0, 0.4),
+    0 0 40px rgba(255, 215, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.8);
+  animation: divineLogoShimmer 4s ease-in-out infinite;
+}
+
+@keyframes divineLogoShimmer {
+  0%, 100% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2); }
+  50% { text-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3), 0 0 90px rgba(255, 215, 0, 0.1); }
+}
+
+/* ─── Progress Section ─── */
+.divine-loading__progress-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 340px;
+}
+
+/* Progress bar track */
+.divine-loading__progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 215, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Progress bar fill */
+.divine-loading__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.3), #FFD700, rgba(255, 215, 0, 0.3));
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow:
+    0 0 12px rgba(255, 215, 0, 0.4),
+    0 0 24px rgba(255, 215, 0, 0.2);
+}
+
+/* Shimmer on the fill */
+.divine-loading__progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: divineProgressShimmer 2s ease-in-out infinite;
+}
+
+@keyframes divineProgressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Status text */
+.divine-loading__status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255, 215, 0, 0.5);
+  text-transform: uppercase;
+  min-height: 16px;
+  transition: opacity 0.3s ease;
+}
+
+/* Version badge */
+.divine-loading__version {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: rgba(255, 248, 225, 0.15);
+  text-transform: uppercase;
+}
+
+/* ─── Portal Transition — The Opening ─── */
+.divine-loading--exiting {
+  animation: divinePortalOpen 1.2s cubic-bezier(0.4, 0, 0, 1) forwards;
+}
+
+@keyframes divinePortalOpen {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    filter: brightness(2.5);
+  }
+  60% {
+    opacity: 0.8;
+    transform: scale(1.15);
+    filter: brightness(3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+    filter: brightness(4) blur(20px);
+  }
+}
+
+/* ─── Floating Particles (CSS-only divine embers) ─── */
+.divine-loading__particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.divine-loading__particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #FFD700;
+  border-radius: 50%;
+  opacity: 0;
+  animation: divineParticleFloat var(--dur, 6s) var(--delay, 0s) infinite ease-in-out;
+}
+
+@keyframes divineParticleFloat {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+    transform: translate(var(--dx, 20px), var(--dy, -40px)) scale(1);
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(calc(var(--dx, 20px) * 3), calc(var(--dy, -40px) * 3)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* ─── Scanline overlay for that premium "FUI" feel ─── */
+.divine-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 20;
+}
