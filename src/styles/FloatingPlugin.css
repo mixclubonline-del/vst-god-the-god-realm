@@ -178,8 +178,9 @@
 }
 
 .fp-titlebar__text {
+  font-family: 'Orbitron', sans-serif;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--fp-accent, #B87DFF);
   text-shadow: 0 0 8px color-mix(in srgb, var(--fp-accent, #B87DFF) 30%, transparent);
@@ -246,8 +247,9 @@
 }
 
 .fp-knob__label {
+  font-family: 'Orbitron', sans-serif;
   font-size: 7px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(160, 150, 120, 0.45);
@@ -371,8 +373,9 @@
 }
 
 .fp-fader__label {
+  font-family: 'Orbitron', sans-serif;
   font-size: 7px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(160, 150, 120, 0.35);
@@ -425,8 +428,9 @@
 }
 
 .fp-instrument__section-label {
+  font-family: 'Orbitron', sans-serif;
   font-size: 8px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(160, 150, 120, 0.3);
@@ -475,13 +479,13 @@
   border-radius: 4px;
   padding: 5px 12px;
   font-size: 8px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(160, 150, 120, 0.45);
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: inherit;
+  font-family: 'Orbitron', sans-serif;
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -677,8 +681,9 @@
 }
 
 .fp-dock__pill-name {
+  font-family: 'Orbitron', sans-serif;
   font-size: 8px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fp-accent, #fff);
@@ -763,8 +768,9 @@
 }
 
 .fp-browser__title {
+  font-family: 'Orbitron', sans-serif;
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.16em;
   color: rgba(200, 190, 150, 0.5);
 }
@@ -777,7 +783,8 @@
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 4px;
-  font-family: inherit;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
   transition: all 0.2s ease;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
 }

@@ -611,7 +611,7 @@
   right: 10px;
   top: 10px;
   color: var(--room-accent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
   font-weight: 900;
 }
@@ -647,7 +647,7 @@
 
 .da-records-header p {
   color: rgba(248, 221, 210, 0.34);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
 }
 

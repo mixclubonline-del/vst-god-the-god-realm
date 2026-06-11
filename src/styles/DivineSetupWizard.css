@@ -165,7 +165,7 @@
   background: var(--god-obsidian);
   border: 1px solid var(--god-glass-border);
   border-radius: var(--god-radius);
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: var(--god-primary);
   word-break: break-all;
