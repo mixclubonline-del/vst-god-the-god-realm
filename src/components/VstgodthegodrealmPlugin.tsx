@@ -12,6 +12,8 @@ import { DivineLoadingScreen, DIVINE_STAGES } from './DivineLoadingScreen';
 import { DivineSettings } from './DivineSettings';
 import { DivineSetupWizard } from './DivineSetupWizard';
 import { LicenseActivationModal } from './LicenseActivationModal';
+import { ReleaseNotesModal } from './ReleaseNotesModal';
+import { checkForUpdates } from '../services/supabase';
 import { nativeAudio } from '../native/bridge';
 import type { DSPChainModule } from '@/services/types';
 import { SoundSlot } from './SoundSlot';
@@ -207,6 +209,10 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   const [activeSessionName, setActiveSessionName] = useState<string | null>(() => realmSessionManager.getActiveSession());
   const [recentSessions, setRecentSessions] = useState<string[]>(() => realmSessionManager.getRecentSessions());
 
+  /* ─── Auto-Update State ─── */
+  const [latestRelease, setLatestRelease] = useState<any | null>(null);
+  const [showReleaseNotes, setShowReleaseNotes] = useState(false);
+
   /* ─── Astral Dais State ─── */
   const [midiMap, setMidiMap] = useState<number[]>(DEFAULT_MIDI_MAP);
   const [triggerFlash, setTriggerFlash] = useState<boolean[]>(Array(16).fill(false));
@@ -347,7 +353,17 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         if (cancelled) return;
         setActiveSettings(settings);
 
-
+        // Check for updates
+        try {
+          const pluginVersion = settings?.pluginVersion || 'v1.0.0-dev';
+          const update = await checkForUpdates(pluginVersion);
+          if (update && !cancelled) {
+            console.log('[God Plugin] Update available:', update.version);
+            setLatestRelease(update);
+          }
+        } catch (e) {
+          console.error('[God Plugin] Update check failed:', e);
+        }
 
         // ── Stage 3: Samples ──
         setLoadingStage('samples');
@@ -1137,6 +1153,34 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             />
           </div>
 
+          {latestRelease && (
+            <button
+              className="vg-header-update-badge animate-pulse"
+              onClick={() => setShowReleaseNotes(true)}
+              aria-label="Update Available"
+              title={`Upgrade available: ${latestRelease.version}`}
+              style={{
+                background: 'rgba(255, 215, 0, 0.12)',
+                border: '1px solid var(--god-primary)',
+                color: 'var(--god-primary)',
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: '9px',
+                fontWeight: 800,
+                letterSpacing: '0.05em',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                marginRight: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 0 10px rgba(255,215,0,0.25)',
+              }}
+            >
+              ⚡ UPDATE {latestRelease.version}
+            </button>
+          )}
+
           <button
             className="vg-header-close"
             onClick={() => setIsSessionDrawerOpen(true)}
@@ -1605,6 +1649,15 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+
+      {/* ═══════════ RELEASE NOTES MODAL ═══════════ */}
+      {showReleaseNotes && latestRelease && (
+        <ReleaseNotesModal
+          release={latestRelease}
+          onClose={() => setShowReleaseNotes(false)}
+          activeSettings={activeSettings}
+        />
+      )}
 
       {/* ═══════════ NEURAL SUGGESTION PANEL ═══════════ */}
       <NeuralSuggestPanel
