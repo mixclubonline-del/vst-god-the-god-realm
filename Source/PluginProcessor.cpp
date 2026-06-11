@@ -112,6 +112,7 @@ void VSTGodTheGodRealmAudioProcessor::prepareToPlay (double sampleRate, int samp
 
     velvetChain.prepare(spec);
     sampler.prepare(sampleRate);
+    pantheonSynth.prepare(sampleRate);
     
     // Peak decay coefficient: ~300ms decay at the current sample rate
     // exp(-1 / (tau * sr)) where tau = 0.3s
@@ -153,113 +154,151 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         buffer.clear (i, 0, buffer.getNumSamples());
 
     // ═══════════════════════════════════════════════════════════
-    // MIDI 2.0 Note Event Capture
+    // MIDI 2.0 Note Event Capture & Routing
     // ═══════════════════════════════════════════════════════════
+    int activeTab = static_cast<int>(*apvts.getRawParameterValue("activeTab"));
+
     for (const auto metadata : midiMessages)
     {
         const auto msg = metadata.getMessage();
-        if (msg.isNoteOn())
+        
+        if (activeTab == 8) // Electric Pantheon tab
         {
-            // 1. Gather active slots (loaded and powered)
-            std::vector<int> activeSlots;
-            for (int i = 0; i < 6; ++i)
+            if (msg.isNoteOn())
             {
-                bool isPowered = true;
-                if (auto* param = apvts.getParameter("slotPower_" + juce::String(i)))
-                {
-                    isPowered = param->getValue() > 0.5f;
-                }
-                // Check if sampler voice has sample loaded
-                if (isPowered && sampler.hasSample(i))
-                {
-                    activeSlots.push_back(i);
-                }
-            }
-
-            if (!activeSlots.empty())
-            {
-                // 2. Select slot(s) to play based on slotPlayMode
-                int playMode = 0;
-                if (auto* param = apvts.getParameter("slotPlayMode"))
-                {
-                    playMode = static_cast<int>(param->getNormalisableRange().convertFrom0to1(param->getValue()));
-                }
-
-                std::vector<int> slotsToTrigger;
-                if (playMode == 0) // Layer Mode
-                {
-                    slotsToTrigger = activeSlots;
-                }
-                else if (playMode == 1) // Round Robin
-                {
-                    int rrIdx = currentRoundRobinSlot.load(std::memory_order_relaxed);
-                    int slotIdx = activeSlots[rrIdx % activeSlots.size()];
-                    slotsToTrigger.push_back(slotIdx);
-                    currentRoundRobinSlot.store((rrIdx + 1) % activeSlots.size(), std::memory_order_relaxed);
-                }
-                else if (playMode == 2) // Random
-                {
-                    int randIdx = randomGen.nextInt(static_cast<int>(activeSlots.size()));
-                    slotsToTrigger.push_back(activeSlots[randIdx]);
-                }
-
-                // 3. Trigger each selected slot
-                float velocity = static_cast<float>(msg.getVelocity()) / 127.0f;
-                float pitchOffset = static_cast<float>(msg.getNoteNumber() - 60);
-                float globalTune = *apvts.getRawParameterValue("tuneSemitones");
-
-                for (int slotIdx : slotsToTrigger)
-                {
-                    float tuneVal = 50.0f;
-                    float fineVal = 50.0f;
-                    float panVal = 50.0f;
-                    float volVal = 75.0f;
-                    float textureVal = 40.0f;
-
-                    if (auto* param = apvts.getParameter("slotTune_" + juce::String(slotIdx)))
-                        tuneVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
-                    if (auto* param = apvts.getParameter("slotFine_" + juce::String(slotIdx)))
-                        fineVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
-                    if (auto* param = apvts.getParameter("slotPan_" + juce::String(slotIdx)))
-                        panVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
-                    if (auto* param = apvts.getParameter("slotVol_" + juce::String(slotIdx)))
-                        volVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
-                    if (auto* param = apvts.getParameter("slotTexture_" + juce::String(slotIdx)))
-                        textureVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
-
-                    float slotTuneSemitones = (tuneVal - 50.0f) * 0.48f + (fineVal - 50.0f) * 0.02f;
-                    float finalPitch = pitchOffset + slotTuneSemitones + globalTune;
-                    float finalPan = (panVal - 50.0f) / 50.0f;
-
-                    // Per-slot volume: 0→silence, 75→unity (0dB), 100→+8dB
-                    float slotGain = (volVal <= 0.0f) ? 0.0f
-                                     : juce::Decibels::decibelsToGain((volVal - 75.0f) * 0.32f);
-                    float finalVelocity = velocity * slotGain;
-
-                    // Apply texture (per-voice LPF cutoff)
-                    sampler.setTexture(slotIdx, textureVal);
-
-                    // Trigger the voice
-                    sampler.trigger(slotIdx, finalVelocity, finalPitch, finalPan, 0.5f, 0.0f, 1.0f, false);
-                }
-            }
-
-            int wp = midiEventWritePos.load(std::memory_order_relaxed);
-            int nextWp = (wp + 1) % kMaxMidiEvents;
-            
-            // Only write if buffer isn't full
-            if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
-            {
-                auto& evt = midiEventBuffer[wp];
-                evt.noteNumber = msg.getNoteNumber();
-                evt.channel = msg.getChannel() - 1; // JUCE uses 1-based channels
-                // Scale MIDI 1.0 velocity (0-127) to MIDI 2.0 (0-65535)
-                evt.velocity16 = static_cast<uint32_t>(msg.getVelocity()) * 516; // 127*516 ≈ 65532
-                evt.pitchBend = 0.0f;
-                evt.pressure = msg.getAfterTouchValue() / 127.0f;
-                evt.timestampSamples = metadata.samplePosition;
+                pantheonSynth.noteOn(msg.getNoteNumber(), static_cast<float>(msg.getVelocity()) / 127.0f);
                 
-                midiEventWritePos.store(nextWp, std::memory_order_release);
+                // Write note-on to the queue for UI note visualization
+                int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                int nextWp = (wp + 1) % kMaxMidiEvents;
+                if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                {
+                    auto& evt = midiEventBuffer[wp];
+                    evt.noteNumber = msg.getNoteNumber();
+                    evt.channel = msg.getChannel() - 1; // JUCE uses 1-based channels
+                    evt.velocity16 = static_cast<uint32_t>(msg.getVelocity()) * 516;
+                    evt.pitchBend = 0.0f;
+                    evt.pressure = msg.getAfterTouchValue() / 127.0f;
+                    evt.timestampSamples = metadata.samplePosition;
+                    
+                    midiEventWritePos.store(nextWp, std::memory_order_release);
+                }
+            }
+            else if (msg.isNoteOff())
+            {
+                pantheonSynth.noteOff(msg.getNoteNumber());
+            }
+            else if (msg.isPitchWheel())
+            {
+                float pbVal = (static_cast<float>(msg.getPitchWheelValue()) - 8192.0f) / 8192.0f;
+                pantheonSynth.setPitchBend(pbVal);
+            }
+        }
+        else // Other tabs trigger the sampler
+        {
+            if (msg.isNoteOn())
+            {
+                // 1. Gather active slots (loaded and powered)
+                std::vector<int> activeSlots;
+                for (int i = 0; i < 6; ++i)
+                {
+                    bool isPowered = true;
+                    if (auto* param = apvts.getParameter("slotPower_" + juce::String(i)))
+                    {
+                        isPowered = param->getValue() > 0.5f;
+                    }
+                    // Check if sampler voice has sample loaded
+                    if (isPowered && sampler.hasSample(i))
+                    {
+                        activeSlots.push_back(i);
+                    }
+                }
+
+                if (!activeSlots.empty())
+                {
+                    // 2. Select slot(s) to play based on slotPlayMode
+                    int playMode = 0;
+                    if (auto* param = apvts.getParameter("slotPlayMode"))
+                    {
+                        playMode = static_cast<int>(param->getNormalisableRange().convertFrom0to1(param->getValue()));
+                    }
+
+                    std::vector<int> slotsToTrigger;
+                    if (playMode == 0) // Layer Mode
+                    {
+                        slotsToTrigger = activeSlots;
+                    }
+                    else if (playMode == 1) // Round Robin
+                    {
+                        int rrIdx = currentRoundRobinSlot.load(std::memory_order_relaxed);
+                        int slotIdx = activeSlots[rrIdx % activeSlots.size()];
+                        slotsToTrigger.push_back(slotIdx);
+                        currentRoundRobinSlot.store((rrIdx + 1) % activeSlots.size(), std::memory_order_relaxed);
+                    }
+                    else if (playMode == 2) // Random
+                    {
+                        int randIdx = randomGen.nextInt(static_cast<int>(activeSlots.size()));
+                        slotsToTrigger.push_back(activeSlots[randIdx]);
+                    }
+
+                    // 3. Trigger each selected slot
+                    float velocity = static_cast<float>(msg.getVelocity()) / 127.0f;
+                    float pitchOffset = static_cast<float>(msg.getNoteNumber() - 60);
+                    float globalTune = *apvts.getRawParameterValue("tuneSemitones");
+
+                    for (int slotIdx : slotsToTrigger)
+                    {
+                        float tuneVal = 50.0f;
+                        float fineVal = 50.0f;
+                        float panVal = 50.0f;
+                        float volVal = 75.0f;
+                        float textureVal = 40.0f;
+
+                        if (auto* param = apvts.getParameter("slotTune_" + juce::String(slotIdx)))
+                            tuneVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                        if (auto* param = apvts.getParameter("slotFine_" + juce::String(slotIdx)))
+                            fineVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                        if (auto* param = apvts.getParameter("slotPan_" + juce::String(slotIdx)))
+                            panVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                        if (auto* param = apvts.getParameter("slotVol_" + juce::String(slotIdx)))
+                            volVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+                        if (auto* param = apvts.getParameter("slotTexture_" + juce::String(slotIdx)))
+                            textureVal = param->getNormalisableRange().convertFrom0to1(param->getValue());
+
+                        float slotTuneSemitones = (tuneVal - 50.0f) * 0.48f + (fineVal - 50.0f) * 0.02f;
+                        float finalPitch = pitchOffset + slotTuneSemitones + globalTune;
+                        float finalPan = (panVal - 50.0f) / 50.0f;
+
+                        // Per-slot volume: 0→silence, 75→unity (0dB), 100→+8dB
+                        float slotGain = (volVal <= 0.0f) ? 0.0f
+                                         : juce::Decibels::decibelsToGain((volVal - 75.0f) * 0.32f);
+                        float finalVelocity = velocity * slotGain;
+
+                        // Apply texture (per-voice LPF cutoff)
+                        sampler.setTexture(slotIdx, textureVal);
+
+                        // Trigger the voice
+                        sampler.trigger(slotIdx, finalVelocity, finalPitch, finalPan, 0.5f, 0.0f, 1.0f, false);
+                    }
+                }
+
+                int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                int nextWp = (wp + 1) % kMaxMidiEvents;
+                
+                // Only write if buffer isn't full
+                if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                {
+                    auto& evt = midiEventBuffer[wp];
+                    evt.noteNumber = msg.getNoteNumber();
+                    evt.channel = msg.getChannel() - 1; // JUCE uses 1-based channels
+                    // Scale MIDI 1.0 velocity (0-127) to MIDI 2.0 (0-65535)
+                    evt.velocity16 = static_cast<uint32_t>(msg.getVelocity()) * 516; // 127*516 ≈ 65532
+                    evt.pitchBend = 0.0f;
+                    evt.pressure = msg.getAfterTouchValue() / 127.0f;
+                    evt.timestampSamples = metadata.samplePosition;
+                    
+                    midiEventWritePos.store(nextWp, std::memory_order_release);
+                }
             }
         }
     }
@@ -363,6 +402,21 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     // Sampler Processing
     // ═══════════════════════════════════════════════════════════
     sampler.process(buffer);
+
+    // ═══════════════════════════════════════════════════════════
+    // Electric Pantheon Synth Parameters & Processing
+    // ═══════════════════════════════════════════════════════════
+    int godIdx = static_cast<int>(*apvts.getRawParameterValue("pantheonGod"));
+    float energy = *apvts.getRawParameterValue("pantheonMacro_energy");
+    float divinity = *apvts.getRawParameterValue("pantheonMacro_divinity");
+    float width = *apvts.getRawParameterValue("pantheonMacro_width");
+    float realm = *apvts.getRawParameterValue("pantheonMacro_realm");
+    float aura = *apvts.getRawParameterValue("pantheonMacro_aura");
+    float age = *apvts.getRawParameterValue("pantheonMacro_age");
+
+    pantheonSynth.setGod(godIdx);
+    pantheonSynth.setMacros(energy, divinity, width, realm, aura, age);
+    pantheonSynth.process(buffer);
 
     // ─── Per-Track Peak Metering (post-sampler, pre-master) ───
     // We approximate per-track peaks from the sampler voices.
@@ -746,10 +800,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout VSTGodTheGodRealmAudioProces
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterImager", 1), "Imager", -1.0f, 1.0f, 0.0f));
 
     // --- Navigation & State ---
-    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activeTab", 1), "Active Tab", 0, 7, 0));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activeTab", 1), "Active Tab", 0, 8, 0));
     layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("selectedPreset", 1), "Selected Preset", 0, 511, 0));
     layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activePattern", 1), "Active Pattern", 0, 1, 0));
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("isFillMode", 1), "Fill Mode", false));
+
+    // --- Electric Pantheon Synth ---
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("pantheonGod", 1), "Pantheon God", 0, 7, 0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_energy", 1), "Pantheon Energy", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_divinity", 1), "Pantheon Divinity", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_width", 1), "Pantheon Width", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_realm", 1), "Pantheon Realm", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_aura", 1), "Pantheon Aura", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pantheonMacro_age", 1), "Pantheon Age", 0.0f, 100.0f, 50.0f));
 
     // --- Sample Chopper / Sequencer (Stubs for now) ---
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("morphFactor", 1), "Morph Factor", 0.0f, 1.0f, 0.0f));

@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "VelvetCurve.h"
 #include "SacredSampler.h"
+#include "PantheonSynth.h"
 
 struct Step
 {
@@ -136,6 +137,7 @@ private:
 
     VelvetCurve velvetChain;
     SacredSamplerEngine sampler;
+    PantheonSynthEngine pantheonSynth;
     
     std::vector<Track> tracks;
     juce::String sampleLibraryPath;

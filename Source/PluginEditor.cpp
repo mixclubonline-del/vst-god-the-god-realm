@@ -101,7 +101,40 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         else if (type == "SET_PARAMETER")
         {
             auto id = payload.getProperty("id", "").toString();
-            auto value = (float)payload.getProperty("value", 0.0);
+            auto valVar = payload.getProperty("value", juce::var());
+            
+            float value = 0.0f;
+            if (id == "activeTab")
+            {
+                juce::String valStr = valVar.toString();
+                if (valStr == "Multi-Realm") value = 0.0f;
+                else if (valStr == "Pantheon") value = 1.0f;
+                else if (valStr == "Sample Chopper") value = 2.0f;
+                else if (valStr == "Divine Archive") value = 3.0f;
+                else if (valStr == "Sequencer") value = 4.0f;
+                else if (valStr == "Mastering") value = 5.0f;
+                else if (valStr == "Export") value = 6.0f;
+                else if (valStr == "Preset Vault") value = 7.0f;
+                else if (valStr == "Electric Pantheon") value = 8.0f;
+                else value = (float)valVar;
+            }
+            else if (id == "pantheonGod")
+            {
+                juce::String valStr = valVar.toString();
+                if (valStr == "olympus") value = 0.0f;
+                else if (valStr == "hades") value = 1.0f;
+                else if (valStr == "zeus") value = 2.0f;
+                else if (valStr == "athena") value = 3.0f;
+                else if (valStr == "poseidon") value = 4.0f;
+                else if (valStr == "titan") value = 5.0f;
+                else if (valStr == "apollo") value = 6.0f;
+                else if (valStr == "chronos") value = 7.0f;
+                else value = (float)valVar;
+            }
+            else
+            {
+                value = (float)valVar;
+            }
             
             if (auto* param = audioProcessor.apvts.getParameter(id))
             {
