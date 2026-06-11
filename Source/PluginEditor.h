@@ -23,6 +23,7 @@ private:
     juce::String buildMeteringJson();
     juce::String buildTelemetryJson();
     void browseForLibraryPath();
+    void handleNeuralOrchestration (const juce::String& prompt, const juce::var& activeSlotsVar);
     static juce::WebBrowserComponent::Options createWebBrowserOptions (VSTGodTheGodRealmAudioProcessorEditor* editor);
     void handleWebViewMessage (const juce::Array<juce::var>& args, juce::WebBrowserComponent::NativeFunctionCompletion completion);
     std::optional<juce::WebBrowserComponent::Resource> getEmbeddedUIResource (const juce::String& url);

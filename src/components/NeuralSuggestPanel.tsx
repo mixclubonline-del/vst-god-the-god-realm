@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Stub: Neural suggestions will be powered by io.net GPU cluster in production
-const sendMessage = async (prompt: string): Promise<{ text: string }> => ({
-  text: `🧠 Neural analysis of your request: "${prompt.slice(0, 50)}..."
-
-The Divine Engine detects harmonic opportunities in your current stack. Consider layering a complementary texture in the next available slot.
-
-Note: Full neural inference will be enabled when connected to the io.net processing cluster.`
-});
+import { nativeAudio } from '../native/bridge';
 
 interface NeuralSuggestPanelProps {
   isOpen: boolean;
@@ -40,40 +32,36 @@ export const NeuralSuggestPanel: React.FC<NeuralSuggestPanelProps> = ({
     }
   }, [response, isAnalyzing]);
 
-  const handleSuggest = async () => {
+  // Subscribe to C++ Neural Suggestion responses
+  useEffect(() => {
+    if (isOpen) {
+      const unsubscribe = nativeAudio.subscribeNeuralResponse((res) => {
+        let fullResponse = res.text;
+        if (res.params) {
+          fullResponse += "\n\n" + JSON.stringify(res.params);
+        }
+        setResponse(fullResponse);
+        setIsAnalyzing(false);
+      });
+      return () => unsubscribe();
+    }
+  }, [isOpen]);
+
+  const handleSuggest = () => {
     if (!prompt.trim() || isAnalyzing) return;
 
     setIsAnalyzing(true);
     setResponse(null);
 
-    try {
-      // Build context of current active slots
-      const context = activeSlots.map((s, i) => ({
-        index: i,
-        name: s.name,
-        enabled: s.enabled,
-        vol: s.vol
-      })).filter(s => s.enabled);
+    // Build context of current active slots to pass to C++ if needed
+    const context = activeSlots.map((s, i) => ({
+      index: i,
+      name: s.name,
+      enabled: s.enabled,
+      vol: s.vol
+    })).filter(s => s.enabled);
 
-      const fullPrompt = `
-        As a Neural Sound Designer for 'The God Realm' plugin, analyze this current 6-slot stack:
-        ${JSON.stringify(context, null, 2)}
-        
-        User Request: "${prompt}"
-        
-        Provide a creative suggestion to enhance this stack. 
-        If asking for a new layer, specify which empty slot (0-5) to use.
-        Return your response in a supportive, slightly mystical "God Forge" tone.
-        Include a hidden JSON block at the end with the proposed parameter changes if applicable.
-      `;
-
-      const { text } = await sendMessage(fullPrompt);
-      setResponse(text);
-    } catch (err) {
-      setResponse("The Divine Connection was interrupted. Please try again.");
-    } finally {
-      setIsAnalyzing(false);
-    }
+    nativeAudio.triggerNeuralOrchestration(prompt, context);
   };
 
   return (

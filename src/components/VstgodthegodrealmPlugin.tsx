@@ -698,8 +698,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [displayedTab, update]);
 
   const handleApplyNeuralSuggestion = useCallback((suggestion: any) => {
-    if (!suggestion || !suggestion.params) return;
-    Object.entries(suggestion.params).forEach(([id, val]) => {
+    if (!suggestion) return;
+    const params = suggestion.params || suggestion;
+    Object.entries(params).forEach(([id, val]) => {
       update(id, val);
     });
     showMessage("Neural Suggestion Applied");
@@ -1133,6 +1134,16 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             style={{ fontSize: '14px', marginRight: '4px' }}
           >
             🔱
+          </button>
+
+          <button
+            className={`vg-neural-btn ${isNeuralPanelOpen ? 'active' : ''}`}
+            onClick={() => setIsNeuralPanelOpen(true)}
+            aria-label="Neural Forge"
+            title="Consult the Third Eye"
+            style={{ marginRight: '4px' }}
+          >
+            👁️
           </button>
 
           <button
@@ -1580,6 +1591,18 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
       <DivineSettings
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* ═══════════ NEURAL SUGGESTION PANEL ═══════════ */}
+      <NeuralSuggestPanel
+        isOpen={isNeuralPanelOpen}
+        onClose={() => setIsNeuralPanelOpen(false)}
+        activeSlots={Array.from({ length: 16 }).map((_, i) => ({
+          name: parameterValues[`slotName_${i}`] || `Throne ${i + 1}`,
+          enabled: parameterValues[`slotPower_${i}`] !== false,
+          vol: parameterValues[`slotVol_${i}`] ?? 75
+        }))}
+        onApplySuggestion={handleApplyNeuralSuggestion}
       />
 
       </div>

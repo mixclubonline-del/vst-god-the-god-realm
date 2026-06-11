@@ -127,6 +127,8 @@ declare global {
     // Phase 2: Parameter updates
     __godRealmParameterUpdate?: (data: { id: string; value: any }) => void;
     __godRealmParametersUpdate?: (params: Record<string, any>) => void;
+    // Phase 3: Neural Suggestions
+    __godRealmNeuralResponse?: (response: { text: string; params?: Record<string, any> }) => void;
     // Phase 4: New inbound callbacks from JUCE
     __godRealmWaveformAnalysis?: (data: WaveformAnalysisState) => void;
     __godRealmSpectralData?: (data: SpectralDataState) => void;
@@ -142,6 +144,7 @@ class NativeAudioBridge {
   private pathListeners: Set<(path: string) => void> = new Set();
   private paramListeners: Set<(paramId: string, value: any) => void> = new Set();
   private paramsListListeners: Set<(params: Record<string, any>) => void> = new Set();
+  private neuralListeners: Set<(response: { text: string; params?: Record<string, any> }) => void> = new Set();
   
   // Current accumulated state
   private currentState: EngineState = {
@@ -225,6 +228,12 @@ class NativeAudioBridge {
       window.__godRealmParametersUpdate = (params: Record<string, any>) => {
         console.log('[NativeBridge] __godRealmParametersUpdate:', JSON.stringify(params));
         this.paramsListListeners.forEach(l => l(params));
+      };
+
+      // ─── Phase 3: Neural Suggestion Callback ───
+      window.__godRealmNeuralResponse = (response) => {
+        console.log('[NativeBridge] __godRealmNeuralResponse invoked');
+        this.neuralListeners.forEach(l => l(response));
       };
 
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
@@ -403,13 +412,29 @@ class NativeAudioBridge {
     }
   }
 
-  public triggerNeuralOrchestration() {
+  public triggerNeuralOrchestration(prompt: string, activeSlots: any[]) {
+    const msg = {
+      type: 'TRIGGER_NEURAL_ORCHESTRATION',
+      payload: { prompt, activeSlots }
+    };
+    
     if (this.isInJuce()) {
-      const msg = { type: 'TRIGGER_NEURAL_ORCHESTRATION' };
       if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
       else if (window.sendToJuce) window.sendToJuce(msg);
     } else {
-      console.log('[NativeBridge Sim] Neural orchestration triggered');
+      console.log('[NativeBridge Sim] Neural orchestration triggered:', prompt);
+      setTimeout(() => {
+        if (window.__godRealmNeuralResponse) {
+          window.__godRealmNeuralResponse({
+            text: `🧠 [Simulated Neural Suggestion]: For prompt "${prompt}", we suggest calling Poseidon and increasing Width. {Proposed parameters locked in below.}`,
+            params: {
+              activeTab: 'Electric Pantheon',
+              pantheonGod: 'poseidon',
+              masterWidth: 160.0
+            }
+          });
+        }
+      }, 1000);
     }
   }
 
@@ -539,6 +564,13 @@ class NativeAudioBridge {
     this.paramsListListeners.add(callback);
     return () => {
       this.paramsListListeners.delete(callback);
+    };
+  }
+
+  public subscribeNeuralResponse(callback: (response: { text: string; params?: Record<string, any> }) => void) {
+    this.neuralListeners.add(callback);
+    return () => {
+      this.neuralListeners.delete(callback);
     };
   }
 

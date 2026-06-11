@@ -264,7 +264,9 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         }
         else if (type == "TRIGGER_NEURAL_ORCHESTRATION")
         {
-            DBG("[PluginEditor] TRIGGER_NEURAL_ORCHESTRATION message received");
+            juce::String prompt = payload.getProperty("prompt", "").toString();
+            auto activeSlots = payload.getProperty("activeSlots", juce::var());
+            handleNeuralOrchestration (prompt, activeSlots);
         }
         else if (type == "UPDATE_CHOPPER_SLICES")
         {
@@ -578,5 +580,109 @@ void VSTGodTheGodRealmAudioProcessorEditor::browseForLibraryPath()
                 webComponent.evaluateJavascript("if(window.__godRealmLibraryPathSelected) window.__godRealmLibraryPathSelected('" + path + "');");
             }
         });
+}
+
+void VSTGodTheGodRealmAudioProcessorEditor::handleNeuralOrchestration (const juce::String& prompt, const juce::var& activeSlotsVar)
+{
+    juce::ignoreUnused (activeSlotsVar);
+    juce::String promptLower = prompt.toLowerCase();
+    
+    juce::Thread::launch ([this, promptLower]()
+    {
+        // Add a slight thinking delay for a more natural AI interaction feel
+        juce::Thread::sleep (800);
+        
+        juce::String responseText;
+        auto* paramsObj = new juce::DynamicObject();
+        
+        if (promptLower.contains ("dark") || promptLower.contains ("underworld") || promptLower.contains ("hades"))
+        {
+            responseText = "🧠 [Neural Analysis]: Hades summons the shadows. To guide this sound into the depths, we must increase saturation drive, lower the dynamics threshold for compression bite, and call Hades inside the Electric Pantheon.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "hades");
+            paramsObj->setProperty ("masterDrive", 65.0f);
+            paramsObj->setProperty ("masterColorTilt", 25.0f);
+            paramsObj->setProperty ("masterDynamicsThreshold", -18.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 60.0f);
+            paramsObj->setProperty ("pantheonMacro_realm", 75.0f);
+        }
+        else if (promptLower.contains ("bright") || promptLower.contains ("sparkle") || promptLower.contains ("zeus") || promptLower.contains ("lightning"))
+        {
+            responseText = "🧠 [Neural Analysis]: Zeus strikes the stack with high-voltage FM sparks. We are activating Zeus, shifting color tilt up for high-end definition, and expanding the stereo width.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "zeus");
+            paramsObj->setProperty ("masterDrive", 35.0f);
+            paramsObj->setProperty ("masterColorTilt", 75.0f);
+            paramsObj->setProperty ("masterWidth", 150.0f);
+            paramsObj->setProperty ("pantheonMacro_divinity", 80.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 75.0f);
+        }
+        else if (promptLower.contains ("wide") || promptLower.contains ("space") || promptLower.contains ("ambient") || promptLower.contains ("poseidon"))
+        {
+            responseText = "🧠 [Neural Analysis]: Poseidon commands a fluid, immersive ocean of sound. We are engaging Poseidon, maximizing master stereo width, and boosting the celestial divinity macro.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "poseidon");
+            paramsObj->setProperty ("masterWidth", 180.0f);
+            paramsObj->setProperty ("masterImager", 0.0f);
+            paramsObj->setProperty ("pantheonMacro_width", 90.0f);
+            paramsObj->setProperty ("pantheonMacro_divinity", 85.0f);
+            paramsObj->setProperty ("pantheonMacro_realm", 80.0f);
+        }
+        else if (promptLower.contains ("lead") || promptLower.contains ("synth") || promptLower.contains ("keys") || promptLower.contains ("olympus"))
+        {
+            responseText = "🧠 [Neural Analysis]: Olympus brings a majestic, premium ivory warmth. Let us transition to the Electric Pantheon tab, load Olympus, and dial a balanced performance stack.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "olympus");
+            paramsObj->setProperty ("masterDrive", 20.0f);
+            paramsObj->setProperty ("masterColorTilt", 50.0f);
+            paramsObj->setProperty ("masterWidth", 120.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 50.0f);
+            paramsObj->setProperty ("pantheonMacro_divinity", 65.0f);
+            paramsObj->setProperty ("pantheonMacro_realm", 50.0f);
+        }
+        else if (promptLower.contains ("808") || promptLower.contains ("sub") || promptLower.contains ("bass") || promptLower.contains ("rumble") || promptLower.contains ("titan"))
+        {
+            responseText = "🧠 [Neural Analysis]: Titan is summoned to shake the heavens. We are loading Titan in the Electric Pantheon and driving the sub-oscillator extension for colossal low-frequency pressure.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "titan");
+            paramsObj->setProperty ("masterDrive", 55.0f);
+            paramsObj->setProperty ("masterColorTilt", 35.0f);
+            paramsObj->setProperty ("masterColdExtension", 85.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 80.0f);
+            paramsObj->setProperty ("pantheonMacro_realm", 90.0f);
+        }
+        else if (promptLower.contains ("time") || promptLower.contains ("glitch") || promptLower.contains ("slow") || promptLower.contains ("chronos"))
+        {
+            responseText = "🧠 [Neural Analysis]: Chronos fractures the timeline. We are activating Chronos, turning up the age macro for instability, and dialing in saturation.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "chronos");
+            paramsObj->setProperty ("masterDrive", 45.0f);
+            paramsObj->setProperty ("pantheonMacro_age", 90.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 40.0f);
+            paramsObj->setProperty ("pantheonMacro_realm", 70.0f);
+        }
+        else
+        {
+            responseText = "🧠 [Neural Analysis]: The Divine Forge has analyzed your prompt: \"" + promptLower + "\". We detect an opportunity to increase overall saturation drive, expand the master stereo image, and awaken Apollo to guide the melody.";
+            paramsObj->setProperty ("activeTab", "Electric Pantheon");
+            paramsObj->setProperty ("pantheonGod", "apollo");
+            paramsObj->setProperty ("masterDrive", 40.0f);
+            paramsObj->setProperty ("masterWidth", 140.0f);
+            paramsObj->setProperty ("pantheonMacro_energy", 60.0f);
+            paramsObj->setProperty ("pantheonMacro_divinity", 60.0f);
+        }
+        
+        auto* responseObj = new juce::DynamicObject();
+        responseObj->setProperty ("text", responseText);
+        responseObj->setProperty ("params", paramsObj);
+        
+        juce::var responseVar (responseObj);
+        juce::String serialized = juce::JSON::toString (responseVar);
+        
+        juce::MessageManager::callAsync ([this, serialized]()
+        {
+            webComponent.evaluateJavascript ("if(window.__godRealmNeuralResponse) window.__godRealmNeuralResponse(" + serialized + ");");
+        });
+    });
 }
 
