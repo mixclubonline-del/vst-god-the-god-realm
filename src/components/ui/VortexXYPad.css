@@ -21,6 +21,7 @@
 }
 
 .vortex-label {
+  font-family: 'Orbitron', sans-serif;
   font-size: 9px;
   font-weight: 800;
   color: var(--god-text-dim);
@@ -107,4 +108,5 @@
   font-weight: 800;
   color: var(--god-text-muted);
   white-space: nowrap;
+  font-family: 'Orbitron', sans-serif;
 }

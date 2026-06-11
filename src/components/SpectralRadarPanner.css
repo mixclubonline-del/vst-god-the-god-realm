@@ -34,10 +34,10 @@
 }
 
 .divine-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 0.3em;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.18em;
   color: white;
   text-shadow: 0 0 10px var(--mixx-accent-glow);
 }

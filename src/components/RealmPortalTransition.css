@@ -32,11 +32,12 @@
   position: absolute;
   bottom: 38%;
   z-index: 2;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
   font-size: 18px;
   font-weight: 900;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
+  text-shadow: 0 0 20px currentColor, 0 2px 4px rgba(0,0,0,0.5);
 }
 
 /* ── Scanline pass during transition ── */
