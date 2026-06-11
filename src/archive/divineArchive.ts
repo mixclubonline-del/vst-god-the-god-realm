@@ -18,6 +18,10 @@ export interface DivineRelic {
   tags: string[];
   tone: string;
   weight: number;
+  energy: number;
+  spectralCentroid: number;
+  decayTime: number;
+  similarRelicIds: string[];
 }
 
 export interface DivineArchiveManifest {

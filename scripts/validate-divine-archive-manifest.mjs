@@ -98,14 +98,23 @@ for (const relic of relics) {
   }
   ids.add(relic.id);
 
-  for (const field of ['room', 'roomName', 'sourceCategory']) {
-    if (!relic[field]) {
-      fail(`Relic ${relic.id} is missing ${field}.`);
+  for (const field of ['room', 'roomName', 'sourceCategory', 'energy', 'spectralCentroid', 'decayTime', 'similarRelicIds']) {
+    if (relic[field] === undefined) {
+      fail(`Relic ${relic.id} is missing field: ${field}`);
     }
   }
 
-  if (!Array.isArray(relic.tags) || relic.tags.length === 0) {
-    fail(`Relic ${relic.id} must contain at least one tag.`);
+  if (typeof relic.energy !== 'number' || relic.energy < 0 || relic.energy > 1) {
+    fail(`Relic ${relic.id} has invalid energy: ${relic.energy}`);
+  }
+  if (typeof relic.spectralCentroid !== 'number' || relic.spectralCentroid < 0 || relic.spectralCentroid > 1) {
+    fail(`Relic ${relic.id} has invalid spectralCentroid: ${relic.spectralCentroid}`);
+  }
+  if (typeof relic.decayTime !== 'number' || relic.decayTime < 0) {
+    fail(`Relic ${relic.id} has invalid decayTime: ${relic.decayTime}`);
+  }
+  if (!Array.isArray(relic.similarRelicIds) || relic.similarRelicIds.length !== 5) {
+    fail(`Relic ${relic.id} must have exactly 5 similarRelicIds, got: ${relic.similarRelicIds.length}`);
   }
 
   if (!roomIds.has(relic.room)) {
@@ -123,6 +132,15 @@ for (const relic of relics) {
     fail(`Source sample appears more than once in archive: ${sourceKey}`);
   }
   archiveKeys.add(sourceKey);
+}
+
+// Check similarRelicIds targets exist
+for (const relic of relics) {
+  for (const simId of relic.similarRelicIds) {
+    if (!ids.has(simId)) {
+      fail(`Relic ${relic.id} references non-existent similar ID: ${simId}`);
+    }
+  }
 }
 
 for (const sourceSample of sourceSamples) {

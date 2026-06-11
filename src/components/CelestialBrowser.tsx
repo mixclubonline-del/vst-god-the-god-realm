@@ -15,6 +15,7 @@ import {
   roomAccent,
   roomImage
 } from '@/archive/divineArchive';
+import { THRONE_DOMAINS } from '../data/throneDomains';
 
 /* Sacred Realm Sigils — unique icon per room */
 const REALM_SIGILS: Record<string, React.FC<{ size?: number }>> = {
@@ -41,6 +42,8 @@ interface CelestialBrowserProps {
   engineRef: React.MutableRefObject<any>;
   onLoadToPad?: (samplePath: string, padIndex: number, relic: DivineRelic) => void;
   activePad: number;
+  onActivePadChange?: (padIndex: number) => void;
+  loadedPadNames?: string[];
 }
 
 const FAVORITES_KEY = 'vst-god-favorites';
@@ -70,7 +73,7 @@ const EqBars = () => (
 );
 
 /* ── Waveform Oracle — animated golden oscilloscope ── */
-const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent, active }) => {
+const WaveformOracle: React.FC<{ accent: string; active: boolean; energy: number; decayTime: number }> = ({ accent, active, energy, decayTime }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 
@@ -95,23 +98,51 @@ const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent,
       const h = canvas.getBoundingClientRect().height;
       ctx.clearRect(0, 0, w, h);
 
+      // Decays from left to right. A longer decayTime means it decays slower.
+      // Maximum decayTime in manifest is 4.0, minimum is 0.05.
+      const decayCoeff = 2.5 / Math.max(0.1, decayTime);
+
       if (!active) {
-        // Dormant state — faint baseline
+        // Dormant state — draw a realistic static decay waveform fingerprint
         ctx.strokeStyle = accent;
-        ctx.globalAlpha = 0.08;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.22;
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const nx = x / w;
+          const envelope = Math.exp(-nx * decayCoeff) * energy;
+          // Complex static wave with multiple harmonics to look realistic
+          const y = h / 2 + (
+            Math.sin(nx * Math.PI * 18) * 0.5 +
+            Math.sin(nx * Math.PI * 36) * 0.3 +
+            Math.sin(nx * Math.PI * 64) * 0.15 +
+            Math.sin(nx * Math.PI * 120) * 0.05
+          ) * (h * 0.4) * envelope;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Faint baseline
+        ctx.strokeStyle = accent;
+        ctx.globalAlpha = 0.05;
         ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.moveTo(0, h / 2);
         ctx.lineTo(w, h / 2);
         ctx.stroke();
         ctx.globalAlpha = 1;
+        
         rafRef.current = requestAnimationFrame(draw);
         return;
       }
 
       t += 0.025;
 
-      // Layer 1: primary wave — bold golden sine
+      // Active state — animated ripples decaying exponentially
+      // Layer 1: primary wave — bold golden sine with decay
       ctx.strokeStyle = accent;
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.6;
@@ -120,10 +151,12 @@ const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent,
       ctx.beginPath();
       for (let x = 0; x < w; x++) {
         const nx = x / w;
-        const y = h / 2 +
-          Math.sin(nx * Math.PI * 4 + t * 2.5) * h * 0.22 +
-          Math.sin(nx * Math.PI * 7 + t * 1.8) * h * 0.08 +
-          Math.sin(nx * Math.PI * 13 + t * 3.2) * h * 0.04;
+        const envelope = Math.exp(-nx * decayCoeff) * energy;
+        const y = h / 2 + (
+          Math.sin(nx * Math.PI * 6 - t * 3) * 0.6 +
+          Math.sin(nx * Math.PI * 12 - t * 1.7) * 0.3 +
+          Math.sin(nx * Math.PI * 24 - t * 4.2) * 0.1
+        ) * (h * 0.4) * envelope;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -135,22 +168,11 @@ const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent,
       ctx.beginPath();
       for (let x = 0; x < w; x++) {
         const nx = x / w;
-        const y = h / 2 +
-          Math.sin(nx * Math.PI * 9 + t * 3.5) * h * 0.14 +
-          Math.cos(nx * Math.PI * 3 + t * 1.2) * h * 0.10;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      // Layer 3: sub-harmonic — very faint, slow
-      ctx.lineWidth = 3;
-      ctx.globalAlpha = 0.08;
-      ctx.shadowBlur = 20;
-      ctx.beginPath();
-      for (let x = 0; x < w; x++) {
-        const nx = x / w;
-        const y = h / 2 +
-          Math.sin(nx * Math.PI * 2 + t * 0.8) * h * 0.30;
+        const envelope = Math.exp(-nx * decayCoeff) * energy;
+        const y = h / 2 + (
+          Math.sin(nx * Math.PI * 10 - t * 4.5) * 0.7 +
+          Math.cos(nx * Math.PI * 16 - t * 2.2) * 0.3
+        ) * (h * 0.3) * envelope;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -159,19 +181,16 @@ const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent,
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = accent;
-      for (let i = 0; i < 5; i++) {
-        const px = (Math.sin(t * (0.7 + i * 0.3) + i * 1.7) * 0.5 + 0.5) * w;
-        const py = h / 2 + Math.sin(px / w * Math.PI * 4 + t * 2.5) * h * 0.22;
-        const pulse = 0.5 + 0.5 * Math.sin(t * 3 + i * 2);
+      for (let i = 0; i < 4; i++) {
+        const px = (Math.sin(t * (0.8 + i * 0.25) + i * 1.5) * 0.45 + 0.5) * w;
+        const pnx = px / w;
+        const penv = Math.exp(-pnx * decayCoeff) * energy;
+        const py = h / 2 + Math.sin(pnx * Math.PI * 6 - t * 3) * (h * 0.4) * penv;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 4 + i * 2);
         const r = 1.5 + pulse * 2;
-        ctx.globalAlpha = 0.3 + pulse * 0.4;
+        ctx.globalAlpha = (0.2 + pulse * 0.4) * penv;
         ctx.beginPath();
         ctx.arc(px, py, r, 0, Math.PI * 2);
-        ctx.fill();
-        // Outer glow
-        ctx.globalAlpha = 0.08 + pulse * 0.06;
-        ctx.beginPath();
-        ctx.arc(px, py, r * 4, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -182,7 +201,7 @@ const WaveformOracle: React.FC<{ accent: string; active: boolean }> = ({ accent,
 
     draw();
     return () => cancelAnimationFrame(rafRef.current);
-  }, [accent, active]);
+  }, [accent, active, energy, decayTime]);
 
   return <canvas ref={canvasRef} className="da-waveform-oracle" />;
 };
@@ -201,6 +220,8 @@ const RelicInspector = ({
   isPlaying,
   hasPreviewError,
   activePad,
+  allRelics,
+  onSelectRelic,
   onAwaken,
   onRecall,
   onToggleFavorite
@@ -210,42 +231,109 @@ const RelicInspector = ({
   isPlaying: boolean;
   hasPreviewError: boolean;
   activePad: number;
+  allRelics: DivineRelic[];
+  onSelectRelic: (relic: DivineRelic) => void;
   onAwaken: () => void;
   onRecall: () => void;
   onToggleFavorite: () => void;
-}) => (
-  <div className={`da-inspector-card ${isPlaying ? 'is-playing' : ''}`} style={{ '--room-accent': roomAccent(relic.room) } as React.CSSProperties}>
-    <div className="da-inspector-header" style={{ '--room-image': `url(${roomImage(relic.room)})` } as React.CSSProperties}>
-      <WaveformOracle accent={roomAccent(relic.room)} active={isPlaying} />
-      <div className={`da-inspector-orb ${isPlaying ? 'is-pulsing' : ''}`}>
-        {isPlaying ? <Volume2 size={22} /> : <Eye size={22} />}
+}) => {
+  const similarRelics = useMemo(() => {
+    if (!relic.similarRelicIds) return [];
+    return relic.similarRelicIds
+      .map((id) => allRelics.find((r) => r.id === id))
+      .filter((r): r is DivineRelic => r !== undefined);
+  }, [relic.similarRelicIds, allRelics]);
+
+  return (
+    <div className={`da-inspector-card ${isPlaying ? 'is-playing' : ''}`} style={{ '--room-accent': roomAccent(relic.room) } as React.CSSProperties}>
+      <div className="da-inspector-header" style={{ '--room-image': `url(${roomImage(relic.room)})` } as React.CSSProperties}>
+        <WaveformOracle accent={roomAccent(relic.room)} active={isPlaying} energy={relic.energy} decayTime={relic.decayTime} />
+        <div className={`da-inspector-orb ${isPlaying ? 'is-pulsing' : ''}`}>
+          {isPlaying ? <Volume2 size={22} /> : <Eye size={22} />}
+        </div>
+      </div>
+      <span className="da-kicker">{relic.roomName}</span>
+      <h3>{relic.name}</h3>
+      <p>{relic.tone}</p>
+
+      {/* Acoustic Meters */}
+      <div className="da-meters">
+        <div className="da-meter-item">
+          <div className="da-meter-row">
+            <span className="da-meter-label">Energy</span>
+            <span className="da-meter-val">{Math.round((relic.energy ?? 0.5) * 100)}%</span>
+          </div>
+          <div className="da-meter-track">
+            <div className="da-meter-fill" style={{ width: `${(relic.energy ?? 0.5) * 100}%` }} />
+          </div>
+        </div>
+        <div className="da-meter-item">
+          <div className="da-meter-row">
+            <span className="da-meter-label">Centroid</span>
+            <span className="da-meter-val">{Math.round((relic.spectralCentroid ?? 0.5) * 100)}%</span>
+          </div>
+          <div className="da-meter-track">
+            <div className="da-meter-fill" style={{ width: `${(relic.spectralCentroid ?? 0.5) * 100}%` }} />
+          </div>
+        </div>
+        <div className="da-meter-item">
+          <div className="da-meter-row">
+            <span className="da-meter-label">Decay Time</span>
+            <span className="da-meter-val">{(relic.decayTime ?? 1.0).toFixed(2)}s</span>
+          </div>
+          <div className="da-meter-track">
+            <div className="da-meter-fill" style={{ width: `${Math.min(((relic.decayTime ?? 1.0) / 4.0) * 100, 100)}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <dl>
+        <div><dt>Category</dt><dd>{relic.sourceCategory}</dd></div>
+        <div><dt>Format</dt><dd>{relic.format.toUpperCase()}</dd></div>
+        <div><dt>Status</dt><dd>{isPlaying ? '◉ Awakened' : hasPreviewError ? '⚠ Preview failed' : '○ Dormant'}</dd></div>
+      </dl>
+      <div className="da-tag-cloud">{relic.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+
+      {/* Similar Relics grid */}
+      {similarRelics.length > 0 && (
+        <div className="da-similar-section">
+          <h4 className="da-similar-title">Similar Relics</h4>
+          <div className="da-similar-grid">
+            {similarRelics.map((sim) => (
+              <button
+                key={sim.id}
+                type="button"
+                className="da-similar-btn"
+                style={{ '--room-accent': roomAccent(sim.room) } as React.CSSProperties}
+                onClick={() => onSelectRelic(sim)}
+                title={`${sim.name} (${sim.roomName})`}
+              >
+                <span className="da-similar-sigil">
+                  <RealmSigil roomId={sim.room} size={10} />
+                </span>
+                <span className="da-similar-name">{sim.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="da-inspector-actions">
+        <button type="button" onClick={onAwaken}>
+          {isPlaying ? '■ Stop' : '▶ Awaken'}
+          <kbd>Space</kbd>
+        </button>
+        <button type="button" onClick={onRecall}>
+          Recall to Pad {activePad + 1}
+          <kbd>Enter</kbd>
+        </button>
+        <button type="button" onClick={onToggleFavorite}>
+          {isFavorite ? '★ Marked' : '☆ Mark Relic'}
+        </button>
       </div>
     </div>
-    <span className="da-kicker">{relic.roomName}</span>
-    <h3>{relic.name}</h3>
-    <p>{relic.tone}</p>
-    <div className="da-aura-ring">{isPlaying ? <EqBars /> : <Waves size={34} />}</div>
-    <dl>
-      <div><dt>Category</dt><dd>{relic.sourceCategory}</dd></div>
-      <div><dt>Format</dt><dd>{relic.format.toUpperCase()}</dd></div>
-      <div><dt>Status</dt><dd>{isPlaying ? '◉ Awakened' : hasPreviewError ? '⚠ Preview failed' : '○ Dormant'}</dd></div>
-    </dl>
-    <div className="da-tag-cloud">{relic.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-    <div className="da-inspector-actions">
-      <button type="button" onClick={onAwaken}>
-        {isPlaying ? '■ Stop' : '▶ Awaken'}
-        <kbd>Space</kbd>
-      </button>
-      <button type="button" onClick={onRecall}>
-        Recall to Pad {activePad + 1}
-        <kbd>Enter</kbd>
-      </button>
-      <button type="button" onClick={onToggleFavorite}>
-        {isFavorite ? '★ Marked' : '☆ Mark Relic'}
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   engineRef,
@@ -518,6 +606,11 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.15, delay: Math.min(index * 0.012, 0.4) }}
                 whileHover={{ scale: 1.015, transition: { duration: 0.15 } }}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = 'copy';
+                  e.dataTransfer.setData('text/plain', JSON.stringify({ relicId: relic.id, path: relic.path }));
+                }}
               >
                 {viewMode === 'shelf' && <div className="da-relic-hero" />}
                 <span className="da-relic-orb">
@@ -554,6 +647,8 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
                 isPlaying={playingPath === selectedRelic.path}
                 hasPreviewError={previewErrorPath === selectedRelic.path}
                 activePad={activePad}
+                allRelics={manifest.relics}
+                onSelectRelic={handleAwaken}
                 onAwaken={() => handleAwaken(selectedRelic)}
                 onRecall={() => handleRecall(selectedRelic)}
                 onToggleFavorite={() => toggleFavorite(selectedRelic.path)}
@@ -572,23 +667,51 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
         </AnimatePresence>
       </aside>
 
-      <footer className="da-recall-strip">
-        <span>ACTIVE PAD {activePad + 1}</span>
-        <div>
-          {recentRecalls.map((relic, i) => (
-            <motion.button
-              key={relic.path}
-              onClick={() => handleRecall(relic)}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.15, delay: i * 0.04 }}
-              style={{ '--room-accent': roomAccent(relic.room) } as React.CSSProperties}
+      <footer className="da-pad-bank" style={{ gridColumn: '1 / -1' }}>
+        {Array.from({ length: 16 }).map((_, i) => {
+          const domain = THRONE_DOMAINS[i];
+          const sampleName = loadedPadNames ? loadedPadNames[i] : '';
+          const isActive = activePad === i;
+          return (
+            <div
+              key={i}
+              className={`da-pad ${isActive ? 'active' : ''} ${sampleName ? 'loaded' : ''}`}
+              style={{ '--da-pad-color': domain.color } as React.CSSProperties}
+              onClick={() => onActivePadChange?.(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                try {
+                  const dataStr = e.dataTransfer.getData('text/plain');
+                  if (dataStr) {
+                    const data = JSON.parse(dataStr);
+                    if (data && data.path) {
+                      const relic = manifest.relics.find((r) => r.path === data.path);
+                      if (relic) {
+                        engineRef.current?.loadSampleByPath(relic.path, i);
+                        onLoadToPad?.(relic.path, i, relic);
+                        setRecentRecalls((current) => [relic, ...current.filter((item) => item.path !== relic.path)].slice(0, 6));
+                        setRecalledPath(relic.path);
+                        if (recallTimerRef.current) clearTimeout(recallTimerRef.current);
+                        recallTimerRef.current = setTimeout(() => setRecalledPath(null), 600);
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error('Failed to parse dropped relic:', err);
+                }
+              }}
             >
-              {relic.name}
-            </motion.button>
-          ))}
-        </div>
-        <span>{recalledPath ? 'RELIC RECALLED ✦' : playingPath ? 'AWAKENING RELIC' : 'ARCHIVE READY'}</span>
+              <span className="da-pad-sigil">{domain.sigil}</span>
+              <span className="da-pad-num">{(i + 1).toString().padStart(2, '0')}</span>
+              {sampleName ? (
+                <span className="da-pad-sample" title={sampleName}>{sampleName}</span>
+              ) : (
+                <span className="da-pad-domain">{domain.name}</span>
+              )}
+            </div>
+          );
+        })}
       </footer>
     </div>
   );

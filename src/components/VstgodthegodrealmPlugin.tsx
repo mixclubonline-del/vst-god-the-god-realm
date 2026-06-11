@@ -1237,6 +1237,8 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               engineRef={godEngine}
               activePad={activePad}
               onLoadToPad={handleArchiveRecall}
+              onActivePadChange={(padIndex) => update('activePad', padIndex)}
+              loadedPadNames={Array.from({ length: 16 }).map((_, i) => parameterValues[`slotName_${i}`] || `Throne ${i + 1}`)}
             />
           </div>
         )}

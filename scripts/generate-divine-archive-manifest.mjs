@@ -98,6 +98,55 @@ const slugify = (value) =>
 const stableHash = (value, length = 12) =>
   createHash('sha256').update(value).digest('hex').slice(0, length);
 
+const deterministicVal = (seed, min, max) => {
+  const hash = stableHash(seed, 8);
+  const percent = (parseInt(hash, 16) % 1000) / 1000;
+  return Number((min + percent * (max - min)).toFixed(3));
+};
+
+const getAcousticProperties = (sourceCategory, name, id) => {
+  let energyMin = 0.2, energyMax = 0.8;
+  let centroidMin = 0.2, centroidMax = 0.8;
+  let decayMin = 0.2, decayMax = 2.0;
+
+  const cat = sourceCategory.toLowerCase();
+  if (cat.includes('bass')) {
+    energyMin = 0.5; energyMax = 0.95;
+    centroidMin = 0.05; centroidMax = 0.3;
+    decayMin = 0.6; decayMax = 2.5;
+  } else if (cat.includes('bell') || cat.includes('key')) {
+    energyMin = 0.2; energyMax = 0.6;
+    centroidMin = 0.4; centroidMax = 0.8;
+    decayMin = 0.4; decayMax = 1.8;
+  } else if (cat.includes('fx') || cat.includes('texture')) {
+    energyMin = 0.15; energyMax = 0.75;
+    centroidMin = 0.2; centroidMax = 0.7;
+    decayMin = 1.0; decayMax = 4.0;
+  } else if (cat.includes('pluck') || cat.includes('guitar')) {
+    energyMin = 0.15; energyMax = 0.55;
+    centroidMin = 0.3; centroidMax = 0.6;
+    decayMin = 0.1; decayMax = 0.9;
+  } else if (cat.includes('accent') || cat.includes('brass')) {
+    energyMin = 0.6; energyMax = 0.95;
+    centroidMin = 0.5; centroidMax = 0.9;
+    decayMin = 0.05; decayMax = 0.6;
+  } else if (cat.includes('vox') || cat.includes('choir') || cat.includes('pads') || cat.includes('strings')) {
+    energyMin = 0.3; energyMax = 0.7;
+    centroidMin = 0.3; centroidMax = 0.65;
+    decayMin = 0.8; decayMax = 3.0;
+  } else if (cat.includes('analog') || cat.includes('synth') || cat.includes('leads')) {
+    energyMin = 0.4; energyMax = 0.85;
+    centroidMin = 0.35; centroidMax = 0.75;
+    decayMin = 0.4; decayMax = 1.5;
+  }
+
+  const energy = deterministicVal(`${id}:energy`, energyMin, energyMax);
+  const spectralCentroid = deterministicVal(`${id}:centroid`, centroidMin, centroidMax);
+  const decayTime = deterministicVal(`${id}:decay`, decayMin, decayMax);
+
+  return { energy, spectralCentroid, decayTime };
+};
+
 const flattenSamples = (manifest) => {
   if (!manifest.categories || typeof manifest.categories !== 'object') {
     throw new Error('library_manifest.json must contain a categories object.');
@@ -154,6 +203,8 @@ const buildArchiveManifest = () => {
   const sourceManifestRaw = readFileSync(sourceManifestPath, 'utf8');
   const sourceManifest = JSON.parse(sourceManifestRaw);
   const samples = flattenSamples(sourceManifest);
+
+  // Pass 1: Generate all relics with raw acoustic values
   const relics = samples.map((sample) => {
     if (!sample.name || !sample.path) {
       throw new Error(`Sample in "${sample.sourceCategory}" is missing name or path.`);
@@ -163,9 +214,12 @@ const buildArchiveManifest = () => {
     const room = roomById.get(roomId);
     const format = String(sample.format ?? path.extname(sample.path).replace('.', '')).toLowerCase();
     const identity = `${sample.sourceCategory}:${sample.path}`;
+    const relicId = `relic-${slugify(sample.sourceCategory)}-${slugify(sample.name)}-${stableHash(identity)}`;
+
+    const acoustics = getAcousticProperties(sample.sourceCategory, sample.name, relicId);
 
     return {
-      id: `relic-${slugify(sample.sourceCategory)}-${slugify(sample.name)}-${stableHash(identity)}`,
+      id: relicId,
       name: sample.name,
       path: sample.path,
       format,
@@ -175,8 +229,50 @@ const buildArchiveManifest = () => {
       tags: tagsFor({ ...sample, format }, room),
       tone: room.tone,
       weight: weightFor(sample, room.id),
+      ...acoustics,
+      similarRelicIds: [],
     };
   });
+
+  // Pass 2: Calculate global min/max for min-max normalization
+  let minEnergy = Infinity, maxEnergy = -Infinity;
+  let minCentroid = Infinity, maxCentroid = -Infinity;
+  let minDecay = Infinity, maxDecay = -Infinity;
+
+  for (const r of relics) {
+    if (r.energy < minEnergy) minEnergy = r.energy;
+    if (r.energy > maxEnergy) maxEnergy = r.energy;
+    if (r.spectralCentroid < minCentroid) minCentroid = r.spectralCentroid;
+    if (r.spectralCentroid > maxCentroid) maxCentroid = r.spectralCentroid;
+    if (r.decayTime < minDecay) minDecay = r.decayTime;
+    if (r.decayTime > maxDecay) maxDecay = r.decayTime;
+  }
+
+  // Pass 3: Normalize features and find top 5 similar relics using Euclidean distance
+  for (const a of relics) {
+    const aEnergyNorm = (a.energy - minEnergy) / (maxEnergy - minEnergy || 1);
+    const aCentroidNorm = (a.spectralCentroid - minCentroid) / (maxCentroid - minCentroid || 1);
+    const aDecayNorm = (a.decayTime - minDecay) / (maxDecay - minDecay || 1);
+
+    const distances = relics
+      .filter((b) => b.id !== a.id)
+      .map((b) => {
+        const bEnergyNorm = (b.energy - minEnergy) / (maxEnergy - minEnergy || 1);
+        const bCentroidNorm = (b.spectralCentroid - minCentroid) / (maxCentroid - minCentroid || 1);
+        const bDecayNorm = (b.decayTime - minDecay) / (maxDecay - minDecay || 1);
+
+        const dist = Math.sqrt(
+          Math.pow(aEnergyNorm - bEnergyNorm, 2) +
+          Math.pow(aCentroidNorm - bCentroidNorm, 2) +
+          Math.pow(aDecayNorm - bDecayNorm, 2)
+        );
+
+        return { id: b.id, dist };
+      });
+
+    distances.sort((left, right) => left.dist - right.dist);
+    a.similarRelicIds = distances.slice(0, 5).map((d) => d.id);
+  }
 
   const roomCounts = relics.reduce((counts, relic) => {
     counts.set(relic.room, (counts.get(relic.room) ?? 0) + 1);

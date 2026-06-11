@@ -365,7 +365,7 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr) 300px;
-  grid-template-rows: minmax(0, 1fr) 54px;
+  grid-template-rows: minmax(0, 1fr) 64px;
   background: #040405;
   color: #f8ddd2;
   overflow: hidden;
@@ -1203,3 +1203,63 @@
     min-width: 0;
   }
 }
+
+/* Similar Relics recommendations */
+.da-similar-section {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.da-similar-title {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+}
+
+.da-similar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.da-similar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  color: rgba(248, 221, 210, 0.72);
+  text-align: left;
+  min-width: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.da-similar-btn:hover {
+  background: color-mix(in srgb, var(--room-accent) 6%, rgba(255, 255, 255, 0.04));
+  border-color: color-mix(in srgb, var(--room-accent) 25%, rgba(255, 255, 255, 0.1));
+  color: #fff;
+}
+
+.da-similar-sigil {
+  color: var(--room-accent);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.da-similar-name {
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
