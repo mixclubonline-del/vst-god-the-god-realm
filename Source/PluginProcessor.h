@@ -129,7 +129,31 @@ public:
     /** Drain recent MIDI 2.0 note events (clears the queue). */
     std::vector<Midi2NoteEvent> drainMidiEvents();
 
+    // ─── Phase 4: FFT & Transient Analysis Accessors ───
+    static constexpr int kFftSize = 1024;
+    void pushToFftBuffer (const float* samples, int numSamples);
+    void getLatestFftSamples (float* dest);
+
+    struct WaveformAnalysis
+    {
+        int padIndex = 0;
+        std::vector<float> transients;     // normalized positions (0.0 to 1.0)
+        std::vector<float> rmsEnvelope;    // downsampled envelope values
+        bool pendingUpdate = false;
+    };
+
+    WaveformAnalysis getTrackAnalysis (int trackIdx);
+    void clearTrackAnalysisPending (int trackIdx);
+
 private:
+    // ─── Phase 4: FFT Ring Buffer & Transient state ───
+    float fftRingBuffer[kFftSize * 2] = { 0.0f };
+    std::atomic<int> fftWritePos { 0 };
+
+    WaveformAnalysis trackAnalysis[16]; // support up to 16 pads/thrones
+    juce::CriticalSection analysisLock;
+
+    void analyzeSample (int trackIdx, const juce::AudioBuffer<float>& buffer, double sampleRate);
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
     std::unique_ptr<juce::XmlElement> serializeTracks();

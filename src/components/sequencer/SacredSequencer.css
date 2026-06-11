@@ -2045,6 +2045,23 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+.tss__clipboard-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.tss__clipboard-row .tss__btn {
+  flex: 1;
+  text-align: center;
+  padding: 5px 0;
+  font-size: 7.5px;
+}
+.tss__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* ═══════════════════════════════════════════════════
    Mixer Toggle Button (Header)
    ═══════════════════════════════════════════════════ */

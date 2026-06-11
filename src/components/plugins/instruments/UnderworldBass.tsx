@@ -7,15 +7,17 @@
 import React, { useState, useCallback } from 'react';
 import { DivineKnob } from '../controls/DivineKnob';
 import { HoloFader } from '../controls/HoloFader';
-import { WaveformCanvas } from '../controls/WaveformCanvas';
 import { MiniKeyboard } from '../controls/MiniKeyboard';
 import { usePluginEngine } from '@/hooks/usePluginEngine';
+import { useJuceBridge } from '@/hooks/useJuceBridge';
+import { SpectralRadarPanner } from '@/components/SpectralRadarPanner';
 
 const LAVA = '#EF4444';
 const EMBER = '#FF8C42';
 
 export const UnderworldBass: React.FC = () => {
   const { engine, noteOn, noteOff, setParam } = usePluginEngine('underworld-bass');
+  const bridgeState = useJuceBridge();
 
   const [subGain, setSubGain] = useState(60);
   const [drive, setDrive] = useState(45);
@@ -38,8 +40,8 @@ export const UnderworldBass: React.FC = () => {
   return (
     <div className="fp-instrument fp-instrument--underworld-bass">
       {/* Waveform */}
-      <div className="fp-instrument__waveform">
-        <WaveformCanvas engine={engine} color={LAVA} height={90} />
+      <div className="fp-instrument__waveform" style={{ height: '260px' }}>
+        <SpectralRadarPanner spectralData={bridgeState.spectralData} />
       </div>
 
       {/* Main Controls Row */}

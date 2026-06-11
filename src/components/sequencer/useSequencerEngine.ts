@@ -410,6 +410,8 @@ type SeqAction =
   | { type: 'COPY_TRACK_PATTERN' }
   | { type: 'PASTE_TRACK_PATTERN' }
   | { type: 'SWAP_PATTERNS' }
+  | { type: 'ROTATE_TRACK_PATTERN'; trackIndex: number; direction: 'left' | 'right' }
+  | { type: 'DUPLICATE_TRACK_PATTERN'; trackIndex: number }
   /* Automation */
   | { type: 'ADD_AUTOMATION_LANE'; trackIndex: number; param: AutomationParam }
   | { type: 'REMOVE_AUTOMATION_LANE'; trackIndex: number; param: AutomationParam }
@@ -856,6 +858,50 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       };
       const tracks = state.tracks.map((t, idx) =>
         idx === state.selectedTrack ? swapped : t
+      );
+      return { ...state, tracks };
+    }
+    case 'ROTATE_TRACK_PATTERN': {
+      const { trackIndex, direction } = action;
+      const track = state.tracks[trackIndex];
+      if (!track) return state;
+      const fullPattern = getActivePattern(track, state.activePattern);
+      const len = track.polymetricLength || state.stepCount;
+      
+      const activeSteps = fullPattern.slice(0, len);
+      const remainingSteps = fullPattern.slice(len);
+      
+      if (direction === 'left') {
+        const first = activeSteps.shift();
+        if (first !== undefined) activeSteps.push(first);
+      } else {
+        const last = activeSteps.pop();
+        if (last !== undefined) activeSteps.unshift(last);
+      }
+      
+      const newPattern = [...activeSteps, ...remainingSteps];
+      const tracks = state.tracks.map((t, idx) =>
+        idx === trackIndex ? setActivePattern(t, state.activePattern, newPattern) : t
+      );
+      return { ...state, tracks };
+    }
+    case 'DUPLICATE_TRACK_PATTERN': {
+      const { trackIndex } = action;
+      const track = state.tracks[trackIndex];
+      if (!track) return state;
+      const pattern = [...getActivePattern(track, state.activePattern)];
+      const len = track.polymetricLength || state.stepCount;
+      
+      const newPattern = [...pattern];
+      for (let i = 0; i < len; i++) {
+        const destIdx = i + len;
+        if (destIdx < pattern.length) {
+          newPattern[destIdx] = { ...pattern[i] };
+        }
+      }
+      
+      const tracks = state.tracks.map((t, idx) =>
+        idx === trackIndex ? setActivePattern(t, state.activePattern, newPattern) : t
       );
       return { ...state, tracks };
     }

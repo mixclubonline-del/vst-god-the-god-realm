@@ -5,7 +5,7 @@
  * Supports import/export as JSON files for project sharing.
  * Max 20 named project slots.
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { SequencerState } from './useSequencerEngine';
 
 /* ═══ Types ═══ */
@@ -61,19 +61,31 @@ export function useProjectManager(
   const [projects, setProjects] = useState<ProjectMeta[]>([]);
   const [activeProject, setActiveProject] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const lastSavedStateRef = useRef<string>('');
 
   // Load project list on mount
   useEffect(() => {
     refreshList();
     const saved = localStorage.getItem(ACTIVE_PROJECT_KEY);
-    if (saved) setActiveProject(saved);
+    if (saved) {
+      setActiveProject(saved);
+      const store = loadProjectStore();
+      const project = store[saved];
+      if (project) {
+        lastSavedStateRef.current = JSON.stringify(project.state);
+      }
+    }
   }, []);
 
-  // Track dirty state (any dispatch after save marks dirty)
-  const lastSaveRef = useState('')[1]; // trigger re-render
+  // Track dirty state via deep serialization comparison
   useEffect(() => {
-    if (activeProject) setIsDirty(true);
-  }, [currentState.tracks, currentState.bpm, currentState.songArrangement]);
+    if (!activeProject || !lastSavedStateRef.current) {
+      setIsDirty(false);
+      return;
+    }
+    const currentSerialized = JSON.stringify(stripTransientState(currentState));
+    setIsDirty(currentSerialized !== lastSavedStateRef.current);
+  }, [currentState, activeProject]);
 
   const refreshList = useCallback(() => {
     const store = loadProjectStore();
@@ -93,6 +105,7 @@ export function useProjectManager(
       return false;
     }
 
+    const strippedState = stripTransientState(currentState);
     const project: SavedProject = {
       meta: {
         name,
@@ -102,13 +115,14 @@ export function useProjectManager(
         stepCount: currentState.stepCount,
         version: CURRENT_VERSION,
       },
-      state: stripTransientState(currentState),
+      state: strippedState,
     };
 
     store[name] = project;
     saveProjectStore(store);
     setActiveProject(name);
     localStorage.setItem(ACTIVE_PROJECT_KEY, name);
+    lastSavedStateRef.current = JSON.stringify(strippedState);
     setIsDirty(false);
     refreshList();
     return true;
@@ -133,6 +147,7 @@ export function useProjectManager(
     clearHistory();
     setActiveProject(name);
     localStorage.setItem(ACTIVE_PROJECT_KEY, name);
+    lastSavedStateRef.current = JSON.stringify(project.state);
     setIsDirty(false);
     return true;
   }, [dispatch, clearHistory]);
@@ -145,6 +160,7 @@ export function useProjectManager(
     if (activeProject === name) {
       setActiveProject(null);
       localStorage.removeItem(ACTIVE_PROJECT_KEY);
+      lastSavedStateRef.current = '';
     }
     refreshList();
   }, [activeProject, refreshList]);
@@ -176,6 +192,7 @@ export function useProjectManager(
     localStorage.removeItem('sacred_sequencer_state');
     localStorage.removeItem(ACTIVE_PROJECT_KEY);
     setActiveProject(null);
+    lastSavedStateRef.current = '';
     setIsDirty(false);
     // Reload the page to get fresh state
     window.location.reload();

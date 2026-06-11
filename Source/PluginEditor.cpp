@@ -66,6 +66,7 @@ juce::WebBrowserComponent::Options VSTGodTheGodRealmAudioProcessorEditor::create
 VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VSTGodTheGodRealmAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p), webComponent(createWebBrowserOptions (this))
 {
+    fft = std::make_unique<juce::dsp::FFT>(10);
     addAndMakeVisible(webComponent);
     setSize (1200, 800);
 
@@ -497,6 +498,87 @@ void VSTGodTheGodRealmAudioProcessorEditor::timerCallback()
     {
         juce::String telemetryJson = buildTelemetryJson();
         webComponent.evaluateJavascript("if(window.__godRealmTelemetry) window.__godRealmTelemetry(" + telemetryJson + ");");
+    }
+
+    // ─── Phase 4: FFT Spectrum Analysis ───
+    if (fft != nullptr)
+    {
+        float fftData[2048] = { 0.0f };
+        float fftWindowed[1024] = { 0.0f };
+        audioProcessor.getLatestFftSamples (fftWindowed);
+        
+        juce::dsp::WindowingFunction<float> window (1024, juce::dsp::WindowingFunction<float>::hann);
+        window.multiplyWithWindowingTable (fftWindowed, 1024);
+        
+        juce::FloatVectorOperations::copy (fftData, fftWindowed, 1024);
+        fft->performFrequencyOnlyForwardTransform (fftData);
+        
+        uint8_t fftBins[64] = { 0 };
+        float minFreq = 20.0f;
+        float maxFreq = 20000.0f;
+        double sampleRate = audioProcessor.getSampleRate();
+        if (sampleRate <= 0.0) sampleRate = 44100.0;
+        
+        for (int binIdx = 0; binIdx < 64; ++binIdx)
+        {
+            float fStart = minFreq * std::pow (maxFreq / minFreq, static_cast<float>(binIdx) / 64.0f);
+            float fEnd = minFreq * std::pow (maxFreq / minFreq, static_cast<float>(binIdx + 1) / 64.0f);
+            
+            int idxStart = std::max (0, static_cast<int>(fStart * 1024.0f / sampleRate));
+            int idxEnd = std::min (511, static_cast<int>(fEnd * 1024.0f / sampleRate));
+            if (idxEnd < idxStart) idxEnd = idxStart;
+            
+            float maxMag = 0.0f;
+            for (int i = idxStart; i <= idxEnd; ++i)
+                maxMag = std::max (maxMag, fftData[i]);
+            
+            float db = juce::Decibels::gainToDecibels (maxMag);
+            float normalized = (db + 60.0f) / 60.0f;
+            normalized = std::max (0.0f, std::min (normalized, 1.0f));
+            fftBins[binIdx] = static_cast<uint8_t>(normalized * 255.0f);
+        }
+        
+        juce::String spectralJson = "{\"fftBins\":[";
+        for (int i = 0; i < 64; ++i)
+        {
+            spectralJson += juce::String(static_cast<int>(fftBins[i]));
+            if (i < 63) spectralJson += ",";
+        }
+        spectralJson += "],\"rms\":" + juce::String((audioProcessor.getMasterPeakL() + audioProcessor.getMasterPeakR()) * 0.5f, 4);
+        spectralJson += ",\"peakFrequency\":0.0}";
+        
+        webComponent.evaluateJavascript ("if(window.__godRealmSpectralData) window.__godRealmSpectralData(" + spectralJson + ");");
+    }
+
+    // ─── Phase 4: Native Waveform Analysis ───
+    for (int t = 0; t < 16; ++t)
+    {
+        auto analysis = audioProcessor.getTrackAnalysis (t);
+        if (analysis.pendingUpdate)
+        {
+            audioProcessor.clearTrackAnalysisPending (t);
+            
+            juce::String json = "{";
+            json += "\"padIndex\":" + juce::String (t) + ",";
+            
+            json += "\"transients\":[";
+            for (size_t i = 0; i < analysis.transients.size(); ++i)
+            {
+                json += juce::String (analysis.transients[i], 4);
+                if (i < analysis.transients.size() - 1) json += ",";
+            }
+            json += "],";
+            
+            json += "\"rmsEnvelope\":[";
+            for (size_t i = 0; i < analysis.rmsEnvelope.size(); ++i)
+            {
+                json += juce::String (analysis.rmsEnvelope[i], 4);
+                if (i < analysis.rmsEnvelope.size() - 1) json += ",";
+            }
+            json += "]}";
+            
+            webComponent.evaluateJavascript ("if(window.__godRealmWaveformAnalysis) window.__godRealmWaveformAnalysis(" + json + ");");
+        }
     }
 }
 

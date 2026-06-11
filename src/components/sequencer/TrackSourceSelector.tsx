@@ -19,6 +19,10 @@ interface TrackSourceSelectorProps {
   onSetColor: (color: string) => void;
   onDelete: () => void;
   onClose: () => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  onSwap?: () => void;
+  canPaste?: boolean;
 }
 
 const SOURCE_CARDS: { type: TrackSourceType; label: string; icon: string; desc: string; accentColor: string }[] = [
@@ -41,6 +45,10 @@ export const TrackSourceSelector: React.FC<TrackSourceSelectorProps> = ({
   onSetColor,
   onDelete,
   onClose,
+  onCopy,
+  onPaste,
+  onSwap,
+  canPaste = false,
 }) => {
   const [editName, setEditName] = useState(track.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -171,6 +179,22 @@ export const TrackSourceSelector: React.FC<TrackSourceSelectorProps> = ({
                 onClick={() => onSetColor(c)}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Track Clipboard */}
+        <div className="tss__section">
+          <span className="tss__label">TRACK CLIPBOARD</span>
+          <div className="tss__clipboard-row">
+            <button className="tss__btn" onClick={onCopy} title="Copy track pattern">
+              📋 COPY
+            </button>
+            <button className="tss__btn" onClick={onPaste} disabled={!canPaste} title="Paste copied pattern">
+              📥 PASTE
+            </button>
+            <button className="tss__btn" onClick={onSwap} title="Swap Pattern A and B">
+              🔄 SWAP A/B
+            </button>
           </div>
         </div>
 

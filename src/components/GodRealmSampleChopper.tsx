@@ -6,6 +6,7 @@
  */
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import './SacredChopper.css';
+import { useJuceBridge } from '@/hooks/useJuceBridge';
 
 export interface SacredChopperProps {
   trackIndex: number;
@@ -114,6 +115,8 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
   onClose,
   onSpreadToPads,
 }) => {
+  const bridgeState = useJuceBridge();
+  const nativeTransientsRef = useRef<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const waveformRef = useRef<HTMLDivElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -142,35 +145,58 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
     const width = canvas.width;
     const height = canvas.height;
 
-    if (!buffer) {
-      // Static ambient — no animation loop
-      ctx.fillStyle = 'rgba(0, 0, 0, 1)';
-      ctx.fillRect(0, 0, width, height);
-      ctx.globalAlpha = 0.25;
-      ctx.font = 'bold 14px monospace';
-      ctx.fillStyle = '#a88cff';
-      ctx.textAlign = 'center';
-      ctx.fillText('DROP OR LOAD A SAMPLE', width / 2, height / 2);
-      ctx.globalAlpha = 1;
-      return;
-    }
+    let peaks: Float32Array;
 
-    const data = buffer.getChannelData(0);
-    const startIndex = Math.floor(viewWindow[0] * data.length);
-    const endIndex = Math.floor(viewWindow[1] * data.length);
-    const windowLen = endIndex - startIndex;
-    const step = Math.max(1, windowLen / width);
-    const peaks = new Float32Array(width);
-    for (let i = 0; i < width; i++) {
-      let peak = 0;
-      const count = Math.max(1, Math.floor(step));
-      const offset = startIndex + Math.floor(i * step);
-      for (let j = 0; j < count; j++) {
-        if (offset + j < data.length) {
-          peak = Math.max(peak, Math.abs(data[offset + j] || 0));
+    if (buffer) {
+      const data = buffer.getChannelData(0);
+      const startIndex = Math.floor(viewWindow[0] * data.length);
+      const endIndex = Math.floor(viewWindow[1] * data.length);
+      const windowLen = endIndex - startIndex;
+      const step = Math.max(1, windowLen / width);
+      peaks = new Float32Array(width);
+      for (let i = 0; i < width; i++) {
+        let peak = 0;
+        const count = Math.max(1, Math.floor(step));
+        const offset = startIndex + Math.floor(i * step);
+        for (let j = 0; j < count; j++) {
+          if (offset + j < data.length) {
+            peak = Math.max(peak, Math.abs(data[offset + j] || 0));
+          }
         }
+        peaks[i] = peak;
       }
-      peaks[i] = peak;
+    } else {
+      const nativeAnalysis = bridgeState.waveformAnalysis;
+      if (nativeAnalysis && nativeAnalysis.padIndex === trackIndex && nativeAnalysis.rmsEnvelope && nativeAnalysis.rmsEnvelope.length > 0) {
+        const env = nativeAnalysis.rmsEnvelope;
+        const startIndex = Math.floor(viewWindow[0] * env.length);
+        const endIndex = Math.floor(viewWindow[1] * env.length);
+        const windowLen = endIndex - startIndex;
+        const step = Math.max(1, windowLen / width);
+        peaks = new Float32Array(width);
+        for (let i = 0; i < width; i++) {
+          let peak = 0;
+          const count = Math.max(1, Math.floor(step));
+          const offset = startIndex + Math.floor(i * step);
+          for (let j = 0; j < count; j++) {
+            if (offset + j < env.length) {
+              peak = Math.max(peak, env[offset + j]);
+            }
+          }
+          peaks[i] = peak;
+        }
+      } else {
+        // Static ambient — no animation loop
+        ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = 0.25;
+        ctx.font = 'bold 14px monospace';
+        ctx.fillStyle = '#a88cff';
+        ctx.textAlign = 'center';
+        ctx.fillText('DROP OR LOAD A SAMPLE', width / 2, height / 2);
+        ctx.globalAlpha = 1;
+        return;
+      }
     }
 
     // Single animated frame with reduced jitter (not re-rendering every frame)
@@ -232,44 +258,80 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
 
     renderWaveform();
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [buffer, chopMarkers, viewWindow]);
+  }, [buffer, chopMarkers, viewWindow, bridgeState.waveformAnalysis, trackIndex]);
 
   // ─── Minimap Rendering ───
   useEffect(() => {
     const canvas = minimapCanvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx || !buffer) return;
+    if (!canvas || !ctx) return;
     
     const width = canvas.width;
     const height = canvas.height;
     
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
     
-    const data = buffer.getChannelData(0);
-    const step = Math.floor(data.length / width);
-    
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    for (let i = 0; i < width; i++) {
-      let peak = 0;
-      for (let j = 0; j < step; j++) {
-        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+    if (buffer) {
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+      const data = buffer.getChannelData(0);
+      const step = Math.floor(data.length / width);
+      
+      ctx.beginPath();
+      ctx.moveTo(0, height / 2);
+      for (let i = 0; i < width; i++) {
+        let peak = 0;
+        for (let j = 0; j < step; j++) {
+          peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+        }
+        const yOff = peak * (height / 2);
+        ctx.lineTo(i, height / 2 - yOff);
       }
-      const yOff = peak * (height / 2);
-      ctx.lineTo(i, height / 2 - yOff);
-    }
-    for (let i = width - 1; i >= 0; i--) {
-      let peak = 0;
-      for (let j = 0; j < step; j++) {
-        peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+      for (let i = width - 1; i >= 0; i--) {
+        let peak = 0;
+        for (let j = 0; j < step; j++) {
+          peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
+        }
+        const yOff = peak * (height / 2);
+        ctx.lineTo(i, height / 2 + yOff);
       }
-      const yOff = peak * (height / 2);
-      ctx.lineTo(i, height / 2 + yOff);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      const nativeAnalysis = bridgeState.waveformAnalysis;
+      if (nativeAnalysis && nativeAnalysis.padIndex === trackIndex && nativeAnalysis.rmsEnvelope && nativeAnalysis.rmsEnvelope.length > 0) {
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
+        const env = nativeAnalysis.rmsEnvelope;
+        const step = Math.max(1, env.length / width);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        for (let i = 0; i < width; i++) {
+          let peak = 0;
+          const offset = Math.floor(i * step);
+          for (let j = 0; j < step; j++) {
+            if (offset + j < env.length) {
+              peak = Math.max(peak, env[offset + j]);
+            }
+          }
+          const yOff = peak * (height / 2);
+          ctx.lineTo(i, height / 2 - yOff);
+        }
+        for (let i = width - 1; i >= 0; i--) {
+          let peak = 0;
+          const offset = Math.floor(i * step);
+          for (let j = 0; j < step; j++) {
+            if (offset + j < env.length) {
+              peak = Math.max(peak, env[offset + j]);
+            }
+          }
+          const yOff = peak * (height / 2);
+          ctx.lineTo(i, height / 2 + yOff);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
     }
-    ctx.closePath();
-    ctx.fill();
-  }, [buffer]);
+  }, [buffer, bridgeState.waveformAnalysis, trackIndex]);
 
   // ─── Interaction & Zooming ───
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -319,6 +381,19 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
     onUpdateParam('slices', slices);
     onUpdateParam('chopMarkers', sorted);
   }, [onUpdateParam]);
+
+  // Listen to native waveform analysis and store transients
+  useEffect(() => {
+    if (bridgeState.waveformAnalysis && bridgeState.waveformAnalysis.padIndex === trackIndex) {
+      const trans = bridgeState.waveformAnalysis.transients;
+      if (trans && trans.length > 0) {
+        nativeTransientsRef.current = trans;
+        if (chopMode === 'Auto') {
+          updateSlicesFromMarkers(trans);
+        }
+      }
+    }
+  }, [bridgeState.waveformAnalysis, trackIndex, chopMode, updateSlicesFromMarkers]);
 
   // ─── Marker Dragging ───
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -414,12 +489,17 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
   }, [onUpdateParam, updateSlicesFromMarkers]);
 
   const applyAutoChop = useCallback(() => {
+    onUpdateParam('chopMode', 'Auto');
+    if (nativeTransientsRef.current && nativeTransientsRef.current.length > 0) {
+      updateSlicesFromMarkers(nativeTransientsRef.current);
+      return;
+    }
+
     if (!buffer) return;
     setSpreadState('spreading');
     
     const worker = new Worker(new URL('../workers/chopper.worker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (e) => {
-      onUpdateParam('chopMode', 'Auto');
       updateSlicesFromMarkers(e.data.markers);
       setSpreadState('idle');
       worker.terminate();

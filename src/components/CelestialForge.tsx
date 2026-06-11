@@ -6,6 +6,7 @@ import { nativeAudio, MasteringBridgeParams } from '@/native/bridge';
 import { MasterMeter } from './ui/MasterMeter';
 import { HardwareScrew } from './ui/HardwareScrew';
 import { DivineKnob } from './ui/DivineKnob';
+import { SpectralRadarPanner } from './SpectralRadarPanner';
 
 /* GodKnobV2 has been retired — all mastering knobs now use DivineKnob with variant="celestial" */
 
@@ -334,6 +335,7 @@ export const CelestialForge: React.FC<{
 }> = ({ parameterValues, update, moduleLevels }) => {
   // Live engine metering from JUCE bridge
   const bridgeState = useJuceBridge();
+  const [vizMode, setVizMode] = useState<'disk' | 'radar'>('disk');
 
   // Phase 4: Debounced mastering parameter sync to JUCE (60Hz max)
   const masteringSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -430,6 +432,28 @@ export const CelestialForge: React.FC<{
             <span className="text-[10px] font-black text-white/40 tracking-widest">AURA / DIVINE AUDIO</span>
             <div className="w-0.5 h-4 bg-white/20" />
             <span className="vg-forge-title">Mastering Section</span>
+            <div className="flex bg-black/40 p-0.5 rounded-md border border-white/5 gap-0.5 ml-4">
+              <button
+                onClick={() => setVizMode('disk')}
+                className={`px-3 py-1 text-[9px] font-bold rounded uppercase transition-all ${
+                  vizMode === 'disk' 
+                    ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' 
+                    : 'text-white/40 hover:text-white'
+                }`}
+              >
+                Solar Disk
+              </button>
+              <button
+                onClick={() => setVizMode('radar')}
+                className={`px-3 py-1 text-[9px] font-bold rounded uppercase transition-all ${
+                  vizMode === 'radar' 
+                    ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' 
+                    : 'text-white/40 hover:text-white'
+                }`}
+              >
+                Spectral Radar
+              </button>
+            </div>
         </div>
         
         <div className="flex items-center gap-4">
@@ -470,20 +494,26 @@ export const CelestialForge: React.FC<{
 
         {/* Central Visualization Area */}
         <div className="vg-forge-viz-area">
-          <SunDisk levels={{ 
-              peak: moduleLevels.masterOutput || 0, 
-              rms: (moduleLevels.masterOutput || 0) * 0.7, 
-              reduction: moduleLevels.masterReduction || 0 
-          }} />
-          
-          <AnchorOrbits levels={moduleLevels} />
-          
-          <div className="absolute bottom-16">
-              <AetherSaturationMatrix 
-                drive={parameterValues.masterDrive ?? 20} 
-                tone={parameterValues.masterColorTilt ?? 50} 
-              />
-          </div>
+          {vizMode === 'radar' ? (
+            <SpectralRadarPanner spectralData={bridgeState.spectralData} />
+          ) : (
+            <>
+              <SunDisk levels={{ 
+                  peak: moduleLevels.masterOutput || 0, 
+                  rms: (moduleLevels.masterOutput || 0) * 0.7, 
+                  reduction: moduleLevels.masterReduction || 0 
+              }} />
+              
+              <AnchorOrbits levels={moduleLevels} />
+              
+              <div className="absolute bottom-16">
+                  <AetherSaturationMatrix 
+                    drive={parameterValues.masterDrive ?? 20} 
+                    tone={parameterValues.masterColorTilt ?? 50} 
+                  />
+              </div>
+            </>
+          )}
           
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 mix-blend-screen pointer-events-none">
              <div className="text-[28px] font-black text-white italic tracking-tighter drop-shadow-[0_0_12px_rgba(255,255,255,0.8)]">AURA</div>

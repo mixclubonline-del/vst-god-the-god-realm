@@ -637,8 +637,38 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               to: state.stepCount - 1,
             });
             return;
+          case 'd':
+            e.preventDefault();
+            if ((state.selectedSteps ?? []).length > 0) {
+              dispatch({ type: 'DOUBLE_SELECTED_STEPS' });
+            } else {
+              dispatch({ type: 'DUPLICATE_TRACK_PATTERN', trackIndex: state.selectedTrack });
+            }
+            return;
         }
         return;
+      }
+      
+      // ─── Alt modifier shortcuts ───
+      if (e.altKey) {
+        switch (e.code) {
+          case 'ArrowLeft':
+            e.preventDefault();
+            dispatch({ type: 'ROTATE_TRACK_PATTERN', trackIndex: state.selectedTrack, direction: 'left' });
+            return;
+          case 'ArrowRight':
+            e.preventDefault();
+            dispatch({ type: 'ROTATE_TRACK_PATTERN', trackIndex: state.selectedTrack, direction: 'right' });
+            return;
+          case 'KeyC':
+            e.preventDefault();
+            dispatch({ type: 'CLEAR_TRACK', trackIndex: state.selectedTrack });
+            return;
+          case 'KeyS':
+            e.preventDefault();
+            dispatch({ type: 'SWAP_PATTERNS' });
+            return;
+        }
       }
 
       // ─── Single-key shortcuts ───
@@ -695,6 +725,14 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               dispatch({ type: 'CLEAR_TRACK', trackIndex: state.selectedTrack });
             }
           }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack - 1 + state.tracks.length) % state.tracks.length });
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack + 1) % state.tracks.length });
           break;
         // Number keys 1-8 select tracks
         case 'Digit1': dispatch({ type: 'SELECT_TRACK', index: 0 }); break;
@@ -1333,6 +1371,11 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               }))}
             /* Phase 5: Polyrhythm */
             onSetPolymetricLength={(len) => dispatch({ type: 'SET_POLYMETRIC_LENGTH', trackIndex: i, length: len })}
+            /* Phase 5: Pattern clipboard */
+            onCopyTrackPattern={() => dispatch({ type: 'COPY_TRACK_PATTERN' })}
+            onPasteTrackPattern={() => dispatch({ type: 'PASTE_TRACK_PATTERN' })}
+            onSwapPatterns={() => dispatch({ type: 'SWAP_PATTERNS' })}
+            canPastePattern={state.clipboardPattern !== null}
             /* Track Bounce/Freeze */
             onFreezeTrack={() => handleFreezeTrack(i)}
             onUnfreezeTrack={() => handleUnfreezeTrack(i)}

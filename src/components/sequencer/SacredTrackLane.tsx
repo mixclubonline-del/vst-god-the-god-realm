@@ -86,6 +86,11 @@ interface SacredTrackLaneProps {
   recordingState?: { isRecording: boolean; duration: number; peakLevel: number } | null;
   /* Phase 5: Polyrhythm Support */
   onSetPolymetricLength?: (len: number) => void;
+  /* Phase 5: Pattern clipboard */
+  onCopyTrackPattern?: (trackIndex: number) => void;
+  onPasteTrackPattern?: (trackIndex: number) => void;
+  onSwapPatterns?: (trackIndex: number) => void;
+  canPastePattern?: boolean;
 }
 
 /** Convert MIDI note number to note name */
@@ -155,6 +160,10 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
   bounceProgress = 0,
   recordingState = null,
   onSetPolymetricLength,
+  onCopyTrackPattern,
+  onPasteTrackPattern,
+  onSwapPatterns,
+  canPastePattern = false,
 }) => {
   const pattern = activePattern === 'A' ? track.patternA : track.patternB;
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -653,6 +662,19 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
             setSelectorOpen(false);
           }}
           onClose={() => setSelectorOpen(false)}
+          onCopy={() => {
+            onSelectTrack();
+            onCopyTrackPattern?.(trackIndex);
+          }}
+          onPaste={() => {
+            onSelectTrack();
+            onPasteTrackPattern?.(trackIndex);
+          }}
+          onSwap={() => {
+            onSelectTrack();
+            onSwapPatterns?.(trackIndex);
+          }}
+          canPaste={canPastePattern}
         />
       )}
 

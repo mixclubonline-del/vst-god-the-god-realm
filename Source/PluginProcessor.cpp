@@ -506,6 +506,24 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         float prevR = masterPeakR.load(std::memory_order_relaxed);
         masterPeakL.store(std::max(peakL, prevL * peakDecayCoeff), std::memory_order_relaxed);
         masterPeakR.store(std::max(peakR, prevR * peakDecayCoeff), std::memory_order_relaxed);
+
+        // Push master output to FFT ring buffer
+        if (buffer.getNumChannels() >= 1)
+        {
+            const float* left = buffer.getReadPointer(0);
+            if (buffer.getNumChannels() >= 2)
+            {
+                const float* right = buffer.getReadPointer(1);
+                std::vector<float> mono (static_cast<size_t>(numSamples));
+                for (int i = 0; i < numSamples; ++i)
+                    mono[static_cast<size_t>(i)] = (left[i] + right[i]) * 0.5f;
+                pushToFftBuffer (mono.data(), numSamples);
+            }
+            else
+            {
+                pushToFftBuffer (left, numSamples);
+            }
+        }
     }
 }
 
@@ -560,6 +578,8 @@ void VSTGodTheGodRealmAudioProcessor::loadSampleForTrack(int trackIdx, const juc
             
             sampler.setSample(trackIdx, buffer, reader->sampleRate);
             tracks[trackIdx].samplePath = path;
+            
+            analyzeSample(trackIdx, *buffer, reader->sampleRate);
             
             delete reader;
         }
@@ -866,6 +886,109 @@ void VSTGodTheGodRealmAudioProcessor::saveSettingsToDisk (const juce::String& se
     if (json.hasProperty("sampleLibraryPath"))
     {
         sampleLibraryPath = json.getProperty("sampleLibraryPath", "").toString();
+    }
+}
+
+void VSTGodTheGodRealmAudioProcessor::pushToFftBuffer (const float* samples, int numSamples)
+{
+    int wp = fftWritePos.load (std::memory_order_relaxed);
+    for (int i = 0; i < numSamples; ++i)
+    {
+        fftRingBuffer[wp] = samples[i];
+        wp = (wp + 1) % (kFftSize * 2);
+    }
+    fftWritePos.store (wp, std::memory_order_release);
+}
+
+void VSTGodTheGodRealmAudioProcessor::getLatestFftSamples (float* dest)
+{
+    int wp = fftWritePos.load (std::memory_order_relaxed);
+    int readPos = (wp - kFftSize + kFftSize * 2) % (kFftSize * 2);
+    for (int i = 0; i < kFftSize; ++i)
+    {
+        dest[i] = fftRingBuffer[readPos];
+        readPos = (readPos + 1) % (kFftSize * 2);
+    }
+}
+
+VSTGodTheGodRealmAudioProcessor::WaveformAnalysis VSTGodTheGodRealmAudioProcessor::getTrackAnalysis (int trackIdx)
+{
+    if (trackIdx < 0 || trackIdx >= 16) return {};
+    const juce::ScopedLock sl (analysisLock);
+    return trackAnalysis[trackIdx];
+}
+
+void VSTGodTheGodRealmAudioProcessor::clearTrackAnalysisPending (int trackIdx)
+{
+    if (trackIdx < 0 || trackIdx >= 16) return;
+    const juce::ScopedLock sl (analysisLock);
+    trackAnalysis[trackIdx].pendingUpdate = false;
+}
+
+void VSTGodTheGodRealmAudioProcessor::analyzeSample (int trackIdx, const juce::AudioBuffer<float>& buffer, double sampleRate)
+{
+    if (trackIdx < 0 || trackIdx >= 16) return;
+    if (buffer.getNumSamples() <= 0) return;
+    
+    const float* data = buffer.getReadPointer (0);
+    const int numSamples = buffer.getNumSamples();
+    
+    std::vector<float> transientsList;
+    
+    int blockSize = static_cast<int> (sampleRate * 0.01);
+    if (blockSize < 16) blockSize = 16;
+    
+    int numBlocks = numSamples / blockSize;
+    if (numBlocks > 1)
+    {
+        std::vector<float> energies (numBlocks, 0.0f);
+        for (int b = 0; b < numBlocks; ++b)
+        {
+            float sum = 0.0f;
+            for (int i = 0; i < blockSize; ++i)
+            {
+                float s = data[b * blockSize + i];
+                sum += s * s;
+            }
+            energies[b] = sum / static_cast<float> (blockSize);
+        }
+        
+        float threshold = 26.0f * 0.0002f; // (101 - 75) * 0.0002
+        for (int b = 1; b < numBlocks; ++b)
+        {
+            float diff = energies[b] - energies[b - 1];
+            if (diff > threshold && energies[b] > 0.0001f)
+            {
+                float pos = static_cast<float> (b * blockSize) / static_cast<float> (numSamples);
+                if (transientsList.empty() || pos - transientsList.back() > 0.03f)
+                {
+                    transientsList.push_back (pos);
+                }
+            }
+        }
+    }
+    
+    std::vector<float> envelope (256, 0.0f);
+    int step = numSamples / 256;
+    if (step < 1) step = 1;
+    for (int i = 0; i < 256; ++i)
+    {
+        float maxVal = 0.0f;
+        int startSample = i * step;
+        int endSample = std::min (numSamples, (i + 1) * step);
+        for (int s = startSample; s < endSample; ++s)
+        {
+            maxVal = std::max (maxVal, std::abs (data[s]));
+        }
+        envelope[i] = maxVal;
+    }
+    
+    {
+        const juce::ScopedLock sl (analysisLock);
+        trackAnalysis[trackIdx].padIndex = trackIdx;
+        trackAnalysis[trackIdx].transients = std::move (transientsList);
+        trackAnalysis[trackIdx].rmsEnvelope = std::move (envelope);
+        trackAnalysis[trackIdx].pendingUpdate = true;
     }
 }
 

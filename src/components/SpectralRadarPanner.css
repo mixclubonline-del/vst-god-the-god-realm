@@ -1,7 +1,9 @@
 .spectral-radar-3d-wrapper {
+  --mixx-accent: var(--god-primary, #FFD700);
+  --mixx-accent-glow: var(--god-primary-glow, rgba(255, 215, 0, 0.3));
   width: 100%;
   height: 400px;
-  background: var(--god-bg-dark);
+  background: var(--god-bg-dark, #0d060a);
   border-radius: 16px;
   padding: 24px;
   display: flex;

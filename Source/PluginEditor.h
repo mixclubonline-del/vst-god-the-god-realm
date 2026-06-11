@@ -31,6 +31,7 @@ private:
     VSTGodTheGodRealmAudioProcessor& audioProcessor;
     juce::WebBrowserComponent webComponent;
     std::unique_ptr<juce::FileChooser> fileChooser;
+    std::unique_ptr<juce::dsp::FFT> fft;
 
     int frameCounter = 0;
 
