@@ -98,10 +98,10 @@ public:
         float playbackRate = std::pow(2.0f, currentPitch / 12.0f) * (float)(sourceSampleRate / outputSampleRate);
         
         auto* leftOut = outputBuffer.getWritePointer(0, startSampleInOutput);
-        auto* rightOut = outputBuffer.getWritePointer(1, startSampleInOutput);
+        auto* rightOut = outputBuffer.getNumChannels() > 1 ? outputBuffer.getWritePointer(1, startSampleInOutput) : nullptr;
         
         auto* leftIn = originalBuffer->getReadPointer(0);
-        auto* rightIn = originalBuffer->getReadPointer(1);
+        auto* rightIn = originalBuffer->getNumChannels() > 1 ? originalBuffer->getReadPointer(1) : nullptr;
 
         int retrigInterval = (currentRetrigRate > 1 && currentSamplesPer16th > 0) 
                              ? (currentSamplesPer16th / currentRetrigRate) 
@@ -147,12 +147,12 @@ public:
                 float fraction = static_cast<float>(currentIndex - idx);
                 
                 float sL = leftIn[idx];
-                float sR = originalBuffer->getNumChannels() > 1 ? rightIn[idx] : sL;
+                float sR = rightIn != nullptr ? rightIn[idx] : sL;
 
                 if (nextIdx >= 0 && nextIdx < originalBuffer->getNumSamples())
                 {
                     float nL = leftIn[nextIdx];
-                    float nR = originalBuffer->getNumChannels() > 1 ? rightIn[nextIdx] : nL;
+                    float nR = rightIn != nullptr ? rightIn[nextIdx] : nL;
                     sL = sL + fraction * (nL - sL);
                     sR = sR + fraction * (nR - sR);
                 }
@@ -172,7 +172,14 @@ public:
                 float panR = std::sin((currentPan + 1.0f) * juce::MathConstants<float>::pi * 0.25f);
 
                 leftOut[i] += sL * gain * panL;
-                rightOut[i] += sR * gain * panR;
+                if (rightOut != nullptr)
+                {
+                    rightOut[i] += sR * gain * panR;
+                }
+                else
+                {
+                    leftOut[i] += sR * gain * panR; // Downmix R panned component to mono output
+                }
             }
 
             if (currentReverse)

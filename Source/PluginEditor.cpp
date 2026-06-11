@@ -82,7 +82,11 @@ VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VS
     // Dev: Vite dev server on port 3001
     // Release: Embedded BinaryData served via resource provider (Phase 7)
     // ═══════════════════════════════════════════════════════════════
-    webComponent.goToURL(juce::WebBrowserComponent::getResourceProviderRoot());
+    #if JUCE_DEBUG
+    webComponent.goToURL ("http://localhost:3001");
+    #else
+    webComponent.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
+    #endif
 
     // ═══════════════════════════════════════════════════════════════
     // Start the 30Hz state push timer

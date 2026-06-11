@@ -666,7 +666,10 @@ public:
 
         // 3. Accumulate to host output buffer
         buffer.addFrom(0, 0, synthBuffer.getReadPointer(0), numSamples);
-        buffer.addFrom(1, 0, synthBuffer.getReadPointer(1), numSamples);
+        if (buffer.getNumChannels() > 1)
+        {
+            buffer.addFrom(1, 0, synthBuffer.getReadPointer(1), numSamples);
+        }
     }
 
     void setMacros(float energy, float divinity, float width, float realm, float aura, float age)
