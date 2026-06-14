@@ -93,10 +93,18 @@ export const PluginWindowProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const updatePosition = useCallback((instanceId: string, x: number, y: number) => {
+    let clampedX = x;
+    let clampedY = y;
+    if (typeof window !== 'undefined') {
+      const maxX = window.innerWidth - 150;
+      const maxY = window.innerHeight - 40;
+      clampedX = Math.max(0, Math.min(maxX, x));
+      clampedY = Math.max(0, Math.min(maxY, y));
+    }
     setWindows(prev =>
       prev.map(w =>
         w.instanceId === instanceId
-          ? { ...w, position: { x, y } }
+          ? { ...w, position: { x: clampedX, y: clampedY } }
           : w
       )
     );

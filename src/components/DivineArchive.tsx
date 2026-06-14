@@ -71,10 +71,48 @@ export const DivineArchive: React.FC<DivineArchiveProps> = ({
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
+  const [selectedSampleBuffer, setSelectedSampleBuffer] = useState<AudioBuffer | null>(null);
+
   const previewSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const previewGainRef = useRef<GainNode | null>(null);
 
+  useEffect(() => {
+    if (!selectedSample) {
+      setSelectedSampleBuffer(null);
+      return;
+    }
+
+    let active = true;
+    const loadBuffer = async () => {
+      setSelectedSampleBuffer(null);
+      const engine = engineRef.current;
+      if (!engine) return;
+      if (!engine.ctx) {
+        try { await engine.init(); } catch (e) { return; }
+      }
+      const ctx = engine.ctx;
+      try {
+        const response = await fetch(selectedSample.path);
+        if (!response.ok) return;
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await ctx.decodeAudioData(arrayBuffer);
+        if (active) {
+          setSelectedSampleBuffer(buffer);
+        }
+      } catch (err) {
+        console.error('Failed to load buffer for preview waveform:', err);
+      }
+    };
+
+    loadBuffer();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedSample, engineRef]);
+
   // ─── Load & Merge Both Manifests ─────────────────────────────────────────
+
 
   useEffect(() => {
     const loadBoth = async () => {
@@ -502,8 +540,9 @@ export const DivineArchive: React.FC<DivineArchiveProps> = ({
               </span>
 
               <div className="da-wave-large">
-                <RelicWaveform mode="full" />
+                <RelicWaveform mode="full" buffer={selectedSampleBuffer} />
               </div>
+
 
               {/* Acoustic Meters */}
               <div className="da-meters">

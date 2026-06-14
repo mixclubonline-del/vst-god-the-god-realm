@@ -1375,6 +1375,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onCopyTrackPattern={() => dispatch({ type: 'COPY_TRACK_PATTERN' })}
             onPasteTrackPattern={() => dispatch({ type: 'PASTE_TRACK_PATTERN' })}
             onSwapPatterns={() => dispatch({ type: 'SWAP_PATTERNS' })}
+            onDuplicateTrackPattern={() => dispatch({ type: 'DUPLICATE_TRACK_PATTERN', trackIndex: i })}
             canPastePattern={state.clipboardPattern !== null}
             /* Track Bounce/Freeze */
             onFreezeTrack={() => handleFreezeTrack(i)}

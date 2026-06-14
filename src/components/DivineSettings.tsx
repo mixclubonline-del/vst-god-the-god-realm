@@ -10,6 +10,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import '@/styles/DivineSettings.css';
 import { nativeAudio } from '@/native/bridge';
+import { DivineSlider } from './ui/DivineSlider';
+import { DivineConfirmModal } from './ui/DivineConfirmModal';
+
+
 
 // ═══════════════════════════════════════════════════════
 // Settings Schema & Defaults
@@ -50,6 +54,15 @@ export interface DivineSettingsData {
   confirmOnClose: boolean;
   loadLastSessionOnStart: boolean;
 
+  // Calibration
+  knobCurve: 'linear' | 'logarithmic' | 'exponential' | 's-curve';
+  knobSensitivity: number;
+  faderCurve: 'linear' | 'logarithmic' | 'exponential' | 's-curve';
+  faderSensitivity: number;
+  xyPadCurveX: 'linear' | 'logarithmic' | 'exponential' | 's-curve';
+  xyPadCurveY: 'linear' | 'logarithmic' | 'exponential' | 's-curve';
+  xyPadSensitivity: number;
+
   // About (read-only display)
   pluginVersion: string;
 }
@@ -77,6 +90,13 @@ const DEFAULT_SETTINGS: DivineSettingsData = {
   autoSaveIntervalSec: 120,
   confirmOnClose: true,
   loadLastSessionOnStart: true,
+  knobCurve: 'linear',
+  knobSensitivity: 1.0,
+  faderCurve: 'linear',
+  faderSensitivity: 1.0,
+  xyPadCurveX: 'linear',
+  xyPadCurveY: 'linear',
+  xyPadSensitivity: 1.0,
   pluginVersion: 'v1.0.0-dev',
 };
 
@@ -159,25 +179,32 @@ interface SliderRowProps {
   onChange: (v: number) => void;
 }
 
-const SliderRow: React.FC<SliderRowProps> = ({ label, description, value, min, max, step = 1, suffix = '', onChange }) => (
-  <div className="ds-row">
-    <div className="ds-row__info">
-      <span className="ds-row__label">{label}</span>
-      {description && <span className="ds-row__description">{description}</span>}
+const SliderRow: React.FC<SliderRowProps> = ({ label, description, value, min, max, step = 1, suffix = '', onChange }) => {
+  const decimals = step < 1 ? 1 : 0;
+  return (
+    <div className="ds-row ds-row--slider">
+      <div className="ds-row__info">
+        <span className="ds-row__label">{label}</span>
+        {description && <span className="ds-row__description">{description}</span>}
+      </div>
+      <div className="ds-slider">
+        <div className="ds-slider-custom" style={{ width: 100 }}>
+          <DivineSlider
+            min={min}
+            max={max}
+            value={value}
+            step={step}
+            decimals={decimals}
+            onChange={onChange}
+            color="#FFD700"
+            size="sm"
+          />
+        </div>
+        <span className="ds-slider__value">{value.toFixed(decimals)}{suffix}</span>
+      </div>
     </div>
-    <div className="ds-slider">
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-      <span className="ds-slider__value">{value}{suffix}</span>
-    </div>
-  </div>
-);
+  );
+};
 
 // ═══════════════════════════════════════════════════════
 // Main Component
@@ -191,6 +218,8 @@ interface DivineSettingsProps {
 export const DivineSettings: React.FC<DivineSettingsProps> = ({ isOpen, onClose }) => {
   const [settings, setSettings] = useState<DivineSettingsData>(loadSettings);
   const [exiting, setExiting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
 
   // Load settings from C++ on mount if running in JUCE
   useEffect(() => {
@@ -211,6 +240,7 @@ export const DivineSettings: React.FC<DivineSettingsProps> = ({ isOpen, onClose 
   useEffect(() => {
     saveSettings(settings);
     nativeAudio.saveSettings(settings);
+    window.dispatchEvent(new CustomEvent('divine-settings-updated', { detail: settings }));
   }, [settings]);
 
   const update = useCallback(<K extends keyof DivineSettingsData>(
@@ -229,10 +259,9 @@ export const DivineSettings: React.FC<DivineSettingsProps> = ({ isOpen, onClose 
   }, [onClose]);
 
   const handleReset = useCallback(() => {
-    if (confirm('Reset all settings to defaults? This cannot be undone.')) {
-      setSettings({ ...DEFAULT_SETTINGS });
-    }
+    setShowResetConfirm(true);
   }, []);
+
 
   if (!isOpen) return null;
 
@@ -391,6 +420,99 @@ export const DivineSettings: React.FC<DivineSettingsProps> = ({ isOpen, onClose 
             />
           </div>
 
+          {/* ─── Controls & Touch Calibration ─── */}
+          <div className="ds-section">
+            <div className="ds-section__header">
+              <span className="ds-section__icon">🎛</span>
+              <span className="ds-section__title">Controls & Touch Calibration</span>
+            </div>
+
+            <SelectRow
+              label="Knob Curve"
+              description="Response curve for knobs"
+              value={settings.knobCurve}
+              options={[
+                { value: 'linear', label: 'Linear' },
+                { value: 'logarithmic', label: 'Logarithmic' },
+                { value: 'exponential', label: 'Exponential' },
+                { value: 's-curve', label: 'S-Curve' },
+              ]}
+              onChange={(v) => update('knobCurve', v as any)}
+            />
+
+            <SliderRow
+              label="Knob Sensitivity"
+              description="Fine-tune knob drag speed"
+              value={settings.knobSensitivity}
+              min={0.1}
+              max={3.0}
+              step={0.1}
+              suffix="x"
+              onChange={(v) => update('knobSensitivity', v)}
+            />
+
+            <SelectRow
+              label="Fader Curve"
+              description="Response curve for faders"
+              value={settings.faderCurve}
+              options={[
+                { value: 'linear', label: 'Linear' },
+                { value: 'logarithmic', label: 'Logarithmic' },
+                { value: 'exponential', label: 'Exponential' },
+                { value: 's-curve', label: 'S-Curve' },
+              ]}
+              onChange={(v) => update('faderCurve', v as any)}
+            />
+
+            <SliderRow
+              label="Fader Sensitivity"
+              description="Fine-tune fader drag speed"
+              value={settings.faderSensitivity}
+              min={0.1}
+              max={3.0}
+              step={0.1}
+              suffix="x"
+              onChange={(v) => update('faderSensitivity', v)}
+            />
+
+            <SelectRow
+              label="XY Pad Curve X"
+              description="X-axis response curve for touch pads"
+              value={settings.xyPadCurveX}
+              options={[
+                { value: 'linear', label: 'Linear' },
+                { value: 'logarithmic', label: 'Logarithmic' },
+                { value: 'exponential', label: 'Exponential' },
+                { value: 's-curve', label: 'S-Curve' },
+              ]}
+              onChange={(v) => update('xyPadCurveX', v as any)}
+            />
+
+            <SelectRow
+              label="XY Pad Curve Y"
+              description="Y-axis response curve for touch pads"
+              value={settings.xyPadCurveY}
+              options={[
+                { value: 'linear', label: 'Linear' },
+                { value: 'logarithmic', label: 'Logarithmic' },
+                { value: 'exponential', label: 'Exponential' },
+                { value: 's-curve', label: 'S-Curve' },
+              ]}
+              onChange={(v) => update('xyPadCurveY', v as any)}
+            />
+
+            <SliderRow
+              label="XY Pad Sensitivity"
+              description="Fine-tune touch node responsiveness"
+              value={settings.xyPadSensitivity}
+              min={0.1}
+              max={3.0}
+              step={0.1}
+              suffix="x"
+              onChange={(v) => update('xyPadSensitivity', v)}
+            />
+          </div>
+
           {/* ─── Interface ─── */}
           <div className="ds-section">
             <div className="ds-section__header">
@@ -546,6 +668,17 @@ export const DivineSettings: React.FC<DivineSettingsProps> = ({ isOpen, onClose 
           <div className="ds-footer__credits">Forged by MixxTech · ©2026</div>
         </div>
       </div>
+
+      <DivineConfirmModal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={() => setSettings({ ...DEFAULT_SETTINGS })}
+        title="RESET PREFERENCES"
+        description="Reset all global VST preferences and audio calibration settings to defaults? This cannot be undone."
+        confirmLabel="RESET"
+        cancelLabel="CANCEL"
+        isDestructive={true}
+      />
     </>
   );
 };

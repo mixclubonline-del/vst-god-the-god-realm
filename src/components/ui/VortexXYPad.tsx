@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useSpring } from 'framer-motion';
 import './VortexXYPad.css';
+import { useCalibrationSettings, applyCurve, invertCurve } from '@/utils/calibration';
 
 interface Anchor {
   x: number;
@@ -15,6 +16,7 @@ interface VortexXYPadProps {
   onPositionChange: (x: number, y: number) => void;
   anchors?: Anchor[];
   onAnchorClick?: (anchor: Anchor) => void;
+  level?: number;
 }
 
 export const VortexXYPad: React.FC<VortexXYPadProps> = ({
@@ -23,22 +25,34 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
   y,
   onPositionChange,
   anchors = [],
-  onAnchorClick
+  onAnchorClick,
+  level
 }) => {
+  const calibration = useCalibrationSettings();
   const [rms, setRms] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, startRawX: 0, startRawY: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   
+  const rawX = invertCurve(x, calibration.xyPadCurveX, 0, 100);
+  const rawY = invertCurve(y, calibration.xyPadCurveY, 0, 100);
+
   // Spring physics for smooth UI response
-  const springX = useSpring(x, { stiffness: 100, damping: 20 });
-  const springY = useSpring(y, { stiffness: 100, damping: 20 });
+  const springX = useSpring(rawX, { stiffness: 100, damping: 20 });
+  const springY = useSpring(rawY, { stiffness: 100, damping: 20 });
 
   useEffect(() => {
-    springX.set(x);
-    springY.set(y);
-  }, [x, y, springX, springY]);
+    springX.set(rawX);
+    springY.set(rawY);
+  }, [rawX, rawY, springX, springY]);
 
   // Audio reactivity loop
   useEffect(() => {
+    if (level !== undefined) {
+      setRms(prev => prev * 0.85 + level * 0.15);
+      return;
+    }
+
     let rafId: number;
     let frame = 0;
     const update = () => {
@@ -49,27 +63,50 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
     };
     rafId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [level]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (!containerRef.current) return;
     e.preventDefault();
     e.stopPropagation();
-    handleUpdate(e.clientX, e.clientY);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const clickRawX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const clickRawY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startRawX: clickRawX, startRawY: clickRawY };
+    setDragging(true);
+
+    const calibratedX = applyCurve(clickRawX, calibration.xyPadCurveX, 0, 100);
+    const calibratedY = applyCurve(clickRawY, calibration.xyPadCurveY, 0, 100);
+    onPositionChange(calibratedX, calibratedY);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (e.buttons !== 1) return;
+    if (!dragging || !containerRef.current) return;
     e.stopPropagation();
-    handleUpdate(e.clientX, e.clientY);
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+
+    const deltaRawX = (dx / rect.width) * 100;
+    const deltaRawY = (dy / rect.height) * 100;
+
+    const newRawX = Math.max(0, Math.min(100, dragRef.current.startRawX + deltaRawX * calibration.xyPadSensitivity));
+    const newRawY = Math.max(0, Math.min(100, dragRef.current.startRawY + deltaRawY * calibration.xyPadSensitivity));
+
+    const calibratedX = applyCurve(newRawX, calibration.xyPadCurveX, 0, 100);
+    const calibratedY = applyCurve(newRawY, calibration.xyPadCurveY, 0, 100);
+    onPositionChange(calibratedX, calibratedY);
   };
 
-  const handleUpdate = (clientX: number, clientY: number) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const ny = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-    onPositionChange(nx, ny);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setDragging(false);
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
   };
 
   return (
@@ -111,8 +148,8 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
         <motion.div 
           className="vortex-node"
           style={{
-            left: `${x}%`,
-            top: `${y}%`,
+            left: `${rawX}%`,
+            top: `${rawY}%`,
             transform: 'translate(-50%, -50%)'
           }}
         >
@@ -133,9 +170,9 @@ export const VortexXYPad: React.FC<VortexXYPadProps> = ({
                  <stop offset="100%" stopColor="transparent" />
               </radialGradient>
            </defs>
-           <circle cx={`${x}%`} cy={`${y}%`} r={20 + rms * 40} fill="url(#vortexGrad)" />
-           <line x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
-           <line x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
+           <circle cx={`${rawX}%`} cy={`${rawY}%`} r={20 + rms * 40} fill="url(#vortexGrad)" />
+           <line x1={`${rawX}%`} y1="0" x2={`${rawX}%`} y2="100%" stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
+           <line x1="0" y1={`${rawY}%`} x2="100%" y2={`${rawY}%`} stroke="rgba(255,215,0,0.1)" strokeWidth="1" />
         </svg>
       </div>
     </div>

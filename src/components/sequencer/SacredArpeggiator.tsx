@@ -6,7 +6,9 @@
  */
 import React, { useCallback, useMemo } from 'react';
 import type { ArpConfig, ArpMode, ArpRate } from '../../audio/ArpeggiatorEngine';
+import { DivineSlider } from '../ui/DivineSlider';
 import './SacredArpeggiator.css';
+
 
 interface SacredArpeggiatorProps {
   config: ArpConfig;
@@ -165,15 +167,18 @@ export const SacredArpeggiator: React.FC<SacredArpeggiatorProps> = ({
 
           <div className="sacred-arp__knob-group">
             <span className="sacred-arp__label">GATE</span>
-            <input
-              type="range"
-              className="sacred-arp__gate-slider"
-              min={0.1}
-              max={1.0}
-              step={0.05}
-              value={config.gate}
-              onChange={handleGateChange}
-            />
+            <div className="sacred-arp__gate-slider-custom" style={{ width: 60 }}>
+              <DivineSlider
+                min={0.1}
+                max={1.0}
+                value={config.gate}
+                step={0.05}
+                decimals={2}
+                onChange={(v) => onConfigChange({ gate: v })}
+                color="#A855F7"
+                size="sm"
+              />
+            </div>
             <span className="sacred-arp__gate-value">{Math.round(config.gate * 100)}%</span>
           </div>
         </div>

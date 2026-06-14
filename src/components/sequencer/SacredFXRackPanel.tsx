@@ -5,6 +5,8 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import type { FXRack, FXRackParams } from '../../audio/FXRack';
+import { DivineSlider } from '../ui/DivineSlider';
+
 
 interface SacredFXRackPanelProps {
   fxRack: React.MutableRefObject<FXRack | null>;
@@ -166,18 +168,18 @@ export const SacredFXRackPanel: React.FC<SacredFXRackPanelProps> = ({ fxRack }) 
             <div key={slider.key} className="seq-fx-panel__control">
               <label className="seq-fx-panel__control-label">{slider.label}</label>
               <div className="seq-fx-panel__slider-wrap">
-                <input
-                  type="range"
-                  className="seq-fx-panel__slider"
-                  min={slider.min}
-                  max={slider.max}
-                  step={slider.step}
-                  value={val}
-                  onChange={(e) => handleChange(slider, parseFloat(e.target.value))}
-                  style={{
-                    '--slider-progress': `${((val - slider.min) / (slider.max - slider.min)) * 100}%`,
-                  } as React.CSSProperties}
-                />
+                <div className="seq-fx-panel__slider-custom" style={{ flex: 1 }}>
+                  <DivineSlider
+                    min={slider.min}
+                    max={slider.max}
+                    value={val}
+                    step={slider.step}
+                    decimals={slider.step < 0.1 ? 2 : slider.step < 1 ? 1 : 0}
+                    onChange={(v) => handleChange(slider, v)}
+                    color={activeTabInfo.color}
+                    size="sm"
+                  />
+                </div>
                 <span className="seq-fx-panel__control-value">
                   {formatValue(val, slider.unit)}
                 </span>

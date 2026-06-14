@@ -957,11 +957,13 @@
   display: flex; align-items: center; justify-content: center;
   padding: 14px; border-top: 1px solid rgba(255,255,255,0.04);
   flex-shrink: 0; width: 100%;
+  position: absolute; bottom: 24px; left: 0; right: 0; text-align: center;
 }
 .vg-pantheon-hint span {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.3em;
-  color: rgba(255,255,255,0.15);
+  font-size: 11px; font-weight: 800; letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.25);
   animation: hintPulse 3s ease-in-out infinite;
+  text-transform: uppercase;
 }
 @keyframes hintPulse {
   0%, 100% { opacity: 0.15; }
@@ -4296,4 +4298,68 @@
       0 0 22px rgba(255, 215, 0, 0.65); 
   }
 }
+
+/* ═══ Harmonic Pantheon Deity Detail Panel Extensions (Phase 17) ═══ */
+.hp-detail-inner {
+  min-width: 320px;
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hp-detail-description {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  margin: 0;
+}
+
+.hp-detail-dna-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 4px;
+}
+
+.hp-detail-dna-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.7;
+}
+
+.hp-detail-anubis-special {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.hp-detail-flex-1 {
+  flex: 1;
+}
+
+.hp-detail-envelope-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 12px;
+}
+
+.hp-detail-envelope-title {
+  font-size: 8px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.hp-detail-envelope-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 

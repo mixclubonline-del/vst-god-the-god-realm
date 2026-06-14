@@ -6,6 +6,8 @@
  */
 import React, { useCallback, useRef, useEffect } from 'react';
 import type { StepState } from './useSequencerEngine';
+import { DivineSlider } from '../ui/DivineSlider';
+
 
 interface SacredStepDetailProps {
   step: StepState;
@@ -78,37 +80,52 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
 
       {/* Velocity */}
       <ParamRow label="VELOCITY" value={step.velocity} suffix="" color={trackColor}>
-        <input
-          type="range" min={0} max={127} step={1}
-          value={step.velocity}
-          onChange={(e) => onSetProp('velocity', parseInt(e.target.value))}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={0}
+            max={127}
+            value={step.velocity}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('velocity', Math.round(v))}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{step.velocity}</span>
       </ParamRow>
 
       {/* Pitch */}
       <ParamRow label="PITCH" value={step.pitch} suffix="st" color={trackColor}>
-        <input
-          type="range" min={-24} max={24} step={1}
-          value={step.pitch}
-          onChange={(e) => onSetProp('pitch', parseInt(e.target.value))}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={-24}
+            max={24}
+            value={step.pitch}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('pitch', Math.round(v))}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{step.pitch > 0 ? '+' : ''}{step.pitch}</span>
       </ParamRow>
 
       {/* Pan */}
       <ParamRow label="PAN" value={Math.round(step.pan * 100)} suffix="" color={trackColor}>
-        <input
-          type="range" min={-100} max={100} step={1}
-          value={Math.round(step.pan * 100)}
-          onChange={(e) => onSetProp('pan', parseInt(e.target.value) / 100)}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={-100}
+            max={100}
+            value={Math.round(step.pan * 100)}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('pan', Math.round(v) / 100)}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">
           {step.pan === 0 ? 'C' : step.pan < 0 ? `L${Math.abs(Math.round(step.pan * 100))}` : `R${Math.round(step.pan * 100)}`}
         </span>
@@ -116,49 +133,69 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
 
       {/* Decay */}
       <ParamRow label="DECAY" value={Math.round(step.decay * 100)} suffix="%" color={trackColor}>
-        <input
-          type="range" min={0} max={100} step={1}
-          value={Math.round(step.decay * 100)}
-          onChange={(e) => onSetProp('decay', parseInt(e.target.value) / 100)}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={0}
+            max={100}
+            value={Math.round(step.decay * 100)}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('decay', Math.round(v) / 100)}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{Math.round(step.decay * 100)}%</span>
       </ParamRow>
 
       {/* Probability */}
       <ParamRow label="PROB" value={step.probability} suffix="%" color={trackColor}>
-        <input
-          type="range" min={0} max={100} step={5}
-          value={step.probability}
-          onChange={(e) => onSetProp('probability', parseInt(e.target.value))}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={0}
+            max={100}
+            value={step.probability}
+            step={5}
+            decimals={0}
+            onChange={(v) => onSetProp('probability', Math.round(v))}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{step.probability}%</span>
       </ParamRow>
 
       {/* Micro-Timing */}
       <ParamRow label="μTIME" value={step.microTiming} suffix="%" color={trackColor}>
-        <input
-          type="range" min={-50} max={50} step={1}
-          value={step.microTiming}
-          onChange={(e) => onSetProp('microTiming', parseInt(e.target.value))}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={-50}
+            max={50}
+            value={step.microTiming}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('microTiming', Math.round(v))}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{step.microTiming > 0 ? '+' : ''}{step.microTiming}</span>
       </ParamRow>
 
       {/* Slice Index */}
       <ParamRow label="SLICE" value={step.sliceIndex} suffix="" color={trackColor}>
-        <input
-          type="range" min={0} max={16} step={1}
-          value={step.sliceIndex}
-          onChange={(e) => onSetProp('sliceIndex', parseInt(e.target.value))}
-          className="step-detail__slider"
-          style={{ '--slider-color': trackColor } as React.CSSProperties}
-        />
+        <div className="step-detail__slider-custom">
+          <DivineSlider
+            min={0}
+            max={16}
+            value={step.sliceIndex}
+            step={1}
+            decimals={0}
+            onChange={(v) => onSetProp('sliceIndex', Math.round(v))}
+            color={trackColor}
+            size="sm"
+          />
+        </div>
         <span className="step-detail__value">{step.sliceIndex === 0 ? 'ALL' : `S${step.sliceIndex}`}</span>
       </ParamRow>
 

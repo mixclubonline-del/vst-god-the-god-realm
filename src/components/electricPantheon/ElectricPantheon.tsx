@@ -347,6 +347,8 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
             />
             <WaveformScope
               color={activeGod.colors.primary}
+              colorSecondary={activeGod.colors.secondary}
+              colorAccent={activeGod.colors.accent}
               engineRef={synthRef}
             />
           </div>

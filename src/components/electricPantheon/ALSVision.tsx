@@ -9,7 +9,7 @@
  * 3. Voice Counter — Dot indicator showing active polyphony (0–8)
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { ElectricPantheonGod } from '@/data/electricPantheonGods';
 import type { PantheonMacroId } from '@/data/pantheonMacros';
@@ -52,6 +52,26 @@ export const ALSVision: React.FC<ALSVisionProps> = ({ god, macroValues, analysis
 
   const meterSegments = 20;
 
+  // Peak hold with slow decay (industry-standard metering)
+  const peakHoldRef = useRef(0);
+  const peakHoldTimerRef = useRef(0);
+
+  useEffect(() => {
+    // Update peak hold: if current level exceeds stored peak, snap to it
+    if (displayLevel > peakHoldRef.current) {
+      peakHoldRef.current = displayLevel;
+      peakHoldTimerRef.current = 0;
+    } else {
+      // Decay: hold for 30 frames then fall
+      peakHoldTimerRef.current++;
+      if (peakHoldTimerRef.current > 30) {
+        peakHoldRef.current = Math.max(0, peakHoldRef.current - 0.008);
+      }
+    }
+  });
+
+  const peakHoldLevel = peakHoldRef.current;
+
   return (
     <div
       className="ep-als-vision"
@@ -71,22 +91,26 @@ export const ALSVision: React.FC<ALSVisionProps> = ({ god, macroValues, analysis
           const segmentThreshold = (i + 1) / meterSegments;
           const isLit = displayLevel >= segmentThreshold;
           const isPeak = peak >= segmentThreshold && peak < segmentThreshold + (1 / meterSegments);
+          const isPeakHold = peakHoldLevel >= segmentThreshold && peakHoldLevel < segmentThreshold + (1 / meterSegments);
           const isHot = segmentThreshold > 0.8;
           const isWarm = segmentThreshold > 0.6;
 
           return (
             <div
               key={i}
-              className={`ep-als-segment ${isLit ? 'active' : ''} ${isPeak ? 'peak' : ''} ${isHot ? 'hot' : isWarm ? 'warm' : ''}`}
+              className={`ep-als-segment ${isLit ? 'active' : ''} ${isPeak ? 'peak' : ''} ${isPeakHold ? 'peak-hold' : ''} ${isHot ? 'hot' : isWarm ? 'warm' : ''}`}
               style={{
-                opacity: isLit ? 1 : isPeak ? 0.7 : 0.12,
+                opacity: isLit ? 1 : isPeakHold ? 0.8 : isPeak ? 0.7 : 0.12,
                 transform: `scaleY(${isLit ? 1 : 0.5})`,
                 backgroundColor: isLit
                   ? isHot ? '#ff4444' : isWarm ? god.colors.accent : god.colors.primary
+                  : isPeakHold ? god.colors.accent
                   : isPeak ? god.colors.primary : undefined,
                 boxShadow: isLit && isActive
                   ? `0 0 ${isHot ? 6 : 3}px ${isHot ? '#ff4444' : god.colors.primary}`
                   : undefined,
+                // Peak hold indicator line color
+                ...(isPeakHold ? { '--peak-color': god.colors.accent } as React.CSSProperties : {}),
               }}
             />
           );
@@ -100,16 +124,19 @@ export const ALSVision: React.FC<ALSVisionProps> = ({ god, macroValues, analysis
           style={{
             background: isActive
               ? `conic-gradient(from 0deg,
-                  ${god.colors.primary}${Math.round(spectral.body * 200 + 20).toString(16).padStart(2, '0')} 0deg,
-                  ${god.colors.secondary ?? god.colors.primary}${Math.round(spectral.soul * 200 + 20).toString(16).padStart(2, '0')} 90deg,
-                  ${god.colors.accent}${Math.round(spectral.air * 200 + 20).toString(16).padStart(2, '0')} 180deg,
-                  ${god.colors.primary}${Math.round(spectral.silk * 200 + 20).toString(16).padStart(2, '0')} 270deg,
-                  ${god.colors.primary}${Math.round(spectral.body * 200 + 20).toString(16).padStart(2, '0')} 360deg
+                  ${god.colors.primary}${Math.round(Math.min(220, spectral.body * 200 + 20)).toString(16).padStart(2, '0')} 0deg,
+                  ${god.colors.secondary ?? god.colors.primary}${Math.round(Math.min(220, spectral.soul * 200 + 20)).toString(16).padStart(2, '0')} 90deg,
+                  ${god.colors.accent}${Math.round(Math.min(220, spectral.air * 200 + 20)).toString(16).padStart(2, '0')} 180deg,
+                  ${god.colors.primary}${Math.round(Math.min(220, spectral.silk * 200 + 20)).toString(16).padStart(2, '0')} 270deg,
+                  ${god.colors.primary}${Math.round(Math.min(220, spectral.body * 200 + 20)).toString(16).padStart(2, '0')} 360deg
                 )`
               : `radial-gradient(circle, ${god.colors.primary}15 0%, transparent 70%)`,
             filter: isActive ? `blur(${2 + liveLevel * 6}px)` : 'blur(4px)',
           }}
         />
+
+        {/* Rotating Spectral Border */}
+        <div className="ep-als-spectral-border" />
 
         {/* God Emblem */}
         <motion.div

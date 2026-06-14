@@ -1,0 +1,110 @@
+/* ═══ Divine Confirmation Modal Stylesheet ═══ */
+
+.divine-confirm-container {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 30px 24px 24px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.95),
+    0 0 40px rgba(255, 215, 0, 0.03);
+}
+
+.divine-confirm-container.destructive {
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.95),
+    0 0 40px rgba(239, 68, 68, 0.04);
+}
+
+.divine-confirm-glow {
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.35), transparent);
+}
+
+.destructive .divine-confirm-glow {
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.5), transparent);
+}
+
+.divine-confirm-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.divine-confirm-icon-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.divine-confirm-title {
+  font-family: 'Orbitron', 'Cinzel', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.destructive .divine-confirm-title {
+  color: #ef4444;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.divine-confirm-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 0 8px;
+}
+
+.divine-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.divine-confirm-btn--gold {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(218, 165, 32, 0.25) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+}
+
+.divine-confirm-btn--gold:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(218, 165, 32, 0.4) 100%);
+  border-color: #FFD700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.divine-confirm-btn--destructive {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.25) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.divine-confirm-btn--destructive:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.35) 100%);
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s infinite ease-in-out;
+}

@@ -150,6 +150,7 @@ bool VSTGodTheGodRealmAudioProcessor::isBusesLayoutSupported (const BusesLayout&
 
 void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    auto startTime = juce::Time::getHighResolutionTicks();
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -588,6 +589,16 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
             }
         }
     }
+
+    auto endTime = juce::Time::getHighResolutionTicks();
+    double elapsedSeconds = static_cast<double>(endTime - startTime) / juce::Time::getHighResolutionTicksPerSecond();
+    double blockSeconds = static_cast<double>(buffer.getNumSamples()) / getSampleRate();
+    if (blockSeconds > 0.0)
+    {
+        double currentUsage = (elapsedSeconds / blockSeconds) * 100.0;
+        double prevUsage = cpuUsage.load(std::memory_order_relaxed);
+        cpuUsage.store(prevUsage + 0.1 * (currentUsage - prevUsage), std::memory_order_relaxed);
+    }
 }
 
 bool VSTGodTheGodRealmAudioProcessor::hasEditor() const
@@ -912,6 +923,81 @@ juce::AudioProcessorValueTreeState::ParameterLayout VSTGodTheGodRealmAudioProces
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotTexture_" + idSuffix, 1), "Slot " + idSuffix + " Texture", 0.0f, 100.0f, 40.0f));
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("slotFine_" + idSuffix, 1), "Slot " + idSuffix + " Fine", 0.0f, 100.0f, 50.0f));
     }
+
+    // --- Front-Panel Global Macros ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("macro_energy", 1), "Global Energy", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("macro_divinity", 1), "Global Divinity", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("macro_width", 1), "Global Width", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("macro_realm", 1), "Global Realm", 0.0f, 100.0f, 50.0f));
+
+    // --- CelestialPad Instrument ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_reverbMix", 1), "Pad Depth", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_chorusMix", 1), "Pad Drift", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_filterFreq", 1), "Pad Warmth", 0.0f, 100.0f, 55.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_attack", 1), "Pad Bloom", 0.0f, 100.0f, 65.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_sustain", 1), "Pad Sustain", 0.0f, 100.0f, 80.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_release", 1), "Pad Release", 0.0f, 100.0f, 75.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_divinity", 1), "Pad Shimmer", 0.0f, 100.0f, 45.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_width", 1), "Pad Space", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_bodyGain", 1), "Pad Body", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_subOscGain", 1), "Pad Sub", 0.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pad_masterGain", 1), "Pad Master", 0.0f, 100.0f, 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("pad_power", 1), "Pad Power", true));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("pad_waveType", 1), "Pad Wave Type", 0, 3, 0));
+
+    // --- UnderworldBass Instrument ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_subOscGain", 1), "Bass Sub Gain", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_satDrive", 1), "Bass Drive", 0.0f, 100.0f, 45.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_satMix", 1), "Bass Distort", 0.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_modIndex", 1), "Bass Crush", 0.0f, 100.0f, 15.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_masterGain", 1), "Bass Level", 0.0f, 100.0f, 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_filterFreq", 1), "Bass Cutoff", 0.0f, 100.0f, 55.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_filterQ", 1), "Bass Reso", 0.0f, 100.0f, 35.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_delayMix", 1), "Bass Lava Drip", 0.0f, 100.0f, 25.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_attack", 1), "Bass Attack", 0.0f, 100.0f, 5.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_decay", 1), "Bass Decay", 0.0f, 100.0f, 40.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_sustain", 1), "Bass Sustain", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("bass_release", 1), "Bass Release", 0.0f, 100.0f, 35.0f));
+
+    // --- DivineTexture Instrument ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_filterFreq", 1), "Texture Filter", 0.0f, 100.0f, 65.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_morphBlend", 1), "Texture Blend", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_reverbMix", 1), "Texture Reverb", 0.0f, 100.0f, 55.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_masterGain", 1), "Texture Output", 0.0f, 100.0f, 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_energy", 1), "Texture Organic", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_divinity", 1), "Texture Growth", 0.0f, 100.0f, 45.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_filterQ", 1), "Texture Resonance", 0.0f, 100.0f, 40.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_subOscGain", 1), "Texture Roots", 0.0f, 100.0f, 55.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_modIndex", 1), "Texture Harmonics", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_chorusMix", 1), "Texture Mystic", 0.0f, 100.0f, 35.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_delayMix", 1), "Texture Vine", 0.0f, 100.0f, 40.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("texture_realm", 1), "Texture Divine", 0.0f, 100.0f, 50.0f));
+
+    // --- EtherealPluck Instrument ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_modIndex", 1), "Pluck Tone", 0.0f, 100.0f, 55.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_filterQ", 1), "Pluck Res", 0.0f, 100.0f, 40.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_reverbMix", 1), "Pluck Shimmer", 0.0f, 100.0f, 65.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_attack", 1), "Pluck Attack", 0.0f, 100.0f, 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_bodyGain", 1), "Pluck Body", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_chorusMix", 1), "Pluck Air", 0.0f, 100.0f, 45.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_width", 1), "Pluck Width", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pluck_masterGain", 1), "Pluck Master", 0.0f, 100.0f, 70.0f));
+
+    // --- MythicLead Instrument ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_satDrive", 1), "Lead Drive", 0.0f, 100.0f, 40.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_bodyGain", 1), "Lead Level", 0.0f, 100.0f, 65.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_subOscGain", 1), "Lead Lo", 0.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_filterFreq", 1), "Lead Cutoff", 0.0f, 100.0f, 60.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_filterQ", 1), "Lead Res", 0.0f, 100.0f, 35.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_detuneCents", 1), "Lead Detune", 0.0f, 100.0f, 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_attack", 1), "Lead Attack", 0.0f, 100.0f, 5.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_decay", 1), "Lead Decay", 0.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_sustain", 1), "Lead Sustain", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_release", 1), "Lead Release", 0.0f, 100.0f, 25.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_satMix", 1), "Lead Sat", 0.0f, 100.0f, 30.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lead_masterGain", 1), "Lead Master", 0.0f, 100.0f, 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("lead_bypassed", 1), "Lead Bypassed", false));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("lead_voiceMode", 1), "Lead Voice Mode", 0, 1, 0));
 
     return layout;
 }

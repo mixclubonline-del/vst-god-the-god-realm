@@ -1,6 +1,37 @@
 import type { DSPChainModule, DSPModuleType } from './types';
 import type { BufferRegistry } from '../audio/BufferRegistry';
 
+const CLOCK_WORKLET_CODE = `
+class GodRealmClockWorklet extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.tickIntervalSamples = Math.floor(sampleRate * 0.025); 
+    this.samplesSinceLastTick = 0;
+
+    this.port.onmessage = (event) => {
+      if (event.data.type === 'SET_INTERVAL') {
+        const ms = event.data.intervalMs || 25;
+        this.tickIntervalSamples = Math.floor(sampleRate * (ms / 1000));
+      }
+    };
+  }
+
+  process(inputs, outputs, parameters) {
+    this.samplesSinceLastTick += 128;
+
+    if (this.samplesSinceLastTick >= this.tickIntervalSamples) {
+      this.samplesSinceLastTick -= this.tickIntervalSamples;
+      this.port.postMessage({ type: 'tick' });
+    }
+
+    return true;
+  }
+}
+
+registerProcessor('god-realm-clock-worklet', GodRealmClockWorklet);
+`;
+
+
 export interface SamplePreviewController {
   path: string;
   stop: () => void;
@@ -376,6 +407,7 @@ export class GodRealmSamplerEngine {
   // Aura Link (Modulation)
   private lfos: OscillatorNode[] = [];
   private lfoGains: GainNode[] = [];
+  private routingGains: GainNode[] = [];
   private modulationMatrix: Map<string, AudioParam[]> = new Map();
 
   private currentRoundRobinSlot = 0;
@@ -436,10 +468,10 @@ export class GodRealmSamplerEngine {
     }
 
     try {
-      // In Vite, ?url explicitly tells the bundler to treat this as an asset URL.
-      // And we use .js because AudioWorklets must be valid JS (browsers can't parse TS).
-      const workletUrl = new URL('../audio/godRealmWorklet.js?url', import.meta.url);
-      await this.ctx.audioWorklet.addModule(workletUrl.href);
+      const blob = new Blob([CLOCK_WORKLET_CODE], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      await this.ctx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
       if (this.ctx.state === 'closed') return; // Component unmounted, abort init
       
       this.clockNode = new AudioWorkletNode(this.ctx, 'god-realm-clock-worklet');
@@ -449,8 +481,10 @@ export class GodRealmSamplerEngine {
         }
       };
       this.clockNode.connect(this.ctx.destination);
-    } catch (err) {
-      console.warn('GodRealmSamplerEngine failed to load Clock Worklet, falling back to setTimeout', err);
+    } catch (err: any) {
+      if (err.name !== 'AbortError' && this.ctx?.state !== 'closed') {
+        console.warn('GodRealmSamplerEngine failed to load Clock Worklet, falling back to setTimeout', err);
+      }
     }
     
     if (this.ctx.state === 'closed') return; // Final check before massive node creation
@@ -603,6 +637,9 @@ export class GodRealmSamplerEngine {
     this.m808ClickBuffer = makeNoiseBuffer(this.ctx, 0.05);
 
     // ─── Aura Link LFOs ───
+    this.lfos = [];
+    this.lfoGains = [];
+    this.routingGains = [];
     for (let i = 0; i < 4; i++) {
       const lfo = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -613,6 +650,26 @@ export class GodRealmSamplerEngine {
       lfo.start();
       this.lfos.push(lfo);
       this.lfoGains.push(gain);
+
+      // Create intermediate routing gain node
+      const rGain = this.ctx.createGain();
+      rGain.gain.value = 0; // Routing amount starts at 0, updated by parameters
+      gain.connect(rGain);
+      this.routingGains.push(rGain);
+    }
+
+    // Connect routing gains to their target AudioParams
+    if (this.masterBodyFilter) {
+      this.routingGains[0].connect(this.masterBodyFilter.gain);
+    }
+    if (this.masterSoulFilter) {
+      this.routingGains[1].connect(this.masterSoulFilter.gain);
+    }
+    if (this.masterSilkFilter) {
+      this.routingGains[2].connect(this.masterSilkFilter.gain);
+    }
+    if (this.widthGain) {
+      this.routingGains[3].connect(this.widthGain.gain);
     }
 
     await this.loadManifest();
@@ -916,6 +973,8 @@ export class GodRealmSamplerEngine {
     // Stop engine-wide oscillators
     if (this.m808SubOsc) { try { this.m808SubOsc.stop(); } catch(e){} }
     this.lfos.forEach(lfo => { try { lfo.stop(); } catch(e){} });
+    this.routingGains.forEach(gain => { try { gain.disconnect(); } catch(e){} });
+    this.routingGains = [];
 
     if (this.ctx) {
       // Phase 1: Only close the context if we created it ourselves
@@ -2308,6 +2367,20 @@ export class GodRealmSamplerEngine {
       }
     }
 
+    // Master Dynamics / Limiter
+    if (params['masterDynamicsThreshold'] !== undefined && this.masterLimiter) {
+      this.masterLimiter.threshold.setTargetAtTime(params['masterDynamicsThreshold'], this.ctx.currentTime, 0.05);
+    }
+    if (params['masterDynamicsRatio'] !== undefined && this.masterLimiter) {
+      this.masterLimiter.ratio.setTargetAtTime(params['masterDynamicsRatio'], this.ctx.currentTime, 0.05);
+    }
+    if (params['masterDynamicsAttack'] !== undefined && this.masterLimiter) {
+      this.masterLimiter.attack.setTargetAtTime(params['masterDynamicsAttack'] / 1000, this.ctx.currentTime, 0.05); // ms -> s
+    }
+    if (params['masterDynamicsRelease'] !== undefined && this.masterLimiter) {
+      this.masterLimiter.release.setTargetAtTime(params['masterDynamicsRelease'] / 1000, this.ctx.currentTime, 0.05); // ms -> s
+    }
+
     // --- Slot & God Module Updates ---
     for (const [id, value] of Object.entries(params)) {
       // Slot logic
@@ -2503,6 +2576,54 @@ export class GodRealmSamplerEngine {
       const activePad = params['activePad'] ?? 0;
       if (params['chopperReverse'] && !this.reversedBuffers[activePad] && this.buffers[activePad]) {
         this.reversedBuffers[activePad] = this.reverseAudioBuffer(this.buffers[activePad]!);
+      }
+    }
+
+    // --- LFO & Aura Modulation Matrix Updates ---
+    for (let i = 0; i < 4; i++) {
+      if (params[`lfoRate_${i}`] !== undefined) {
+        const rateVal = params[`lfoRate_${i}`];
+        const minHz = Math.log(0.1);
+        const maxHz = Math.log(20);
+        const hz = Math.exp(minHz + (rateVal / 100) * (maxHz - minHz));
+        if (this.lfos[i]) {
+          this.lfos[i].frequency.setTargetAtTime(hz, this.ctx.currentTime, 0.05);
+        }
+      }
+
+      if (params[`lfoDepth_${i}`] !== undefined) {
+        const depthVal = params[`lfoDepth_${i}`];
+        if (this.lfoGains[i]) {
+          this.lfoGains[i].gain.setTargetAtTime(depthVal / 100, this.ctx.currentTime, 0.05);
+        }
+      }
+
+      if (params[`lfoShape_${i}`] !== undefined) {
+        const shapeVal = params[`lfoShape_${i}`];
+        const shapes: OscillatorType[] = ['sine', 'triangle', 'sawtooth', 'square'];
+        const targetShape = shapes[shapeVal] || 'sine';
+        if (this.lfos[i]) {
+          this.lfos[i].type = targetShape;
+        }
+      }
+
+      const actKey = `routingActive_${i}`;
+      const amtKey = `routingAmt_${i}`;
+      if (params[actKey] !== undefined || params[amtKey] !== undefined) {
+        const active = params[actKey] !== undefined ? params[actKey] : (this.lastParams[actKey] ?? (i === 1 ? false : true));
+        const amt = params[amtKey] !== undefined ? params[amtKey] : (this.lastParams[amtKey] ?? (i === 0 ? 45 : i === 1 ? 12 : i === 2 ? 68 : 92));
+        
+        let scale = 1.0;
+        if (i < 3) {
+          scale = 12.0; // Modulate EQ gain by up to +/- 12 dB
+        } else {
+          scale = 1.0;  // Modulate width by up to +/- 1.0
+        }
+        
+        const targetGain = active ? (amt / 100) * scale : 0;
+        if (this.routingGains[i]) {
+          this.routingGains[i].gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.05);
+        }
       }
     }
 

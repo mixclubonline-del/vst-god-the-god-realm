@@ -1010,14 +1010,28 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       const newPoint: AutomationPoint = { step: action.step, value: clampedValue };
       const tracks = state.tracks.map((t, i) => {
         if (i !== action.trackIndex) return t;
-        const lanes = t.automationLanes.map(lane => {
-          if (lane.param !== action.param) return lane;
-          // Merge: remove points within ±0.1 step of new point, then insert
-          let points = lane.points.filter(p => Math.abs(p.step - action.step) > 0.1);
-          points.push(newPoint);
-          points.sort((a, b) => a.step - b.step);
-          return { ...lane, points };
-        });
+        
+        const laneExists = t.automationLanes.some(lane => lane.param === action.param);
+        let lanes;
+        if (!laneExists) {
+          // Auto-insert a new lane if it doesn't exist
+          const newLane: AutomationLane = {
+            param: action.param,
+            enabled: true,
+            points: [newPoint],
+            curveType: 'linear'
+          };
+          lanes = [...t.automationLanes, newLane];
+        } else {
+          lanes = t.automationLanes.map(lane => {
+            if (lane.param !== action.param) return lane;
+            // Merge: remove points within ±0.1 step of new point, then insert
+            let points = lane.points.filter(p => Math.abs(p.step - action.step) > 0.1);
+            points.push(newPoint);
+            points.sort((a, b) => a.step - b.step);
+            return { ...lane, points };
+          });
+        }
         return { ...t, automationLanes: lanes };
       });
       return { ...state, tracks };
@@ -1326,6 +1340,36 @@ const HISTORY_IGNORE_ACTIONS = [
   'TOGGLE_AUTOMATION_RECORD',
 ];
 
+const CLOCK_WORKLET_CODE = `
+class GodRealmClockWorklet extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.tickIntervalSamples = Math.floor(sampleRate * 0.025); 
+    this.samplesSinceLastTick = 0;
+
+    this.port.onmessage = (event) => {
+      if (event.data.type === 'SET_INTERVAL') {
+        const ms = event.data.intervalMs || 25;
+        this.tickIntervalSamples = Math.floor(sampleRate * (ms / 1000));
+      }
+    };
+  }
+
+  process(inputs, outputs, parameters) {
+    this.samplesSinceLastTick += 128;
+
+    if (this.samplesSinceLastTick >= this.tickIntervalSamples) {
+      this.samplesSinceLastTick -= this.tickIntervalSamples;
+      this.port.postMessage({ type: 'tick' });
+    }
+
+    return true;
+  }
+}
+
+registerProcessor('god-realm-clock-worklet', GodRealmClockWorklet);
+`;
+
 /* ═══ Hook ═══ */
 export function useSequencerEngine(
   sharedAudioCtx?: React.RefObject<AudioContext | null>,
@@ -1469,9 +1513,10 @@ export function useSequencerEngine(
 
       // Update UI step — throttled to reduce React re-render churn
       // Direct ref update is always current; dispatch is throttled
-      if (currentStepRef.current !== stepIdx) {
+      if (s.currentStep !== stepIdx) {
         dispatch({ type: 'SET_CURRENT_STEP', step: stepIdx });
       }
+
       nextStepTimeRef.current += stepDuration;
     }
   }, []);
@@ -1487,8 +1532,10 @@ export function useSequencerEngine(
 
       // Phase 3: Load the highly-accurate Clock Worklet
       try {
-        const workletUrl = new URL('../../audio/godRealmWorklet.js?url', import.meta.url);
-        await audioCtxRef.current.audioWorklet.addModule(workletUrl.href);
+        const blob = new Blob([CLOCK_WORKLET_CODE], { type: 'application/javascript' });
+        const url = URL.createObjectURL(blob);
+        await audioCtxRef.current.audioWorklet.addModule(url);
+        URL.revokeObjectURL(url);
         clockNodeRef.current = new AudioWorkletNode(audioCtxRef.current, 'god-realm-clock-worklet');
         clockNodeRef.current.port.onmessage = (e) => {
           if (e.data.type === 'tick') {
@@ -1496,8 +1543,10 @@ export function useSequencerEngine(
           }
         };
         clockNodeRef.current.connect(audioCtxRef.current.destination);
-      } catch (err) {
-        console.warn('GodRealmClockWorklet failed to load, falling back to setInterval clock:', err);
+      } catch (err: any) {
+        if (err.name !== 'AbortError' && audioCtxRef.current?.state !== 'closed') {
+          console.warn('GodRealmClockWorklet failed to load, falling back to setInterval clock:', err);
+        }
       }
 
       // Phase 3: Use shared MasterChain (Celestial Forge) if provided
@@ -1572,6 +1621,7 @@ export function useSequencerEngine(
     masterChain: masterChainRef,
     fxRack: fxRackRef,
     /* Undo/Redo */
+
     undo,
     redo,
     canUndo,

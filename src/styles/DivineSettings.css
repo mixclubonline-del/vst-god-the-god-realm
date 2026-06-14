@@ -444,3 +444,49 @@
   background: rgba(255, 68, 68, 0.15);
   border-color: rgba(255, 68, 68, 0.3);
 }
+
+/* ─── Integrated Settings Sliders ─── */
+.ds-slider-custom .divine-slider-header {
+  display: none !important;
+}
+
+.ds-slider-custom .divine-slider-container {
+  min-width: unset !important;
+  gap: 0 !important;
+  display: block !important;
+}
+
+.ds-slider-custom .divine-slider-track-area {
+  height: 16px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.ds-slider-custom .divine-slider-track-bg {
+  inset: 6px 0 !important;
+}
+
+.ds-slider-custom .divine-slider-fill {
+  height: 4px !important;
+  top: 6px !important;
+}
+
+.ds-slider-custom .divine-slider-thumb {
+  width: 10px !important;
+  height: 10px !important;
+  top: 3px !important;
+  margin-left: -5px !important;
+}
+
+.ds-slider-custom .thumb-glass {
+  border-radius: 50% !important;
+}
+
+.ds-slider-custom .thumb-indicator {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.ds-row--slider:hover {
+  background: rgba(255, 215, 0, 0.04);
+}

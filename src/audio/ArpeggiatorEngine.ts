@@ -116,6 +116,7 @@ export class ArpeggiatorEngine {
   private onNoteOff: ((note: number) => void) | null = null;
   private activeNote: number | null = null;
   private timerId: number | null = null;
+  private nextTickTime: number = 0;
 
   setConfig(config: Partial<ArpConfig>) {
     this.config = { ...this.config, ...config };
@@ -161,6 +162,8 @@ export class ArpeggiatorEngine {
     const beatsPerSecond = bpm / 60;
     const stepsPerBeat = RATE_MULTIPLIERS[this.config.rate];
     this.tickInterval = 1000 / (beatsPerSecond * stepsPerBeat);
+    // Reset so next tick recalculates timing at new interval
+    this.nextTickTime = 0;
   }
 
   private rebuildSequence() {
@@ -175,6 +178,7 @@ export class ArpeggiatorEngine {
     this.stepIndex = 0;
     this.patternIndex = 0;
     this.lastTickTime = performance.now();
+    this.nextTickTime = 0;
     this.scheduleTick();
   }
 
@@ -184,6 +188,7 @@ export class ArpeggiatorEngine {
       clearTimeout(this.timerId);
       this.timerId = null;
     }
+    this.nextTickTime = 0;
     // Release active note
     if (this.activeNote !== null && this.onNoteOff) {
       this.onNoteOff(this.activeNote);
@@ -193,10 +198,22 @@ export class ArpeggiatorEngine {
 
   private scheduleTick() {
     if (!this.isRunning) return;
+
+    const now = performance.now();
+    if (this.nextTickTime === 0) {
+      this.nextTickTime = now + this.tickInterval;
+    }
+
+    // Calculate delay to next expected tick, correcting for any drift
+    const delay = Math.max(1, this.nextTickTime - now);
+
     this.timerId = window.setTimeout(() => {
       this.tick();
+      // Schedule next tick relative to when this tick SHOULD have fired
+      // This prevents cumulative drift
+      this.nextTickTime += this.tickInterval;
       this.scheduleTick();
-    }, this.tickInterval) as unknown as number;
+    }, delay) as unknown as number;
   }
 
   private tick() {

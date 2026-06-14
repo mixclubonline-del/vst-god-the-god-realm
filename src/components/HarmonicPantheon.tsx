@@ -213,7 +213,7 @@ export const HarmonicPantheon: React.FC<{
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
             >
-              <div style={{ minWidth: 320, padding: '24px', height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="hp-detail-inner">
                 {/* Header */}
                 <div className="vg-deity-header">
                   <div className="vg-deity-id">
@@ -240,7 +240,7 @@ export const HarmonicPantheon: React.FC<{
                 </div>
 
                 {/* Description */}
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', margin: 0 }}>{sel.description}</p>
+                <p className="hp-detail-description">{sel.description}</p>
 
                 {/* Invoke slider */}
                 <div className="vg-deity-invoke-row">
@@ -263,18 +263,16 @@ export const HarmonicPantheon: React.FC<{
                 </div>
 
                 {/* Harmonic DNA Bars */}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 48, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 4 }}>
+                <div className="hp-detail-dna-bars">
                   {sel.harmonicProfile.map((amp, i) => (
                     <motion.div
                       key={i}
                       initial={{ height: 0 }}
                       animate={{ height: `${amp * 100}%` }}
                       transition={{ type: 'spring', stiffness: 100, damping: 15, delay: i * 0.03 }}
+                      className="hp-detail-dna-bar"
                       style={{ 
-                        flex: 1, 
                         background: sel.color, 
-                        borderRadius: '2px 2px 0 0',
-                        opacity: 0.7,
                         boxShadow: `0 0 8px ${sel.color}44`
                       }}
                     />
@@ -303,18 +301,17 @@ export const HarmonicPantheon: React.FC<{
 
                 {/* Anubis Phase Align special */}
                 {sel.id === 'anubis' && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div className="hp-detail-anubis-special">
                     <button 
-                      className="vg-deity-bypass-btn"
+                      className="vg-deity-bypass-btn hp-detail-flex-1"
                       onClick={() => {
                         const current = (parameterValues.god_anubis_phase as number) || 0;
                         update('god_anubis_phase', current > 50 ? 0 : 80);
                       }}
-                      style={{ flex: 1 }}
                     >
                       ⚡ PHASE ALIGN
                     </button>
-                    <div className="vg-808-viz" style={{ flex: 1 }}>
+                    <div className="vg-808-viz hp-detail-flex-1">
                       <div className="vg-808-wave-layer sub" style={{ opacity: (parameterValues.god_anubis_sub as number || 50) / 100 }} />
                       <div className="vg-808-wave-layer mid" style={{ opacity: (parameterValues.god_anubis_mid as number || 50) / 100 }} />
                     </div>
@@ -322,9 +319,9 @@ export const HarmonicPantheon: React.FC<{
                 )}
 
                 {/* Aether Envelope */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-                  <span style={{ fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', textTransform: 'uppercase' as const }}>AETHER ENVELOPE</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                <div className="hp-detail-envelope-section">
+                  <span className="hp-detail-envelope-title">AETHER ENVELOPE</span>
+                  <div className="hp-detail-envelope-list">
                     <DivineSlider label="ATTACK" value={parameterValues[`god_${sel.id}_envAttack`] || 10} min={0} max={2000} unit="ms" onChange={(v) => update(`god_${sel.id}_envAttack`, v)} />
                     <DivineSlider label="DECAY" value={parameterValues[`god_${sel.id}_envDecay`] || 250} min={10} max={5000} unit="ms" onChange={(v) => update(`god_${sel.id}_envDecay`, v)} />
                     <DivineSlider label="SUSTAIN" value={parameterValues[`god_${sel.id}_envSustain`] || 70} min={0} max={100} unit="%" onChange={(v) => update(`god_${sel.id}_envSustain`, v)} />
@@ -338,8 +335,8 @@ export const HarmonicPantheon: React.FC<{
 
         {/* Prompt when nothing selected */}
         {!sel && (
-          <div className="vg-pantheon-hint" style={{ position: 'absolute', bottom: 24, left: 0, right: 0, textAlign: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.3em', textTransform: 'uppercase' as const }}>
+          <div className="vg-pantheon-hint">
+            <span>
               SELECT A DEITY TO INVOKE THEIR POWER
             </span>
           </div>

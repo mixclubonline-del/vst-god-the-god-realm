@@ -124,9 +124,45 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
   const [playingSlice, setPlayingSlice] = useState<number | null>(null);
   const previewSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const previewCtxRef = useRef<AudioContext | null>(null);
+  const previewStartTimeRef = useRef<number | null>(null);
   const [spreadState, setSpreadState] = useState<'idle' | 'spreading' | 'done'>('idle');
   const minimapCanvasRef = useRef<HTMLCanvasElement>(null);
   const [viewWindow, setViewWindow] = useState<[number, number]>([0, 1]);
+
+  const [dimensions, setDimensions] = useState({ width: 1000, height: 280 });
+  const [minimapDimensions, setMinimapDimensions] = useState({ width: 800, height: 32 });
+
+  // ResizeObserver for main waveform canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setDimensions({
+          width: Math.floor(entry.contentRect.width) || 1000,
+          height: Math.floor(entry.contentRect.height) || 280,
+        });
+      }
+    });
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+
+  // ResizeObserver for minimap canvas
+  useEffect(() => {
+    const canvas = minimapCanvasRef.current;
+    if (!canvas) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setMinimapDimensions({
+          width: Math.floor(entry.contentRect.width) || 800,
+          height: Math.floor(entry.contentRect.height) || 32,
+        });
+      }
+    });
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
 
   // Extract current params
   const chopMarkers = useMemo(() =>
@@ -136,14 +172,18 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
   const chopMode = sampleParams.chopMode || 'Manual';
   const isReverse = sampleParams.reverse;
 
+  const { width, height } = dimensions;
+
   // ─── Waveform Rendering ───
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
 
     let peaks: Float32Array;
 
@@ -190,7 +230,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
         ctx.fillStyle = 'rgba(0, 0, 0, 1)';
         ctx.fillRect(0, 0, width, height);
         ctx.globalAlpha = 0.25;
-        ctx.font = 'bold 14px monospace';
+        ctx.font = 'bold 12px monospace';
         ctx.fillStyle = '#a88cff';
         ctx.textAlign = 'center';
         ctx.fillText('DROP OR LOAD A SAMPLE', width / 2, height / 2);
@@ -214,18 +254,42 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.fillRect(0, 0, width, height);
 
-      const drawPath = (color: string, blur: number, isMirror: boolean, jitter: number, alpha: number, w: number) => {
-        ctx.beginPath();
-        ctx.moveTo(0, height / 2);
-        for (let i = 0; i < width; i++) {
-          const p = peaks[i];
+      const drawPath = (color: string, blur: number, isMirror: boolean, jitter: number, alpha: number, lineWidthVal: number) => {
+        const points: Array<{ x: number; y: number }> = [];
+        const stepSize = 2; // draw every 2 logical pixels
+        for (let i = 0; i < width; i += stepSize) {
+          const p = peaks[i] || 0;
           const j = (Math.random() - 0.5) * p * jitter;
           const yOff = p * (height / 2 * 0.8) + j;
-          ctx.lineTo(i, isMirror ? (height / 2) + yOff : (height / 2) - yOff);
+          points.push({
+            x: i,
+            y: isMirror ? (height / 2) + yOff : (height / 2) - yOff,
+          });
         }
+        
+        // Final point
+        const lastP = peaks[width - 1] || 0;
+        const lastJ = (Math.random() - 0.5) * lastP * jitter;
+        const lastYOff = lastP * (height / 2 * 0.8) + lastJ;
+        points.push({
+          x: width,
+          y: isMirror ? (height / 2) + lastYOff : (height / 2) - lastYOff,
+        });
+
+        if (points.length < 2) return;
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length - 1; i++) {
+          const xc = (points[i].x + points[i + 1].x) / 2;
+          const yc = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+        }
+        ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+
         ctx.strokeStyle = color;
         ctx.globalAlpha = alpha;
-        ctx.lineWidth = w;
+        ctx.lineWidth = lineWidthVal;
         ctx.shadowBlur = blur;
         ctx.shadowColor = color;
         ctx.globalCompositeOperation = 'screen';
@@ -245,7 +309,8 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
       ctx.globalAlpha = 1;
 
       // Draw slice region shading
-      const allPositions = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+      const sortedMarkers = [...chopMarkers].sort((a, b) => a - b);
+      const allPositions = [0, ...sortedMarkers, 1];
       for (let i = 0; i < allPositions.length - 1; i++) {
         const x1 = allPositions[i] * width;
         const x2 = allPositions[i + 1] * width;
@@ -253,46 +318,79 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
         ctx.fillRect(x1, 0, x2 - x1, height);
       }
 
+      // Draw real-time preview playhead
+      if (playingSlice !== null && buffer && previewCtxRef.current && previewStartTimeRef.current !== null) {
+        const ctxAudio = previewCtxRef.current;
+        const elapsed = (ctxAudio.currentTime - previewStartTimeRef.current) * sampleParams.chopperSpeed;
+        const sorted = [0, ...[...chopMarkers].sort((a, b) => a - b), 1];
+        const start = sorted[playingSlice] ?? 0;
+        const end = sorted[playingSlice + 1] ?? 1;
+        const sliceDuration = (end - start) * buffer.duration;
+        
+        if (elapsed <= sliceDuration) {
+          const currentPos = start + (elapsed / buffer.duration);
+          const playheadX = ((currentPos - viewWindow[0]) / (viewWindow[1] - viewWindow[0])) * width;
+          
+          if (playheadX >= 0 && playheadX <= width) {
+            ctx.save();
+            ctx.strokeStyle = '#ff6600';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#ff6600';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.moveTo(playheadX, 0);
+            ctx.lineTo(playheadX, height);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
       animFrameRef.current = requestAnimationFrame(renderWaveform);
     };
 
     renderWaveform();
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [buffer, chopMarkers, viewWindow, bridgeState.waveformAnalysis, trackIndex]);
+  }, [buffer, chopMarkers, viewWindow, bridgeState.waveformAnalysis, trackIndex, width, height, playingSlice, sampleParams.chopperSpeed]);
 
   // ─── Minimap Rendering ───
+  const { width: miniW, height: miniH } = minimapDimensions;
+
   useEffect(() => {
     const canvas = minimapCanvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     
-    const width = canvas.width;
-    const height = canvas.height;
+    // High-DPI support
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = miniW * dpr;
+    canvas.height = miniH * dpr;
+    ctx.scale(dpr, dpr);
     
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, miniW, miniH);
     
     if (buffer) {
       ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
       const data = buffer.getChannelData(0);
-      const step = Math.floor(data.length / width);
+      const step = Math.floor(data.length / miniW);
       
       ctx.beginPath();
-      ctx.moveTo(0, height / 2);
-      for (let i = 0; i < width; i++) {
+      ctx.moveTo(0, miniH / 2);
+      for (let i = 0; i < miniW; i++) {
         let peak = 0;
         for (let j = 0; j < step; j++) {
           peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
         }
-        const yOff = peak * (height / 2);
-        ctx.lineTo(i, height / 2 - yOff);
+        const yOff = peak * (miniH / 2);
+        ctx.lineTo(i, miniH / 2 - yOff);
       }
-      for (let i = width - 1; i >= 0; i--) {
+      for (let i = Math.floor(miniW) - 1; i >= 0; i--) {
         let peak = 0;
         for (let j = 0; j < step; j++) {
           peak = Math.max(peak, Math.abs(data[i * step + j] || 0));
         }
-        const yOff = peak * (height / 2);
-        ctx.lineTo(i, height / 2 + yOff);
+        const yOff = peak * (miniH / 2);
+        ctx.lineTo(i, miniH / 2 + yOff);
       }
       ctx.closePath();
       ctx.fill();
@@ -301,11 +399,11 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
       if (nativeAnalysis && nativeAnalysis.padIndex === trackIndex && nativeAnalysis.rmsEnvelope && nativeAnalysis.rmsEnvelope.length > 0) {
         ctx.fillStyle = 'rgba(168, 85, 247, 0.4)';
         const env = nativeAnalysis.rmsEnvelope;
-        const step = Math.max(1, env.length / width);
+        const step = Math.max(1, env.length / miniW);
         
         ctx.beginPath();
-        ctx.moveTo(0, height / 2);
-        for (let i = 0; i < width; i++) {
+        ctx.moveTo(0, miniH / 2);
+        for (let i = 0; i < miniW; i++) {
           let peak = 0;
           const offset = Math.floor(i * step);
           for (let j = 0; j < step; j++) {
@@ -313,10 +411,10 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
               peak = Math.max(peak, env[offset + j]);
             }
           }
-          const yOff = peak * (height / 2);
-          ctx.lineTo(i, height / 2 - yOff);
+          const yOff = peak * (miniH / 2);
+          ctx.lineTo(i, miniH / 2 - yOff);
         }
-        for (let i = width - 1; i >= 0; i--) {
+        for (let i = Math.floor(miniW) - 1; i >= 0; i--) {
           let peak = 0;
           const offset = Math.floor(i * step);
           for (let j = 0; j < step; j++) {
@@ -324,14 +422,14 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
               peak = Math.max(peak, env[offset + j]);
             }
           }
-          const yOff = peak * (height / 2);
-          ctx.lineTo(i, height / 2 + yOff);
+          const yOff = peak * (miniH / 2);
+          ctx.lineTo(i, miniH / 2 + yOff);
         }
         ctx.closePath();
         ctx.fill();
       }
     }
-  }, [buffer, bridgeState.waveformAnalysis, trackIndex]);
+  }, [buffer, bridgeState.waveformAnalysis, trackIndex, miniW, miniH]);
 
   // ─── Interaction & Zooming ───
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -531,7 +629,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
       previewSourceRef.current = null;
     }
 
-    const sorted = [0, ...chopMarkers.sort((a, b) => a - b), 1];
+    const sorted = [0, ...[...chopMarkers].sort((a, b) => a - b), 1];
     const start = sorted[sliceIndex] ?? 0;
     const end = sorted[sliceIndex + 1] ?? 1;
     const offset = start * buffer.duration;
@@ -544,10 +642,12 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
     source.start(0, offset, duration);
     previewSourceRef.current = source;
     setPlayingSlice(sliceIndex);
+    previewStartTimeRef.current = ctx.currentTime;
 
     source.onended = () => {
       setPlayingSlice(null);
       previewSourceRef.current = null;
+      previewStartTimeRef.current = null;
     };
   }, [buffer, chopMarkers, sampleParams.chopperSpeed]);
 
@@ -637,7 +737,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       >
-        <canvas ref={canvasRef} width={1000} height={280} className="sacred-chopper__canvas" />
+        <canvas ref={canvasRef} className="sacred-chopper__canvas" />
         {!buffer && <div className="sacred-chopper__empty-text">Awaiting Sample</div>}
 
         {/* Slice Markers */}
@@ -685,7 +785,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
         onMouseDown={handleMinimapDrag} 
         onMouseMove={handleMinimapDrag}
       >
-        <canvas ref={minimapCanvasRef} width={800} height={32} className="sacred-chopper__minimap-canvas" />
+        <canvas ref={minimapCanvasRef} className="sacred-chopper__minimap-canvas" />
         {buffer && (
           <div 
             className="sacred-chopper__minimap-window" 

@@ -108,7 +108,20 @@ export const SpectralAura: React.FC<SpectralAuraProps> = ({ energy, decayTime, s
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 w-full h-full mix-blend-screen opacity-90 transition-opacity duration-300"
+      className="spectral-aura-canvas"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+        mixBlendMode: 'screen',
+        opacity: 0.9,
+        transition: 'opacity 300ms ease-in-out',
+        pointerEvents: 'none'
+      }}
     />
   );
 };

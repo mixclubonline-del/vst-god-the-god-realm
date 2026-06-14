@@ -339,6 +339,8 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   engineRef,
   onLoadToPad,
   activePad,
+  onActivePadChange,
+  loadedPadNames,
 }) => {
   const [manifest, setManifest] = useState<DivineArchiveManifest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -607,7 +609,7 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
                 transition={{ duration: 0.15, delay: Math.min(index * 0.012, 0.4) }}
                 whileHover={{ scale: 1.015, transition: { duration: 0.15 } }}
                 draggable
-                onDragStart={(e) => {
+                onDragStart={(e: any) => {
                   e.dataTransfer.effectAllowed = 'copy';
                   e.dataTransfer.setData('text/plain', JSON.stringify({ relicId: relic.id, path: relic.path }));
                 }}

@@ -5,6 +5,8 @@
  */
 import React, { useCallback, useEffect, useRef } from 'react';
 import type { FXSendState } from './useSequencerEngine';
+import { DivineSlider } from '../ui/DivineSlider';
+
 
 interface SacredFXPopoverProps {
   trackIndex: number;
@@ -73,21 +75,16 @@ export const SacredFXPopover: React.FC<SacredFXPopoverProps> = ({
           <div key={ch.id} className="seq-fx-popover__channel">
             <div className="seq-fx-popover__channel-icon">{ch.icon}</div>
             <div className="seq-fx-popover__slider-wrap">
-              <input
-                type="range"
-                className="seq-fx-popover__slider"
+              <DivineSlider
+                orientation="vertical"
                 min={0}
                 max={100}
                 value={sends[ch.id]}
-                onChange={(e) => onSetSend(trackIndex, ch.id, parseInt(e.target.value))}
-                style={{ '--slider-accent': ch.accent } as React.CSSProperties}
-              />
-              <div
-                className="seq-fx-popover__fill"
-                style={{
-                  height: `${sends[ch.id]}%`,
-                  background: `linear-gradient(to top, ${ch.accent}33, ${ch.accent}88)`,
-                }}
+                step={1}
+                decimals={0}
+                onChange={(v) => onSetSend(trackIndex, ch.id, Math.round(v))}
+                color={ch.accent}
+                size="sm"
               />
             </div>
             <span className="seq-fx-popover__value" style={{ color: ch.accent }}>

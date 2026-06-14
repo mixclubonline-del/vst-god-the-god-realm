@@ -7,7 +7,9 @@
  */
 import React, { useCallback } from 'react';
 import type { SidechainConfig } from '../../audio/SidechainEngine';
+import { DivineSlider } from '../ui/DivineSlider';
 import './SacredSidechain.css';
+
 
 interface TrackInfo {
   index: number;
@@ -109,90 +111,108 @@ export const SacredSidechain: React.FC<SacredSidechainProps> = ({
           {/* Threshold */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">THRESH</span>
-            <input
-              type="range"
-              className="sacred-sc__slider"
-              min={-60}
-              max={0}
-              step={1}
-              value={config.threshold}
-              onChange={e => handleSlider('threshold', parseFloat(e.target.value))}
-            />
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={-60}
+                max={0}
+                value={config.threshold}
+                step={1}
+                decimals={0}
+                onChange={v => handleSlider('threshold', v)}
+                color="#EF4444"
+                size="sm"
+              />
+            </div>
             <span className="sacred-sc__knob-value">{config.threshold}dB</span>
           </div>
 
           {/* Ratio */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">RATIO</span>
-            <input
-              type="range"
-              className="sacred-sc__slider"
-              min={1}
-              max={20}
-              step={0.5}
-              value={config.ratio}
-              onChange={e => handleSlider('ratio', parseFloat(e.target.value))}
-            />
-            <span className="sacred-sc__knob-value">{config.ratio}:1</span>
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={1}
+                max={20}
+                value={config.ratio}
+                step={0.5}
+                decimals={1}
+                onChange={v => handleSlider('ratio', v)}
+                color="#EF4444"
+                size="sm"
+              />
+            </div>
+            <span className="sacred-sc__knob-value">{config.ratio.toFixed(1)}:1</span>
           </div>
 
           {/* Attack */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">ATK</span>
-            <input
-              type="range"
-              className="sacred-sc__slider"
-              min={0.1}
-              max={100}
-              step={0.1}
-              value={config.attack}
-              onChange={e => handleSlider('attack', parseFloat(e.target.value))}
-            />
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={0.1}
+                max={100}
+                value={config.attack}
+                step={0.1}
+                decimals={1}
+                onChange={v => handleSlider('attack', v)}
+                color="#EF4444"
+                size="sm"
+              />
+            </div>
             <span className="sacred-sc__knob-value">{config.attack.toFixed(1)}ms</span>
           </div>
 
           {/* Release */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">REL</span>
-            <input
-              type="range"
-              className="sacred-sc__slider"
-              min={10}
-              max={1000}
-              step={5}
-              value={config.release}
-              onChange={e => handleSlider('release', parseFloat(e.target.value))}
-            />
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={10}
+                max={1000}
+                value={config.release}
+                step={5}
+                decimals={0}
+                onChange={v => handleSlider('release', v)}
+                color="#EF4444"
+                size="sm"
+              />
+            </div>
             <span className="sacred-sc__knob-value">{config.release}ms</span>
           </div>
 
           {/* Hold */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">HOLD</span>
-            <input
-              type="range"
-              className="sacred-sc__slider"
-              min={0}
-              max={200}
-              step={1}
-              value={config.hold}
-              onChange={e => handleSlider('hold', parseFloat(e.target.value))}
-            />
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={0}
+                max={200}
+                value={config.hold}
+                step={1}
+                decimals={0}
+                onChange={v => handleSlider('hold', v)}
+                color="#EF4444"
+                size="sm"
+              />
+            </div>
             <span className="sacred-sc__knob-value">{config.hold}ms</span>
           </div>
 
           {/* Depth */}
           <div className="sacred-sc__knob">
             <span className="sacred-sc__knob-label">DEPTH</span>
-            <input
-              type="range"
-              className="sacred-sc__slider sacred-sc__slider--depth"
-              min={0}
-              max={100}
-              step={1}
-              value={config.depth}
-              onChange={e => handleSlider('depth', parseFloat(e.target.value))}
-            />
+            <div className="sacred-sc__slider-custom" style={{ width: 48 }}>
+              <DivineSlider
+                min={0}
+                max={100}
+                value={config.depth}
+                step={1}
+                decimals={0}
+                onChange={v => handleSlider('depth', v)}
+                color="#FFD700"
+                size="sm"
+              />
+            </div>
             <span className="sacred-sc__knob-value">{config.depth}%</span>
           </div>
         </div>

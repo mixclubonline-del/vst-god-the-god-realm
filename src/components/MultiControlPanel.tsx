@@ -15,6 +15,7 @@ interface MultiControlPanelProps {
   currentStep?: number;
   vortexAnchors?: Array<{x: number, y: number, name: string}>;
   onSaveVortexAnchor?: (x: number, y: number, name: string) => void;
+  level?: number;
 }
 
 /**
@@ -26,19 +27,22 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
   update,
   currentStep = 0,
   vortexAnchors = [],
-  onSaveVortexAnchor
+  onSaveVortexAnchor,
+  level
 }) => {
   const [activePanelTab, setActivePanelTab] = useState<'EQ' | 'FILTER' | 'COMP' | 'AURA'>('EQ');
+  const [activeLfo, setActiveLfo] = useState<number>(0);
   const morphX = parameterValues.morphX || 50;
   const morphY = parameterValues.morphY || 50;
   const [isRecording, setIsRecording] = useState(false);
   const [automationPath, setAutomationPath] = useState<Array<{x: number, y: number}>>([]);
-  const [routings, setRoutings] = useState([
-    { src: 'LFO 1', target: 'RA LOW', amt: 45, active: true },
-    { src: 'LFO 2', target: 'ZEUS TIME', amt: 12, active: false },
-    { src: 'LFO 4', target: 'MSTR REVERB', amt: 68, active: true },
-    { src: 'MOD W', target: 'WIDTH', amt: 92, active: true }
-  ]);
+  
+  const routings = [
+    { src: 'LFO 1', target: 'RA LOW', amt: parameterValues.routingAmt_0 ?? 45, active: parameterValues.routingActive_0 ?? true },
+    { src: 'LFO 2', target: 'RA MID', amt: parameterValues.routingAmt_1 ?? 12, active: parameterValues.routingActive_1 ?? false },
+    { src: 'LFO 3', target: 'RA HIGH', amt: parameterValues.routingAmt_2 ?? 68, active: parameterValues.routingActive_2 ?? true },
+    { src: 'LFO 4', target: 'WIDTH', amt: parameterValues.routingAmt_3 ?? 92, active: parameterValues.routingActive_3 ?? true }
+  ];
 
   return (
     <div className="vg-control-center">
@@ -65,8 +69,18 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                     <span className="text-[7px] text-white/30 uppercase tracking-widest">Divine Modulation Engine</span>
                   </div>
                   <div className="flex gap-2">
-                     {['LFO 1', 'LFO 2', 'LFO 3', 'LFO 4'].map(l => (
-                        <button key={l} className="px-2.5 py-1 bg-red-500/5 border border-red-500/10 rounded-md text-[7px] font-bold text-red-500/60 uppercase hover:bg-red-500/10 transition-colors">{l}</button>
+                     {['LFO 1', 'LFO 2', 'LFO 3', 'LFO 4'].map((l, idx) => (
+                        <button 
+                          key={l} 
+                          onClick={() => setActiveLfo(idx)}
+                          className={`px-2.5 py-1 rounded-md text-[7px] font-bold uppercase transition-all ${
+                            activeLfo === idx 
+                              ? 'bg-red-500 border border-red-500 text-black shadow-[0_0_8px_rgba(255,68,68,0.4)] font-black' 
+                              : 'bg-red-500/5 border border-red-500/10 text-red-500/60 hover:bg-red-500/10'
+                          }`}
+                        >
+                          {l}
+                        </button>
                      ))}
                   </div>
                </div>
@@ -84,28 +98,47 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                         {routings.map((r, i) => (
                            <div 
                              key={i} 
-                             className={`flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none ${r.active ? 'bg-red-500/5 border-red-500/10 shadow-[inset_0_0_10px_rgba(255,0,0,0.02)]' : 'bg-black/20 border-white/5 opacity-40'}`}
-                             onClick={() => {
-                               setRoutings(prev => prev.map((route, idx) => 
-                                 idx === i ? { ...route, active: !route.active } : route
-                               ));
-                             }}
+                             className={`flex items-center justify-between p-2 rounded-lg border transition-all select-none ${r.active ? 'bg-red-500/5 border-red-500/10 shadow-[inset_0_0_10px_rgba(255,0,0,0.02)]' : 'bg-black/20 border-white/5 opacity-40'}`}
                            >
-                              <div className="flex items-center gap-3">
+                              <div 
+                                className="flex items-center gap-3 cursor-pointer flex-1"
+                                onClick={() => update(`routingActive_${i}`, !r.active)}
+                              >
                                 <div className={`w-1.5 h-1.5 rounded-full transition-all ${r.active ? 'bg-red-500 shadow-[0_0_6px_rgba(255,0,0,0.6)]' : 'bg-white/10'}`} />
                                 <span className={`text-[9px] font-black tracking-tighter transition-colors ${r.active ? 'text-red-500' : 'text-white/20'}`}>{r.src}</span>
                                 <span className="text-[8px] text-white/10">▶</span>
                                 <span className={`text-[8px] font-bold uppercase tracking-tight transition-colors ${r.active ? 'text-white/60' : 'text-white/20'}`}>{r.target}</span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div 
+                                className="flex items-center gap-2 cursor-ew-resize py-1 select-none"
+                                onPointerDown={(e) => {
+                                  e.stopPropagation();
+                                  const el = e.currentTarget;
+                                  const rect = el.getBoundingClientRect();
+                                  const updateAmount = (clientX: number) => {
+                                    const pct = Math.max(0, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)));
+                                    update(`routingAmt_${i}`, pct);
+                                  };
+                                  updateAmount(e.clientX);
+                                  const onPointerMove = (moveEv: PointerEvent) => {
+                                    updateAmount(moveEv.clientX);
+                                  };
+                                  const onPointerUp = () => {
+                                    window.removeEventListener('pointermove', onPointerMove);
+                                    window.removeEventListener('pointerup', onPointerUp);
+                                  };
+                                  window.addEventListener('pointermove', onPointerMove);
+                                  window.addEventListener('pointerup', onPointerUp);
+                                }}
+                              >
+                                <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden pointer-events-none">
                                   <motion.div 
                                     className="h-full bg-red-500/40" 
                                     animate={{ width: r.active ? `${r.amt}%` : '0%' }}
                                     transition={{ duration: 0.4, ease: 'easeOut' }}
                                   />
                                 </div>
-                                <span className={`text-[9px] font-mono w-6 text-right transition-colors ${r.active ? 'text-yellow-500/60' : 'text-white/10'}`}>{r.amt}%</span>
+                                <span className={`text-[9px] font-mono w-6 text-right transition-colors pointer-events-none ${r.active ? 'text-yellow-500/60' : 'text-white/10'}`}>{r.amt}%</span>
                               </div>
                            </div>
                         ))}
@@ -188,93 +221,321 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                   </div>
                </div>
             </div>
+          ) : activePanelTab === 'FILTER' ? (
+            <svg className="w-full h-full p-2 overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="filter-grad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor="rgba(0,204,255,0)" />
+                  <stop offset="100%" stopColor="rgba(0,204,255,0.12)" />
+                </linearGradient>
+              </defs>
+
+              {/* Background Grid Lines */}
+              <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+              {[50, 100, 150].map(x => (
+                <line key={x} x1={x} y1="0" x2={x} y2="100" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+              ))}
+
+              {(() => {
+                const pad = parameterValues.activePad || 0;
+                const cutoff = parameterValues[`slotFilterFreq_${pad}`] ?? 100;
+                const q = parameterValues[`slotFilterQ_${pad}`] ?? 15;
+                const type = parameterValues[`slotFilterType_${pad}`] ?? 'lowpass';
+
+                const cx = 20 + (cutoff / 100) * 160;
+                const peak = (q / 100) * 35;
+                const cy = Math.max(10, 50 - peak);
+                let path = '';
+                let strokePath = '';
+                
+                if (type === 'lowpass') {
+                  path = `M 0 50 L 0 50 L ${cx - 30} 50 Q ${cx - 15} 50 ${cx - 8} ${cy} Q ${cx} ${cy - 5} ${cx + 10} 70 T 200 98 L 200 50 Z`;
+                  strokePath = `M 0 50 L ${cx - 30} 50 Q ${cx - 15} 50 ${cx - 8} ${cy} Q ${cx} ${cy - 5} ${cx + 10} 70 T 200 98`;
+                } else if (type === 'highpass') {
+                  path = `M 0 98 Q 50 90 ${cx - 10} 70 Q ${cx} ${cy - 5} ${cx + 8} ${cy} Q ${cx + 15} 50 ${cx + 30} 50 L 200 50 L 200 50 Z`;
+                  strokePath = `M 0 98 Q 50 90 ${cx - 10} 70 Q ${cx} ${cy - 5} ${cx + 8} ${cy} Q ${cx + 15} 50 ${cx + 30} 50 L 200 50`;
+                } else { // bandpass
+                  path = `M 0 95 Q ${cx - 30} 90 ${cx - 15} ${cy + 15} Q ${cx} ${cy} ${cx + 15} ${cy + 15} Q ${cx + 30} 90 200 95 L 200 50 Z`;
+                  strokePath = `M 0 95 Q ${cx - 30} 90 ${cx - 15} ${cy + 15} Q ${cx} ${cy} ${cx + 15} ${cy + 15} Q ${cx + 30} 90 200 95`;
+                }
+
+                return (
+                  <>
+                    <path d={path} fill="url(#filter-grad)" />
+                    <path d={strokePath} fill="none" stroke="#00ccff" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(0,204,255,0.4)]" />
+                    <circle cx={cx} cy={type === 'lowpass' ? cy - 2 : type === 'highpass' ? cy - 2 : cy} r="3" fill="#00ccff" className="drop-shadow-[0_0_8px_#00ccff]" />
+                  </>
+                );
+              })()}
+            </svg>
+          ) : activePanelTab === 'COMP' ? (
+            <svg className="w-full h-full p-2 overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="comp-grad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stopColor="rgba(255,68,68,0)" />
+                  <stop offset="100%" stopColor="rgba(255,68,68,0.12)" />
+                </linearGradient>
+              </defs>
+
+              {/* Background Grid Lines */}
+              <line x1="20" y1="50" x2="180" y2="50" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+              <line x1="100" y1="10" x2="100" y2="90" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+
+              {(() => {
+                const thres = parameterValues.masterDynamicsThreshold ?? -12;
+                const ratio = parameterValues.masterDynamicsRatio ?? 2.0;
+                
+                const tx = 20 + ((thres + 60) / 60) * 160;
+                const ty = 90 - ((thres + 60) / 60) * 80;
+                
+                const outDb = thres + (0 - thres) / ratio;
+                const ey = 90 - ((outDb + 60) / 60) * 80;
+                
+                const strokePath = `M 20 90 L ${tx} ${ty} L 180 ${ey}`;
+                const path = `M 20 90 L ${tx} ${ty} L 180 ${ey} L 180 90 Z`;
+                
+                // Real-time bouncing indicator dot
+                const activeLvl = level || 0;
+                const lvlDb = -60 + activeLvl * 60;
+                const dotX = 20 + ((lvlDb + 60) / 60) * 160;
+                let dotY = 90 - ((lvlDb + 60) / 60) * 80;
+                if (lvlDb > thres) {
+                  const compDb = thres + (lvlDb - thres) / ratio;
+                  dotY = 90 - ((compDb + 60) / 60) * 80;
+                }
+
+                // Gain Reduction
+                const grDb = lvlDb > thres ? (lvlDb - thres) * (1 - 1 / ratio) : 0;
+                const grHeight = (grDb / 40) * 80;
+
+                return (
+                  <>
+                    <line x1={tx} y1="10" x2={tx} y2="90" stroke="rgba(255,68,68,0.25)" strokeWidth="1" strokeDasharray="3 3" />
+                    
+                    <path d={path} fill="url(#comp-grad)" />
+                    <path d={strokePath} fill="none" stroke="#ff4444" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(255,68,68,0.4)]" />
+                    
+                    {activeLvl > 0.01 && (
+                      <circle cx={Math.max(20, Math.min(180, dotX))} cy={Math.max(10, Math.min(90, dotY))} r="3.5" fill="#ff4444" className="drop-shadow-[0_0_10px_#ff4444]" />
+                    )}
+
+                    <rect x="190" y="10" width="4" height="80" rx="1" fill="rgba(255,255,255,0.05)" />
+                    {grDb > 0.1 && (
+                      <rect x="190" y="10" width="4" height={Math.min(80, grHeight)} rx="1" fill="#ff4444" className="drop-shadow-[0_0_8px_#ff4444]" />
+                    )}
+                  </>
+                );
+              })()}
+            </svg>
           ) : (
-               <svg className="w-full h-full p-2 overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
-                   <defs>
-                      <linearGradient id="eq-grad" x1="0" y1="1" x2="0" y2="0">
-                         <stop offset="0%" stopColor="rgba(255,215,0,0)" />
-                         <stop offset="100%" stopColor="rgba(255,215,0,0.1)" />
-                      </linearGradient>
-                      <linearGradient id="freqGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255,215,0,0.1)" />
-                        <stop offset="100%" stopColor="transparent" />
-                      </linearGradient>
-                   </defs>
+            <svg className="w-full h-full p-2 overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
+                <defs>
+                   <linearGradient id="eq-grad" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="rgba(255,215,0,0)" />
+                      <stop offset="100%" stopColor="rgba(255,215,0,0.1)" />
+                   </linearGradient>
+                   <linearGradient id="freqGlow" x1="0" y1="0" x2="0" y2="1">
+                     <stop offset="0%" stopColor="rgba(255,215,0,0.1)" />
+                     <stop offset="100%" stopColor="transparent" />
+                   </linearGradient>
+                </defs>
 
-                   {/* Background Frequency Clouds */}
-                   <path 
-                     d="M 0 60 Q 50 20 100 50 T 200 40 L 200 100 L 0 100 Z" 
-                     fill="url(#freqGlow)"
-                     className="animate-pulse opacity-40"
-                     style={{ animationDuration: '4s' }}
-                   />
+                {/* Background Frequency Clouds */}
+                <path 
+                  d="M 0 60 Q 50 20 100 50 T 200 40 L 200 100 L 0 100 Z" 
+                  fill="url(#freqGlow)"
+                  className="animate-pulse opacity-40"
+                  style={{ animationDuration: '4s' }}
+                />
+                
+                {/* Dynamic Frequency Response Curve */}
+                {(() => {
+                   const low = ((parameterValues['god_ra_low'] || 50) - 50) * 0.8;
+                   const mid = ((parameterValues['god_ra_mid'] || 50) - 50) * 0.8;
+                   const pres = ((parameterValues['god_ra_presence'] || 50) - 50) * 0.8;
+                   const high = ((parameterValues['god_ra_high'] || 50) - 50) * 0.8;
                    
-                   {/* Dynamic Frequency Response Curve */}
-                   {(() => {
-                      const low = ((parameterValues['god_ra_low'] || 50) - 50) * 0.8;
-                      const mid = ((parameterValues['god_ra_mid'] || 50) - 50) * 0.8;
-                      const pres = ((parameterValues['god_ra_presence'] || 50) - 50) * 0.8;
-                      const high = ((parameterValues['god_ra_high'] || 50) - 50) * 0.8;
-                      
-                      const p1 = { x: 0, y: 50 - low };
-                      const p2 = { x: 50, y: 50 - mid };
-                      const p3 = { x: 100, y: 50 - pres };
-                      const p4 = { x: 150, y: 50 - high };
-                      const p5 = { x: 200, y: 50 - high };
+                   const p1 = { x: 0, y: 50 - low };
+                   const p2 = { x: 50, y: 50 - mid };
+                   const p3 = { x: 100, y: 50 - pres };
+                   const p4 = { x: 150, y: 50 - high };
+                   const p5 = { x: 200, y: 50 - high };
 
-                      const path = `M 0 50 L 0 ${p1.y} Q 25 ${p1.y} 50 ${p2.y} T 100 ${p3.y} T 150 ${p4.y} L 200 ${p5.y} L 200 50 Z`;
-                      const strokePath = `M 0 ${p1.y} Q 25 ${p1.y} 50 ${p2.y} T 100 ${p3.y} T 150 ${p4.y} L 200 ${p5.y}`;
+                   const path = `M 0 50 L 0 ${p1.y} Q 25 ${p1.y} 50 ${p2.y} T 100 ${p3.y} T 150 ${p4.y} L 200 ${p5.y} L 200 50 Z`;
+                   const strokePath = `M 0 ${p1.y} Q 25 ${p1.y} 50 ${p2.y} T 100 ${p3.y} T 150 ${p4.y} L 200 ${p5.y}`;
 
-                      return (
-                        <>
-                          <path d={path} fill="url(#eq-grad)" />
-                          <path d={strokePath} fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(255,215,0,0.4)]" />
-                          
-                          {/* Interaction Nodes */}
-                          {[p1, p2, p3, p4].map((p, i) => (
-                            <g key={i} className="cursor-pointer">
-                               <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="3" fill="#FFD700" className="drop-shadow-[0_0_8px_#FFD700]" />
-                               {Math.abs(50 - p.y) > 10 && (
-                                 <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="6" fill="transparent" stroke="rgba(255,215,0,0.3)" strokeWidth="1" className="animate-ping" />
-                               )}
-                            </g>
-                          ))}
-                        </>
-                      );
-                   })()}
-                   
-                   {/* Background grid lines */}
-                   <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-                   {[50, 100, 150].map(x => (
-                     <line key={x} x1={x} y1="0" x2={x} y2="100" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-                   ))}
-                </svg>
+                   return (
+                     <>
+                       <path d={path} fill="url(#eq-grad)" />
+                       <path d={strokePath} fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" className="drop-shadow-[0_0_8px_rgba(255,215,0,0.4)]" />
+                       
+                       {/* Interaction Nodes */}
+                       {[p1, p2, p3, p4].map((p, i) => (
+                         <g key={i} className="cursor-pointer">
+                            <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="3" fill="#FFD700" className="drop-shadow-[0_0_8px_#FFD700]" />
+                            {Math.abs(50 - p.y) > 10 && (
+                              <circle cx={p.x === 0 ? 10 : p.x} cy={p.y} r="6" fill="transparent" stroke="rgba(255,215,0,0.3)" strokeWidth="1" className="animate-ping" />
+                            )}
+                         </g>
+                       ))}
+                     </>
+                   );
+                })()}
+                
+                {/* Background grid lines */}
+                <line x1="0" y1="50" x2="200" y2="50" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
+                {[50, 100, 150].map(x => (
+                  <line key={x} x1={x} y1="0" x2={x} y2="100" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
+                ))}
+            </svg>
           )}
         </div>
         <div className="grid grid-cols-4 gap-2 mt-4">
-           {[
-              { label: 'LOW', key: 'god_ra_low' },
-              { label: 'LOW MID', key: 'god_ra_mid' },
-              { label: 'HIGH MID', key: 'god_ra_presence' },
-              { label: 'HIGH', key: 'god_ra_high' }
-           ].map(band => {
-              return (
-                <div key={band.label} className="flex flex-col items-center">
+           {activePanelTab === 'EQ' && [
+              { label: 'LOW', key: 'god_ra_low', color: '#FFD700', display: `${((((parameterValues.god_ra_low || 50) - 50) / 50) * 12).toFixed(1)}dB` },
+              { label: 'LOW MID', key: 'god_ra_mid', color: '#FFD700', display: `${((((parameterValues.god_ra_mid || 50) - 50) / 50) * 12).toFixed(1)}dB` },
+              { label: 'HIGH MID', key: 'god_ra_presence', color: '#FFD700', display: `${((((parameterValues.god_ra_presence || 50) - 50) / 50) * 12).toFixed(1)}dB` },
+              { label: 'HIGH', key: 'god_ra_high', color: '#FFD700', display: `${((((parameterValues.god_ra_high || 50) - 50) / 50) * 12).toFixed(1)}dB` }
+           ].map(band => (
+              <div key={band.label} className="flex flex-col items-center">
+                 <DivineKnob 
+                   value={parameterValues[band.key] || 50}
+                   onChange={(val) => update(band.key, val)}
+                   label={band.label}
+                   size="md"
+                   min={0}
+                   max={100}
+                   showValue={true}
+                   variant="mystical"
+                   color={band.color}
+                   valueDisplay={band.display}
+                 />
+              </div>
+           ))}
+
+           {activePanelTab === 'FILTER' && (() => {
+              const pad = parameterValues.activePad || 0;
+              const fKey = `slotFilterFreq_${pad}`;
+              const qKey = `slotFilterQ_${pad}`;
+              const tKey = `slotFilterType_${pad}`;
+              const volKey = `slotVol_${pad}`;
+              
+              const freqVal = parameterValues[fKey] ?? 100;
+              const qVal = parameterValues[qKey] ?? 15;
+              const typeVal = parameterValues[tKey] ?? 'lowpass';
+              const volVal = parameterValues[volKey] ?? 75;
+              
+              const minF = Math.log(20);
+              const maxF = Math.log(20000);
+              const hz = Math.round(Math.exp(minF + (freqVal / 100) * (maxF - minF)));
+              const hzStr = hz >= 1000 ? `${(hz / 1000).toFixed(1)}kHz` : `${hz}Hz`;
+
+              return [
+                { label: 'CUTOFF', key: fKey, val: freqVal, color: '#00ccff', display: hzStr },
+                { label: 'RESONANCE', key: qKey, val: qVal, color: '#00ccff', display: `${Math.round(0.5 + (qVal/100)*19.5).toFixed(1)}Q` },
+                { 
+                  label: 'TYPE', 
+                  key: tKey, 
+                  val: typeVal === 'lowpass' ? 15 : typeVal === 'highpass' ? 50 : 85, 
+                  color: '#00ccff', 
+                  display: typeVal === 'lowpass' ? 'LP' : typeVal === 'highpass' ? 'HP' : 'BP',
+                  onChange: (v: number) => {
+                    const nextType = v < 33 ? 'lowpass' : v < 66 ? 'highpass' : 'bandpass';
+                    update(tKey, nextType);
+                  }
+                },
+                { label: 'LEVEL', key: volKey, val: volVal, color: '#FFD700', display: `${Math.round(volVal)}%` }
+              ].map(ctrl => (
+                <div key={ctrl.label} className="flex flex-col items-center">
                    <DivineKnob 
-                     value={parameterValues[band.key] || 50}
-                     onChange={(val) => update(band.key, val)}
-                     label={band.label}
+                     value={ctrl.val}
+                     onChange={ctrl.onChange || ((v) => update(ctrl.key, v))}
+                     label={ctrl.label}
                      size="md"
                      min={0}
                      max={100}
                      showValue={true}
                      variant="mystical"
-                     color="#00ccff"
-                     valueDisplay={`${((((parameterValues[band.key] || 50) - 50) / 50) * 12).toFixed(1)}dB`}
+                     color={ctrl.color}
+                     valueDisplay={ctrl.display}
                    />
                 </div>
-              );
-           })}
+              ));
+           })()}
+
+           {activePanelTab === 'COMP' && [
+              { label: 'THRES', key: 'masterDynamicsThreshold', val: parameterValues.masterDynamicsThreshold ?? -12, min: -60, max: 0, color: '#ff4444', display: `${Math.round(parameterValues.masterDynamicsThreshold ?? -12)}dB` },
+              { label: 'RATIO', key: 'masterDynamicsRatio', val: parameterValues.masterDynamicsRatio ?? 2.0, min: 1, max: 10, color: '#ff4444', display: `${(parameterValues.masterDynamicsRatio ?? 2.0).toFixed(1)}:1` },
+              { label: 'ATTACK', key: 'masterDynamicsAttack', val: parameterValues.masterDynamicsAttack ?? 5, min: 1, max: 100, color: '#ff4444', display: `${Math.round(parameterValues.masterDynamicsAttack ?? 5)}ms` },
+              { label: 'RELEASE', key: 'masterDynamicsRelease', val: parameterValues.masterDynamicsRelease ?? 100, min: 10, max: 1000, color: '#ff4444', display: `${Math.round(parameterValues.masterDynamicsRelease ?? 100)}ms` }
+           ].map(ctrl => (
+              <div key={ctrl.label} className="flex flex-col items-center">
+                 <DivineKnob 
+                   value={ctrl.val}
+                   onChange={(v) => update(ctrl.key, v)}
+                   label={ctrl.label}
+                   size="md"
+                   min={ctrl.min}
+                   max={ctrl.max}
+                   showValue={true}
+                   variant="mystical"
+                   color={ctrl.color}
+                   valueDisplay={ctrl.display}
+                 />
+              </div>
+           ))}
+
+           {activePanelTab === 'AURA' && (() => {
+               const rKey = `lfoRate_${activeLfo}`;
+               const dKey = `lfoDepth_${activeLfo}`;
+               const sKey = `lfoShape_${activeLfo}`;
+               const verbKey = `masterReverbMix`;
+               
+               const rateVal = parameterValues[rKey] ?? (activeLfo === 0 ? 30 : activeLfo === 1 ? 45 : activeLfo === 2 ? 15 : 60);
+               const depthVal = parameterValues[dKey] ?? 50;
+               const shapeVal = parameterValues[sKey] ?? 0;
+               const verbVal = parameterValues[verbKey] ?? 35;
+               
+               const minHz = Math.log(0.1);
+               const maxHz = Math.log(20);
+               const hz = Math.exp(minHz + (rateVal / 100) * (maxHz - minHz));
+               const hzStr = `${hz.toFixed(2)}Hz`;
+
+               const shapes = ['SINE', 'TRI', 'SAW', 'SQR'];
+               const shapeStr = shapes[shapeVal] || 'SINE';
+
+               return [
+                 { label: 'LFO RATE', key: rKey, val: rateVal, color: '#ff4444', display: hzStr },
+                 { label: 'LFO DEPTH', key: dKey, val: depthVal, color: '#ff4444', display: `${Math.round(depthVal)}%` },
+                 { 
+                   label: 'LFO SHAPE', 
+                   key: sKey, 
+                   val: shapeVal * 33.3,
+                   color: '#ff4444', 
+                   display: shapeStr,
+                   onChange: (v: number) => {
+                     const nextShape = Math.min(3, Math.max(0, Math.round((v / 100) * 3)));
+                     update(sKey, nextShape);
+                   }
+                 },
+                 { label: 'AURA SEND', key: verbKey, val: verbVal, color: '#FFD700', display: `${Math.round(verbVal)}%` }
+               ].map(ctrl => (
+                 <div key={ctrl.label} className="flex flex-col items-center">
+                    <DivineKnob 
+                      value={ctrl.val}
+                      onChange={ctrl.onChange || ((v) => update(ctrl.key, v))}
+                      label={ctrl.label}
+                      size="md"
+                      min={0}
+                      max={100}
+                      showValue={true}
+                      variant="mystical"
+                      color={ctrl.color}
+                      valueDisplay={ctrl.display}
+                    />
+                 </div>
+               ));
+           })()}
         </div>
       </div>
 
@@ -311,6 +572,7 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
                 update('morphX', anchor.x);
                 update('morphY', anchor.y);
               }}
+              level={level}
             />
          </div>
 
@@ -397,6 +659,8 @@ export const MultiControlPanel: React.FC<MultiControlPanelProps> = ({
               return (
                 <div key={m} className="flex flex-col items-center">
                    <DivineKnob 
+                     id={paramKey}
+                     update={update}
                      value={parameterValues[paramKey] || 50}
                      onChange={(val) => update(paramKey, val)}
                      label={m}

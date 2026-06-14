@@ -651,9 +651,7 @@ juce::String VSTGodTheGodRealmAudioProcessorEditor::buildTelemetryJson()
 {
     juce::String json = "{";
 
-    // CPU approximation (JUCE doesn't provide a built-in CPU meter,
-    // but we can use the proportion of buffer time used)
-    double cpuEstimate = audioProcessor.getLatencySamples() > 0 ? 2.5 : 1.0;
+    double cpuEstimate = audioProcessor.getActiveCpuUsage();
     json += "\"cpuUsage\":" + juce::String(cpuEstimate, 1) + ",";
 
     // Sample rate and buffer size

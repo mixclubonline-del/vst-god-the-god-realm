@@ -208,12 +208,14 @@ export const SacredProjectDrawer: React.FC<SacredProjectDrawerProps> = ({
                         <>
                           <button
                             className="sacred-project-icon-btn danger"
+                            style={{ width: 'auto', padding: '0 8px' }}
                             onClick={() => { onDelete(p.name); setConfirmDelete(null); }}
                           >
                             Confirm
                           </button>
                           <button
                             className="sacred-project-icon-btn"
+                            style={{ width: 'auto', padding: '0 8px' }}
                             onClick={() => setConfirmDelete(null)}
                           >
                             Cancel

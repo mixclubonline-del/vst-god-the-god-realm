@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './DivineKnob.css';
+import { useCalibrationSettings, applyCurve, invertCurve } from '@/utils/calibration';
+import { midiMappingService } from '@/services/midiMappingService';
 
 interface DivineKnobProps {
   label?: string;
@@ -48,6 +50,13 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   const isDragging = useRef(false);
   const startY = useRef(0);
   const startValue = useRef(0);
+  const startRawValue = useRef(0);
+  const calibration = useCalibrationSettings();
+
+  // MIDI Mapping / Learn States
+  const [midiCC, setMidiCC] = useState<number | null>(null);
+  const [learning, setLearning] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Sync internal state when external value changes
   useEffect(() => {
@@ -62,6 +71,53 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     if (id && update) update(id, val);
     onChange?.(val);
   };
+
+  const displayValueRef = useRef(displayValue);
+  useEffect(() => {
+    displayValueRef.current = displayValue;
+  });
+
+  const emitRef = useRef(emit);
+  useEffect(() => {
+    emitRef.current = emit;
+  });
+
+  // Register MIDI mapping target
+  useEffect(() => {
+    if (!id) return;
+
+    midiMappingService.registerTarget({
+      id,
+      label: label || id,
+      group: 'Front Panel',
+      min,
+      max,
+      getValue: () => displayValueRef.current,
+      setValue: (val) => {
+        emitRef.current(val);
+      }
+    });
+
+    // Initial check
+    const mapping = midiMappingService.getMappingForTarget(id);
+    if (mapping) setMidiCC(mapping.cc);
+
+    // Subscriptions
+    const unsubMap = midiMappingService.onMappingChange(() => {
+      const mapping = midiMappingService.getMappingForTarget(id);
+      setMidiCC(mapping ? mapping.cc : null);
+    });
+
+    const unsubLearn = midiMappingService.onLearnChange(() => {
+      setLearning(midiMappingService.isLearning && midiMappingService.learningTargetId === id);
+    });
+
+    return () => {
+      midiMappingService.unregisterTarget(id);
+      unsubMap();
+      unsubLearn();
+    };
+  }, [id, label, min, max]);
 
   // Audio reactivity loop (Mocked for premium feel)
   useEffect(() => {
@@ -81,7 +137,8 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, []);
 
-  const rotation = ((displayValue - min) / (max - min)) * 280 - 140;
+  const rawValue = invertCurve(displayValue, calibration.knobCurve, min, max);
+  const rotation = ((rawValue - min) / (max - min)) * 280 - 140;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -89,6 +146,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     isDragging.current = true;
     startY.current = e.clientY;
     startValue.current = displayValue;
+    startRawValue.current = invertCurve(displayValue, calibration.knobCurve, min, max);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -98,11 +156,13 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
 
     const deltaY = startY.current - e.clientY;
     const range = max - min;
-    const sensitivity = range / (e.shiftKey ? 1000 : 200); 
+    const baseSensitivity = range / (e.shiftKey ? 1000 : 200); 
+    const sensitivity = baseSensitivity * calibration.knobSensitivity;
     
-    let newValue = startValue.current + deltaY * sensitivity;
-    newValue = Math.max(min, Math.min(max, newValue));
+    let newRaw = startRawValue.current + deltaY * sensitivity;
+    newRaw = Math.max(min, Math.min(max, newRaw));
     
+    const newValue = applyCurve(newRaw, calibration.knobCurve, min, max);
     emit(newValue);
   };
 
@@ -115,15 +175,40 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
     emit(defaultValue);
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!id) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMidiLearn = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    if (id) {
+      midiMappingService.startLearn(id).catch((err) => {
+        console.warn('MIDI Learn error:', err);
+      });
+    }
+  };
+
+  const handleClearMidi = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    if (id) {
+      midiMappingService.removeMappingForTarget(id);
+    }
+  };
+
   return (
     <div 
-      className={`divine-knob-container size-${size} variant-${variant} ${isDragging.current ? 'is-dragging' : ''}`}
+      className={`divine-knob-container size-${size} variant-${variant} ${isDragging.current ? 'is-dragging' : ''} ${learning ? 'is-learning' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onContextMenu={handleContextMenu}
     >
       {/* Numerical Readout Above (Refined) */}
       <div className={`divine-knob-readout ${isHovered || isDragging.current ? 'visible' : ''}`}>
@@ -131,6 +216,9 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
       </div>
 
       <div className="divine-knob-wrapper">
+        {midiCC !== null && (
+          <div className="divine-knob-cc-badge">cc {midiCC}</div>
+        )}
         {/* Divine Halo - Audio Reactive */}
         <motion.div 
           className="divine-knob-halo"
@@ -217,6 +305,24 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
           </div>
         )}
       </div>
+
+      {contextMenu && (
+        <>
+          <div className="divine-context-menu-backdrop" onPointerDown={(e) => { e.stopPropagation(); setContextMenu(null); }} />
+          <div 
+            className="divine-context-menu" 
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="divine-context-menu__item" onClick={handleMidiLearn}>
+              MIDI Learn
+            </div>
+            <div className="divine-context-menu__item" onClick={handleClearMidi}>
+              Clear CC
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

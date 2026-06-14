@@ -350,3 +350,46 @@
   color: rgba(255, 255, 255, 0.15);
   padding: 1px 4px;
 }
+
+/* ─── Integrated Arp Gate Slider ─── */
+.sacred-arp__gate-slider-custom .divine-slider-header {
+  display: none !important;
+}
+
+.sacred-arp__gate-slider-custom .divine-slider-container {
+  min-width: unset !important;
+  gap: 0 !important;
+  display: block !important;
+}
+
+.sacred-arp__gate-slider-custom .divine-slider-track-area {
+  height: 16px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.sacred-arp__gate-slider-custom .divine-slider-track-bg {
+  inset: 6px 0 !important;
+}
+
+.sacred-arp__gate-slider-custom .divine-slider-fill {
+  height: 4px !important;
+  top: 6px !important;
+}
+
+.sacred-arp__gate-slider-custom .divine-slider-thumb {
+  width: 10px !important;
+  height: 10px !important;
+  top: 3px !important;
+  margin-left: -5px !important;
+}
+
+.sacred-arp__gate-slider-custom .thumb-glass {
+  border-radius: 50% !important;
+}
+
+.sacred-arp__gate-slider-custom .thumb-indicator {
+  width: 4px !important;
+  height: 4px !important;
+}
+

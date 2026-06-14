@@ -13,7 +13,7 @@ import { DivineSettings } from './DivineSettings';
 import { DivineSetupWizard } from './DivineSetupWizard';
 import { LicenseActivationModal } from './LicenseActivationModal';
 import { ReleaseNotesModal } from './ReleaseNotesModal';
-import { checkForUpdates } from '../services/supabase';
+import { checkForUpdates, uploadPresetsBackup, downloadPresetsBackup, sharePreset } from '../services/supabase';
 import { nativeAudio } from '../native/bridge';
 import type { DSPChainModule } from '@/services/types';
 import { SoundSlot } from './SoundSlot';
@@ -30,9 +30,9 @@ import { DEFAULT_MIDI_MAP } from '../data/throneDomains';
 import { KitExporter } from './KitExporter';
 import { CelestialBrowser } from './CelestialBrowser';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
-import { NebulaXYPad } from './NebulaXYPad';
 /* FluidSlider retired — use DivineSlider variant="fluid" instead */
-import { SacredSequencer as SacredSequencerV2, useSequencerEngine } from './sequencer';
+import { SacredSequencer as SacredSequencerV2, useSequencerEngine, type AutomationParam, type SequencerState } from './sequencer';
+import { useAutomationRecorder } from '@/hooks/useAutomationRecorder';
 import { RealmParticleCanvas } from './RealmParticleCanvas';
 import { RealmPortalTransition } from './RealmPortalTransition';
 import { sampleManager } from './sequencer/SampleManager';
@@ -67,9 +67,13 @@ import { PluginWindowBar } from './plugins/PluginWindowBar';
 import '@/styles/FloatingPlugin.css';
 import { MidiMappingModal, type MidiCCMapping } from './MidiMappingModal';
 import '@/styles/MidiMappingModal.css';
+import { midiMappingService } from '@/services/midiMappingService';
 
 import { PresetDropdown } from './ui/PresetDropdown';
 import { usePresetService, presetService, type UnifiedPreset } from '@/services/presetService';
+import { DivinePresetModal } from './ui/DivinePresetModal';
+import { DivineConfirmModal } from './ui/DivineConfirmModal';
+
 
 interface VstgodthegodrealmPluginProps {
   isOpen: boolean;
@@ -109,6 +113,18 @@ const TABS = [
   { id: 'Preset Vault', label: 'PRESET VAULT' },
   { id: 'Electric Pantheon', label: 'ELECTRIC PANTHEON' },
 ];
+
+const TAB_SUBTITLES: Record<string, string> = {
+  'Multi-Realm': 'MULTI-REALM FORGE',
+  'Pantheon': 'THE DIVINE PANTHEON',
+  'Sample Chopper': 'SACRED SAMPLE CHOPPER',
+  'Divine Archive': 'THE DIVINE ARCHIVE',
+  'Sequencer': 'SACRED SEQUENCER',
+  'Mastering': 'CELESTIAL FORGE',
+  'Export': 'RITUAL OF EXPORT',
+  'Preset Vault': 'ETERNAL PRESET VAULT',
+  'Electric Pantheon': 'ELECTRIC PANTHEON',
+};
 
 /* ─── Initial Data ─── */
 const DEFAULT_PRESETS = [
@@ -151,6 +167,98 @@ const INCLUDED_PRESETS = [
   { name: 'Celestial Keys', type: 'Keys' },
   { name: 'Lightning Strike', type: 'Lead' },
 ];
+
+/* ─── Phase 32: Sequencer Automation Helpers ─── */
+function getTrackIndexForParam(paramId: string, state: SequencerState): number {
+  const lowercaseId = paramId.toLowerCase();
+  
+  if (lowercaseId.startsWith('pad_')) {
+    const idx = state.tracks.findIndex(t => t.name.toUpperCase().includes('PAD'));
+    if (idx !== -1) return idx;
+    return 8; // fallback to track index 8 (PAD)
+  }
+  if (lowercaseId.startsWith('lead_')) {
+    const idx = state.tracks.findIndex(t => t.name.toUpperCase().includes('LEAD'));
+    if (idx !== -1) return idx;
+    return 7; // fallback to track index 7 (LEAD)
+  }
+  if (lowercaseId.startsWith('bass_')) {
+    const idx = state.tracks.findIndex(t => t.name.toUpperCase().includes('BASS') || t.name.toUpperCase().includes('808'));
+    if (idx !== -1) return idx;
+    return 3; // fallback to track index 3 (808)
+  }
+  if (lowercaseId.startsWith('pluck_')) {
+    const idx = state.tracks.findIndex(t => t.name.toUpperCase().includes('MELODY') || t.name.toUpperCase().includes('PLUCK') || t.name.toUpperCase().includes('CHORDS'));
+    if (idx !== -1) return idx;
+    return 5; // fallback to track index 5 (MELODY)
+  }
+  if (lowercaseId.startsWith('texture_')) {
+    const idx = state.tracks.findIndex(t => t.name.toUpperCase().includes('PAD') || t.name.toUpperCase().includes('TEXTURE'));
+    if (idx !== -1) return idx;
+    return 8; // fallback to track index 8 (PAD)
+  }
+  
+  // Default: currently selected track in the sequencer
+  return state.selectedTrack;
+}
+
+function getAutomationParamAndValue(paramId: string, val: any): { param: AutomationParam; value: number } | null {
+  const lowercaseId = paramId.toLowerCase();
+  let normalizedValue = typeof val === 'number' ? val / 100 : Number(val) / 100;
+  if (isNaN(normalizedValue)) return null;
+
+  // 1. Macros
+  if (lowercaseId.includes('energy') || lowercaseId.includes('filterfreq') || lowercaseId.includes('warmth')) {
+    return { param: 'synthEnergy', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('divinity') || lowercaseId.includes('shimmer')) {
+    return { param: 'synthDivinity', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('width') || lowercaseId.includes('space') || lowercaseId.includes('stereo')) {
+    return { param: 'synthWidth', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('realm')) {
+    return { param: 'synthRealm', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  
+  // 2. Mixer / FX Sends
+  if (lowercaseId.includes('reverbmix') || lowercaseId.includes('reverb') || lowercaseId.includes('depth')) {
+    return { param: 'fxReverb', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('chorusmix') || lowercaseId.includes('chorus') || lowercaseId.includes('drift')) {
+    return { param: 'fxChorus', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('delaymix') || lowercaseId.includes('delay')) {
+    return { param: 'fxDelay', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('satdrive') || lowercaseId.includes('satmix') || lowercaseId.includes('saturation')) {
+    return { param: 'fxSaturation', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  
+  // 3. Volume and Pan
+  if (lowercaseId.includes('volume') || lowercaseId.includes('gain') || lowercaseId.includes('master') || lowercaseId.includes('level')) {
+    if (lowercaseId.includes('mastervolume') || lowercaseId.includes('volume')) {
+      const dbVal = typeof val === 'number' ? val : Number(val);
+      if (dbVal < 0) {
+        normalizedValue = Math.max(0, (dbVal + 60) / 60);
+      } else {
+        normalizedValue = 1.0 + (dbVal / 6);
+      }
+    }
+    return { param: 'volume', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+  if (lowercaseId.includes('pan')) {
+    const panVal = typeof val === 'number' ? val : Number(val);
+    let normPan = panVal;
+    if (panVal > 1 || panVal < -1) {
+      normPan = (panVal - 50) / 50;
+    }
+    normalizedValue = (normPan + 1) / 2;
+    return { param: 'pan', value: Math.min(1, Math.max(0, normalizedValue)) };
+  }
+
+  return null;
+}
 
 export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = ({
   isOpen,
@@ -227,10 +335,97 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   /* ─── MIDI Mapping Modal State ─── */
   const [isMidiModalOpen, setIsMidiModalOpen] = useState(false);
-  const [ccMappings, setCCMappings] = useState<MidiCCMapping[]>([
-    { ccNumber: 1, targetParam: 'modWheel', targetLabel: 'Mod Wheel', min: 0, max: 127 },
-    { ccNumber: 7, targetParam: 'masterVol', targetLabel: 'Master Volume', min: 0, max: 127 },
-  ]);
+
+  /* ─── Preset Saving & Confirmation Modal State ─── */
+  const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [presetModalConfig, setPresetModalConfig] = useState<{
+    defaultName: string;
+    onSave: (name: string, type: string, tags: string[], energyLevel: number) => void;
+  } | null>(null);
+
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const [ccMappings, setCCMappings] = useState<MidiCCMapping[]>(() => {
+    const active = midiMappingService.getMappings();
+    if (active.length > 0) {
+      return active.map(m => ({
+        ccNumber: m.cc,
+        targetParam: m.targetId,
+        targetLabel: m.targetLabel || m.targetId,
+        min: 0,
+        max: 127
+      }));
+    }
+    return [
+      { ccNumber: 1, targetParam: 'modWheel', targetLabel: 'Mod Wheel', min: 0, max: 127 },
+      { ccNumber: 7, targetParam: 'masterVolume', targetLabel: 'Master Volume', min: 0, max: 127 },
+    ];
+  });
+
+  // Sync service mappings on mount and setup subscription
+  useEffect(() => {
+    // Seed default mappings in service if empty
+    if (midiMappingService.getMappings().length === 0) {
+      midiMappingService.setMapping({
+        ccKey: '0:1',
+        cc: 1,
+        channel: 0,
+        targetId: 'modWheel',
+        targetLabel: 'Mod Wheel',
+        deviceName: 'Generic'
+      });
+      midiMappingService.setMapping({
+        ccKey: '0:7',
+        cc: 7,
+        channel: 0,
+        targetId: 'masterVolume',
+        targetLabel: 'Master Volume',
+        deviceName: 'Generic'
+      });
+    }
+
+    const syncFromService = () => {
+      const active = midiMappingService.getMappings();
+      setCCMappings(
+        active.map(m => ({
+          ccNumber: m.cc,
+          targetParam: m.targetId,
+          targetLabel: m.targetLabel || m.targetId,
+          min: 0,
+          max: 127
+        }))
+      );
+    };
+
+    // Initial sync
+    syncFromService();
+
+    // Subscribe to changes
+    return midiMappingService.onMappingChange(syncFromService);
+  }, []);
+
+  const handleCCMappingsChange = useCallback((newMappings: MidiCCMapping[]) => {
+    midiMappingService.clearAll();
+    newMappings.forEach(m => {
+      midiMappingService.setMapping({
+        ccKey: `0:${m.ccNumber}`,
+        cc: m.ccNumber,
+        channel: 0,
+        targetId: m.targetParam,
+        targetLabel: m.targetLabel,
+        deviceName: 'Generic'
+      });
+    });
+    setCCMappings(newMappings);
+  }, []);
 
   const handleNavigateToTab = useCallback((tabName: string, options?: { padIndex?: number }) => {
     if (options?.padIndex !== undefined && onParameterChange) {
@@ -288,6 +483,42 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   /* ─── Sequencer Engine (uses Sovereign Context + Celestial Forge) ─── */
   const engine = useSequencerEngine(sovereignCtx, celestialForgeChain);
   const { masterChain } = engine;
+
+  if (typeof window !== 'undefined') {
+    (window as any).sequencerEngine = engine;
+  }
+
+
+  // ─── Phase 32: Sequencer Automation Recording ───
+  const isSelectingPresetRef = useRef(false);
+  const { recordAutomation } = useAutomationRecorder({
+    isRecording: engine.state.isRecording,
+    isPlaying: engine.state.isPlaying,
+    currentStep: engine.state.currentStep,
+    dispatch: engine.dispatch,
+  });
+
+  const prevParameterValuesRef = useRef<Record<string, any>>({ ...parameterValues });
+
+  useEffect(() => {
+    if (engine.state.isRecording && engine.state.isPlaying && !isSelectingPresetRef.current) {
+      const prev = prevParameterValuesRef.current;
+      const current = parameterValues;
+      
+      Object.keys(current).forEach(key => {
+        if (current[key] !== prev[key]) {
+          const mapped = getAutomationParamAndValue(key, current[key]);
+          if (mapped) {
+            const trackIdx = getTrackIndexForParam(key, engine.state);
+            recordAutomation(trackIdx, mapped.param, mapped.value);
+          }
+        }
+      });
+    }
+    prevParameterValuesRef.current = { ...parameterValues };
+  }, [parameterValues, engine.state, recordAutomation]);
+
+
   
   // Connect the analyser to the design system CSS variables
   // Phase 3: Use the Celestial Forge chain's analyser (it's the shared master)
@@ -631,58 +862,65 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [registry, engine.state, parameterValues, activePad, midiMap]);
 
   const applySnapshot = useCallback(async (snapshot: RealmSnapshot) => {
-    // 1. Restore sequencer state
-    if (snapshot.sequencerState) {
-      engine.dispatch({
-        type: 'LOAD_PROJECT_STATE',
-        payload: {
-          ...snapshot.sequencerState,
-          isPlaying: false,
-          currentStep: -1,
-          cycleCount: 0,
-          clipboardPattern: null,
-        },
-      });
-    }
-
-    // 2. Restore parameter values (covers effects, mastering, all knobs)
-    if (snapshot.parameterValues) {
-      Object.entries(snapshot.parameterValues).forEach(([key, val]) => {
-        update(key, val);
-      });
-    }
-
-    // 3. Restore pad assignments (re-fetch from paths)
-    if (snapshot.padAssignments && sovereignCtx.current) {
-      registry.clearAll();
-      for (const pad of snapshot.padAssignments) {
-        if (pad.isFileDrop) {
-          console.warn(`[SessionSeal] Pad ${pad.slotIndex} ("${pad.name}") was a file drop — must re-drop manually`);
-          continue;
-        }
-        try {
-          await registry.loadFromPath(sovereignCtx.current, pad.path, pad.slotIndex, pad.name);
-        } catch (err) {
-          console.warn(`[SessionSeal] Failed to reload pad ${pad.slotIndex}:`, err);
-        }
-      }
-    }
-
-    // 4. Restore Dais state
-    if (snapshot.daisState) {
-      update('activePad', snapshot.daisState.activePad);
-      if (snapshot.daisState.midiMap) {
-        const newMap = [...DEFAULT_MIDI_MAP];
-        Object.entries(snapshot.daisState.midiMap).forEach(([idx, note]) => {
-          newMap[Number(idx)] = Number(note);
+    isSelectingPresetRef.current = true;
+    try {
+      // 1. Restore sequencer state
+      if (snapshot.sequencerState) {
+        engine.dispatch({
+          type: 'LOAD_PROJECT_STATE',
+          payload: {
+            ...snapshot.sequencerState,
+            isPlaying: false,
+            currentStep: -1,
+            cycleCount: 0,
+            clipboardPattern: null,
+          },
         });
-        setMidiMap(newMap);
       }
-    }
 
-    setActiveSessionName(snapshot.name);
-    setRecentSessions(realmSessionManager.getRecentSessions());
-    console.log(`[SessionSeal] Restored: "${snapshot.name}"`);
+      // 2. Restore parameter values (covers effects, mastering, all knobs)
+      if (snapshot.parameterValues) {
+        Object.entries(snapshot.parameterValues).forEach(([key, val]) => {
+          update(key, val);
+        });
+      }
+
+      // 3. Restore pad assignments (re-fetch from paths)
+      if (snapshot.padAssignments && sovereignCtx.current) {
+        registry.clearAll();
+        for (const pad of snapshot.padAssignments) {
+          if (pad.isFileDrop) {
+            console.warn(`[SessionSeal] Pad ${pad.slotIndex} ("${pad.name}") was a file drop — must re-drop manually`);
+            continue;
+          }
+          try {
+            await registry.loadFromPath(sovereignCtx.current, pad.path, pad.slotIndex, pad.name);
+          } catch (err) {
+            console.warn(`[SessionSeal] Failed to reload pad ${pad.slotIndex}:`, err);
+          }
+        }
+      }
+
+      // 4. Restore Dais state
+      if (snapshot.daisState) {
+        update('activePad', snapshot.daisState.activePad);
+        if (snapshot.daisState.midiMap) {
+          const newMap = [...DEFAULT_MIDI_MAP];
+          Object.entries(snapshot.daisState.midiMap).forEach(([idx, note]) => {
+            newMap[Number(idx)] = Number(note);
+          });
+          setMidiMap(newMap);
+        }
+      }
+
+      setActiveSessionName(snapshot.name);
+      setRecentSessions(realmSessionManager.getRecentSessions());
+      console.log(`[SessionSeal] Restored: "${snapshot.name}"`);
+    } finally {
+      setTimeout(() => {
+        isSelectingPresetRef.current = false;
+      }, 50);
+    }
   }, [engine, update, registry, setMidiMap]);
 
   const handleSessionSave = useCallback(async (name: string) => {
@@ -789,6 +1027,10 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [update]);
 
   const handlePresetSelect = useCallback((preset: UnifiedPreset) => {
+    // Cancel active MIDI Learn on preset select
+    midiMappingService.cancelLearn();
+
+    isSelectingPresetRef.current = true;
     update('currentPresetId', preset.id);
     update('currentPresetName', preset.name);
     if (preset.state?.params) {
@@ -798,6 +1040,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         }
       });
     }
+    setTimeout(() => {
+      isSelectingPresetRef.current = false;
+    }, 50);
   }, [update]);
 
   const handlePresetNext = useCallback(() => {
@@ -821,41 +1066,63 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
   const handleSavePreset = useCallback(() => {
     if (activePreset && activePreset.source !== 'pantheon') {
-      presetSvc.save({ ...activePreset, state: { params: parameterValues } });
-      showMessage(`Saved: ${activePreset.name}`);
+      setConfirmModalConfig({
+        title: 'OVERWRITE PRESET',
+        description: `Overwrite preset "${activePreset.name}" with current settings?`,
+        confirmLabel: 'OVERWRITE',
+        cancelLabel: 'CANCEL',
+        isDestructive: false,
+        onConfirm: () => {
+          presetSvc.save({ ...activePreset, state: { params: parameterValues } });
+          showMessage(`Saved: ${activePreset.name}`);
+        }
+      });
+      setConfirmModalOpen(true);
     } else {
       showMessage('Cannot save Pantheon presets. Use Save As.');
     }
   }, [activePreset, presetSvc, parameterValues]);
 
   const handleSaveAsPreset = useCallback(() => {
-    const name = prompt('Enter Preset Name:', `New Preset ${allPresets.length + 1}`);
-    if (!name) return;
-    const newPreset: UnifiedPreset = {
-      id: `preset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name,
-      type: 'User',
-      author: 'User',
-      rating: 5,
-      fav: false,
-      tags: ['User', 'Custom'],
-      lastModified: new Date().toISOString(),
-      energyLevel: 40 + Math.random() * 60,
-      source: 'user',
-      state: { params: parameterValues }
-    };
-    presetSvc.save(newPreset);
-    handlePresetSelect(newPreset);
-    showMessage(`Created: ${name}`);
-  }, [allPresets.length, parameterValues, presetSvc, handlePresetSelect]);
+    setPresetModalConfig({
+      defaultName: `New Preset ${allPresets.length + 1}`,
+      onSave: (name, type, tags, energyLevel) => {
+        const newPreset: UnifiedPreset = {
+          id: `preset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name,
+          type,
+          author: activeSettings?.username || 'User',
+          rating: 5,
+          fav: false,
+          tags: tags.length > 0 ? tags : ['User', 'Custom'],
+          lastModified: new Date().toISOString(),
+          energyLevel: energyLevel,
+          source: 'user',
+          state: { params: parameterValues }
+        };
+        presetSvc.save(newPreset);
+        handlePresetSelect(newPreset);
+        showMessage(`Created: ${name}`);
+      }
+    });
+    setPresetModalOpen(true);
+  }, [allPresets.length, parameterValues, presetSvc, handlePresetSelect, activeSettings?.username]);
 
   const handleDeletePreset = useCallback(() => {
     if (activePreset && activePreset.source !== 'pantheon') {
-      if (confirm(`Delete preset "${activePreset.name}"?`)) {
-        presetSvc.delete(activePreset.id);
-        handlePresetSelect(allPresets[0]);
-        showMessage('Preset Deleted');
-      }
+      setConfirmModalConfig({
+        title: 'BANISH PRESET',
+        description: `Are you sure you want to permanently delete the preset "${activePreset.name}"? This action cannot be undone.`,
+        confirmLabel: 'BANISH',
+        cancelLabel: 'KEEP',
+        isDestructive: true,
+        onConfirm: () => {
+          presetSvc.delete(activePreset.id);
+          handlePresetSelect(allPresets[0]);
+          showMessage('Preset Deleted');
+        }
+      });
+      setConfirmModalOpen(true);
     }
   }, [activePreset, presetSvc, handlePresetSelect, allPresets]);
 
@@ -893,30 +1160,124 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
   }, [presetSvc, update]);
 
   const handleRestoreDefaults = useCallback(() => {
-    if (!confirm('This will reset your library to factory defaults. Continue?')) return;
-    localStorage.removeItem('vst-god-realm-presets-v2');
-    window.location.reload();
+    setConfirmModalConfig({
+      title: 'RESTORE DEFAULTS',
+      description: 'This will reset your library to factory defaults and reload the page. All unsaved custom presets will be lost. Continue?',
+      confirmLabel: 'RESTORE',
+      cancelLabel: 'CANCEL',
+      isDestructive: true,
+      onConfirm: () => {
+        localStorage.removeItem('vst-god-realm-presets-v2');
+        window.location.reload();
+      }
+    });
+    setConfirmModalOpen(true);
   }, []);
 
-  const handleCloudSync = useCallback(() => {
+  const handleCloudBackup = useCallback(async () => {
     if (isSyncing) return;
+    if (!activeSettings?.licenseActivated) {
+      showMessage('LICENSE REQUIRED FOR CLOUD BACKUP');
+      return;
+    }
     setIsSyncing(true);
     showMessage('CONNECTING TO DIVINE CLOUD...');
     
-    let step = 0;
-    const interval = setInterval(() => {
-      step++;
-      if (step === 1) showMessage('VERIFYING DIVINE CHUNKS...');
-      if (step === 2) showMessage('CALCULATING COSMIC HASHES...');
-      if (step === 3) showMessage('UPLOADING TO THE GOD REALM...');
-      if (step === 4) {
-        clearInterval(interval);
-        showMessage('DIVINE SYNC SUCCESSFUL');
-        setIsSyncing(false);
-        update('btnCloudSync', false);
+    try {
+      const allVaultPresets = presetSvc.getVaultPresets();
+      const presetsJson = JSON.stringify(allVaultPresets);
+      
+      showMessage('UPLOADING VAULT BACKUP...');
+      const result = await uploadPresetsBackup(
+        activeSettings.licenseKey,
+        activeSettings.machineId,
+        presetsJson
+      );
+      
+      if (result.success) {
+        showMessage('CLOUD BACKUP SUCCESSFUL');
+      } else {
+        showMessage(`BACKUP FAILED: ${result.message}`);
       }
-    }, 1500);
-  }, [isSyncing, update]);
+    } catch (err: any) {
+      showMessage(`BACKUP ERROR: ${err.message || err}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing, activeSettings, presetSvc, showMessage]);
+
+  const handleCloudRestore = useCallback(async () => {
+    if (isSyncing) return;
+    if (!activeSettings?.licenseActivated) {
+      showMessage('LICENSE REQUIRED FOR CLOUD RESTORE');
+      return;
+    }
+    
+    setConfirmModalConfig({
+      title: 'RESTORE FROM CLOUD?',
+      description: 'This will overwrite your current local vault with the presets from your cloud backup. Continue?',
+      confirmLabel: 'RESTORE',
+      cancelLabel: 'CANCEL',
+      isDestructive: false,
+      onConfirm: async () => {
+        setConfirmModalOpen(false);
+        setIsSyncing(true);
+        showMessage('RETRIEVING CLOUD BACKUP...');
+        
+        try {
+          const result = await downloadPresetsBackup(
+            activeSettings.licenseKey,
+            activeSettings.machineId
+          );
+          
+          if (result.success && result.data) {
+            const imported = presetSvc.importVault(result.data);
+            if (imported) {
+              showMessage(`RESTORED ${imported.length} RITUALS FROM CLOUD`);
+            } else {
+              showMessage('FAILED TO PARSE CLOUD DATA');
+            }
+          } else {
+            showMessage(result.message || 'NO CLOUD BACKUP FOUND');
+          }
+        } catch (err: any) {
+          showMessage(`RESTORE ERROR: ${err.message || err}`);
+        } finally {
+          setIsSyncing(false);
+        }
+      }
+    });
+    setConfirmModalOpen(true);
+  }, [isSyncing, activeSettings, presetSvc, showMessage]);
+
+  const handleSharePreset = useCallback(async (preset: any) => {
+    if (isSyncing) return;
+    if (!activeSettings?.licenseActivated) {
+      showMessage('LICENSE REQUIRED FOR SHARING');
+      return;
+    }
+    setIsSyncing(true);
+    showMessage(`ASCENDING "${preset.name}" TO SOVEREIGN CLOUD...`);
+    
+    try {
+      const result = await sharePreset(
+        activeSettings.licenseKey,
+        activeSettings.machineId,
+        preset
+      );
+      if (result.success) {
+        showMessage('RITUAL ASCENDED SUCCESSFULLY');
+      } else {
+        showMessage(`SHARING FAILED: ${result.message}`);
+      }
+    } catch (err: any) {
+      showMessage(`SHARING ERROR: ${err.message || err}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing, activeSettings, showMessage]);
+
+  const handleCloudSync = handleCloudBackup;
 
   const handleExportPreset = useCallback(() => {
     if (!activePreset) return;
@@ -1118,20 +1479,18 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
 
         <div className="vg-header-center">
           <h1 className="vg-title">THE GOD REALM</h1>
-          <span className="vg-subtitle">PRESET VAULT &amp; KIT EXPORTER</span>
+          <span className="vg-subtitle">{TAB_SUBTITLES[displayedTab] || 'THE GOD REALM'}</span>
         </div>
 
         <div className="vg-header-right">
           <div className="vg-master-display">
-            <span className="vg-display-value">{globalBpm.toFixed(2)} Hz</span>
-            <span className="vg-display-label">GLOBAL</span>
-          </div>
-          <div className="vg-master-display">
-            <span className="vg-display-value">{Math.round(globalBpm)} BPM</span>
+            <span className="vg-display-value">{globalBpm.toFixed(1)} BPM</span>
             <span className="vg-display-label">TEMPO</span>
           </div>
           <div className="vg-knob-group">
             <DivineKnob 
+              id="tuneSemitones"
+              update={update}
               label="TUNE"
               min={-24}
               max={24}
@@ -1142,6 +1501,8 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
               variant="celestial"
             />
             <DivineKnob 
+              id="masterVolume"
+              update={update}
               label="VOLUME"
               min={-60}
               max={6}
@@ -1436,6 +1797,9 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             onDeletePreset={handleDeletePreset}
             onCloudSync={handleCloudSync}
             isSyncing={isSyncing}
+            onSharePreset={handleSharePreset}
+            activeSettings={activeSettings}
+            showMessage={showMessage}
             kitExporter={
               <KitExporter 
                 presets={allPresets}
@@ -1606,6 +1970,22 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
             <span className="vg-foot-btn-icon">🎹</span>
             <span>MIDI MAP</span>
           </button>
+          <button
+            className={`vg-foot-btn-action ${isSyncing ? 'active' : ''}`}
+            onClick={handleCloudBackup}
+            disabled={isSyncing}
+          >
+            <span className="vg-foot-btn-icon">☁️</span>
+            <span>CLOUD BACKUP</span>
+          </button>
+          <button
+            className="vg-foot-btn-action"
+            onClick={handleCloudRestore}
+            disabled={isSyncing}
+          >
+            <span className="vg-foot-btn-icon">📥</span>
+            <span>CLOUD RESTORE</span>
+          </button>
         </div>
         <div className="vg-footer-right">
           <NerveMonitor
@@ -1640,7 +2020,7 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
         noteMap={midiMap}
         onNoteMapChange={setMidiMap}
         ccMappings={ccMappings}
-        onCCMappingsChange={setCCMappings}
+        onCCMappingsChange={handleCCMappingsChange}
         midiDevices={webMidiState.devices.map(d => ({ id: d.id, name: d.name }))}
       />
 
@@ -1669,6 +2049,25 @@ export const VstgodthegodrealmPlugin: React.FC<VstgodthegodrealmPluginProps> = (
           vol: parameterValues[`slotVol_${i}`] ?? 75
         }))}
         onApplySuggestion={handleApplyNeuralSuggestion}
+      />
+
+      {/* ═══════════ DIVINE CUSTOM PRESET MODALS ═══════════ */}
+      <DivinePresetModal
+        isOpen={presetModalOpen}
+        onClose={() => setPresetModalOpen(false)}
+        onSave={presetModalConfig?.onSave || (() => {})}
+        defaultName={presetModalConfig?.defaultName}
+      />
+
+      <DivineConfirmModal
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={confirmModalConfig?.onConfirm || (() => {})}
+        title={confirmModalConfig?.title || ''}
+        description={confirmModalConfig?.description || ''}
+        confirmLabel={confirmModalConfig?.confirmLabel}
+        cancelLabel={confirmModalConfig?.cancelLabel}
+        isDestructive={confirmModalConfig?.isDestructive}
       />
 
       </div>

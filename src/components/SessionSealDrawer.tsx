@@ -11,6 +11,8 @@ import {
   type SessionMeta,
 } from '../services/RealmSessionManager';
 import './SessionSealDrawer.css';
+import { DivineConfirmModal } from './ui/DivineConfirmModal';
+
 
 interface SessionSealDrawerProps {
   isOpen: boolean;
@@ -31,6 +33,9 @@ export const SessionSealDrawer: React.FC<SessionSealDrawerProps> = ({
   const [saveName, setSaveName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteName, setPendingDeleteName] = useState<string | null>(null);
+
 
   // Load session list
   const refreshList = useCallback(async () => {
@@ -66,12 +71,20 @@ export const SessionSealDrawer: React.FC<SessionSealDrawerProps> = ({
   }, [onLoad, refreshList, onClose]);
 
   // Delete handler
-  const handleDelete = useCallback(async (name: string, e: React.MouseEvent) => {
+  const handleDelete = useCallback((name: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Delete session "${name}"?`)) return;
-    await realmSessionManager.deleteSession(name);
-    await refreshList();
-  }, [refreshList]);
+    setPendingDeleteName(name);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const executeDelete = useCallback(async () => {
+    if (pendingDeleteName) {
+      await realmSessionManager.deleteSession(pendingDeleteName);
+      await refreshList();
+      setPendingDeleteName(null);
+    }
+  }, [pendingDeleteName, refreshList]);
+
 
   // Export handler
   const handleExport = useCallback(async (name: string, e: React.MouseEvent) => {
@@ -242,6 +255,20 @@ export const SessionSealDrawer: React.FC<SessionSealDrawerProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <DivineConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setPendingDeleteName(null);
+        }}
+        onConfirm={executeDelete}
+        title="DELETE REALM SESSION"
+        description={`Are you sure you want to permanently delete the sealed session "${pendingDeleteName}"? This action cannot be undone.`}
+        confirmLabel="BANISH"
+        cancelLabel="KEEP"
+        isDestructive={true}
+      />
     </>
   );
 };

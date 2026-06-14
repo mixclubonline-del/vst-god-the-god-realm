@@ -139,6 +139,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
           currentStep={arpStep}
           vortexAnchors={vortexAnchors}
           onSaveVortexAnchor={(x, y, name) => { /* TODO: Implement Native Backend Vortex Save */ }}
+          level={slotLevels[activePad] || 0}
         />
       </div>
 

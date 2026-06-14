@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useTransform, AnimatePresence } from 'framer-motion';
 import './DivineSlider.css';
+import { midiMappingService } from '@/services/midiMappingService';
 
 interface DivineSliderProps {
   label?: string;
@@ -9,11 +10,15 @@ interface DivineSliderProps {
   value?: number;
   defaultValue?: number;
   onChange?: (value: number) => void;
+  id?: string;
+  update?: (id: string, val: number) => void;
   unit?: string;
   color?: string;
   orientation?: 'horizontal' | 'vertical';
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'mystical' | 'infernal' | 'celestial' | 'fluid';
+  step?: number;
+  decimals?: number;
 }
 
 export const DivineSlider: React.FC<DivineSliderProps> = ({
@@ -23,17 +28,26 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
   value: externalValue,
   defaultValue = 0.5,
   onChange,
+  id,
+  update,
   unit = '',
   color = 'var(--mixx-accent)',
   orientation = 'horizontal',
   size = 'md',
-  variant = 'default'
+  variant = 'default',
+  step,
+  decimals = 2
 }) => {
   const [internalValue, setInternalValue] = useState(externalValue ?? defaultValue);
   const [rms, setRms] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+
+  // MIDI Mapping / Learn States
+  const [midiCC, setMidiCC] = useState<number | null>(null);
+  const [learning, setLearning] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const displayValue = externalValue ?? internalValue;
   const percentage = ((displayValue - min) / (max - min)) * 100;
@@ -52,6 +66,67 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, []);
 
+  /** Unified emit — routes to either update(id,val) or onChange(val) */
+  const emit = (val: number) => {
+    let clamped = Math.max(min, Math.min(max, val));
+    if (step !== undefined && step > 0) {
+      clamped = Math.round((clamped - min) / step) * step + min;
+      clamped = Math.max(min, Math.min(max, clamped));
+      const decimalsFactor = Math.pow(10, decimals);
+      clamped = Math.round(clamped * decimalsFactor) / decimalsFactor;
+    }
+    setInternalValue(clamped);
+    if (id && update) update(id, clamped);
+    onChange?.(clamped);
+  };
+
+  const displayValueRef = useRef(displayValue);
+  useEffect(() => {
+    displayValueRef.current = displayValue;
+  });
+
+  const emitRef = useRef(emit);
+  useEffect(() => {
+    emitRef.current = emit;
+  });
+
+  // Register MIDI mapping target
+  useEffect(() => {
+    if (!id) return;
+
+    midiMappingService.registerTarget({
+      id,
+      label: label || id,
+      group: 'Front Panel',
+      min,
+      max,
+      getValue: () => displayValueRef.current,
+      setValue: (val) => {
+        emitRef.current(val);
+      }
+    });
+
+    // Initial check
+    const mapping = midiMappingService.getMappingForTarget(id);
+    if (mapping) setMidiCC(mapping.cc);
+
+    // Subscriptions
+    const unsubMap = midiMappingService.onMappingChange(() => {
+      const mapping = midiMappingService.getMappingForTarget(id);
+      setMidiCC(mapping ? mapping.cc : null);
+    });
+
+    const unsubLearn = midiMappingService.onLearnChange(() => {
+      setLearning(midiMappingService.isLearning && midiMappingService.learningTargetId === id);
+    });
+
+    return () => {
+      midiMappingService.unregisterTarget(id);
+      unsubMap();
+      unsubLearn();
+    };
+  }, [id, label, min, max]);
+
   const handleUpdate = (clientX: number, clientY: number) => {
     if (!trackRef.current) return;
     const rect = trackRef.current.getBoundingClientRect();
@@ -64,8 +139,7 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
     }
 
     const newValue = min + normalized * (max - min);
-    setInternalValue(newValue);
-    onChange?.(newValue);
+    emit(newValue);
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -87,11 +161,36 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!id) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMidiLearn = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    if (id) {
+      midiMappingService.startLearn(id).catch((err) => {
+        console.warn('MIDI Learn error:', err);
+      });
+    }
+  };
+
+  const handleClearMidi = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    if (id) {
+      midiMappingService.removeMappingForTarget(id);
+    }
+  };
+
   return (
     <div 
-      className={`divine-slider-container orientation-${orientation} size-${size} slider-variant-${variant} ${isDragging.current ? 'is-dragging' : ''}`}
+      className={`divine-slider-container orientation-${orientation} size-${size} slider-variant-${variant} ${isDragging.current ? 'is-dragging' : ''} ${learning ? 'is-learning' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onContextMenu={handleContextMenu}
     >
       <div className="divine-slider-header">
         {label && <span className="divine-slider-label">{label}</span>}
@@ -99,7 +198,7 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
           className="divine-slider-value"
           animate={{ color: isHovered || isDragging.current ? color : 'rgba(255,255,255,0.4)' }}
         >
-          {displayValue.toFixed(2)}<span className="unit">{unit}</span>
+          {displayValue.toFixed(decimals)}<span className="unit">{unit}</span>
         </motion.span>
       </div>
 
@@ -110,6 +209,9 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
+        {midiCC !== null && (
+          <div className="divine-slider-cc-badge">cc {midiCC}</div>
+        )}
         {/* Ambient Molten Glow */}
         <motion.div 
           className="divine-slider-ambient-glow"
@@ -150,6 +252,24 @@ export const DivineSlider: React.FC<DivineSliderProps> = ({
           <div className="thumb-indicator" style={{ backgroundColor: color }} />
         </motion.div>
       </div>
+
+      {contextMenu && (
+        <>
+          <div className="divine-context-menu-backdrop" onPointerDown={(e) => { e.stopPropagation(); setContextMenu(null); }} />
+          <div 
+            className="divine-context-menu" 
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="divine-context-menu__item" onClick={handleMidiLearn}>
+              MIDI Learn
+            </div>
+            <div className="divine-context-menu__item" onClick={handleClearMidi}>
+              Clear CC
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

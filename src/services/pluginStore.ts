@@ -96,3 +96,7 @@ export const usePluginStore = create<PluginState>()(
     }
   )
 );
+
+if (typeof window !== 'undefined') {
+  (window as any).usePluginStore = usePluginStore;
+}

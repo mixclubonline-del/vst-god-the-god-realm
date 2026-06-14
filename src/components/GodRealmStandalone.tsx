@@ -624,7 +624,7 @@ export const GodRealmStandalone: React.FC = () => {
                        </div>
                        <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
-                            animate={{ width: `${Math.min(100, cpuPct * 10)}%` }}
+                            animate={{ width: `${Math.min(100, cpuPct)}%` }}
                             transition={{ duration: 0.15, ease: 'linear' }}
                             className={`h-full ${cpuPct > 80 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : cpuPct > 60 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-yellow-500 shadow-[0_0_10px_rgba(255,215,0,0.5)]'}`}
                           />

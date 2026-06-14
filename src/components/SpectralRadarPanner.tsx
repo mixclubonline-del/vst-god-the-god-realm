@@ -63,37 +63,66 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
     setFreqData(spectralData.fftBins);
   }, [spectralData]);
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!containerRef.current || e.buttons !== 1) return;
-    
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!containerRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+
     const rect = containerRef.current.getBoundingClientRect();
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    
-    // Convert screen space to local radar space
     const x = ((e.clientX - rect.left) / rect.width) * 200 - 100;
     const y = ((e.clientY - rect.top) / rect.height) * 200 - 100;
-    
+
     // Circular constraint
     const distance = Math.sqrt(x * x + y * y);
     const maxRadius = 90;
-    
-    if (distance <= maxRadius) {
-      setPosition({ x, y });
-      springX.set(x);
-      springY.set(y);
-    } else {
+
+    let targetX = x;
+    let targetY = y;
+
+    if (distance > maxRadius) {
       const angle = Math.atan2(y, x);
-      const nx = maxRadius * Math.cos(angle);
-      const ny = maxRadius * Math.sin(angle);
-      setPosition({ x: nx, y: ny });
-      springX.set(nx);
-      springY.set(ny);
+      targetX = maxRadius * Math.cos(angle);
+      targetY = maxRadius * Math.sin(angle);
     }
 
-    // Phase 4: Forward spatial position to JUCE panner
-    const azimuth = (Math.atan2(position.y, position.x) * 180 / Math.PI + 450) % 360;
+    setPosition({ x: targetX, y: targetY });
+    springX.set(targetX);
+    springY.set(targetY);
+
+    const azimuth = (Math.atan2(targetY, targetX) * 180 / Math.PI + 450) % 360;
     nativeAudio.updateSpatialPosition(azimuth, elevation, 'ALPHA_PRIME');
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!containerRef.current) return;
+    if (e.buttons !== 1 && !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 200 - 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 200 - 100;
+
+    // Circular constraint
+    const distance = Math.sqrt(x * x + y * y);
+    const maxRadius = 90;
+
+    let targetX = x;
+    let targetY = y;
+
+    if (distance > maxRadius) {
+      const angle = Math.atan2(y, x);
+      targetX = maxRadius * Math.cos(angle);
+      targetY = maxRadius * Math.sin(angle);
+    }
+
+    setPosition({ x: targetX, y: targetY });
+    springX.set(targetX);
+    springY.set(targetY);
+
+    const azimuth = (Math.atan2(targetY, targetX) * 180 / Math.PI + 450) % 360;
+    nativeAudio.updateSpatialPosition(azimuth, elevation, 'ALPHA_PRIME');
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   const handleScroll = (e: React.WheelEvent) => {
@@ -103,23 +132,39 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
     springZ.set(newElevation);
   };
 
-  // Generate the Spectral Mesh Path
+  // Generate the Spectral Mesh Path (smooth closed Bézier loop)
   const meshPath = useMemo(() => {
-    if (!freqData) return "";
-    const points: string[] = [];
+    if (!freqData || freqData.length === 0) return "";
     const radius = 100;
     const center = 100;
+    const points: Array<{ x: number; y: number }> = [];
     
-    for (let i = 0; i <= 64; i++) {
+    for (let i = 0; i < 64; i++) {
       const angle = (i / 64) * Math.PI * 2;
-      const val = freqData[i % 64] / 255;
+      const val = freqData[i] / 255;
       const r = radius * (0.8 + val * 0.3 * (1 + rms));
-      const px = center + r * Math.cos(angle);
-      const py = center + r * Math.sin(angle);
-      points.push(`${i === 0 ? 'M' : 'L'} ${px} ${py}`);
+      points.push({
+        x: center + r * Math.cos(angle),
+        y: center + r * Math.sin(angle),
+      });
     }
-    points.push('Z');
-    return points.join(' ');
+
+    if (points.length < 3) return "";
+
+    const pathArr: string[] = [];
+    // Start at midpoint of last and first point for seamless closed loop
+    const firstMidX = (points[points.length - 1].x + points[0].x) / 2;
+    const firstMidY = (points[points.length - 1].y + points[0].y) / 2;
+    pathArr.push(`M ${firstMidX} ${firstMidY}`);
+
+    for (let i = 0; i < points.length; i++) {
+      const nextIdx = (i + 1) % points.length;
+      const midX = (points[i].x + points[nextIdx].x) / 2;
+      const midY = (points[i].y + points[nextIdx].y) / 2;
+      pathArr.push(`Q ${points[i].x} ${points[i].y} ${midX} ${midY}`);
+    }
+    pathArr.push('Z');
+    return pathArr.join(' ');
   }, [freqData, rms]);
 
   return (
@@ -142,7 +187,9 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
         <div 
           ref={containerRef}
           className="radar-scene"
+          onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
         >
           {/* 3D Perspective Surface */}
           <motion.div 

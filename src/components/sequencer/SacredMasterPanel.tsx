@@ -1,6 +1,8 @@
 import React from 'react';
 import { MasterParams } from '../../audio/VelvetCurveEngine';
 import { SacredVisualizer } from './SacredVisualizer';
+import { DivineSlider } from '../ui/DivineSlider';
+
 
 interface SacredMasterPanelProps {
   params: MasterParams;
@@ -124,20 +126,24 @@ const MasterControl: React.FC<MasterControlProps> = ({
   displayValue,
   onChange,
 }) => {
+  const decimals = step < 0.1 ? 2 : step < 1 ? 1 : 0;
   return (
     <div className="master-control">
       <div className="master-control__label">{label}</div>
-      <input
-        type="range"
-        className="master-control__slider"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-      />
+      <div className="master-control__slider-custom" style={{ width: '100%' }}>
+        <DivineSlider
+          min={min}
+          max={max}
+          value={value}
+          step={step}
+          decimals={decimals}
+          onChange={onChange}
+          color="#FFD700"
+          size="sm"
+        />
+      </div>
       <div className="master-control__value">
-        {displayValue !== undefined ? displayValue : value.toFixed(1)}
+        {displayValue !== undefined ? displayValue : value.toFixed(decimals)}
         <span className="master-control__unit">{unit}</span>
       </div>
     </div>

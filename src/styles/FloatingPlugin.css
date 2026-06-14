@@ -961,3 +961,143 @@
     0 0 8px color-mix(in srgb, var(--fp-accent, #B87DFF) 15%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+
+/* ═══ ADSR Envelope Display ═══ */
+.fp-adsr-envelope {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* ═══ Output Level Meter ═══ */
+.fp-output-meter {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 2px;
+  background: rgba(0,0,0,0.3);
+  border-left: 1px solid rgba(255,255,255,0.04);
+  z-index: 2;
+}
+.fp-output-meter__bars {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  width: 100%;
+  align-items: flex-end;
+}
+.fp-output-meter__bar {
+  flex: 1;
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  height: 100%;
+}
+.fp-output-meter__fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 1px;
+  transition: height 0.06s ease-out;
+  background: linear-gradient(to top, #22C55E 0%, #22C55E 50%, #EAB308 75%, #EF4444 100%);
+}
+.fp-output-meter__peak {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  transition: bottom 0.06s ease-out, opacity 1.5s ease-out;
+}
+.fp-output-meter__clip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 0 4px #EF4444, 0 0 8px #EF444480;
+  opacity: 0;
+  transition: opacity 0.1s;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+.fp-output-meter__clip--active {
+  opacity: 1;
+}
+.fp-output-meter__scale {
+  position: absolute;
+  right: 100%;
+  font-size: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(255,255,255,0.15);
+  transform: translateY(50%);
+  padding-right: 2px;
+  pointer-events: none;
+}
+
+/* ═══ Filter Curve Display ═══ */
+.fp-filter-curve {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* ═══ Instrument body padding for meter ═══ */
+.fp-instrument {
+  position: relative;
+  padding-right: 20px;
+}
+
+/* ═══ Window Focus & Stacking ═══ */
+.fp-window--active {
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.75),
+    0 4px 12px rgba(0, 0, 0, 0.65),
+    0 -1px 0 rgba(255, 255, 255, 0.08),
+    -1px 0 0 rgba(255, 255, 255, 0.04),
+    0 0 80px var(--fp-glow, rgba(128, 80, 255, 0.18));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+.fp-window--inactive {
+  opacity: 0.8;
+  filter: contrast(0.95) saturate(0.85);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.fp-window--inactive:hover {
+  opacity: 0.95;
+  filter: none;
+}
+
+/* ═══ MIDI Learn Pulsing states for floating plugin controls ═══ */
+@keyframes fp-pulse-gold {
+  0% { box-shadow: 0 0 4px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+  100% { box-shadow: 0 0 4px rgba(212, 175, 55, 0.3); }
+}
+
+.fp-knob.is-learning {
+  animation: fp-pulse-gold 1.5s infinite ease-in-out;
+  border-radius: 50%;
+}
+
+.fp-fader.is-learning .fp-fader__track {
+  animation: fp-pulse-gold 1.5s infinite ease-in-out;
+  border-radius: 4px;
+}
+

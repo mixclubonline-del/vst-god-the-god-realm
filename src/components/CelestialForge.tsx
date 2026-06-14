@@ -7,6 +7,7 @@ import { MasterMeter } from './ui/MasterMeter';
 import { HardwareScrew } from './ui/HardwareScrew';
 import { DivineKnob } from './ui/DivineKnob';
 import { SpectralRadarPanner } from './SpectralRadarPanner';
+import { SpectralWaterfall } from './SpectralWaterfall';
 
 /* GodKnobV2 has been retired — all mastering knobs now use DivineKnob with variant="celestial" */
 
@@ -327,6 +328,150 @@ const AnchorOrbits: React.FC<{ levels: Record<string, number> }> = ({ levels }) 
   );
 };
 
+interface MasteringPreset {
+  id: string;
+  name: string;
+  description: string;
+  params: {
+    masterInputGain: number;
+    masterDrive: number;
+    masterColorTilt: number;
+    masterDynamicsThreshold: number;
+    masterDynamicsRatio: number;
+    masterColdExtension: number;
+    masterCeiling: number;
+    masterAttack: number;
+    masterRelease: number;
+    masterWidth: number;
+    masterImager: number;
+  };
+}
+
+const DEFAULTS_MAP: Record<string, number> = {
+  masterInputGain: 0,
+  masterDrive: 20,
+  masterColorTilt: 50,
+  masterDynamicsThreshold: -12,
+  masterDynamicsRatio: 2.0,
+  masterColdExtension: 0,
+  masterCeiling: -0.1,
+  masterAttack: 30,
+  masterRelease: 100,
+  masterWidth: 100,
+  masterImager: 0,
+};
+
+const FACTORY_PRESETS: MasteringPreset[] = [
+  {
+    id: 'deep_ember',
+    name: 'DEEP EMBER',
+    description: 'Warm saturation, gentle low-shelf boost',
+    params: {
+      masterInputGain: 0,
+      masterDrive: 25,
+      masterColorTilt: 40,
+      masterDynamicsThreshold: -12,
+      masterDynamicsRatio: 2.0,
+      masterColdExtension: 10,
+      masterCeiling: -0.1,
+      masterAttack: 30,
+      masterRelease: 150,
+      masterWidth: 110,
+      masterImager: 0.1
+    }
+  },
+  {
+    id: 'solar_flare',
+    name: 'SOLAR FLARE',
+    description: 'Aggressive drive, bright excitation',
+    params: {
+      masterInputGain: 1.5,
+      masterDrive: 45,
+      masterColorTilt: 65,
+      masterDynamicsThreshold: -16,
+      masterDynamicsRatio: 2.5,
+      masterColdExtension: 30,
+      masterCeiling: -0.2,
+      masterAttack: 20,
+      masterRelease: 100,
+      masterWidth: 120,
+      masterImager: 0.2
+    }
+  },
+  {
+    id: 'golden_shimmer',
+    name: 'GOLDEN SHIMMER',
+    description: 'High-end silk & wide imaging',
+    params: {
+      masterInputGain: -0.5,
+      masterDrive: 15,
+      masterColorTilt: 55,
+      masterDynamicsThreshold: -8,
+      masterDynamicsRatio: 1.5,
+      masterColdExtension: 45,
+      masterCeiling: -0.1,
+      masterAttack: 40,
+      masterRelease: 200,
+      masterWidth: 135,
+      masterImager: 0.4
+    }
+  },
+  {
+    id: 'volcanic_punch',
+    name: 'VOLCANIC PUNCH',
+    description: 'Heavy transient compression & body boost',
+    params: {
+      masterInputGain: 1.0,
+      masterDrive: 35,
+      masterColorTilt: 45,
+      masterDynamicsThreshold: -18,
+      masterDynamicsRatio: 3.5,
+      masterColdExtension: 5,
+      masterCeiling: -0.3,
+      masterAttack: 10,
+      masterRelease: 80,
+      masterWidth: 105,
+      masterImager: 0.0
+    }
+  },
+  {
+    id: 'obsidian_wall',
+    name: 'OBSIDIAN WALL',
+    description: 'Max volume brick-wall limiting',
+    params: {
+      masterInputGain: 4.0,
+      masterDrive: 10,
+      masterColorTilt: 50,
+      masterDynamicsThreshold: -24,
+      masterDynamicsRatio: 8.0,
+      masterColdExtension: 15,
+      masterCeiling: -0.05,
+      masterAttack: 5,
+      masterRelease: 50,
+      masterWidth: 100,
+      masterImager: 0.0
+    }
+  },
+  {
+    id: 'bypass',
+    name: 'BYPASS',
+    description: 'Zeroed out / flat mastering chain',
+    params: {
+      masterInputGain: 0,
+      masterDrive: 0,
+      masterColorTilt: 50,
+      masterDynamicsThreshold: 0,
+      masterDynamicsRatio: 1.0,
+      masterColdExtension: 0,
+      masterCeiling: 0,
+      masterAttack: 30,
+      masterRelease: 100,
+      masterWidth: 100,
+      masterImager: 0.0
+    }
+  }
+];
+
 export const CelestialForge: React.FC<{
   parameterValues: Record<string, any>;
   update: (id: string, val: any) => void;
@@ -335,7 +480,14 @@ export const CelestialForge: React.FC<{
 }> = ({ parameterValues, update, moduleLevels }) => {
   // Live engine metering from JUCE bridge
   const bridgeState = useJuceBridge();
-  const [vizMode, setVizMode] = useState<'disk' | 'radar'>('disk');
+  const [vizMode, setVizMode] = useState<'disk' | 'radar' | 'waterfall'>('disk');
+
+  // Mastering Preset System State
+  const [customPresets, setCustomPresets] = useState<MasteringPreset[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('deep_ember');
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false);
+  const [newPresetName, setNewPresetName] = useState('');
 
   // Phase 4: Debounced mastering parameter sync to JUCE (60Hz max)
   const masteringSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -381,6 +533,83 @@ export const CelestialForge: React.FC<{
       }
     };
   }, []);
+
+  // Load custom presets on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('vst_god_mastering_presets');
+      if (stored) {
+        setCustomPresets(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Failed to load custom mastering presets', e);
+    }
+  }, []);
+
+  const allPresets = [...FACTORY_PRESETS, ...customPresets];
+  const activePreset = allPresets.find(p => p.id === selectedPresetId) || FACTORY_PRESETS[0];
+
+  const checkIsModified = useCallback(() => {
+    if (!activePreset) return false;
+    const keys = Object.keys(activePreset.params) as Array<keyof MasteringPreset['params']>;
+    for (const key of keys) {
+      const val1 = parameterValues[key] !== undefined ? parameterValues[key] : DEFAULTS_MAP[key];
+      const val2 = activePreset.params[key];
+      if (Math.abs(val1 - val2) > 0.05) {
+        return true;
+      }
+    }
+    return false;
+  }, [parameterValues, activePreset]);
+
+  const handleSelectPreset = (preset: MasteringPreset) => {
+    setSelectedPresetId(preset.id);
+    setDropdownOpen(false);
+    
+    // Apply parameters
+    const keys = Object.keys(preset.params) as Array<keyof MasteringPreset['params']>;
+    keys.forEach(key => {
+      bridgedUpdate(key, preset.params[key]);
+    });
+  };
+
+  const handleSavePreset = () => {
+    if (!newPresetName.trim()) return;
+    const newPreset: MasteringPreset = {
+      id: `custom_${Date.now()}`,
+      name: newPresetName.trim().toUpperCase(),
+      description: 'Custom user mastering preset',
+      params: {
+        masterInputGain: parameterValues.masterInputGain ?? 0,
+        masterDrive: parameterValues.masterDrive ?? 20,
+        masterColorTilt: parameterValues.masterColorTilt ?? 50,
+        masterDynamicsThreshold: parameterValues.masterDynamicsThreshold ?? -12,
+        masterDynamicsRatio: parameterValues.masterDynamicsRatio ?? 2.0,
+        masterColdExtension: parameterValues.masterColdExtension ?? 0,
+        masterCeiling: parameterValues.masterCeiling ?? -0.1,
+        masterAttack: parameterValues.masterAttack ?? 30,
+        masterRelease: parameterValues.masterRelease ?? 100,
+        masterWidth: parameterValues.masterWidth ?? 100,
+        masterImager: parameterValues.masterImager ?? 0,
+      }
+    };
+    const updated = [...customPresets, newPreset];
+    setCustomPresets(updated);
+    localStorage.setItem('vst_god_mastering_presets', JSON.stringify(updated));
+    setSelectedPresetId(newPreset.id);
+    setNewPresetName('');
+    setSaveDrawerOpen(false);
+  };
+
+  const handleDeletePreset = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = customPresets.filter(p => p.id !== id);
+    setCustomPresets(updated);
+    localStorage.setItem('vst_god_mastering_presets', JSON.stringify(updated));
+    if (selectedPresetId === id) {
+      setSelectedPresetId('deep_ember');
+    }
+  };
 
   return (
     <div className="vg-celestial-forge">
@@ -453,19 +682,135 @@ export const CelestialForge: React.FC<{
               >
                 Spectral Radar
               </button>
+              <button
+                onClick={() => setVizMode('waterfall')}
+                className={`px-3 py-1 text-[9px] font-bold rounded uppercase transition-all ${
+                  vizMode === 'waterfall' 
+                    ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' 
+                    : 'text-white/40 hover:text-white'
+                }`}
+              >
+                Spectral Waterfall
+              </button>
             </div>
         </div>
         
-        <div className="flex items-center gap-4">
-           <div className="flex flex-col items-end">
-              <span className="text-[8px] text-white/50 font-bold tracking-widest">PRESET</span>
-              <span className="text-[10px] text-yellow-500 font-black drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]">DEEP EMBER</span>
+        <div className="flex items-center gap-4 relative">
+           <div 
+             className="flex flex-col items-end cursor-pointer group"
+             onClick={() => setDropdownOpen(d => !d)}
+           >
+              <span className="text-[8px] text-white/50 font-bold tracking-widest group-hover:text-yellow-500 transition-colors">PRESET ▾</span>
+              <span className="text-[10px] text-yellow-500 font-black drop-shadow-[0_0_8px_rgba(255,215,0,0.5)] select-none">
+                {activePreset.name}{checkIsModified() ? '*' : ''}
+              </span>
            </div>
+           
            <div className="w-1 h-8 bg-yellow-500/30 rounded-full" />
+           
            <div className="flex flex-col">
               <span className="text-[8px] text-white/50 font-bold tracking-widest">ENGINE</span>
-              <span className="text-[10px] text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">CELESTIAL FORGE v2</span>
+              <span className="text-[10px] text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] select-none">CELESTIAL FORGE v2</span>
            </div>
+
+           {/* Dropdown Menu */}
+           <AnimatePresence>
+             {dropdownOpen && (
+               <>
+                 <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                 <motion.div 
+                   className="absolute top-10 left-0 bg-[#0f0e14]/95 border border-white/10 rounded-xl p-3 w-64 shadow-[0_12px_36px_rgba(0,0,0,0.8)] z-50 backdrop-blur-md"
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: -10 }}
+                   transition={{ duration: 0.15 }}
+                 >
+                   <div className="max-h-60 overflow-y-auto flex flex-col gap-1 mb-2 pr-1 vg-scrollbar">
+                     <span className="text-[7px] text-white/30 font-bold tracking-wider mb-1 px-2 uppercase block">Factory Presets</span>
+                     {FACTORY_PRESETS.map(p => (
+                       <button
+                         key={p.id}
+                         onClick={() => handleSelectPreset(p)}
+                         className={`text-left px-2 py-1.5 rounded-md text-[10px] transition-all flex flex-col ${
+                           selectedPresetId === p.id 
+                             ? 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/20' 
+                             : 'text-white/60 hover:text-white hover:bg-white/5'
+                         }`}
+                       >
+                         <span className="font-bold">{p.name}</span>
+                         <span className="text-[8px] text-white/40 font-mono truncate">{p.description}</span>
+                       </button>
+                     ))}
+
+                     {customPresets.length > 0 && (
+                       <>
+                         <div className="h-[1px] bg-white/5 my-1" />
+                         <span className="text-[7px] text-white/30 font-bold tracking-wider mb-1 px-2 uppercase block">Custom Presets</span>
+                         {customPresets.map(p => (
+                           <div
+                             key={p.id}
+                             onClick={() => handleSelectPreset(p)}
+                             className={`px-2 py-1.5 rounded-md text-[10px] transition-all flex justify-between items-center cursor-pointer group/item ${
+                               selectedPresetId === p.id 
+                                 ? 'bg-yellow-500/15 text-yellow-500 border border-yellow-500/20' 
+                                 : 'text-white/60 hover:text-white hover:bg-white/5'
+                             }`}
+                           >
+                             <div className="flex flex-col truncate">
+                               <span className="font-bold">{p.name}</span>
+                               <span className="text-[8px] text-white/40 font-mono truncate">{p.description}</span>
+                             </div>
+                             <button
+                               onClick={(e) => handleDeletePreset(p.id, e)}
+                               className="text-white/20 hover:text-red-500 transition-colors p-1 opacity-0 group-hover/item:opacity-100"
+                             >
+                               ✕
+                             </button>
+                           </div>
+                         ))}
+                       </>
+                     )}
+                   </div>
+
+                   <div className="h-[1px] bg-white/10 my-2" />
+
+                   {saveDrawerOpen ? (
+                     <div className="flex flex-col gap-2 p-1">
+                       <input 
+                         type="text"
+                         placeholder="PRESET NAME"
+                         value={newPresetName}
+                         onChange={(e) => setNewPresetName(e.target.value.toUpperCase())}
+                         maxLength={20}
+                         className="w-full bg-black/40 border border-white/15 rounded px-2 py-1 text-[10px] font-mono text-yellow-500 placeholder:text-white/20 uppercase"
+                       />
+                       <div className="flex gap-2">
+                         <button 
+                           onClick={handleSavePreset}
+                           className="flex-1 bg-yellow-500/25 border border-yellow-500/40 hover:bg-yellow-500/35 text-yellow-500 text-[8px] font-bold py-1 rounded uppercase tracking-wider transition-colors"
+                         >
+                           Save
+                         </button>
+                         <button 
+                           onClick={() => setSaveDrawerOpen(false)}
+                           className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 text-[8px] font-bold py-1 rounded uppercase tracking-wider transition-colors"
+                         >
+                           Cancel
+                         </button>
+                       </div>
+                     </div>
+                   ) : (
+                     <button
+                       onClick={() => setSaveDrawerOpen(true)}
+                       className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/70 text-[8px] font-bold py-1.5 rounded uppercase tracking-wider transition-all"
+                     >
+                       + Save Current State
+                     </button>
+                   )}
+                 </motion.div>
+               </>
+             )}
+           </AnimatePresence>
         </div>
 
         <div className="text-[10px] font-black text-white/40 tracking-widest">DIVINE AUDIO</div>
@@ -496,6 +841,8 @@ export const CelestialForge: React.FC<{
         <div className="vg-forge-viz-area">
           {vizMode === 'radar' ? (
             <SpectralRadarPanner spectralData={bridgeState.spectralData} />
+          ) : vizMode === 'waterfall' ? (
+            <SpectralWaterfall spectralData={bridgeState.spectralData} />
           ) : (
             <>
               <SunDisk levels={{ 

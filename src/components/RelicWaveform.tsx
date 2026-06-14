@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
+
 
 interface RelicWaveformProps {
   /** Pre-decoded AudioBuffer to draw */
@@ -16,22 +17,23 @@ export const RelicWaveform: React.FC<RelicWaveformProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas resolution
+    // Set canvas resolution dynamically based on devicePixelRatio
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
+    const w = canvas.clientWidth || 100;
+    const h = canvas.clientHeight || 40;
 
-    const w = rect.width;
-    const h = rect.height;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.scale(dpr, dpr);
+    }
 
     // Clear
     ctx.clearRect(0, 0, w, h);
@@ -40,10 +42,20 @@ export const RelicWaveform: React.FC<RelicWaveformProps> = ({
       // Draw placeholder bars
       const barCount = mode === 'mini' ? 20 : 60;
       const barWidth = w / barCount;
-      ctx.fillStyle = 'rgba(194,150,35,0.08)';
+      ctx.fillStyle = 'rgba(194, 150, 35, 0.08)';
       for (let i = 0; i < barCount; i++) {
         const bh = (Math.sin(i * 0.4) * 0.3 + 0.3) * h;
-        ctx.fillRect(i * barWidth + 1, (h - bh) / 2, barWidth - 2, bh);
+        const bx = i * barWidth + 1;
+        const bw = Math.max(1.5, barWidth - 2);
+        const by = (h - bh) / 2;
+        
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(bx, by, bw, bh, bw / 2);
+        } else {
+          ctx.rect(bx, by, bw, bh);
+        }
+        ctx.fill();
       }
       return;
     }
@@ -70,16 +82,42 @@ export const RelicWaveform: React.FC<RelicWaveformProps> = ({
 
       ctx.fillStyle = grad;
       ctx.globalAlpha = 0.6 + avg * 0.4;
-      ctx.fillRect(
-        i * barWidth + 1,
-        (h - barHeight) / 2,
-        barWidth - 2,
-        barHeight
-      );
+      
+      const bx = i * barWidth + 1;
+      const bw = Math.max(1.5, barWidth - 2);
+      const by = (h - barHeight) / 2;
+
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(bx, by, bw, barHeight, bw / 2);
+      } else {
+        ctx.rect(bx, by, bw, barHeight);
+      }
+      ctx.fill();
     }
 
     ctx.globalAlpha = 1;
   }, [buffer, mode, color]);
+
+  // Initial draw + redraw on props change
+  useEffect(() => {
+    draw();
+  }, [draw]);
+
+  // ResizeObserver to handle bounds/layout adjustments automatically
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const observer = new ResizeObserver(() => {
+      draw();
+    });
+    observer.observe(canvas);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [draw]);
 
   return (
     <canvas

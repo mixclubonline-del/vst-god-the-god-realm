@@ -15,6 +15,7 @@ import { SacredStep } from './SacredStep';
 import { MiniWaveform } from './MiniWaveform';
 import { TrackSourceSelector } from './TrackSourceSelector';
 import { SacredFXPopover } from './SacredFXPopover';
+import { TrackOptionsPopover } from './TrackOptionsPopover';
 import { SacredAutomationLane, AddAutomationLaneSelector } from './SacredAutomationLane';
 import type { TrackState, StepState, TrackSourceType, FXSendState, AutomationParam, AutomationPoint, AutomationLane } from './useSequencerEngine';
 import { electricPantheonGods } from '../../data/electricPantheonGods';
@@ -90,6 +91,7 @@ interface SacredTrackLaneProps {
   onCopyTrackPattern?: (trackIndex: number) => void;
   onPasteTrackPattern?: (trackIndex: number) => void;
   onSwapPatterns?: (trackIndex: number) => void;
+  onDuplicateTrackPattern?: (trackIndex: number) => void;
   canPastePattern?: boolean;
 }
 
@@ -163,6 +165,7 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
   onCopyTrackPattern,
   onPasteTrackPattern,
   onSwapPatterns,
+  onDuplicateTrackPattern,
   canPastePattern = false,
 }) => {
   const pattern = activePattern === 'A' ? track.patternA : track.patternB;
@@ -170,6 +173,8 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
   const [selectorPos, setSelectorPos] = useState({ x: 0, y: 0 });
   const [fxPopoverOpen, setFxPopoverOpen] = useState(false);
   const [fxPopoverPos, setFxPopoverPos] = useState({ x: 0, y: 0 });
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [optionsPos, setOptionsPos] = useState({ x: 0, y: 0 });
   const [autoExpanded, setAutoExpanded] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showGhostNotes, setShowGhostNotes] = useState(false);
@@ -445,42 +450,20 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
             </svg>
           </div>
 
-          {onRandomize && (
-            <button
-              className="seq-lane__action-btn"
-              onClick={(e) => { e.stopPropagation(); onRandomize(); }}
-              title="Randomize"
-            >
-              🎲
-            </button>
-          )}
-          {onClear && (
-            <button
-              className="seq-lane__action-btn"
-              onClick={(e) => { e.stopPropagation(); onClear(); }}
-              title="Clear Track"
-            >
-              ✕
-            </button>
-          )}
-          {onHumanize && (
-            <button
-              className="seq-lane__action-btn"
-              onClick={(e) => { e.stopPropagation(); onHumanize(); }}
-              title="Humanize (add feel)"
-            >
-              🌊
-            </button>
-          )}
-          {onQuantize && (
-            <button
-              className="seq-lane__action-btn"
-              onClick={(e) => { e.stopPropagation(); onQuantize(); }}
-              title="Quantize (snap to grid)"
-            >
-              🎯
-            </button>
-          )}
+          {/* Track Options Dropdown ⋮ */}
+          <button
+            className="seq-lane__btn seq-lane__btn--options"
+            style={{ fontSize: '13px', fontWeight: 'bold' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectTrack();
+              setOptionsPos({ x: e.clientX, y: e.clientY });
+              setOptionsOpen(prev => !prev);
+            }}
+            title="Track Actions"
+          >
+            ⋮
+          </button>
           {track.sourceType === 'sample' && onOpenChopper && (
             <button
               className="seq-lane__btn seq-lane__btn--chop"
@@ -674,6 +657,38 @@ export const SacredTrackLane: React.FC<SacredTrackLaneProps> = React.memo(({
             onSelectTrack();
             onSwapPatterns?.(trackIndex);
           }}
+          canPaste={canPastePattern}
+        />
+      )}
+
+      {/* TrackOptionsPopover */}
+      {optionsOpen && (
+        <TrackOptionsPopover
+          trackIndex={trackIndex}
+          trackName={track.name}
+          trackColor={track.color}
+          anchorPosition={optionsPos}
+          onClose={() => setOptionsOpen(false)}
+          onCopy={() => {
+            onSelectTrack();
+            onCopyTrackPattern?.(trackIndex);
+          }}
+          onPaste={() => {
+            onSelectTrack();
+            onPasteTrackPattern?.(trackIndex);
+          }}
+          onDuplicate={() => {
+            onSelectTrack();
+            onDuplicateTrackPattern?.(trackIndex);
+          }}
+          onSwap={() => {
+            onSelectTrack();
+            onSwapPatterns?.(trackIndex);
+          }}
+          onRandomize={() => onRandomize?.()}
+          onClear={() => onClear?.()}
+          onHumanize={() => onHumanize?.()}
+          onQuantize={() => onQuantize?.()}
           canPaste={canPastePattern}
         />
       )}

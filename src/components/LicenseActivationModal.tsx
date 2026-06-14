@@ -20,7 +20,10 @@ export const LicenseActivationModal: React.FC<LicenseActivationModalProps> = ({
   const [isShaking, setIsShaking] = useState(false);
 
   const machineId = activeSettings?.machineId || 'UNKNOWN_DEVICE';
-  const platform = activeSettings?.platform || 'unknown';
+  const rawPlatform = activeSettings?.platform || '';
+  const platform = (rawPlatform === 'macos' || rawPlatform === 'windows')
+    ? rawPlatform
+    : (navigator.userAgent.toLowerCase().includes('win') ? 'windows' : 'macos');
   const pluginVersion = activeSettings?.pluginVersion || 'v1.0.0-dev';
 
   const formatKey = (val: string) => {

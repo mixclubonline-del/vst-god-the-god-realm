@@ -4,4 +4,4 @@
  */
 export { SacredSequencer } from './SacredSequencer';
 export { useSequencerEngine } from './useSequencerEngine';
-export type { StepState, TrackState, SequencerState } from './useSequencerEngine';
+export type { StepState, TrackState, SequencerState, AutomationParam } from './useSequencerEngine';

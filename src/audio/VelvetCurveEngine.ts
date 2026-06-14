@@ -78,6 +78,9 @@ export class MasterChain {
   private makeup: GainNode;
   public analyser: AnalyserNode;
 
+  private lastDrive: number = -1;
+  private lastSilk: number = -1;
+
   constructor(ctx: BaseAudioContext) {
     this.ctx = ctx;
     
@@ -130,8 +133,12 @@ export class MasterChain {
   public updateParams(params: MasterParams) {
     const time = this.ctx.currentTime;
     
-    // Update Saturator Curve
-    this.saturator.curve = makeVelvetCurve(params.drive, params.silk);
+    // Update Saturator Curve if params have changed
+    if (params.drive !== this.lastDrive || params.silk !== this.lastSilk) {
+      this.saturator.curve = makeVelvetCurve(params.drive, params.silk);
+      this.lastDrive = params.drive;
+      this.lastSilk = params.silk;
+    }
     
     // Update EQ Bands
     this.bodyFilter.gain.setTargetAtTime(params.body, time, 0.1);

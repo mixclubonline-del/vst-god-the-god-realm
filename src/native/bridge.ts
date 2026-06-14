@@ -299,7 +299,7 @@ class NativeAudioBridge {
 
     // ─── Telemetry simulation (10Hz) ───
     setInterval(() => {
-      this.currentState.cpuUsage = 1.0 + Math.random() * 3.0;
+      this.currentState.cpuUsage = 10.0 + Math.random() * 30.0;
       this.currentState.memoryUsage = 40 + Math.random() * 20;
     }, 100);
 

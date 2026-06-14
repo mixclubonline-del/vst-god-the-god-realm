@@ -359,3 +359,33 @@
 .slider-variant-fluid .divine-slider-ambient-glow {
   background: radial-gradient(ellipse, rgba(255,215,0,0.08) 0%, transparent 70%) !important;
 }
+
+/* ═══ MIDI Learn & CC Badges ═══ */
+@keyframes divine-slider-pulse-gold {
+  0% { box-shadow: 0 0 4px rgba(212, 175, 55, 0.3), inset 0 0 2px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 12px rgba(212, 175, 55, 0.8), inset 0 0 5px rgba(212, 175, 55, 0.4); }
+  100% { box-shadow: 0 0 4px rgba(212, 175, 55, 0.3), inset 0 0 2px rgba(212, 175, 55, 0.2); }
+}
+
+.divine-slider-container.is-learning .divine-slider-track-area {
+  animation: divine-slider-pulse-gold 1.5s infinite ease-in-out;
+  border: 1px solid rgba(212, 175, 55, 0.6) !important;
+}
+
+.divine-slider-cc-badge {
+  position: absolute;
+  top: -4px;
+  right: 4px;
+  background: rgba(212, 175, 55, 0.95);
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px;
+  font-weight: 900;
+  padding: 1px 3px;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+  z-index: 10;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+

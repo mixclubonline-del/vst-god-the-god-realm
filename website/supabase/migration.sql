@@ -228,3 +228,70 @@ $$ language plpgsql;
 
 -- Example: SELECT generate_license_key();
 -- Returns: VSTGOD-A1B2-C3D4-E5F6-G7H8
+
+-- ============================================================
+-- Ethereal Cloud Sync & Preset Sharing System
+-- ============================================================
+
+-- ── Preset Backups (User repositories) ─────────────────────
+create table if not exists preset_backups (
+  license_key text not null,
+  machine_id text not null,
+  presets_json text not null,
+  updated_at timestamptz default now(),
+  primary key (license_key, machine_id)
+);
+
+-- ── Shared Community Presets ───────────────────────────────
+create table if not exists community_presets (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  type text not null,
+  author text not null,
+  rating int default 3,
+  tags text[] default array[]::text[],
+  energy_level int default 50,
+  state jsonb not null,
+  downloads int default 0,
+  license_key text,
+  machine_id text,
+  created_at timestamptz default now()
+);
+
+-- ── Expansion Kits ─────────────────────────────────────────
+create table if not exists expansion_kits (
+  id text primary key,
+  name text not null,
+  description text,
+  author text not null,
+  tags text[] default array[]::text[],
+  download_count int default 0,
+  presets jsonb not null,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS
+alter table preset_backups enable row level security;
+alter table community_presets enable row level security;
+alter table expansion_kits enable row level security;
+
+-- Policies for preset_backups
+create policy "Anyone can manage backups"
+  on preset_backups for all using (true) with check (true);
+
+-- Policies for community_presets
+create policy "Anyone can view community presets"
+  on community_presets for select using (true);
+
+create policy "Anyone can insert community presets"
+  on community_presets for insert with check (true);
+
+create policy "Anyone can update community presets"
+  on community_presets for update using (true);
+
+-- Policies for expansion_kits
+create policy "Anyone can view expansion kits"
+  on expansion_kits for select using (true);
+
+create policy "Anyone can update expansion kits"
+  on expansion_kits for update using (true);

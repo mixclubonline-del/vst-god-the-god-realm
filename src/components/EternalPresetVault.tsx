@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
@@ -18,8 +18,19 @@ import {
   ShieldCheck,
   Star,
   Plus,
-  Package
+  Package,
+  Download,
+  Loader2
 } from 'lucide-react';
+import { presetService } from '../services/presetService';
+import { 
+  fetchExpansionKits, 
+  fetchCommunityPresets, 
+  incrementKitDownload, 
+  incrementPresetDownload,
+  ExpansionKit,
+  CommunityPreset
+} from '../services/supabase';
 
 interface Preset {
   id: string;
@@ -48,6 +59,9 @@ interface EternalPresetVaultProps {
   isSyncing: boolean;
   /* Kit Assembler props (optional — shown as right-panel tab) */
   kitExporter?: React.ReactNode;
+  onSharePreset?: (preset: any) => Promise<void>;
+  activeSettings?: any;
+  showMessage?: (msg: string) => void;
 }
 
 /**
@@ -86,7 +100,10 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
   onDeletePreset,
   onCloudSync,
   isSyncing,
-  kitExporter
+  kitExporter,
+  onSharePreset,
+  activeSettings,
+  showMessage
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -94,7 +111,113 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
   const [activeCollection, setActiveCollection] = useState<CollectionFilter>('all');
   const [rightPanelMode, setRightPanelMode] = useState<'detail' | 'kit'>('detail');
 
+  const [vaultView, setVaultView] = useState<'local' | 'community'>('local');
+  const [expansionKits, setExpansionKits] = useState<ExpansionKit[]>([]);
+  const [communityPresets, setCommunityPresets] = useState<CommunityPreset[]>([]);
+  const [installedKits, setInstalledKits] = useState<Set<string>>(new Set());
+  const [downloadedPresets, setDownloadedPresets] = useState<Set<string>>(new Set());
+  const [loadingCommunity, setLoadingCommunity] = useState(false);
+  const [communitySearch, setCommunitySearch] = useState('');
+
   const selectedPreset = presets[selectedPresetIndex];
+
+  const loadCommunityData = useCallback(async () => {
+    setLoadingCommunity(true);
+    try {
+      const kits = await fetchExpansionKits();
+      setExpansionKits(kits);
+      const shared = await fetchCommunityPresets();
+      setCommunityPresets(shared);
+    } catch (err) {
+      console.error('[Vault] Error loading community data', err);
+    } finally {
+      setLoadingCommunity(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (vaultView === 'community') {
+      loadCommunityData();
+    }
+  }, [vaultView, loadCommunityData]);
+
+  const handleInstallKit = async (kit: ExpansionKit) => {
+    if (installedKits.has(kit.id)) return;
+    try {
+      await incrementKitDownload(kit.id);
+      let count = 0;
+      for (const p of kit.presets) {
+        const imported = presetService.importPreset(JSON.stringify(p));
+        if (imported) count++;
+      }
+      setInstalledKits(prev => {
+        const next = new Set(prev);
+        next.add(kit.id);
+        return next;
+      });
+      setExpansionKits(prev => prev.map(k => k.id === kit.id ? { ...k, download_count: k.download_count + 1 } : k));
+      showMessage?.(`INSTALLED "${kit.name}": ${count} Rituals Added to Vault`);
+    } catch (err) {
+      console.error('Error installing kit', err);
+      showMessage?.('FAILED TO INSTALL KIT');
+    }
+  };
+
+  const handleDownloadPreset = async (cp: CommunityPreset) => {
+    if (downloadedPresets.has(cp.id)) return;
+    try {
+      await incrementPresetDownload(cp.id);
+      
+      const p = {
+        name: cp.name,
+        type: cp.type,
+        author: cp.author,
+        rating: cp.rating,
+        fav: false,
+        tags: cp.tags,
+        energyLevel: cp.energy_level,
+        state: cp.state
+      };
+      
+      const imported = presetService.importPreset(JSON.stringify(p));
+      if (imported) {
+        setDownloadedPresets(prev => {
+          const next = new Set(prev);
+          next.add(cp.id);
+          return next;
+        });
+        setCommunityPresets(prev => prev.map(item => item.id === cp.id ? { ...item, downloads: item.downloads + 1 } : item));
+        showMessage?.(`DOWNLOADED "${cp.name}"`);
+      } else {
+        showMessage?.('FAILED TO IMPORT PRESET');
+      }
+    } catch (err) {
+      console.error('Error downloading preset', err);
+      showMessage?.('FAILED TO DOWNLOAD PRESET');
+    }
+  };
+
+  const filteredCommunityPresets = useMemo(() => {
+    if (!communitySearch.trim()) return communityPresets;
+    const q = communitySearch.toLowerCase();
+    return communityPresets.filter(cp => 
+      cp.name.toLowerCase().includes(q) ||
+      cp.author.toLowerCase().includes(q) ||
+      cp.type.toLowerCase().includes(q) ||
+      cp.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }, [communityPresets, communitySearch]);
+
+  const filteredExpansionKits = useMemo(() => {
+    if (!communitySearch.trim()) return expansionKits;
+    const q = communitySearch.toLowerCase();
+    return expansionKits.filter(ek => 
+      ek.name.toLowerCase().includes(q) ||
+      ek.description.toLowerCase().includes(q) ||
+      ek.author.toLowerCase().includes(q) ||
+      ek.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }, [expansionKits, communitySearch]);
 
   // Derived tags for filtering
   const allTags = useMemo(() => {
@@ -247,27 +370,193 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
 
         {/* Grid Header */}
         <header className="p-6 flex items-center justify-between border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent z-10">
-          <div>
-            <h2 className="text-xl font-black text-white tracking-[0.2em] uppercase">The Eternal Vault</h2>
-            <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mt-1">
-              {filteredPresets.length} items manifest in current vision
-            </p>
+          <div className="flex items-center gap-6">
+            <div>
+              <h2 className="text-xl font-black text-white tracking-[0.2em] uppercase">The Eternal Vault</h2>
+              <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mt-1">
+                {vaultView === 'local' 
+                  ? `${filteredPresets.length} items manifest in current vision` 
+                  : 'Browse Divine Expansions & Community Shared Rituals'}
+              </p>
+            </div>
+            
+            {/* View Switcher */}
+            <div className="flex bg-black/40 border border-white/10 rounded-full p-0.5">
+              <button
+                onClick={() => setVaultView('local')}
+                className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] transition-all ${
+                  vaultView === 'local'
+                    ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(255,215,0,0.3)]'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                LOCAL VAULT
+              </button>
+              <button
+                onClick={() => setVaultView('community')}
+                className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] transition-all flex items-center gap-1.5 ${
+                  vaultView === 'community'
+                    ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(255,215,0,0.3)]'
+                    : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                <Globe size={10} />
+                COMMUNITY EXPANSIONS
+              </button>
+            </div>
           </div>
           <div className="flex gap-2">
-            <button className="vg-btn vg-btn-ghost px-4 gap-2" onClick={() => setShowHistory(!showHistory)}>
-              <History size={14} className={showHistory ? 'text-yellow-500' : ''} />
-              <span className="text-[10px]">HISTORY</span>
-            </button>
-            <button className="vg-btn vg-btn-primary px-6 gap-2" onClick={onSaveAsPreset}>
-              <Plus size={14} />
-              <span className="text-[10px]">NEW RITUAL</span>
-            </button>
+            {vaultView === 'local' && (
+              <>
+                <button className="vg-btn vg-btn-ghost px-4 gap-2" onClick={() => setShowHistory(!showHistory)}>
+                  <History size={14} className={showHistory ? 'text-yellow-500' : ''} />
+                  <span className="text-[10px]">HISTORY</span>
+                </button>
+                <button className="vg-btn vg-btn-primary px-6 gap-2" onClick={onSaveAsPreset}>
+                  <Plus size={14} />
+                  <span className="text-[10px]">NEW RITUAL</span>
+                </button>
+              </>
+            )}
           </div>
         </header>
 
-        {/* The Node Grid */}
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar z-10">
-          <div className="grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+        {/* The Node Grid / Community view */}
+        {vaultView === 'community' ? (
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar z-10 space-y-8">
+            {loadingCommunity ? (
+              <div className="flex flex-col items-center justify-center h-64 text-yellow-500/60">
+                <Loader2 className="animate-spin mb-4" size={32} />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Contacting the Heavens...</span>
+              </div>
+            ) : (
+              <>
+                {/* Search / Filter community assets */}
+                <div className="relative group max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-500 transition-colors" size={12} />
+                  <input 
+                    type="text" 
+                    value={communitySearch}
+                    onChange={(e) => setCommunitySearch(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-full pl-9 pr-4 py-2.5 text-[10px] text-white placeholder:text-white/20 focus:border-yellow-500/40 outline-none transition-all"
+                    placeholder="Search community expansions, packs, or shared rituals..."
+                  />
+                </div>
+
+                {/* Section: Expansion Packs */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Package size={16} className="text-yellow-500" />
+                    <h3 className="text-xs font-black text-white uppercase tracking-[0.25em]">Expansion Kits</h3>
+                    <span className="text-[8px] font-mono bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20 uppercase">Official & Curated</span>
+                  </div>
+                  
+                  {filteredExpansionKits.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-white/[0.01] border border-white/5 text-center text-white/20 text-[10px] font-bold uppercase">
+                      No expansion kits found matching query
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredExpansionKits.map((kit) => {
+                        const isInstalled = installedKits.has(kit.id);
+                        return (
+                          <div 
+                            key={kit.id}
+                            className="p-5 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between"
+                            style={{ minHeight: '12rem' }}
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="text-sm font-black text-white tracking-wide">{kit.name}</h4>
+                                <span className="text-[8px] font-mono text-white/30 uppercase">{kit.presets.length} Presets</span>
+                              </div>
+                              <p className="text-[10px] text-white/50 leading-relaxed font-bold mb-4">{kit.description}</p>
+                            </div>
+                            
+                            <div>
+                              <div className="flex flex-wrap gap-1 mb-4">
+                                {kit.tags.map(t => (
+                                  <span key={t} className="text-[7px] font-black bg-white/5 text-white/40 px-1.5 py-0.5 rounded uppercase">{t}</span>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                                <span className="text-[8px] font-black text-white/30 uppercase">{kit.download_count} Downloads</span>
+                                <button
+                                  onClick={() => handleInstallKit(kit)}
+                                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                    isInstalled
+                                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                      : 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.15)]'
+                                  }`}
+                                >
+                                  {isInstalled ? 'Installed ✓' : 'Install Kit'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section: Community Shared */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Globe size={16} className="text-yellow-500" />
+                    <h3 className="text-xs font-black text-white uppercase tracking-[0.25em]">Ascended Community Rituals</h3>
+                    <span className="text-[8px] font-mono bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20 uppercase">User Shared</span>
+                  </div>
+
+                  {filteredCommunityPresets.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-white/[0.01] border border-white/5 text-center text-white/20 text-[10px] font-bold uppercase">
+                      No community rituals found matching query
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {filteredCommunityPresets.map((cp) => {
+                        const isDownloaded = downloadedPresets.has(cp.id);
+                        return (
+                          <div 
+                            key={cp.id}
+                            className="p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all flex flex-col justify-between"
+                            style={{ minHeight: '9rem' }}
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-1">
+                                <h4 className="text-[11px] font-black text-white truncate max-w-[120px]">{cp.name}</h4>
+                                <span className="text-[7px] font-mono bg-white/5 text-white/40 px-1 py-0.5 rounded uppercase">{cp.type}</span>
+                              </div>
+                              <span className="text-[8px] font-black text-white/30 uppercase tracking-wider block mb-3">By {cp.author}</span>
+                            </div>
+                            
+                            <div className="border-t border-white/5 pt-2 flex items-center justify-between">
+                              <span className="text-[8px] font-black text-white/30 uppercase tracking-tighter">{cp.downloads} DLs</span>
+                              <button
+                                onClick={() => handleDownloadPreset(cp)}
+                                disabled={isDownloaded}
+                                className={`p-1.5 rounded-lg transition-all ${
+                                  isDownloaded
+                                    ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                                    : 'text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500 hover:text-black'
+                                }`}
+                                title={isDownloaded ? 'Downloaded' : 'Download Ritual'}
+                              >
+                                {isDownloaded ? <ShieldCheck size={12} /> : <Download size={12} />}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar z-10">
+            <div className="grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             <AnimatePresence mode="popLayout">
               {filteredPresets.map((preset, idx) => {
                 // Find the real index in the unfiltered presets array
@@ -351,6 +640,7 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
             </AnimatePresence>
           </div>
         </div>
+        )}
 
         {/* History Overlay Panel */}
         <AnimatePresence>
@@ -505,22 +795,27 @@ export const EternalPresetVault: React.FC<EternalPresetVaultProps> = ({
                    <div className="grid grid-cols-2 gap-2">
                      <button 
                        className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2" 
-                       onClick={() => {
-                         if (confirm(`Overwrite "${selectedPreset.name}" with current settings?`)) {
-                           onSavePreset();
-                         }
-                       }}
+                       onClick={onSavePreset}
                      >
                        <ShieldCheck size={12} />
                        OVERWRITE
                      </button>
-                     <button 
-                       className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2"
-                       onClick={onCloudSync}
-                     >
-                       <Share2 size={12} />
-                       ASCEND
-                     </button>
+                      <button 
+                        className="vg-btn py-3 text-[10px] flex items-center justify-center gap-2"
+                        onClick={async () => {
+                          if (onSharePreset && selectedPreset) {
+                            await onSharePreset(selectedPreset);
+                            if (vaultView === 'community') {
+                              loadCommunityData();
+                            }
+                          } else {
+                            onCloudSync();
+                          }
+                        }}
+                      >
+                        <Share2 size={12} />
+                        ASCEND
+                      </button>
                    </div>
                    <button className="w-full text-[9px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-[0.3em] py-4 transition-colors" onClick={onDeletePreset}>
                      BANISH FROM VAULT

@@ -123,6 +123,9 @@ public:
     float getMasterPeakL() const { return masterPeakL.load (std::memory_order_relaxed); }
     float getMasterPeakR() const { return masterPeakR.load (std::memory_order_relaxed); }
     
+    /** Real-time CPU Usage estimation (0.0 to 100.0) */
+    double getActiveCpuUsage() const { return cpuUsage.load (std::memory_order_relaxed); }
+    
     /** Transport state. */
     const TransportState& getTransportState() const { return transport; }
     
@@ -179,6 +182,7 @@ private:
     std::atomic<float> masterPeakL { 0.0f };
     std::atomic<float> masterPeakR { 0.0f };
     float peakDecayCoeff = 0.9992f;  // ~300ms decay at 44100Hz
+    std::atomic<double> cpuUsage { 0.0 };
 
     // ─── Transport ───
     TransportState transport;
