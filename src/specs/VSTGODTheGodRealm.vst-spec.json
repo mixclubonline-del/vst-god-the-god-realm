@@ -121,7 +121,8 @@
     { "id": "lead_satMix", "name": "lead_satMix", "label": "Lead Sat", "group": "Mythic Lead", "min": 0, "max": 100, "default": 30, "automatable": true },
     { "id": "lead_masterGain", "name": "lead_masterGain", "label": "Lead Master", "group": "Mythic Lead", "min": 0, "max": 100, "default": 70, "automatable": true },
     { "id": "lead_bypassed", "name": "lead_bypassed", "label": "Lead Bypassed", "group": "Mythic Lead", "min": 0, "max": 1, "default": 0, "automatable": true },
-    { "id": "lead_voiceMode", "name": "lead_voiceMode", "label": "Lead Voice Mode", "group": "Mythic Lead", "min": 0, "max": 1, "default": 0, "automatable": true }
+    { "id": "lead_voiceMode", "name": "lead_voiceMode", "label": "Lead Voice Mode", "group": "Mythic Lead", "min": 0, "max": 1, "default": 0, "automatable": true },
+    { "id": "pantheonSubGain", "name": "pantheonSubGain", "label": "Chthonic Sub Gain", "group": "Electric Pantheon", "min": 0, "max": 100, "default": 40, "automatable": true }
   ],
   "audioProcessing": {
     "inputChannels": 2,

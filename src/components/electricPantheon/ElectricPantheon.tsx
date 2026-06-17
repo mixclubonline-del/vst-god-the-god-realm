@@ -39,6 +39,8 @@ import { WaveformScope } from './WaveformScope';
 import { DivineMorphOverlay } from './DivineMorphOverlay';
 import { usePantheonAnalysis } from '@/hooks/usePantheonAnalysis';
 import { usePantheonQwerty } from '@/hooks/usePantheonQwerty';
+import { nativeAudio } from '@/native/bridge';
+import { PantheonVortexPad } from './PantheonVortexPad';
 import '@/styles/ElectricPantheon.css';
 
 interface ElectricPantheonProps {
@@ -70,6 +72,7 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
   // State
   const [activeGodId, setActiveGodId] = useState<ElectricPantheonGodId>('olympus');
   const [isMorphOpen, setIsMorphOpen] = useState(false);
+  const [activeControlTab, setActiveControlTab] = useState<'shapers' | 'fx' | 'vortex' | 'visuals'>('shapers');
   const [macroValues, setMacroValues] = useState<Record<PantheonMacroId, number>>({
     energy: 50,
     divinity: 50,
@@ -91,6 +94,48 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
       setFxValues(selectedPreset.realmFx.map((fx) => Math.round(fx.default * 100)));
     }
   }, [selectedPreset?.id]);
+
+  // Track dominant god from vortex coordinates in real-time
+  const xVal = parameterValues.pantheonVortexX !== undefined ? Number(parameterValues.pantheonVortexX) : 0.5;
+  const yVal = parameterValues.pantheonVortexY !== undefined ? Number(parameterValues.pantheonVortexY) : 0.5;
+
+  useEffect(() => {
+    const vertices = [
+      { id: 'olympus', x: 1.0, y: 0.5 },
+      { id: 'hades', x: 0.85355, y: 0.85355 },
+      { id: 'zeus', x: 0.5, y: 1.0 },
+      { id: 'athena', x: 0.14645, y: 0.85355 },
+      { id: 'poseidon', x: 0.0, y: 0.5 },
+      { id: 'titan', x: 0.14645, y: 0.14645 },
+      { id: 'apollo', x: 0.5, y: 0.0 },
+      { id: 'chronos', x: 0.85355, y: 0.14645 },
+    ];
+
+    let minDistance = 999.0;
+    let closestGodId = activeGodId;
+
+    vertices.forEach((v) => {
+      const dx = xVal - v.x;
+      const dy = yVal - v.y;
+      const dist = dx * dx + dy * dy;
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestGodId = v.id as ElectricPantheonGodId;
+      }
+    });
+
+    if (closestGodId !== activeGodId) {
+      setActiveGodId(closestGodId);
+      librarySelectGod(closestGodId);
+      synthRef.current?.setGod(closestGodId);
+    }
+  }, [xVal, yVal, activeGodId, librarySelectGod]);
+
+  // Sync Chthonic Sub Gain to local Web Audio synth
+  const subGainVal = parameterValues.pantheonSubGain !== undefined ? Number(parameterValues.pantheonSubGain) : 40;
+  useEffect(() => {
+    synthRef.current?.setSubGain(subGainVal);
+  }, [subGainVal]);
 
   // ─── Phase 3: PantheonSynthEngine Lifecycle ───
   const synthRef = useRef<PantheonSynthEngine | null>(null);
@@ -120,6 +165,9 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
    * Returns the AudioContext.
    */
   const ensureAudioReady = useCallback(() => {
+    if (nativeAudio.isInJuce()) {
+      return null;
+    }
     // 1. Get or create AudioContext
     let ctx = sequencerEngine?.audioCtx?.current ?? null;
     if (!ctx) {
@@ -162,10 +210,28 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
     (id: ElectricPantheonGodId) => {
       setActiveGodId(id);
       update('pantheonGod', id);
-      // Also sync the library hook (loads first preset for this god)
       librarySelectGod(id);
-      // Wire to synth engine
       synthRef.current?.setGod(id);
+
+      // Snap Vortex coordinates to this god's vertex
+      const vertices: Record<ElectricPantheonGodId, { x: number; y: number }> = {
+        olympus: { x: 1.0, y: 0.5 },
+        hades: { x: 0.85355, y: 0.85355 },
+        zeus: { x: 0.5, y: 1.0 },
+        athena: { x: 0.14645, y: 0.85355 },
+        poseidon: { x: 0.0, y: 0.5 },
+        titan: { x: 0.14645, y: 0.14645 },
+        apollo: { x: 0.5, y: 0.0 },
+        chronos: { x: 0.85355, y: 0.14645 },
+      };
+
+      const coords = vertices[id];
+      if (coords) {
+        update('pantheonVortexX', coords.x);
+        update('pantheonVortexY', coords.y);
+        nativeAudio.setParameter('pantheonVortexX', coords.x);
+        nativeAudio.setParameter('pantheonVortexY', coords.y);
+      }
     },
     [update, librarySelectGod]
   );
@@ -308,13 +374,7 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
         )}
       </div>
 
-      {/* ═══ TOP: GLOBAL MACROS ═══ */}
-      <PantheonMacros
-        god={activeGod}
-        macroValues={macroValues}
-        onMacroChange={handleMacroChange}
-        behaviorContext={macroBehaviors}
-      />
+      {/* Top macro row removed for expanded keyboard layout */}
 
       {/* ═══ MIDDLE: 3-COLUMN LAYOUT ═══ */}
       <div className="ep-body">
@@ -324,33 +384,82 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
           activeGodId={activeGodId}
           onSelectGod={handleSelectGod}
           onOpenMorph={() => setIsMorphOpen(true)}
+          onOpenVortex={() => setActiveControlTab('vortex')}
         />
 
-        {/* CENTER: Hero + FX */}
+        {/* CENTER: Hero + Tabbed Control Deck */}
         <div className="ep-center">
           <GodHero
             god={activeGod}
             preset={selectedPreset}
           />
 
-          <div className="ep-center-bottom">
-            <RealmFXPanel
-              god={activeGod}
-              fxValues={fxValues}
-              onFxChange={handleFxChange}
-              presetFxNames={selectedPreset.realmFx.map((fx) => fx.name)}
-            />
-            <ALSVision
-              god={activeGod}
-              macroValues={macroValues}
-              analysisData={analysisData}
-            />
-            <WaveformScope
-              color={activeGod.colors.primary}
-              colorSecondary={activeGod.colors.secondary}
-              colorAccent={activeGod.colors.accent}
-              engineRef={synthRef}
-            />
+          <div className="ep-control-deck">
+            <div className="ep-control-deck-tabs">
+              {(['shapers', 'fx', 'vortex', 'visuals'] as const).map((tab) => {
+                const labels: Record<string, string> = {
+                  shapers: 'SHAPERS',
+                  fx: 'REALM FX',
+                  vortex: 'VORTEX PAD',
+                  visuals: 'AETHER SCOPE',
+                };
+                const activeColor = activeGod.colors.primary;
+                const isActive = activeControlTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    className={`ep-control-deck-tab ${isActive ? 'active' : ''}`}
+                    onClick={() => setActiveControlTab(tab)}
+                    style={{
+                      '--active-color': activeColor,
+                    } as React.CSSProperties}
+                  >
+                    {labels[tab]}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="ep-control-deck-content">
+              {activeControlTab === 'shapers' && (
+                <PantheonMacros
+                  god={activeGod}
+                  macroValues={macroValues}
+                  onMacroChange={handleMacroChange}
+                  behaviorContext={macroBehaviors}
+                />
+              )}
+              {activeControlTab === 'fx' && (
+                <RealmFXPanel
+                  god={activeGod}
+                  fxValues={fxValues}
+                  onFxChange={handleFxChange}
+                  presetFxNames={selectedPreset.realmFx.map((fx) => fx.name)}
+                />
+              )}
+              {activeControlTab === 'vortex' && (
+                <PantheonVortexPad
+                  parameterValues={parameterValues}
+                  update={update}
+                  isEmbedded={true}
+                />
+              )}
+              {activeControlTab === 'visuals' && (
+                <div className="ep-visuals-deck">
+                  <ALSVision
+                    god={activeGod}
+                    macroValues={macroValues}
+                    analysisData={analysisData}
+                  />
+                  <WaveformScope
+                    color={activeGod.colors.primary}
+                    colorSecondary={activeGod.colors.secondary}
+                    colorAccent={activeGod.colors.accent}
+                    engineRef={synthRef}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -358,6 +467,8 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
         <GodProfile
           god={activeGod}
           preset={selectedPreset}
+          parameterValues={parameterValues}
+          update={update}
         />
       </div>
 
@@ -386,6 +497,8 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
         onMorphApply={handleMorphApply}
         onMorphPreview={handleMorphPreview}
       />
+
+      {/* Floating Vortex Pad removed in favor of embedded Control Deck tab */}
     </div>
   );
 };

@@ -66,6 +66,7 @@ export class PantheonSynthEngine {
   private vibratoLfo!: OscillatorNode;
   private vibratoGain!: GainNode;
   private macroState = { energy: 50, divinity: 50, width: 50, realm: 50 };
+  private pantheonSubGain = 40;
 
   // Morph state
   private morphVoices: PantheonVoice[] = [];
@@ -343,6 +344,7 @@ export class PantheonSynthEngine {
       voice.noteOff();
     }
 
+    voice.pantheonSubGain = this.pantheonSubGain;
     voice.noteOn(midi, velocity, this.pitchBend);
 
     // Also trigger morph voices if morph is active
@@ -352,6 +354,7 @@ export class PantheonSynthEngine {
         mv = this.morphVoices.reduce((o, v) => v.startTime < o.startTime ? v : o);
         mv.noteOff();
       }
+      mv.pantheonSubGain = this.pantheonSubGain;
       mv.noteOn(midi, velocity, this.pitchBend);
     }
   }
@@ -376,6 +379,7 @@ export class PantheonSynthEngine {
     } else {
       // Retrigger voice 0
       if (active) active.noteOff();
+      this.voices[0].pantheonSubGain = this.pantheonSubGain;
       this.voices[0].noteOn(midi, velocity, this.pitchBend);
     }
   }
@@ -404,6 +408,12 @@ export class PantheonSynthEngine {
     for (const v of this.voices) {
       if (v.active) v.noteOff();
     }
+  }
+
+  setSubGain(value: number): void {
+    this.pantheonSubGain = value;
+    this.voices.forEach((v) => v.setSubGain(value));
+    this.morphVoices.forEach((v) => v.setSubGain(value));
   }
 
   // ─── Macro Control ───────────────────────────────────────

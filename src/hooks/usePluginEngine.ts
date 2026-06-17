@@ -8,6 +8,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { PantheonSynthEngine } from '@/audio/PantheonSynthEngine';
 import type { PluginId } from '@/data/pluginRegistry';
 import { PLUGIN_REGISTRY } from '@/data/pluginRegistry';
+import { nativeAudio } from '@/native/bridge';
 
 interface PluginEngineAPI {
   engine: PantheonSynthEngine | null;
@@ -39,6 +40,10 @@ export function usePluginEngine(pluginId: PluginId): PluginEngineAPI {
   const plugin = PLUGIN_REGISTRY[pluginId];
 
   useEffect(() => {
+    if (nativeAudio.isInJuce()) {
+      setIsReady(true);
+      return;
+    }
     const ctx = getAudioContext();
     const engine = new PantheonSynthEngine();
     engine.init(ctx, ctx.destination);
@@ -125,6 +130,9 @@ export function usePluginEngine(pluginId: PluginId): PluginEngineAPI {
         break;
 
       // ── Sub/Body/Mod ──
+      case 'pantheonSubGain':
+        engine.setSubGain(value);
+        break;
       case 'subOscGain':
       case 'bodyGain':
       case 'modIndex':

@@ -21,6 +21,8 @@ export class PantheonVoice {
   public midi = -1;
   public active = false;
   public startTime = 0;
+  private velocity = 0;
+  public pantheonSubGain = 40;
   private releaseTimer: number | null = null;
   private preset: GodVoicePreset | null = null;
 
@@ -115,6 +117,7 @@ export class PantheonVoice {
     this.midi = midi;
     this.active = true;
     this.startTime = now;
+    this.velocity = vel;
 
     // Set frequencies
     this.carrier.frequency.setTargetAtTime(freq, now, 0.003);
@@ -127,7 +130,8 @@ export class PantheonVoice {
 
     // Body + Sub levels
     this.bodyGain.gain.setTargetAtTime(p.bodyGain * vel, now, 0.003);
-    this.subGain.gain.setTargetAtTime(p.subOscGain * vel, now, 0.003);
+    const subOscGainScaled = p.subOscGain * (this.pantheonSubGain / 100);
+    this.subGain.gain.setTargetAtTime(subOscGainScaled * vel, now, 0.003);
 
     // Detune
     this.carrier.detune.setTargetAtTime(p.detuneCents * 0.5, now, 0.01);
@@ -178,6 +182,15 @@ export class PantheonVoice {
     }
     this.body.frequency.setTargetAtTime(freq, now, 0.01);
     this.sub.frequency.setTargetAtTime(freq * 0.5, now, 0.01);
+  }
+
+  setSubGain(value: number): void {
+    this.pantheonSubGain = value;
+    if (this.active && this.preset) {
+      const now = this.ctx.currentTime;
+      const subOscGainScaled = this.preset.subOscGain * (this.pantheonSubGain / 100);
+      this.subGain.gain.setTargetAtTime(subOscGainScaled * this.velocity, now, 0.01);
+    }
   }
 
   dispose(): void {
