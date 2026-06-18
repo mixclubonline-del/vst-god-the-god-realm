@@ -82,6 +82,10 @@ export class PantheonSynthEngine {
     return GOD_VOICE_PRESETS[this.currentGodId] || GOD_VOICE_PRESETS.olympus;
   }
 
+  getContext(): BaseAudioContext | null {
+    return this.ctx;
+  }
+
   init(ctx: BaseAudioContext, destination?: AudioNode): void {
     this.ctx = ctx;
 
@@ -327,11 +331,11 @@ export class PantheonSynthEngine {
 
   // ─── Voice Allocation ────────────────────────────────────
 
-  noteOn(midi: number, velocity: number): void {
+  noteOn(midi: number, velocity: number, time?: number): void {
     if (!this.ctx) return;
 
     if (this.voiceMode === 'MONO' || this.voiceMode === 'LEGATO') {
-      this.handleMonoNote(midi, velocity);
+      this.handleMonoNote(midi, velocity, time);
       return;
     }
 
@@ -341,46 +345,46 @@ export class PantheonSynthEngine {
       voice = this.voices.reduce((oldest, v) =>
         v.startTime < oldest.startTime ? v : oldest
       );
-      voice.noteOff();
+      voice.noteOff(time);
     }
 
     voice.pantheonSubGain = this.pantheonSubGain;
-    voice.noteOn(midi, velocity, this.pitchBend);
+    voice.noteOn(midi, velocity, this.pitchBend, time);
 
     // Also trigger morph voices if morph is active
     if (this.morphBlend > 0 && this.morphVoices.length > 0) {
       let mv = this.morphVoices.find(v => !v.active);
       if (!mv) {
         mv = this.morphVoices.reduce((o, v) => v.startTime < o.startTime ? v : o);
-        mv.noteOff();
+        mv.noteOff(time);
       }
       mv.pantheonSubGain = this.pantheonSubGain;
-      mv.noteOn(midi, velocity, this.pitchBend);
+      mv.noteOn(midi, velocity, this.pitchBend, time);
     }
   }
 
-  noteOff(midi: number): void {
+  noteOff(midi: number, time?: number): void {
     for (const v of this.voices) {
       if (v.midi === midi && v.active) {
-        v.noteOff();
+        v.noteOff(time);
       }
     }
     for (const v of this.morphVoices) {
       if (v.midi === midi && v.active) {
-        v.noteOff();
+        v.noteOff(time);
       }
     }
   }
 
-  private handleMonoNote(midi: number, velocity: number): void {
+  private handleMonoNote(midi: number, velocity: number, time?: number): void {
     const active = this.voices.find(v => v.active);
     if (active && this.voiceMode === 'LEGATO') {
-      active.glide(midi, this.PORTA_TIME, this.pitchBend);
+      active.glide(midi, this.PORTA_TIME, this.pitchBend, time);
     } else {
       // Retrigger voice 0
-      if (active) active.noteOff();
+      if (active) active.noteOff(time);
       this.voices[0].pantheonSubGain = this.pantheonSubGain;
-      this.voices[0].noteOn(midi, velocity, this.pitchBend);
+      this.voices[0].noteOn(midi, velocity, this.pitchBend, time);
     }
   }
 

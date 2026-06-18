@@ -43,14 +43,19 @@ export function useArpeggiator({ synthEngine, bpm, octave, enabled }: UseArpeggi
     const engine = engineRef.current;
     if (!engine || !synthEngine) return;
 
+    const audioCtx = synthEngine.getContext();
+    if (audioCtx) {
+      engine.init(audioCtx);
+    }
+
     engine.setCallbacks(
-      (note, velocity) => {
+      (note, velocity, time) => {
         const adjusted = note + (octaveRef.current * 12);
-        synthEngine.noteOn(adjusted, velocity);
+        synthEngine.noteOn(adjusted, velocity, time);
       },
-      (note) => {
+      (note, time) => {
         const adjusted = note + (octaveRef.current * 12);
-        synthEngine.noteOff(adjusted);
+        synthEngine.noteOff(adjusted, time);
       }
     );
   }, [synthEngine]);

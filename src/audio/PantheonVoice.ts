@@ -102,10 +102,10 @@ export class PantheonVoice {
     return this.preset !== null;
   }
 
-  noteOn(midi: number, velocity: number, pitchBend = 0): void {
+  noteOn(midi: number, velocity: number, pitchBend = 0, time?: number): void {
     if (!this.preset) return;
     const p = this.preset;
-    const now = this.ctx.currentTime;
+    const now = time !== undefined ? time : this.ctx.currentTime;
     const freq = 440 * Math.pow(2, (midi - 69 + pitchBend) / 12);
     const vel = velocity / 127;
 
@@ -144,9 +144,9 @@ export class PantheonVoice {
     this.envelope.gain.linearRampToValueAtTime(vel * p.sustain, now + p.attack + p.decay);
   }
 
-  noteOff(): void {
+  noteOff(time?: number): void {
     if (!this.preset) return;
-    const now = this.ctx.currentTime;
+    const now = time !== undefined ? time : this.ctx.currentTime;
 
     // Release
     this.envelope.gain.cancelScheduledValues(now);
@@ -154,16 +154,18 @@ export class PantheonVoice {
     this.envelope.gain.linearRampToValueAtTime(0, now + this.preset.release);
 
     // Mark inactive after release completes
+    const releaseDurationMs = this.preset.release * 1000 + 50;
+    const timeDeltaMs = Math.max(0, (now - this.ctx.currentTime) * 1000);
     this.releaseTimer = window.setTimeout(() => {
       this.active = false;
       this.midi = -1;
-    }, this.preset.release * 1000 + 50);
+    }, releaseDurationMs + timeDeltaMs);
   }
 
-  glide(midi: number, portaTime: number, pitchBend = 0): void {
+  glide(midi: number, portaTime: number, pitchBend = 0, time?: number): void {
     if (!this.preset) return;
     const freq = 440 * Math.pow(2, (midi - 69 + pitchBend) / 12);
-    const now = this.ctx.currentTime;
+    const now = time !== undefined ? time : this.ctx.currentTime;
     this.midi = midi;
 
     this.carrier.frequency.setTargetAtTime(freq, now, portaTime);

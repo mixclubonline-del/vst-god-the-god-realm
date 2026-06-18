@@ -110,17 +110,26 @@ export class ArpeggiatorEngine {
   private stepIndex: number = 0;
   private patternIndex: number = 0;
   private isRunning: boolean = false;
-  private lastTickTime: number = 0;
   private tickInterval: number = 0;
-  private onNoteOn: ((note: number, velocity: number) => void) | null = null;
-  private onNoteOff: ((note: number) => void) | null = null;
+  private onNoteOn: ((note: number, velocity: number, time: number) => void) | null = null;
+  private onNoteOff: ((note: number, time: number) => void) | null = null;
   private activeNote: number | null = null;
-  private timerId: number | null = null;
-  private nextTickTime: number = 0;
+
+  private ctx: BaseAudioContext | null = null;
+  private schedulerIntervalId: any = null;
+  private nextNoteTime: number = 0.0;
+  private scheduleAheadTime: number = 0.100; // 100ms look-ahead
+  private lookaheadInterval: number = 25.0;  // 25ms run interval
+  private bpm: number = 120;
+
+  init(ctx: BaseAudioContext) {
+    this.ctx = ctx;
+  }
 
   setConfig(config: Partial<ArpConfig>) {
     this.config = { ...this.config, ...config };
     this.rebuildSequence();
+    this.updateTickInterval(this.bpm);
   }
 
   getConfig(): ArpConfig {
@@ -128,8 +137,8 @@ export class ArpeggiatorEngine {
   }
 
   setCallbacks(
-    onNoteOn: (note: number, velocity: number) => void,
-    onNoteOff: (note: number) => void
+    onNoteOn: (note: number, velocity: number, time: number) => void,
+    onNoteOff: (note: number, time: number) => void
   ) {
     this.onNoteOn = onNoteOn;
     this.onNoteOff = onNoteOff;
@@ -155,6 +164,7 @@ export class ArpeggiatorEngine {
 
   /** Set BPM for timing calculations */
   setBPM(bpm: number) {
+    this.bpm = bpm;
     this.updateTickInterval(bpm);
   }
 
@@ -162,8 +172,6 @@ export class ArpeggiatorEngine {
     const beatsPerSecond = bpm / 60;
     const stepsPerBeat = RATE_MULTIPLIERS[this.config.rate];
     this.tickInterval = 1000 / (beatsPerSecond * stepsPerBeat);
-    // Reset so next tick recalculates timing at new interval
-    this.nextTickTime = 0;
   }
 
   private rebuildSequence() {
@@ -174,86 +182,93 @@ export class ArpeggiatorEngine {
   }
 
   private start() {
+    if (this.isRunning) return;
     this.isRunning = true;
     this.stepIndex = 0;
     this.patternIndex = 0;
-    this.lastTickTime = performance.now();
-    this.nextTickTime = 0;
-    this.scheduleTick();
+
+    const now = this.ctx ? this.ctx.currentTime : (performance.now() / 1000);
+    this.nextNoteTime = now;
+
+    this.startSchedulerLoop();
   }
 
   private stop() {
+    if (!this.isRunning) return;
     this.isRunning = false;
-    if (this.timerId !== null) {
-      clearTimeout(this.timerId);
-      this.timerId = null;
-    }
-    this.nextTickTime = 0;
-    // Release active note
+    this.stopSchedulerLoop();
+    this.nextNoteTime = 0.0;
+
+    // Release active note immediately
     if (this.activeNote !== null && this.onNoteOff) {
-      this.onNoteOff(this.activeNote);
+      const now = this.ctx ? this.ctx.currentTime : 0;
+      this.onNoteOff(this.activeNote, now);
       this.activeNote = null;
     }
   }
 
-  private scheduleTick() {
+  private startSchedulerLoop() {
+    if (this.schedulerIntervalId !== null) {
+      clearInterval(this.schedulerIntervalId);
+    }
+    this.schedulerIntervalId = setInterval(() => {
+      this.schedulerTick();
+    }, this.lookaheadInterval);
+  }
+
+  private stopSchedulerLoop() {
+    if (this.schedulerIntervalId !== null) {
+      clearInterval(this.schedulerIntervalId);
+      this.schedulerIntervalId = null;
+    }
+  }
+
+  private schedulerTick() {
     if (!this.isRunning) return;
 
-    const now = performance.now();
-    if (this.nextTickTime === 0) {
-      this.nextTickTime = now + this.tickInterval;
+    const currentTime = this.ctx ? this.ctx.currentTime : (performance.now() / 1000);
+
+    while (this.nextNoteTime < currentTime + this.scheduleAheadTime) {
+      this.scheduleNote(this.nextNoteTime);
+      this.advanceNote();
     }
-
-    // Calculate delay to next expected tick, correcting for any drift
-    const delay = Math.max(1, this.nextTickTime - now);
-
-    this.timerId = window.setTimeout(() => {
-      this.tick();
-      // Schedule next tick relative to when this tick SHOULD have fired
-      // This prevents cumulative drift
-      this.nextTickTime += this.tickInterval;
-      this.scheduleTick();
-    }, delay) as unknown as number;
   }
 
-  private tick() {
-    if (!this.isRunning || this.sequence.length === 0) return;
+  private scheduleNote(time: number) {
+    if (this.sequence.length === 0) return;
 
-    // Release previous note
-    if (this.activeNote !== null && this.onNoteOff) {
-      this.onNoteOff(this.activeNote);
-      this.activeNote = null;
-    }
-
-    // Check rhythm pattern
     const patternStep = this.config.pattern[this.patternIndex % this.config.pattern.length];
     this.patternIndex++;
 
     if (patternStep === 0) {
-      // Rest — skip this step but advance sequence
-      this.stepIndex = (this.stepIndex + 1) % this.sequence.length;
       return;
     }
 
-    // Play note
     const note = this.sequence[this.stepIndex % this.sequence.length];
     const velocity = this.config.velocity > 0 ? this.config.velocity : 100;
 
+    // Calculate note duration in seconds based on current tempo (BPM)
+    const beatsPerSecond = this.bpm / 60;
+    const stepsPerBeat = RATE_MULTIPLIERS[this.config.rate];
+    const secondsPerStep = 1.0 / (beatsPerSecond * stepsPerBeat);
+    const noteDuration = secondsPerStep * this.config.gate;
+
     if (this.onNoteOn) {
-      this.onNoteOn(note, velocity);
+      this.onNoteOn(note, velocity, time);
       this.activeNote = note;
     }
 
-    // Schedule gate off
-    const gateMs = this.tickInterval * this.config.gate;
-    setTimeout(() => {
-      if (this.activeNote === note && this.onNoteOff) {
-        this.onNoteOff(note);
-        this.activeNote = null;
-      }
-    }, gateMs);
+    if (this.onNoteOff) {
+      this.onNoteOff(note, time + noteDuration);
+    }
+  }
 
-    // Advance
+  private advanceNote() {
+    const beatsPerSecond = this.bpm / 60;
+    const stepsPerBeat = RATE_MULTIPLIERS[this.config.rate];
+    const secondsPerStep = 1.0 / (beatsPerSecond * stepsPerBeat);
+
+    this.nextNoteTime += secondsPerStep;
     this.stepIndex = (this.stepIndex + 1) % this.sequence.length;
 
     // Re-shuffle if random mode
