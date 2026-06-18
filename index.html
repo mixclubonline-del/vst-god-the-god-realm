@@ -7,9 +7,16 @@
     <title>VST GOD — The God Realm</title>
     <meta name="description" content="High-fidelity standalone development harness for The God Realm sampler plugin." />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
-      
+      /* Local font declarations — bundled for offline JUCE WebView */
+      @font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('./fonts/inter-400.ttf') format('truetype'); }
+      @font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url('./fonts/inter-500.ttf') format('truetype'); }
+      @font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('./fonts/inter-600.ttf') format('truetype'); }
+      @font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; font-display: swap; src: url('./fonts/inter-700.ttf') format('truetype'); }
+      @font-face { font-family: 'Inter'; font-weight: 800; font-style: normal; font-display: swap; src: url('./fonts/inter-800.ttf') format('truetype'); }
+      @font-face { font-family: 'Inter'; font-weight: 900; font-style: normal; font-display: swap; src: url('./fonts/inter-900.ttf') format('truetype'); }
+      @font-face { font-family: 'JetBrains Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url('./fonts/jetbrains-mono-400.ttf') format('truetype'); }
+      @font-face { font-family: 'JetBrains Mono'; font-weight: 500; font-style: normal; font-display: swap; src: url('./fonts/jetbrains-mono-500.ttf') format('truetype'); }
+
       body {
         font-family: 'Inter', sans-serif;
         background-color: #050507;
@@ -18,7 +25,7 @@
         margin: 0;
         padding: 0;
       }
-      
+
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }

@@ -5,10 +5,17 @@
 .da-root {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  background: radial-gradient(ellipse at 50% 0%, #1a1008 0%, #0a0a0a 60%);
-  color: #f0e6dc;
-  font-family: 'Orbitron', sans-serif;
+  background: 
+    radial-gradient(ellipse at 50% 0%, rgba(26, 16, 8, 0.9) 0%, rgba(10, 10, 10, 0.95) 60%),
+    url('/plugins/backgrounds/divine-archive-comp.png'),
+    url('/plugins/textures/dark-leather.png');
+  background-size: cover, cover, auto;
+  background-position: center, center, top left;
+  background-blend-mode: normal, luminosity, multiply;
+  color: var(--da-text-primary);
+  font-family: 'Inter', sans-serif;
   overflow: hidden;
   position: relative;
 }

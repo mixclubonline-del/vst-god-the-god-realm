@@ -41,6 +41,34 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: auto;
+  position: relative;
+}
+
+.astral-dais::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/astral-dais.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.astral-dais::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+
+.astral-dais > * {
+  position: relative;
+  z-index: 1;
 }
 
 
@@ -337,7 +365,9 @@
 .astral-detail {
   width: 100%;
   padding: 16px;
-  background: rgba(12, 12, 22, 0.8);
+  background: 
+    linear-gradient(rgba(12, 12, 22, 0.60), rgba(12, 12, 22, 0.60)),
+    url('/plugins/backgrounds/multi-realm.png') center/cover;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.06);

@@ -6,7 +6,7 @@ project(VSTGod_TheGodRealm VERSION 1.0.0)
 include(FetchContent)
 FetchContent_Declare(
     juce
-    URL https://github.com/juce-framework/JUCE/archive/master.zip
+    URL https://github.com/juce-framework/JUCE/archive/refs/tags/8.0.6.zip
 )
 FetchContent_MakeAvailable(juce)
 
@@ -17,6 +17,7 @@ juce_add_plugin(VSTGodTheGodRealm
     PLUGIN_CODE "Vgod"
     FORMATS VST3 AU Standalone
     PRODUCT_NAME "VST God - The God Realm"
+    BUNDLE_ID "com.mixxtech.vstgod.thegodrealm"
     NEEDS_WEB_BROWSER TRUE
     NEEDS_CURL TRUE
 )

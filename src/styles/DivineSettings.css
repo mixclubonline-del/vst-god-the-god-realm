@@ -50,6 +50,36 @@
   overflow: hidden;
 }
 
+/* ─── Background Image Layer ─── */
+.divine-settings::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/divine-settings.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ─── Dark Vignette Overlay ─── */
+.divine-settings::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+}
+
+/* ─── Content Layering ─── */
+.divine-settings > * {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes dsSlideIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }

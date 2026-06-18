@@ -1,0 +1,811 @@
+/**
+ * AnunnakiPluginWindow.css — V2: Deity-Level Insert FX Window Chrome
+ * ════════════════════════════════════════════════════════════════════
+ * Premium machined-obsidian window frame for all Anunnaki FX plugins.
+ *
+ * Design: FORGED OBSIDIAN × DIVINE EMBER — V2
+ * ─────────────────────────────────────────────
+ *  ∙ Obsidian-black chassis with gold and ember-red accents
+ *  ∙ Multi-layer box-shadows for CNC-machined depth
+ *  ∙ Cuneiform micro-texture + gold noise grain overlay
+ *  ∙ Animated gold shimmer sweep on title text
+ *  ∙ Pulsing cuneiform ember glow icon
+ *  ∙ Double-border machined bevel frame
+ *  ∙ Corner accent sacred geometry markers
+ *  ∙ Enhanced bypass overlay with diagonal stripes + rocking text
+ *  ∙ Focus breathing glow animation (8s cycle)
+ *  ∙ Active pulse dot in bottom bar
+ *  ∙ Directional top-left lighting (hardware industry standard)
+ *  ∙ 8-handle resize system with invisible hit areas
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   KEYFRAMES — Divine Animations
+   ═══════════════════════════════════════════════════════════ */
+
+/* Title text gold shimmer sweep */
+@keyframes aw-title-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Cuneiform icon ember pulse */
+@keyframes aw-ember-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(212, 168, 83, 0.3));
+    text-shadow: 0 0 6px rgba(212, 168, 83, 0.2);
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(239, 120, 50, 0.6));
+    text-shadow: 0 0 14px rgba(239, 120, 50, 0.5);
+  }
+}
+
+/* Titlebar bottom gold line pulse */
+@keyframes aw-titlebar-line-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Focus breathing glow */
+@keyframes aw-focus-breathe {
+  0%, 100% {
+    box-shadow:
+      0 24px 72px var(--aw-shadow-deep),
+      0 10px 32px rgba(0, 0, 0, 0.7),
+      -1px -1px 0 var(--aw-chrome-hi),
+      1px 1px 0 rgba(0, 0, 0, 0.4),
+      0 0 60px rgba(212, 168, 83, 0.06),
+      0 0 120px rgba(212, 168, 83, 0.02);
+    border-color: rgba(212, 168, 83, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 24px 72px var(--aw-shadow-deep),
+      0 10px 32px rgba(0, 0, 0, 0.7),
+      -1px -1px 0 var(--aw-chrome-hi),
+      1px 1px 0 rgba(0, 0, 0, 0.4),
+      0 0 80px rgba(212, 168, 83, 0.12),
+      0 0 160px rgba(212, 168, 83, 0.05);
+    border-color: rgba(212, 168, 83, 0.3);
+  }
+}
+
+/* Cuneiform texture shimmer (existing, retained) */
+@keyframes aw-shimmer {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
+}
+
+/* Bypass text rocking + pulse */
+@keyframes aw-bypass-rock {
+  0% {
+    transform: rotate(-12deg) rotate(-5deg);
+    opacity: 0.08;
+  }
+  25% {
+    opacity: 0.18;
+  }
+  50% {
+    transform: rotate(-12deg) rotate(5deg);
+    opacity: 0.08;
+  }
+  75% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: rotate(-12deg) rotate(-5deg);
+    opacity: 0.08;
+  }
+}
+
+/* Bottom bar active pulse dot */
+@keyframes aw-dot-pulse {
+  0%, 100% {
+    box-shadow: 0 0 3px rgba(120, 200, 80, 0.4);
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(212, 168, 83, 0.8);
+    opacity: 1;
+  }
+}
+
+/* Bypass overlay diagonal stripe march */
+@keyframes aw-stripe-march {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 28px 28px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-window {
+  --aw-obsidian: #0a0a0f;
+  --aw-obsidian-deep: #050508;
+  --aw-gold: #d4a853;
+  --aw-gold-dim: rgba(212, 168, 83, 0.4);
+  --aw-gold-ghost: rgba(212, 168, 83, 0.12);
+  --aw-ember: #ef4444;
+  --aw-ember-glow: rgba(239, 68, 68, 0.4);
+  --aw-chrome: rgba(255, 255, 255, 0.06);
+  --aw-chrome-hi: rgba(255, 255, 255, 0.1);
+  --aw-shadow-deep: rgba(0, 0, 0, 0.85);
+  --aw-track-color: var(--track-accent, var(--aw-gold));
+  --aw-titlebar-height: 42px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WINDOW FRAME — Forged Obsidian Chassis V2 (Double Border)
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-window {
+  position: fixed;
+  /* Radial gradient: slightly lighter center, darker edges */
+  background:
+    radial-gradient(
+      ellipse at 50% 40%,
+      rgba(16, 16, 22, 0.97) 0%,
+      rgba(10, 10, 15, 0.97) 50%,
+      rgba(6, 6, 10, 0.98) 100%
+    );
+  /* Outer gold ghost border */
+  border: 1px solid var(--aw-gold-ghost);
+  border-radius: 8px;
+  overflow: visible;
+  font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+
+  /* Inner border via outline for double-bevel machined look */
+  outline: 1px solid rgba(212, 168, 83, 0.06);
+  outline-offset: -3px;
+
+  /* 6-layer machined chassis shadow + inner glow */
+  box-shadow:
+    /* Inner glow — very subtle gold aura */
+    inset 0 0 40px rgba(212, 168, 83, 0.02),
+    /* Primary drop shadow — deep and diffuse */
+    0 20px 60px var(--aw-shadow-deep),
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    /* Top-left directional highlight — machined bevel */
+    -1px -1px 0 var(--aw-chrome-hi),
+    1px 1px 0 rgba(0, 0, 0, 0.4),
+    /* Accent underglow — warm ember halo */
+    0 0 40px rgba(212, 168, 83, 0.04);
+
+  transition: box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Active / Focused state — enhanced glow + breathing ── */
+.anunnaki-window--focused {
+  border-color: rgba(212, 168, 83, 0.22);
+  outline-color: rgba(212, 168, 83, 0.1);
+  animation: aw-focus-breathe 8s ease-in-out infinite;
+}
+
+/* ── Inactive / Blurred state ── */
+.anunnaki-window--blurred {
+  opacity: 0.88;
+  filter: saturate(0.85) contrast(0.96);
+  border-color: rgba(212, 168, 83, 0.06);
+  outline-color: rgba(212, 168, 83, 0.02);
+}
+
+.anunnaki-window--blurred:hover {
+  opacity: 0.96;
+  filter: none;
+}
+
+/* ── Top edge bevel — gold accent highlight ── */
+.anunnaki-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 168, 83, 0.15) 20%,
+    rgba(212, 168, 83, 0.25) 50%,
+    rgba(212, 168, 83, 0.15) 80%,
+    transparent 100%
+  );
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 8px 8px 0 0;
+}
+
+/* ── Cuneiform texture + gold noise grain — dual texture layer ── */
+.anunnaki-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.03;
+  background:
+    /* Vertical micro-columns — cuneiform wedge marks */
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 11px,
+      rgba(212, 168, 83, 0.12) 11px,
+      rgba(212, 168, 83, 0.12) 12px
+    ),
+    /* Horizontal strata — ancient stone layering */
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 7px,
+      rgba(255, 255, 255, 0.06) 7px,
+      rgba(255, 255, 255, 0.06) 8px
+    ),
+    /* Gold noise grain — scattered tiny dots */
+    radial-gradient(circle at 10% 15%, rgba(212, 168, 83, 0.12) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 25% 45%, rgba(212, 168, 83, 0.10) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 50% 10%, rgba(212, 168, 83, 0.08) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 72% 35%, rgba(212, 168, 83, 0.10) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 85% 65%, rgba(212, 168, 83, 0.12) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 40% 80%, rgba(212, 168, 83, 0.08) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 15% 70%, rgba(212, 168, 83, 0.10) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 60% 55%, rgba(212, 168, 83, 0.08) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 90% 20%, rgba(212, 168, 83, 0.10) 0.5px, transparent 0.5px),
+    /* Directional radial accent washes */
+    radial-gradient(
+      ellipse at 30% 20%,
+      rgba(212, 168, 83, 0.05) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at 70% 80%,
+      rgba(212, 168, 83, 0.03) 0%,
+      transparent 60%
+    );
+  mix-blend-mode: overlay;
+}
+
+/* Living shimmer on the cuneiform texture */
+.anunnaki-window--focused::after {
+  animation: aw-shimmer 6s ease-in-out infinite;
+}
+
+/* Ensure all direct children render above pseudo-elements */
+.anunnaki-window > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TITLE BAR — V2: Taller, Animated Shimmer, Ember Icon
+   ═══════════════════════════════════════════════════════════ */
+
+.aw-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--aw-titlebar-height);
+  padding: 0 14px;
+  flex-shrink: 0;
+  position: relative;
+
+  /* Darker recessed groove */
+  background: linear-gradient(
+    180deg,
+    rgba(20, 18, 12, 0.95) 0%,
+    rgba(15, 13, 8, 0.98) 100%
+  );
+
+  /* Top bevel highlight + bottom groove shadow */
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(212, 168, 83, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 0 rgba(0, 0, 0, 0.3);
+
+  border-radius: 8px 8px 0 0;
+  cursor: grab;
+}
+
+.aw-titlebar:active {
+  cursor: grabbing;
+}
+
+/* ── Animated gold pulse line at bottom of title bar ── */
+.aw-titlebar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 168, 83, 0.15) 15%,
+    rgba(212, 168, 83, 0.35) 50%,
+    rgba(212, 168, 83, 0.15) 85%,
+    transparent 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+  animation: aw-titlebar-line-pulse 3s ease-in-out infinite;
+}
+
+/* ── Branding icon — pulsing ember glow ── */
+.aw-titlebar__icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: aw-ember-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── Plugin name — animated gold shimmer sweep ── */
+.aw-titlebar__name {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+
+  /* Shimmer gradient text effect */
+  background: linear-gradient(
+    90deg,
+    var(--aw-gold) 0%,
+    var(--aw-gold) 35%,
+    #f0d890 45%,
+    #fffbe6 50%,
+    #f0d890 55%,
+    var(--aw-gold) 65%,
+    var(--aw-gold) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: aw-title-shimmer 4s linear infinite;
+  text-shadow: none; /* text-shadow doesn't work with bg-clip text, handled by gradient */
+}
+
+/* ── Track indicator — colored dot + number ── */
+.aw-titlebar__track {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.aw-titlebar__track-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--aw-track-color);
+  box-shadow: 0 0 6px var(--aw-track-color);
+}
+
+.aw-titlebar__track-num {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(200, 190, 160, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* ── Bypass button (power icon) ── */
+.aw-titlebar__bypass {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 168, 83, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--aw-gold);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  padding: 0;
+  font-family: inherit;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(212, 168, 83, 0.08);
+}
+
+.aw-titlebar__bypass:hover {
+  border-color: rgba(212, 168, 83, 0.35);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 14px rgba(212, 168, 83, 0.2);
+  transform: scale(1.1);
+}
+
+/* Active = plugin is ON (not bypassed) */
+.aw-titlebar__bypass--active {
+  color: var(--aw-gold);
+  border-color: rgba(212, 168, 83, 0.3);
+  background: rgba(212, 168, 83, 0.08);
+  text-shadow: 0 0 8px rgba(212, 168, 83, 0.5);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(212, 168, 83, 0.15);
+}
+
+/* Bypassed = plugin is OFF */
+.aw-titlebar__bypass--bypassed {
+  color: rgba(120, 110, 90, 0.3);
+  border-color: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.5);
+  text-shadow: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Close button ── */
+.aw-titlebar__close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(40, 30, 30, 0.6);
+  color: rgba(180, 160, 140, 0.4);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  padding: 0;
+  font-family: inherit;
+}
+
+.aw-titlebar__close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--aw-ember);
+  box-shadow: 0 0 12px var(--aw-ember-glow);
+  transform: scale(1.15);
+}
+
+.aw-titlebar__close:active {
+  transform: scale(0.9);
+  background: rgba(239, 68, 68, 0.35);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTENT AREA — V2: Corner Accent Brackets
+   ═══════════════════════════════════════════════════════════ */
+
+.aw-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 15, 1) 0%,
+    rgba(8, 8, 12, 1) 100%
+  );
+  /* Subtle inner recess */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Corner accent brackets (⌜⌝⌞⌟) — sacred geometry markers ── */
+.aw-content::before {
+  content: '⌜';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--aw-gold);
+  opacity: 0.10;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.aw-content::after {
+  content: '⌟';
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--aw-gold);
+  opacity: 0.10;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Additional corners via inner elements (rendered in TSX) */
+.aw-content__corner {
+  position: absolute;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--aw-gold);
+  opacity: 0.10;
+  z-index: 2;
+  pointer-events: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.aw-content__corner--tr {
+  top: 4px;
+  right: 6px;
+}
+
+.aw-content__corner--bl {
+  bottom: 4px;
+  left: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BYPASS OVERLAY — V2: Diagonal Stripes + Rocking Text
+   ═══════════════════════════════════════════════════════════ */
+
+.aw-bypass-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 0 0 7px 7px;
+  overflow: hidden;
+
+  /* Dark tinted overlay */
+  background: rgba(5, 5, 8, 0.75);
+  backdrop-filter: saturate(0.3) brightness(0.5);
+}
+
+.aw-bypass-overlay__text {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.12);
+  text-shadow: 0 0 30px rgba(212, 168, 83, 0.06);
+  user-select: none;
+  /* Rocking + pulse animation */
+  animation: aw-bypass-rock 4s ease-in-out infinite;
+}
+
+/* Diagonal stripe pattern overlay + scanline */
+.aw-bypass-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0px,
+    transparent 10px,
+    rgba(212, 168, 83, 0.03) 10px,
+    rgba(212, 168, 83, 0.03) 14px
+  );
+  animation: aw-stripe-march 8s linear infinite;
+}
+
+/* Scanning line effect */
+.aw-bypass-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESIZE HANDLES — Invisible 6px hit areas
+   ═══════════════════════════════════════════════════════════ */
+
+.aw-resize-handle {
+  position: absolute;
+  z-index: 30;
+  /* Debug: uncomment to visualize hit areas */
+  /* background: rgba(212, 168, 83, 0.15); */
+}
+
+/* ── Edge handles ── */
+.aw-resize-handle--n {
+  top: -3px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: n-resize;
+}
+
+.aw-resize-handle--s {
+  bottom: -3px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: s-resize;
+}
+
+.aw-resize-handle--e {
+  right: -3px;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: e-resize;
+}
+
+.aw-resize-handle--w {
+  left: -3px;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: w-resize;
+}
+
+/* ── Corner handles ── */
+.aw-resize-handle--nw {
+  top: -3px;
+  left: -3px;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.aw-resize-handle--ne {
+  top: -3px;
+  right: -3px;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.aw-resize-handle--sw {
+  bottom: -3px;
+  left: -3px;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
+}
+
+.aw-resize-handle--se {
+  bottom: -3px;
+  right: -3px;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+/* ── SE corner grip dots — decorative ── */
+.aw-resize-handle--se::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background:
+    radial-gradient(circle, rgba(212, 168, 83, 0.2) 1px, transparent 1px) 0 0,
+    radial-gradient(circle, rgba(212, 168, 83, 0.2) 1px, transparent 1px) 3px 0,
+    radial-gradient(circle, rgba(212, 168, 83, 0.2) 1px, transparent 1px) 0 3px,
+    radial-gradient(circle, rgba(212, 168, 83, 0.2) 1px, transparent 1px) 3px 3px;
+  background-size: 6px 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.anunnaki-window:hover .aw-resize-handle--se::after {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTTOM BAR — V2: Taller, Pulse Dot, Enhanced Brand
+   ═══════════════════════════════════════════════════════════ */
+
+.aw-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 12px;
+  height: 24px;
+  flex-shrink: 0;
+  background: rgba(8, 7, 5, 0.9);
+  border-top: 1px solid rgba(212, 168, 83, 0.06);
+  border-radius: 0 0 8px 8px;
+}
+
+.aw-bottom-bar__slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.2);
+}
+
+/* ── Active pulse dot — glows green/gold when plugin is active ── */
+.aw-bottom-bar__pulse {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.aw-bottom-bar__pulse--active {
+  background: rgba(120, 200, 80, 0.7);
+  animation: aw-dot-pulse 2s ease-in-out infinite;
+}
+
+.aw-bottom-bar__pulse--bypassed {
+  background: rgba(80, 75, 60, 0.3);
+  box-shadow: none;
+  animation: none;
+}
+
+.aw-bottom-bar__brand {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.12);
+  text-shadow: 0 0 8px rgba(212, 168, 83, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — Constrain within plugin window bounds
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+  .aw-titlebar__name {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .aw-titlebar__track {
+    display: none;
+  }
+}

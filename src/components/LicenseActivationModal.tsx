@@ -24,16 +24,14 @@ export const LicenseActivationModal: React.FC<LicenseActivationModalProps> = ({
   const platform = (rawPlatform === 'macos' || rawPlatform === 'windows')
     ? rawPlatform
     : (navigator.userAgent.toLowerCase().includes('win') ? 'windows' : 'macos');
-  const pluginVersion = activeSettings?.pluginVersion || 'v1.0.0-dev';
+  const pluginVersion = activeSettings?.pluginVersion || 'v1.0.0';
 
   const formatKey = (val: string) => {
     // Automatically convert to uppercase, strip non-alphanumeric, and insert dashes
     const cleaned = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
     
-    // Group in chunks of 6 or 4 depending on format, or just keep it simple.
-    // Let's support the test key VSTGOD-TEST-KEY-1234-5678 or any user pasting.
-    // Since some keys might have different formats, let's keep it flexible but convert to uppercase.
-    // To help typing, if it starts with VSTGOD, we can format: VSTGOD-XXXX-XXXX-XXXX-XXXX
+    // Keep flexible format — convert to uppercase for consistent display.
+    // Keys follow format: VSTGOD-XXXX-XXXX-XXXX-XXXX
     return val.toUpperCase();
   };
 

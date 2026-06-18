@@ -8,9 +8,16 @@ import './SpectralWaterfall.css';
 
 interface SpectralWaterfallProps {
   spectralData?: SpectralDataState | null;
+  drive?: number;
+  cold?: number;
+  gain?: number;
+  stereoWidth?: number;
+  ceiling?: number;
+  attack?: number;
+  release?: number;
 }
 
-export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralData }) => {
+export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralData, drive = 20, cold = 0, gain = 0, stereoWidth = 100, ceiling = -0.1, attack = 30, release = 100 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -18,6 +25,12 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
   const historyRef = useRef<Uint8Array[]>([]);
   const mockFrameCountRef = useRef(0);
   const animationFrameIdRef = useRef<number | null>(null);
+
+  // Store parameters in a ref to avoid recreating the render loop
+  const paramsRef = useRef({ drive, cold, gain, stereoWidth, ceiling, attack, release });
+  useEffect(() => {
+    paramsRef.current = { drive, cold, gain, stereoWidth, ceiling, attack, release };
+  }, [drive, cold, gain, stereoWidth, ceiling, attack, release]);
 
   const [rms, setRms] = useState(0);
 
@@ -29,8 +42,11 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
     const bins = new Uint8Array(spectralData.fftBins);
     const history = historyRef.current;
     
+    // Release time controls gravity/history length (10ms = 10 frames, 1000ms = 120 frames)
+    const maxHistory = Math.max(10, Math.floor((paramsRef.current.release / 1000) * 110 + 10));
+    
     history.push(bins);
-    if (history.length > 40) {
+    while (history.length > maxHistory) {
       history.shift();
     }
   }, [spectralData]);
@@ -78,6 +94,8 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
       height = container.clientHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       ctx.scale(dpr, dpr);
     };
 
@@ -100,8 +118,9 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
         setRms(prev => prev * 0.8 + avg * 0.2);
 
         const history = historyRef.current;
+        const maxHistory = Math.max(10, Math.floor((paramsRef.current.release / 1000) * 110 + 10));
         history.push(mockFrame);
-        if (history.length > 40) {
+        while (history.length > maxHistory) {
           history.shift();
         }
       }
@@ -109,7 +128,7 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
       const history = historyRef.current;
       const depth = history.length;
 
-      // 2. Clear canvas
+      // Clear canvas so the celestial background breathes through
       ctx.clearRect(0, 0, width, height);
 
       if (depth === 0) {
@@ -117,137 +136,126 @@ export const SpectralWaterfall: React.FC<SpectralWaterfallProps> = ({ spectralDa
         return;
       }
 
-      // Draw 3D floor grid guidelines
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.015)';
-      ctx.lineWidth = 1;
-      const cx = width / 2;
-      const cy = height * 0.72; // Baseline focus center
-      const fov = 260;
-
-      // 3D Bounding grid projection coordinates caching
-      const getProjCoord = (xNorm: number, zNorm: number, amp: number) => {
-        const zOffset = zNorm * 180 + 40; // zOffset goes from 40 (front) to 220 (back)
-        const scale = fov / (fov + zOffset);
-        
-        const xScale = width * 0.86;
-        const yScale = height * 0.32;
-        
-        const px = cx + xNorm * xScale * scale;
-        const py = cy + (zOffset - 110) * 0.45 * scale - amp * yScale * scale;
-        return { x: px, y: py, scale };
-      };
-
-      // 3. Draw 3D Stage guidelines (Ground Plane Grid)
-      ctx.beginPath();
-      for (let zG = 0; zG <= 10; zG++) {
-        const zNorm = zG / 10;
-        const p1 = getProjCoord(-0.5, zNorm, 0);
-        const p2 = getProjCoord(0.5, zNorm, 0);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      for (let xG = 0; xG <= 8; xG++) {
-        const xNorm = (xG / 8) - 0.5;
-        const p1 = getProjCoord(xNorm, 0, 0);
-        const p2 = getProjCoord(xNorm, 1, 0);
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-      }
-      ctx.stroke();
-
-      // Longitudinal lines bin indices to draw
-      const longitudinalBins = [0, 8, 16, 24, 32, 40, 48, 56, 63];
-
-      // 4. Painter's Algorithm: Draw rows from back to front (oldest to newest)
+      // 3. Celestial Tapestry Plotting
+      // Draw from oldest (0) to newest (depth - 1) or vice versa.
       for (let d = depth - 1; d >= 0; d--) {
         const frameData = history[d];
-        const zNorm = d / Math.max(1, depth - 1); // 1 at back (oldest), 0 at front (newest)
+        const progress = (depth - 1 - d) / Math.max(1, depth - 1); // 0 = top (newest), 1 = bottom (oldest)
+        const y = progress * height;
         const numBins = frameData.length;
 
-        // Calculate projected points for the current row
-        const rowPoints: { x: number; y: number; scale: number }[] = [];
-        for (let i = 0; i < numBins; i++) {
-          const xNorm = (i / (numBins - 1)) - 0.5;
-          const amp = frameData[i] / 255;
-          rowPoints.push(getProjCoord(xNorm, zNorm, amp));
-        }
+        const p = paramsRef.current;
+        const gainMult = Math.pow(10, p.gain / 20);
+        const ceilLinear = Math.pow(10, p.ceiling / 20);
+        const driveNorm = Math.min(1, Math.max(0, p.drive / 100));
+        const coldNorm = Math.min(1, Math.max(0, p.cold / 100));
+        const widthNorm = p.stereoWidth / 100;
 
-        // 4a. Draw connecting longitudinal wireframe segments to the previous (further back) row
-        if (d < depth - 1) {
-          const prevFrameData = history[d + 1];
-          const prevZNorm = (d + 1) / Math.max(1, depth - 1);
+        for (let i = 0; i < numBins; i++) {
+          let amp = (frameData[i] / 255) * gainMult;
           
-          ctx.strokeStyle = `rgba(255, 60, 20, ${0.12 * (1 - zNorm)})`;
-          ctx.lineWidth = 0.8 * (1 - zNorm);
-          ctx.beginPath();
+          // Apply ceiling clip
+          if (amp > ceilLinear) amp = ceilLinear;
           
-          for (const binIdx of longitudinalBins) {
-            if (binIdx < numBins) {
-              const pCurrent = rowPoints[binIdx];
-              const pPrev = getProjCoord(
-                (binIdx / (numBins - 1)) - 0.5,
-                prevZNorm,
-                prevFrameData[binIdx] / 255
-              );
-              ctx.moveTo(pPrev.x, pPrev.y);
-              ctx.lineTo(pCurrent.x, pCurrent.y);
+          // Add some chaos based on drive
+          if (driveNorm > 0.1 && amp > 0.1) {
+            amp += (Math.random() - 0.5) * 0.2 * driveNorm * amp;
+          }
+          
+          if (amp < 0.05) continue; // Only draw significant peaks
+
+          const centerOffset = (i / (numBins - 1) - 0.5);
+          const x = (0.5 + centerOffset * widthNorm) * width;
+
+          // Attack phase logic: at high attack (100ms), the newest frames (progress ~0) fade in slowly.
+          // Attack ranges from 1ms to 100ms.
+          const attackNorm = p.attack / 100; // 0.01 to 1
+          let attackEnv = 1.0;
+          if (attackNorm > 0.1 && progress < attackNorm * 0.2) {
+             // If within the attack phase, ramp up the envelope
+             attackEnv = progress / (attackNorm * 0.2);
+          }
+
+          // Glowing star physics
+          const baseRadius = coldNorm > 0.5 ? 2.0 : 4.0; // Cold makes stars sharper/smaller
+          const radius = amp * (baseRadius + driveNorm * 2.0) * attackEnv; 
+          const opacity = amp * (1 - progress) * attackEnv; // Fade out as it falls
+
+          // Draw vertical stardust trails (history connection)
+          if (d < depth - 1) {
+            const prevFrameData = history[d + 1];
+            let prevAmp = (prevFrameData[i] / 255) * gainMult;
+            if (prevAmp > ceilLinear) prevAmp = ceilLinear;
+
+            if (prevAmp > 0.05) {
+              const prevProgress = (depth - 1 - (d + 1)) / Math.max(1, depth - 1);
+              const prevY = prevProgress * height;
+              const prevX = (0.5 + centerOffset * widthNorm) * width;
+              
+              ctx.beginPath();
+              ctx.moveTo(prevX, prevY);
+              ctx.lineTo(x, y);
+              
+              const trailOpacity = Math.min(1, (amp + prevAmp) * 0.5 * (1 - progress));
+              
+              // Color shifting logic based on Drive (Red/Fire) and Cold (Ice/Cyan)
+              let r = 157, g = 0, b = 255; // Default Purple
+              if (driveNorm > 0.1) {
+                 r = 157 + driveNorm * 98; // -> 255
+                 g = driveNorm * 100;     // -> 100
+                 b = 255 - driveNorm * 255; // -> 0 (Fiery Orange/Red)
+              }
+              if (coldNorm > 0.1) {
+                 r = r * (1 - coldNorm);
+                 g = g + (200 - g) * coldNorm;
+                 b = b + (255 - b) * coldNorm; // -> Cyan/Ice Blue
+              }
+              
+              ctx.strokeStyle = `rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${trailOpacity})`; 
+              
+              const widthMultiplier = coldNorm > 0.5 ? 1.0 : 2.5;
+              ctx.lineWidth = Math.max(1.0, (amp + prevAmp) * widthMultiplier * (1 + driveNorm));
+              ctx.stroke();
             }
           }
-          ctx.stroke();
+
+          // Draw horizontal constellation lines
+          if (i > 0 && amp > 0.4) {
+            let prevBinAmp = (frameData[i - 1] / 255) * gainMult;
+            if (prevBinAmp > ceilLinear) prevBinAmp = ceilLinear;
+            if (prevBinAmp > 0.4) {
+              const prevCenterOffset = ((i - 1) / (numBins - 1) - 0.5);
+              const prevX = (0.5 + prevCenterOffset * widthNorm) * width;
+              ctx.beginPath();
+              ctx.moveTo(prevX, y);
+              ctx.lineTo(x, y);
+              
+              let cr = 255, cg = 215, cb = 0; // Default Gold
+              if (coldNorm > 0.5) { cr = 100; cg = 255; cb = 255; } // Ice
+              else if (driveNorm > 0.5) { cr = 255; cg = 50; cb = 0; } // Fire
+
+              ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${opacity * 0.3})`;
+              ctx.lineWidth = coldNorm > 0.5 ? 0.2 : 0.5;
+              ctx.stroke();
+            }
+          }
+
+          // Draw the star core
+          if (amp > 0.1) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            ctx.shadowBlur = coldNorm > 0.5 ? radius * 2 : radius * 4;
+            
+            let shadowColor = amp > 0.6 ? 'rgba(255, 215, 0, 1)' : 'rgba(0, 229, 255, 0.8)';
+            if (coldNorm > 0.5) shadowColor = 'rgba(200, 255, 255, 0.9)';
+            if (driveNorm > 0.5 && amp > 0.6) shadowColor = 'rgba(255, 50, 0, 1)';
+            
+            ctx.shadowColor = shadowColor;
+            ctx.fill();
+            ctx.shadowBlur = 0; // reset
+          }
         }
-
-        // 4b. Fill beneath the transverse curve to mask lines behind it
-        ctx.beginPath();
-        const baseStart = getProjCoord(-0.5, zNorm, 0);
-        ctx.moveTo(rowPoints[0].x, baseStart.y);
-        
-        ctx.lineTo(rowPoints[0].x, rowPoints[0].y);
-        for (let i = 1; i < rowPoints.length; i++) {
-          const xc = (rowPoints[i - 1].x + rowPoints[i].x) / 2;
-          const yc = (rowPoints[i - 1].y + rowPoints[i].y) / 2;
-          ctx.quadraticCurveTo(rowPoints[i - 1].x, rowPoints[i - 1].y, xc, yc);
-        }
-        ctx.lineTo(rowPoints[rowPoints.length - 1].x, rowPoints[rowPoints.length - 1].y);
-        
-        const baseEnd = getProjCoord(0.5, zNorm, 0);
-        ctx.lineTo(rowPoints[rowPoints.length - 1].x, baseEnd.y);
-        ctx.closePath();
-
-        // Dark obsidian backdrop mask (semi-transparent glass overlays)
-        ctx.fillStyle = `rgba(13, 6, 15, ${0.82 - zNorm * 0.15})`;
-        ctx.fill();
-
-        // 4c. Stroke the actual transverse frequency curve
-        ctx.beginPath();
-        ctx.moveTo(rowPoints[0].x, rowPoints[0].y);
-        for (let i = 1; i < rowPoints.length - 1; i++) {
-          const xc = (rowPoints[i].x + rowPoints[i + 1].x) / 2;
-          const yc = (rowPoints[i].y + rowPoints[i + 1].y) / 2;
-          ctx.quadraticCurveTo(rowPoints[i].x, rowPoints[i].y, xc, yc);
-        }
-        ctx.lineTo(rowPoints[rowPoints.length - 1].x, rowPoints[rowPoints.length - 1].y);
-
-        // Gradient color logic (Gold in front -> Red/Orange in back)
-        const opacity = 1.0 - zNorm * 0.55;
-        const colorProgress = 1 - zNorm; // 1 (newest/front), 0 (oldest/back)
-        
-        const r = 255;
-        const g = Math.round(65 + colorProgress * 150); // Blends 65 (red-orange) up to 215 (gold)
-        const b = Math.round(20 + colorProgress * -20); // Gold has 0 blue, red-orange has 20
-
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-        ctx.lineWidth = 1.4 * (1 - zNorm * 0.5);
-        
-        // Neon pulse glow on closest peaks
-        if (zNorm < 0.3) {
-          ctx.shadowBlur = Math.max(0, (5 - zNorm * 10));
-          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.4)`;
-        } else {
-          ctx.shadowBlur = 0;
-        }
-
-        ctx.stroke();
-        ctx.shadowBlur = 0;
       }
 
       animationFrameIdRef.current = requestAnimationFrame(render);

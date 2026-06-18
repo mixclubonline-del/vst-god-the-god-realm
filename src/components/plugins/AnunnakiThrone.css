@@ -1,0 +1,1030 @@
+/**
+ * AnunnakiThrone.css — ANUNNAKI THRONE Compressor Plugin
+ *
+ * Design: Forged Obsidian × Celestial Gold — Dynamics Engine
+ * Layout: Preset Bar → VU Needle Hero → Curve → Mode Selector
+ *         → [ IN Meter | Knobs | OUT Meter ] → Footer
+ *
+ * Hybrid display: VU needle for gain reduction, compression curve,
+ * four-character mode buttons (OPTICAL / VCA / FET / VARI-MU),
+ * hero THRESHOLD knob, flanking vertical I/O level meters.
+ *
+ * No frameworks. No imports. Pure obsidian.
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM PROPERTIES — Mode Accent Colors
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne {
+  /* Gold primary */
+  --throne-gold: #d4a853;
+  --throne-gold-rgb: 212, 168, 83;
+
+  /* Mode accent palette */
+  --throne-optical: rgba(212, 168, 83, 0.9);
+  --throne-optical-rgb: 212, 168, 83;
+
+  --throne-vca: rgba(180, 190, 210, 0.9);
+  --throne-vca-rgb: 180, 190, 210;
+
+  --throne-fet: rgba(239, 68, 68, 0.9);
+  --throne-fet-rgb: 239, 68, 68;
+
+  --throne-varimu: rgba(168, 85, 247, 0.9);
+  --throne-varimu-rgb: 168, 85, 247;
+
+  /* Functional accents */
+  --throne-attack: #ef4444;
+  --throne-release: #3b82f6;
+  --throne-meter-green: #10b981;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════════ */
+
+/* VU needle idle sway — barely perceptible life */
+@keyframes throne-needle-idle {
+  0%, 100% { transform: rotate(-0.3deg); }
+  50%      { transform: rotate(0.3deg); }
+}
+
+/* Meter fill shimmer */
+@keyframes throne-meter-shimmer {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+
+/* Mode button activation pulse */
+@keyframes throne-mode-activate {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* GR label subtle glow breathe */
+@keyframes throne-gr-breathe {
+  0%, 100% { text-shadow: 0 0 6px rgba(212, 168, 83, 0.06); }
+  50%      { text-shadow: 0 0 10px rgba(212, 168, 83, 0.15); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   1. ROOT CONTAINER
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 16px 12px;
+  gap: 10px;
+  background: transparent;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: rgba(212, 168, 83, 0.8);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.anunnaki-throne *,
+.anunnaki-throne *::before,
+.anunnaki-throne *::after {
+  box-sizing: border-box;
+}
+
+/* Bypassed dimming — inherits from parent window logic */
+.anunnaki-throne--bypassed {
+  opacity: 0.3;
+  filter: saturate(0.15) brightness(0.7);
+  pointer-events: none;
+  transition: opacity 0.4s, filter 0.4s;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   2. PRESET BAR
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__preset-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.08);
+  position: relative;
+  z-index: 10;
+}
+
+.anunnaki-throne__preset-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.anunnaki-throne__preset-left:hover {
+  background: rgba(212, 168, 83, 0.04);
+}
+
+.anunnaki-throne__preset-icon {
+  font-size: 7px;
+  color: rgba(212, 168, 83, 0.3);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.anunnaki-throne__preset-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(212, 168, 83, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+
+.anunnaki-throne__preset-left:hover .anunnaki-throne__preset-name {
+  color: var(--throne-gold);
+}
+
+.anunnaki-throne__preset-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.anunnaki-throne__preset-arrow {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  cursor: pointer;
+  color: rgba(212, 168, 83, 0.25);
+  transition: all 0.15s;
+  user-select: none;
+  line-height: 1;
+}
+
+.anunnaki-throne__preset-arrow:hover {
+  color: rgba(212, 168, 83, 0.8);
+  background: rgba(212, 168, 83, 0.08);
+}
+
+/* Preset dropdown */
+.anunnaki-throne__preset-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 14, 0.98);
+  border: 1px solid rgba(212, 168, 83, 0.12);
+  border-top: none;
+  padding: 4px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.anunnaki-throne__preset-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(212, 168, 83, 0.45);
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+}
+
+.anunnaki-throne__preset-option:hover {
+  background: rgba(212, 168, 83, 0.06);
+  color: var(--throne-gold);
+}
+
+.anunnaki-throne__preset-option--active {
+  background: rgba(212, 168, 83, 0.08);
+  color: var(--throne-gold);
+}
+
+.anunnaki-throne__preset-option--active::before {
+  content: '◆';
+  font-size: 6px;
+  margin-right: 8px;
+  color: var(--throne-gold);
+}
+
+/* Dropdown scrollbar */
+.anunnaki-throne__preset-dropdown::-webkit-scrollbar { width: 3px; }
+.anunnaki-throne__preset-dropdown::-webkit-scrollbar-track { background: transparent; }
+.anunnaki-throne__preset-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 83, 0.15);
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3. VU NEEDLE HERO SECTION
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__vu-section {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.anunnaki-throne__vu-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  background:
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(30, 25, 15, 1) 0%,
+      rgba(15, 13, 10, 1) 40%,
+      rgba(10, 10, 15, 1) 70%
+    );
+  border: 1px solid rgba(212, 168, 83, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 20px rgba(212, 168, 83, 0.03),
+    inset 0 -8px 24px rgba(212, 168, 83, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.anunnaki-throne__vu-container:hover {
+  border-color: rgba(212, 168, 83, 0.16);
+  box-shadow:
+    inset 0 0 20px rgba(212, 168, 83, 0.03),
+    inset 0 -8px 24px rgba(212, 168, 83, 0.02),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 16px rgba(212, 168, 83, 0.04);
+}
+
+/* Faceplate texture — radial screw detail hints */
+.anunnaki-throne__vu-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(212, 168, 83, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 92% 12%, rgba(212, 168, 83, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 8% 88%, rgba(212, 168, 83, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 92% 88%, rgba(212, 168, 83, 0.06) 1px, transparent 1px);
+  opacity: 0.5;
+}
+
+/* Glass reflection sweep */
+.anunnaki-throne__vu-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -20%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.015) 45%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.015) 55%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.anunnaki-throne__vu-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+  z-index: 0;
+}
+
+/* GAIN REDUCTION label */
+.anunnaki-throne__vu-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.35);
+  text-align: center;
+  margin-top: 5px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  animation: throne-gr-breathe 4s ease-in-out infinite;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4. COMPRESSION CURVE SECTION
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__curve-section {
+  position: relative;
+  height: 100px;
+  flex-shrink: 0;
+  background: rgba(8, 8, 12, 0.9);
+  border: 1px solid rgba(212, 168, 83, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: crosshair;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  box-shadow:
+    inset 0 1px 6px rgba(0, 0, 0, 0.4),
+    inset 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+.anunnaki-throne__curve-section:hover {
+  border-color: rgba(212, 168, 83, 0.15);
+  box-shadow:
+    inset 0 1px 6px rgba(0, 0, 0, 0.4),
+    inset 0 0 12px rgba(0, 0, 0, 0.2),
+    0 0 14px rgba(212, 168, 83, 0.03);
+}
+
+/* Grid underlay — subtle dB lines rendered via CSS */
+.anunnaki-throne__curve-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(212, 168, 83, 0.03) 0px,
+      transparent 1px,
+      transparent 20%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(212, 168, 83, 0.03) 0px,
+      transparent 1px,
+      transparent 25%
+    );
+}
+
+/* 1:1 reference line hint */
+.anunnaki-throne__curve-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 141.4%; /* √2 × 100% for 45° diagonal */
+  height: 1px;
+  background: rgba(212, 168, 83, 0.06);
+  transform-origin: bottom left;
+  transform: rotate(-45deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anunnaki-throne__curve-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+/* Readout overlay — threshold / ratio in bottom-right */
+.anunnaki-throne__curve-readout {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  z-index: 2;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(212, 168, 83, 0.2);
+  pointer-events: none;
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   5. MODE SELECTOR — Compression Character
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 2px 0;
+}
+
+.anunnaki-throne__mode-btn {
+  padding: 5px 14px;
+  background: rgba(20, 18, 14, 0.8);
+  border: 1px solid rgba(212, 168, 83, 0.12);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.4);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.anunnaki-throne__mode-btn:hover {
+  background: rgba(212, 168, 83, 0.05);
+  color: rgba(212, 168, 83, 0.6);
+  border-color: rgba(212, 168, 83, 0.2);
+}
+
+/* ── Activation sweep underline ── */
+.anunnaki-throne__mode-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  transform: translateX(-50%);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+/* ── Active base state — powered on ── */
+.anunnaki-throne__mode-btn--active {
+  animation: throne-mode-activate 0.3s ease-out;
+}
+
+.anunnaki-throne__mode-btn--active::after {
+  width: 70%;
+}
+
+/* ── OPTICAL — Warm Amber ── */
+.anunnaki-throne__mode-btn--optical {
+  --mode-color: var(--throne-optical);
+  --mode-color-rgb: var(--throne-optical-rgb);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--optical {
+  color: rgba(212, 168, 83, 0.9);
+  border-color: rgba(212, 168, 83, 0.35);
+  background: rgba(212, 168, 83, 0.08);
+  text-shadow: 0 0 8px rgba(212, 168, 83, 0.3);
+  box-shadow: 0 0 8px rgba(212, 168, 83, 0.15);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--optical::after {
+  background: rgba(212, 168, 83, 0.5);
+  box-shadow: 0 0 6px rgba(212, 168, 83, 0.3);
+}
+
+/* ── VCA — Cool Silver ── */
+.anunnaki-throne__mode-btn--vca {
+  --mode-color: var(--throne-vca);
+  --mode-color-rgb: var(--throne-vca-rgb);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--vca {
+  color: rgba(180, 190, 210, 0.9);
+  border-color: rgba(180, 190, 210, 0.35);
+  background: rgba(180, 190, 210, 0.06);
+  text-shadow: 0 0 8px rgba(180, 190, 210, 0.3);
+  box-shadow: 0 0 8px rgba(180, 190, 210, 0.12);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--vca::after {
+  background: rgba(180, 190, 210, 0.5);
+  box-shadow: 0 0 6px rgba(180, 190, 210, 0.3);
+}
+
+/* ── FET — Hot Red ── */
+.anunnaki-throne__mode-btn--fet {
+  --mode-color: var(--throne-fet);
+  --mode-color-rgb: var(--throne-fet-rgb);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--fet {
+  color: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.06);
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.12);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--fet::after {
+  background: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+}
+
+/* ── VARI-MU — Deep Purple ── */
+.anunnaki-throne__mode-btn--varimu {
+  --mode-color: var(--throne-varimu);
+  --mode-color-rgb: var(--throne-varimu-rgb);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--varimu {
+  color: rgba(168, 85, 247, 0.9);
+  border-color: rgba(168, 85, 247, 0.35);
+  background: rgba(168, 85, 247, 0.06);
+  text-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.12);
+}
+
+.anunnaki-throne__mode-btn--active.anunnaki-throne__mode-btn--varimu::after {
+  background: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   6. CONTROLS ROW — Meters flanking Knobs
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+
+/* ── Central knob strip ── */
+.anunnaki-throne__controls {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.anunnaki-throne__knob-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Hero knob — THRESHOLD (larger presence) ── */
+.anunnaki-throne__knob-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transform: scale(1.12);
+  margin: 0 4px;
+}
+
+/* Subtle glow halo behind hero knob */
+.anunnaki-throne__knob-hero::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -55%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(212, 168, 83, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Threshold readout */
+.anunnaki-throne__threshold-readout {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--throne-gold);
+  text-align: center;
+  margin-top: -2px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(212, 168, 83, 0.2);
+}
+
+.anunnaki-throne__threshold-unit {
+  font-size: 8px;
+  font-weight: 500;
+  color: rgba(212, 168, 83, 0.35);
+  letter-spacing: 1px;
+  margin-left: 1px;
+}
+
+/* ── Section divider between knob groups ── */
+.anunnaki-throne__controls-divider {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(212, 168, 83, 0.1) 30%,
+    rgba(212, 168, 83, 0.1) 70%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   7. I/O LEVEL METERS
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__meters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.anunnaki-throne__meter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.anunnaki-throne__meter {
+  position: relative;
+  width: 12px;
+  height: 80px;
+  background: rgba(8, 8, 12, 0.9);
+  border: 1px solid rgba(212, 168, 83, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.5),
+    inset 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Peak hold line */
+.anunnaki-throne__meter::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.6);
+  top: 20%;
+  opacity: 0;
+  transition: top 0.1s, opacity 0.3s;
+  z-index: 2;
+}
+
+.anunnaki-throne__meter--active::after {
+  opacity: 0.4;
+}
+
+/* Meter fill bar */
+.anunnaki-throne__meter-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(
+    to top,
+    var(--throne-meter-green) 0%,
+    #22c55e 25%,
+    var(--throne-gold) 60%,
+    #f59e0b 75%,
+    #ef4444 90%,
+    #dc2626 100%
+  );
+  border-radius: 0 0 2px 2px;
+  transition: height 50ms linear;
+  will-change: height;
+}
+
+/* Clip indicator dot */
+.anunnaki-throne__meter-clip {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 3px;
+  border-radius: 1px;
+  background: rgba(60, 50, 40, 0.3);
+  z-index: 3;
+  transition: background 0.15s;
+}
+
+.anunnaki-throne__meter-clip--lit {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+/* Meter labels */
+.anunnaki-throne__meter-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.3);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  user-select: none;
+  text-align: center;
+}
+
+/* Stereo pair — two thin bars side by side */
+.anunnaki-throne__meter-stereo {
+  display: flex;
+  gap: 2px;
+}
+
+.anunnaki-throne__meter-stereo .anunnaki-throne__meter {
+  width: 5px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   8. FOOTER — Version / Branding
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 16px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(212, 168, 83, 0.04);
+}
+
+.anunnaki-throne__footer-version {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: rgba(212, 168, 83, 0.12);
+  text-transform: uppercase;
+}
+
+.anunnaki-throne__footer-brand {
+  font-family: 'Orbitron', 'Inter', sans-serif;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(160, 150, 120, 0.1);
+  text-shadow: 0 0 6px rgba(212, 168, 83, 0.03);
+}
+
+.anunnaki-throne__footer-gr-value {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(212, 168, 83, 0.25);
+  letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   9. KNOB LABELS & EXTRAS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Standard knob label — below each knob */
+.anunnaki-throne__knob-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.3);
+  text-align: center;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Knob value readout */
+.anunnaki-throne__knob-value {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(212, 168, 83, 0.5);
+  text-align: center;
+  letter-spacing: 0.5px;
+  min-width: 28px;
+}
+
+/* Attack knob accent */
+.anunnaki-throne__knob-col--attack .anunnaki-throne__knob-label {
+  color: rgba(239, 68, 68, 0.3);
+}
+
+/* Release knob accent */
+.anunnaki-throne__knob-col--release .anunnaki-throne__knob-label {
+  color: rgba(59, 130, 246, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   10. SECTION LABELS & DECORATORS
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(212, 168, 83, 0.2);
+  text-transform: uppercase;
+  padding: 0 2px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.anunnaki-throne__section-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(212, 168, 83, 0.2);
+  flex-shrink: 0;
+}
+
+/* Horizontal rule separator — sacred line */
+.anunnaki-throne__divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 168, 83, 0.08) 20%,
+    rgba(212, 168, 83, 0.08) 80%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   11. SIDECHAIN / ADVANCED PANEL (collapsible)
+   ═══════════════════════════════════════════════════════════ */
+
+.anunnaki-throne__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 0;
+  border-top: 1px solid rgba(212, 168, 83, 0.04);
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+.anunnaki-throne__advanced--collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  border: none;
+}
+
+.anunnaki-throne__advanced-toggle {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(212, 168, 83, 0.2);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 3px 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.anunnaki-throne__advanced-toggle:hover {
+  color: rgba(212, 168, 83, 0.5);
+}
+
+.anunnaki-throne__advanced-chevron {
+  font-size: 6px;
+  transition: transform 0.2s;
+}
+
+.anunnaki-throne__advanced-toggle--open .anunnaki-throne__advanced-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Sidechain filter knobs ── */
+.anunnaki-throne__sidechain-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ── Mix / Dry-Wet knob — parallel compression ── */
+.anunnaki-throne__mix-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   12. INTERACTIVE STATES & MICRO-INTERACTIONS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Knob drag active — gold highlight ring */
+.anunnaki-throne__knob-col--dragging {
+  filter: drop-shadow(0 0 6px rgba(212, 168, 83, 0.15));
+}
+
+/* Double-click reset flash */
+.anunnaki-throne__knob-col--resetting {
+  animation: throne-mode-activate 0.2s ease-out;
+}
+
+/* Tooltip on hover (value popup) */
+.anunnaki-throne__tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--throne-gold);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.anunnaki-throne__tooltip--visible {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   13. RESPONSIVE — Content scaling
+   ═══════════════════════════════════════════════════════════ */
+
+/* Compact mode — narrower windows */
+@container (max-width: 520px) {
+  .anunnaki-throne__mode-btn {
+    padding: 4px 10px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  .anunnaki-throne__controls {
+    gap: 6px;
+  }
+
+  .anunnaki-throne__knob-hero {
+    transform: scale(1.05);
+  }
+
+  .anunnaki-throne__meter {
+    height: 64px;
+  }
+}
+
+/* Wide mode — extra breathing room */
+@container (min-width: 700px) {
+  .anunnaki-throne__controls {
+    gap: 12px;
+  }
+
+  .anunnaki-throne__curve-section {
+    height: 120px;
+  }
+}

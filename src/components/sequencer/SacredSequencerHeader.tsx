@@ -515,14 +515,14 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
       <button
         className={`seq-mixer-toggle ${showMixer ? 'seq-mixer-toggle--active' : ''}`}
         onClick={onToggleMixer}
-        title={showMixer ? 'Hide Mixer' : 'Show Mixer'}
+        title={showMixer ? 'Show Pattern Grid' : 'Show Mix Console'}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect x="1" y="2" width="2" height="10" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
           <rect x="6" y="5" width="2" height="7" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
           <rect x="11" y="1" width="2" height="11" rx="0.5" fill="currentColor" opacity={showMixer ? 1 : 0.5} />
         </svg>
-        <span>MIX</span>
+        <span>{showMixer ? 'PATTERN' : 'CONSOLE'}</span>
       </button>
 
       {/* FX Panel Toggle */}

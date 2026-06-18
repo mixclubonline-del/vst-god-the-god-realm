@@ -260,7 +260,12 @@ export const RitualOfExport: React.FC<RitualOfExportProps> = ({
   };
 
   return (
-    <div className="flex w-full h-full gap-4 p-4 overflow-hidden select-none bg-black/20">
+    <div 
+      className="flex w-full h-full gap-4 p-4 overflow-hidden select-none"
+      style={{
+        background: `linear-gradient(rgba(10, 8, 16, 0.60), rgba(6, 4, 10, 0.65)), url('/plugins/backgrounds/archive.png') center/cover`
+      }}
+    >
       {/* ─── LEFT: MULTI-STEM MANIFESTATION ─── */}
       <section className="w-1/3 flex flex-col gap-4">
         <header className="p-4 glass-panel border border-white/5 bg-white/[0.02] flex items-center justify-between">

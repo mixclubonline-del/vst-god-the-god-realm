@@ -13,7 +13,8 @@ const SOURCES = [
   { id: 1, name: 'LFO 1', color: '#ffb000' },
   { id: 2, name: 'LFO 2', color: '#ff7700' },
   { id: 3, name: 'Aftertouch', color: '#3b82f6' },
-  { id: 4, name: 'Mod Wheel', color: '#10b981' }
+  { id: 4, name: 'Mod Wheel', color: '#10b981' },
+  { id: 5, name: 'Env 2', color: '#ec4899' }
 ];
 
 const TARGETS = [
@@ -43,6 +44,12 @@ export const ModulationMatrixDrawer: React.FC<ModulationMatrixDrawerProps> = ({
   const lfo2Rate = parameterValues.lfo2Rate ?? 1.0;
   const lfo1Shape = parameterValues.lfo1Shape ?? 0;
   const lfo2Shape = parameterValues.lfo2Shape ?? 0;
+
+  // Mod Envelope values
+  const modEnvAttack = parameterValues.modEnvAttack ?? 20.0;
+  const modEnvDecay = parameterValues.modEnvDecay ?? 50.0;
+  const modEnvSustain = parameterValues.modEnvSustain ?? 70.0;
+  const modEnvRelease = parameterValues.modEnvRelease ?? 35.0;
 
   // LFO Phase trackers for animation
   const [phase1, setPhase1] = useState(0);
@@ -86,7 +93,7 @@ export const ModulationMatrixDrawer: React.FC<ModulationMatrixDrawerProps> = ({
     e.preventDefault();
     const sourceIdStr = e.dataTransfer.getData('text/plain');
     const sourceId = parseInt(sourceIdStr, 10);
-    if (!isNaN(sourceId) && sourceId >= 0 && sourceId <= 4) {
+    if (!isNaN(sourceId) && sourceId >= 0 && sourceId <= 5) {
       update(`modSource_${slotIdx}`, sourceId);
       // Auto-assign target if None
       const currentTarget = parameterValues[`modTarget_${slotIdx}`] ?? 0;
@@ -262,6 +269,67 @@ export const ModulationMatrixDrawer: React.FC<ModulationMatrixDrawerProps> = ({
                         className="lfo-rate-slider glow-red"
                       />
                       <span className="knob-value">{lfo2Rate.toFixed(1)} Hz</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* MOD ENVELOPE (ENV 2) */}
+                <div className="mod-lfo-row">
+                  <div className="mod-lfo-header">
+                    <span className="lfo-label lfo-color-env2">MOD ENVELOPE (ENV 2)</span>
+                  </div>
+                  <div className="mod-env-controls">
+                    <div className="env-slider-container">
+                      <span className="knob-title">ATTACK</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={modEnvAttack}
+                        onChange={(e) => update('modEnvAttack', parseInt(e.target.value, 10))}
+                        className="lfo-rate-slider glow-pink"
+                      />
+                      <span className="knob-value">{Math.round(modEnvAttack)}%</span>
+                    </div>
+                    <div className="env-slider-container">
+                      <span className="knob-title">DECAY</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={modEnvDecay}
+                        onChange={(e) => update('modEnvDecay', parseInt(e.target.value, 10))}
+                        className="lfo-rate-slider glow-pink"
+                      />
+                      <span className="knob-value">{Math.round(modEnvDecay)}%</span>
+                    </div>
+                    <div className="env-slider-container">
+                      <span className="knob-title">SUSTAIN</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={modEnvSustain}
+                        onChange={(e) => update('modEnvSustain', parseInt(e.target.value, 10))}
+                        className="lfo-rate-slider glow-pink"
+                      />
+                      <span className="knob-value">{Math.round(modEnvSustain)}%</span>
+                    </div>
+                    <div className="env-slider-container">
+                      <span className="knob-title">RELEASE</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={modEnvRelease}
+                        onChange={(e) => update('modEnvRelease', parseInt(e.target.value, 10))}
+                        className="lfo-rate-slider glow-pink"
+                      />
+                      <span className="knob-value">{Math.round(modEnvRelease)}%</span>
                     </div>
                   </div>
                 </div>

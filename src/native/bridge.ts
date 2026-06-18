@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // NativeAudioBridge — Bidirectional JUCE ↔ WebView State Sync
 // ═══════════════════════════════════════════════════════════════
+
+import { neuralInputBus } from '@/services/neuralInputBus';
 // When running inside JUCE (standalone/VST3), the engine pushes
 // real-time state via window.__godRealmStateUpdate(). In dev mode
 // (browser), a simulation loop generates fake data for UI parity.
@@ -188,6 +190,12 @@ class NativeAudioBridge {
         if (state.ppq !== undefined) this.currentState.ppq = state.ppq;
         if (state.midiNotes) this.currentState.midiNotes = state.midiNotes;
 
+        if (state.midiCCs && Array.isArray(state.midiCCs)) {
+          state.midiCCs.forEach((evt: any) => {
+            neuralInputBus.triggerMidiCC(evt.cc, evt.value, evt.channel, evt.deviceName || 'DAW MIDI');
+          });
+        }
+
         this.notifyListeners(this.currentState);
       };
 
@@ -341,6 +349,10 @@ class NativeAudioBridge {
     return () => this.listeners.delete(callback);
   }
 
+  public subscribeToParams(callback: (paramId: string, value: any) => void) {
+    this.paramListeners.add(callback);
+    return () => this.paramListeners.delete(callback);
+  }
   /** Get current snapshot without subscribing */
   public getState(): Readonly<EngineState> {
     return this.currentState;
@@ -664,13 +676,10 @@ class NativeAudioBridge {
       if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
       else if (window.sendToJuce) window.sendToJuce(msg);
     } else {
+      // Browser simulation — license activation requires JUCE host
       setTimeout(() => {
         if ((window as any).__godRealmLicenseResult) {
-          if (key === 'VSTGOD-TEST-KEY-1234-5678') {
-            (window as any).__godRealmLicenseResult(true, 'License activated successfully (simulated).');
-          } else {
-            (window as any).__godRealmLicenseResult(false, 'Invalid license key (simulated).');
-          }
+          (window as any).__godRealmLicenseResult(false, 'License activation requires the JUCE plugin host.');
         }
       }, 1000);
     }

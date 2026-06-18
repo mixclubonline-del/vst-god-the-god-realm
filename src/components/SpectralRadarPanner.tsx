@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { nativeAudio, SpectralDataState } from '@/native/bridge';
+import { Navigation } from 'lucide-react';
 import './SpectralRadarPanner.css';
 
 interface Point {
@@ -9,27 +10,26 @@ interface Point {
 }
 
 interface SpectralRadarPannerProps {
-  /** Phase 4: Real-time FFT data from JUCE engine (optional, falls back to mock) */
   spectralData?: SpectralDataState | null;
 }
 
 export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectralData }) => {
-  const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
+  const [position, setPosition] = useState<Point>({ x: 0, y: -60 }); // Default north
   const [elevation, setElevation] = useState(0.5); 
   const [rms, setRms] = useState(0);
   const [freqData, setFreqData] = useState<Uint8Array>(new Uint8Array(64));
   const containerRef = useRef<HTMLDivElement>(null);
-  const meshRef = useRef<SVGSVGElement>(null);
+  const lastBridgeCall = useRef<number>(0);
   
   // High-fidelity spring physics
   const springX = useSpring(0, { stiffness: 80, damping: 25 });
   const springY = useSpring(0, { stiffness: 80, damping: 25 });
   const springZ = useSpring(0.5, { stiffness: 120, damping: 20 });
-  const springRotateX = useSpring(45, { stiffness: 50, damping: 30 });
+  const springRotateX = useSpring(65, { stiffness: 50, damping: 30 }); // Tilt it more for a map feel
+  const springRotateZ = useSpring(0, { stiffness: 30, damping: 40 }); // Slow rotation
 
-  // Mock audio engine for visual feedback (dev mode fallback)
+  // Mock audio engine
   useEffect(() => {
-    // If real spectral data is available from JUCE, skip mock generation
     if (spectralData) return;
 
     let rafId: number;
@@ -37,72 +37,74 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
     const update = () => {
       frame++;
       
-      // Dynamic RMS with organic variance
       const mockLevel = (Math.sin(frame * 0.05) * 0.4 + 0.6) * (0.1 + Math.random() * 0.05);
       setRms(prev => prev * 0.85 + mockLevel * 0.15);
       
-      // Mock frequency bands (64 bands for the mesh)
       const newData = new Uint8Array(64);
       for (let i = 0; i < 64; i++) {
-        const freqWeight = Math.exp(-Math.abs(i - 10) / 10) * 2; // Bass focus
-        const highWeight = Math.exp(-Math.abs(i - 40) / 15) * 1.5; // Mid focus
+        const freqWeight = Math.exp(-Math.abs(i - 10) / 10) * 2;
+        const highWeight = Math.exp(-Math.abs(i - 40) / 15) * 1.5;
         newData[i] = (Math.sin(frame * 0.15 + i * 0.2) * 40 + 60) * (freqWeight + highWeight) * (0.8 + mockLevel);
       }
       setFreqData(newData);
       
+      // Slowly rotate the astrolabe
+      springRotateZ.set(frame * 0.1);
+
       rafId = requestAnimationFrame(update);
     };
     rafId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(rafId);
   }, [spectralData]);
 
-  // Phase 4: Consume real FFT data from JUCE engine when available
+  // Phase 4: Consume real FFT data
   useEffect(() => {
     if (!spectralData) return;
     setRms(spectralData.rms);
     setFreqData(spectralData.fftBins);
   }, [spectralData]);
 
+  // Bi-directional JUCE param sync
+  useEffect(() => {
+    const unsubscribe = nativeAudio.subscribeToParams((paramId, value) => {
+      if (paramId === 'radar_azimuth') {
+        const az = Number(value);
+        const r = 60; // visual radius
+        const rad = (az - 90) * Math.PI / 180;
+        const newX = r * Math.cos(rad);
+        const newY = r * Math.sin(rad);
+        setPosition({ x: newX, y: newY });
+        springX.set(newX);
+        springY.set(newY);
+      } else if (paramId === 'radar_elevation') {
+        const el = Number(value);
+        setElevation(el);
+        springZ.set(el);
+      }
+    });
+    return () => { unsubscribe(); };
+  }, [springX, springY, springZ]);
+
+  // Pointer dragging
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!containerRef.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 200 - 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 200 - 100;
-
-    // Circular constraint
-    const distance = Math.sqrt(x * x + y * y);
-    const maxRadius = 90;
-
-    let targetX = x;
-    let targetY = y;
-
-    if (distance > maxRadius) {
-      const angle = Math.atan2(y, x);
-      targetX = maxRadius * Math.cos(angle);
-      targetY = maxRadius * Math.sin(angle);
-    }
-
-    setPosition({ x: targetX, y: targetY });
-    springX.set(targetX);
-    springY.set(targetY);
-
-    const azimuth = (Math.atan2(targetY, targetX) * 180 / Math.PI + 450) % 360;
-    nativeAudio.updateSpatialPosition(azimuth, elevation, 'ALPHA_PRIME');
+    updatePosition(e);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!containerRef.current) return;
     if (e.buttons !== 1 && !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    updatePosition(e);
+  };
 
-    const rect = containerRef.current.getBoundingClientRect();
+  const updatePosition = (e: React.PointerEvent) => {
+    const rect = containerRef.current!.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 200 - 100;
     const y = ((e.clientY - rect.top) / rect.height) * 200 - 100;
 
-    // Circular constraint
     const distance = Math.sqrt(x * x + y * y);
-    const maxRadius = 90;
+    const maxRadius = 90; // Keep it within the rings
 
     let targetX = x;
     let targetY = y;
@@ -118,7 +120,13 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
     springY.set(targetY);
 
     const azimuth = (Math.atan2(targetY, targetX) * 180 / Math.PI + 450) % 360;
-    nativeAudio.updateSpatialPosition(azimuth, elevation, 'ALPHA_PRIME');
+    
+    // Throttle bridge calls
+    const now = performance.now();
+    if (now - lastBridgeCall.current > 33) {
+      nativeAudio.updateSpatialPosition(azimuth, elevation, 'NORTH_STAR');
+      lastBridgeCall.current = now;
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
@@ -130,140 +138,113 @@ export const SpectralRadarPanner: React.FC<SpectralRadarPannerProps> = ({ spectr
     const newElevation = Math.max(0, Math.min(1, elevation - e.deltaY * 0.001));
     setElevation(newElevation);
     springZ.set(newElevation);
+    
+    // Update audio engine on scroll
+    const azimuth = (Math.atan2(position.y, position.x) * 180 / Math.PI + 450) % 360;
+    const now = performance.now();
+    if (now - lastBridgeCall.current > 33) {
+      nativeAudio.updateSpatialPosition(azimuth, newElevation, 'NORTH_STAR');
+      lastBridgeCall.current = now;
+    }
   };
 
-  // Generate the Spectral Mesh Path (smooth closed Bézier loop)
-  const meshPath = useMemo(() => {
-    if (!freqData || freqData.length === 0) return "";
-    const radius = 100;
-    const center = 100;
-    const points: Array<{ x: number; y: number }> = [];
-    
-    for (let i = 0; i < 64; i++) {
-      const angle = (i / 64) * Math.PI * 2;
-      const val = freqData[i] / 255;
-      const r = radius * (0.8 + val * 0.3 * (1 + rms));
-      points.push({
-        x: center + r * Math.cos(angle),
-        y: center + r * Math.sin(angle),
-      });
-    }
-
-    if (points.length < 3) return "";
-
-    const pathArr: string[] = [];
-    // Start at midpoint of last and first point for seamless closed loop
-    const firstMidX = (points[points.length - 1].x + points[0].x) / 2;
-    const firstMidY = (points[points.length - 1].y + points[0].y) / 2;
-    pathArr.push(`M ${firstMidX} ${firstMidY}`);
-
-    for (let i = 0; i < points.length; i++) {
-      const nextIdx = (i + 1) % points.length;
-      const midX = (points[i].x + points[nextIdx].x) / 2;
-      const midY = (points[i].y + points[nextIdx].y) / 2;
-      pathArr.push(`Q ${points[i].x} ${points[i].y} ${midX} ${midY}`);
-    }
-    pathArr.push('Z');
-    return pathArr.join(' ');
-  }, [freqData, rms]);
 
   return (
     <div className="spectral-radar-3d-wrapper" onWheel={handleScroll}>
-      <div className="radar-glass-container">
-        <div className="radar-header">
-          <div className="divine-title">SPECTRAL RADAR V2</div>
-          <div className="radar-metrics">
-            <div className="metric-box">
-              <span className="label">AZM</span>
-              <span className="value">{Math.round((Math.atan2(position.y, position.x) * 180 / Math.PI + 450) % 360)}°</span>
-            </div>
-            <div className="metric-box">
-              <span className="label">ELV</span>
-              <span className="value">{Math.round(elevation * 100)}%</span>
-            </div>
-          </div>
+      
+      {/* Floating Holographic HUD */}
+      <div className="holographic-hud">
+        <div className="hud-metric">
+          <span className="label">AZIMUTH</span>
+          <span className="value">{Math.round((Math.atan2(position.y, position.x) * 180 / Math.PI + 450) % 360)}°</span>
         </div>
+        <div className="hud-metric">
+          <span className="label">ELEVATION</span>
+          <span className="value">{Math.round(elevation * 100)}%</span>
+        </div>
+      </div>
 
-        <div 
-          ref={containerRef}
-          className="radar-scene"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
+      <div 
+        ref={containerRef}
+        className="radar-scene"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        {/* Massive 3D Astrolabe Surface */}
+        <motion.div 
+          className="radar-surface-3d"
+          style={{ 
+            rotateX: springRotateX,
+            rotateZ: springRotateZ,
+            perspective: '1500px'
+          }}
         >
-          {/* 3D Perspective Surface */}
+          {/* Background Grid & Rings */}
+          <div className="radar-floor">
+            <div className="floor-grid" />
+            <div className="floor-axis vertical" />
+            <div className="floor-axis horizontal" />
+            
+            {[0.2, 0.4, 0.6, 0.8].map((r, i) => (
+              <div 
+                key={i} 
+                className="floor-ring" 
+                style={{ 
+                  width: `${r * 100}%`, 
+                  height: `${r * 100}%`,
+                  opacity: 0.2 + rms * 0.3
+                }} 
+              />
+            ))}
+          </div>
+
+
+          {/* Volumetric Pillar & Star Shadow (Static on floor, follows star X/Y) */}
+          <motion.div
+            className="star-floor-shadow"
+            style={{
+              left: useTransform(springX, x => `${50 + x/2}%`),
+              top: useTransform(springY, y => `${50 + y/2}%`),
+            }}
+          />
           <motion.div 
-            className="radar-surface-3d"
-            style={{ 
-              rotateX: springRotateX,
-              perspective: '1000px'
+            className="elevation-pillar"
+            style={{
+              left: useTransform(springX, x => `${50 + x/2}%`),
+              top: useTransform(springY, y => `${50 + y/2}%`),
+              height: useTransform(springZ, z => `${z * 100}px`),
+            }}
+          />
+
+          {/* Sound Source Node (Floats on Z axis) */}
+          <motion.div
+            className="divine-source-star"
+            style={{
+              left: useTransform(springX, x => `${50 + x/2}%`),
+              top: useTransform(springY, y => `${50 + y/2}%`),
+              translateZ: useTransform(springZ, z => `${z * 100}px`),
+              scale: useTransform(springZ, z => 0.8 + z * 0.6)
             }}
           >
-            {/* Background Grid & Rings */}
-            <div className="radar-floor">
-              <div className="floor-grid" />
-              {[0.3, 0.6, 0.9].map((r, i) => (
-                <div 
-                  key={i} 
-                  className="floor-ring" 
-                  style={{ 
-                    width: `${r * 100}%`, 
-                    height: `${r * 100}%`,
-                    opacity: 0.1 + rms * 0.2
-                  }} 
-                />
-              ))}
-            </div>
-
-            {/* Spectral Mesh Layer */}
-            <svg viewBox="0 0 200 200" className="spectral-mesh-svg">
-              <defs>
-                <linearGradient id="mesh-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="var(--mixx-accent)" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="var(--mixx-accent-glow)" stopOpacity="0.2" />
-                </linearGradient>
-                <filter id="mesh-glow">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-              <motion.path 
-                d={meshPath}
-                className="mesh-path"
-                fill="url(#mesh-gradient)"
-                filter="url(#mesh-glow)"
-                initial={false}
+            <div className="northstar-node">
+              <Navigation 
+                size={32} 
+                className="northstar-icon" 
+                style={{ 
+                  transform: `rotate(${Math.atan2(position.y, position.x) * 180 / Math.PI + 90}deg)`,
+                  filter: `drop-shadow(0 0 ${10 + rms * 30}px var(--mixx-accent))`
+                }} 
               />
-            </svg>
-
-            {/* Sound Source Orb */}
-            <motion.div
-              className="divine-source-orb"
-              style={{
-                left: useTransform(springX, x => `${50 + x/2}%`),
-                top: useTransform(springY, y => `${50 + y/2}%`),
-                translateZ: useTransform(springZ, z => `${z * 100}px`),
-                scale: useTransform(springZ, z => 0.8 + z * 0.6)
-              }}
-            >
-              <div className="orb-core">
-                <div className="orb-inner-glow" style={{ opacity: 0.5 + rms }} />
-                <motion.div 
-                  className="orb-pulse-ring"
-                  animate={{ scale: [1, 2], opacity: [0.5, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-              </div>
-              <div className="orb-shadow" />
-              <div className="orb-id">ALPHA_PRIME</div>
-            </motion.div>
-
+            </div>
+            <div className="star-id">NORTH_STAR</div>
           </motion.div>
 
-          <div className="radar-overlay-hints">
-            <span>SHIFT + DRAG FOR FINE PAN</span>
-            <span>SCROLL TO ASCEND</span>
-          </div>
+        </motion.div>
+
+        <div className="radar-overlay-hints">
+          <span>DRAG STAR TO PAN</span>
+          <span>SCROLL TO ASCEND</span>
         </div>
       </div>
     </div>

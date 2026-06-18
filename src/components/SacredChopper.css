@@ -7,10 +7,39 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(180deg, rgba(14, 4, 4, 0.98) 0%, rgba(20, 6, 8, 0.96) 100%);
-  color: #fff;
-  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(180deg, rgba(14, 4, 4, 0.98) 0%, rgba(20, 6, 8, 0.96) 50%, rgba(10, 2, 4, 0.98) 100%);
+  color: var(--god-text-primary);
+  border-radius: var(--god-radius-lg);
+  border: 1px solid var(--god-glass-border);
+  box-shadow: 0 8px 32px rgba(255, 30, 0, 0.1), inset 0 1px 0 rgba(255, 100, 100, 0.1);
   overflow: hidden;
+  position: relative;
+}
+
+.sacred-chopper::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/sacred-chopper-comp.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.sacred-chopper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+
+.sacred-chopper > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Header ─── */

@@ -25,13 +25,16 @@
 .fp-window {
   /* OPAQUE — no more glass transparency */
   background:
-    /* Subtle noise grain texture */
     radial-gradient(
       ellipse at 20% 50%,
       rgba(35, 28, 72, 1) 0%,
       rgba(18, 14, 48, 1) 30%,
       rgba(12, 10, 32, 1) 100%
-    );
+    ),
+    url('/plugins/backgrounds/floating-plugin.png'),
+    url('/plugins/textures/dark-leather.png');
+  background-size: cover, cover, auto;
+  background-blend-mode: normal, overlay, multiply;
   border: none;
   border-radius: 12px;
   overflow: hidden;

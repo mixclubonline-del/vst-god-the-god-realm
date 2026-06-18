@@ -34,6 +34,26 @@
   overflow: hidden;
 }
 
+/* ─── Background Image Layer ─── */
+.session-seal-drawer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/session-seal.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ─── Content Layering ─── */
+.session-seal-drawer > * {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes sealDrawerIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }

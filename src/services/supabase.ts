@@ -45,11 +45,12 @@ export async function activateLicense(
   }
 
   if (!isSupabaseConfigured) {
-    console.info('[VST God] Supabase not configured. Simulating activation.');
-    if (key === 'VSTGOD-TEST-KEY-1234-5678') {
-      return { success: true, message: 'License activated successfully (simulated).' };
+    console.info('[VST God] Supabase not configured. License activation unavailable in browser mode.');
+    // Dev-only: allow test activation via environment variable
+    if (import.meta.env.DEV && key === 'VSTGOD-TEST-KEY-1234-5678') {
+      return { success: true, message: 'License activated (dev mode only).' };
     }
-    return { success: false, message: 'Invalid license key (simulated).' };
+    return { success: false, message: 'License activation requires the JUCE plugin host. Please activate from within the plugin.' };
   }
 
   try {

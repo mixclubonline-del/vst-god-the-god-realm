@@ -276,6 +276,7 @@ public:
         bodyOsc.setSampleRate(sr);
         subOsc.setSampleRate(sr);
         envelope.setSampleRate(sr);
+        modEnvelope.setSampleRate(sr);
         filterLP.reset();
         filterHP.reset();
         filterBP.reset();
@@ -361,11 +362,13 @@ public:
 
         updateFrequencies(pitchBendVal, 0.0f, 0);
         envelope.noteOn();
+        modEnvelope.noteOn();
     }
 
     void noteOff()
     {
         envelope.noteOff();
+        modEnvelope.noteOff();
     }
 
     void setMpePitchBend(float pbVal)
@@ -386,6 +389,26 @@ public:
     void setEnvelopeParameters(const juce::ADSR::Parameters& params)
     {
         envelope.setParameters(params);
+    }
+
+    void setModEnvelopeParameters(const juce::ADSR::Parameters& params)
+    {
+        modEnvelope.setParameters(params);
+    }
+
+    void setModMatrixSlots(const int* sources, const int* targets, const float* amounts)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            modSources[i] = sources[i];
+            modTargets[i] = targets[i];
+            modAmounts[i] = amounts[i];
+        }
+    }
+
+    float getLastModEnvValue() const
+    {
+        return lastModEnv;
     }
 
     void setMidiChannel(int channel)
@@ -563,16 +586,33 @@ public:
         return subMix;
     }
 
-    void process(juce::AudioBuffer<float>& buffer, int startSample, int numSamples, float pitchBend, float macroEnergyVal, float driftAmount, float poseidonDriftAmt)
+    void process(juce::AudioBuffer<float>& buffer, int startSample, int numSamples, float pitchBend, float macroEnergyVal, float driftAmount, float poseidonDriftAmt,
+                 float modCutoffVal, float modDecayVal, float modEnergyVal)
     {
         if (!active) return;
 
         updateFrequencies(pitchBend, driftAmount, numSamples);
 
+        // Accumulate voice-specific modulations
+        float voiceModCutoff = modCutoffVal;
+        float voiceModDecay = modDecayVal;
+        float voiceModEnergy = modEnergyVal;
+
+        for (int slot = 0; slot < 4; ++slot)
+        {
+            if (modSources[slot] == 5 && modTargets[slot] != 0 && modAmounts[slot] != 0.0f)
+            {
+                float contribution = lastModEnv * modAmounts[slot];
+                if (modTargets[slot] == 1) voiceModDecay += contribution;
+                else if (modTargets[slot] == 2) voiceModCutoff += contribution;
+                else if (modTargets[slot] == 4) voiceModEnergy += contribution;
+            }
+        }
+
         // Update ADSR parameters dynamically
         juce::ADSR::Parameters params;
         params.attack = blendedPreset.attack;
-        params.decay = blendedPreset.decay;
+        params.decay = juce::jmax(0.01f, blendedPreset.decay + voiceModDecay * 3.0f); // Modulate decay up to ±3s
         params.sustain = blendedPreset.sustain;
         params.release = blendedPreset.release;
         envelope.setParameters(params);
@@ -588,7 +628,9 @@ public:
         
         // Filter envelope modulation: shorter plucky sounds sweep down, pads stay open/smooth
         float envModAmt = 0.6f * (1.0f - juce::jmin(1.0f, blendedPreset.decay / 2.0f));
-        float modulatedCutoff = cutoff * ((1.0f - envModAmt) + envModAmt * lastEnv);
+        // Add voiceModCutoff * 4000.0f (modulate up to ±4000Hz)
+        float modulatedCutoff = cutoff * ((1.0f - envModAmt) + envModAmt * lastEnv) + (voiceModCutoff * 4000.0f);
+        modulatedCutoff = juce::jlimit(20.0f, 20000.0f, modulatedCutoff);
 
         float filterQ = blendedPreset.filterQ;
         
@@ -618,6 +660,10 @@ public:
         {
             float env = envelope.getNextSample();
             lastEnv = env;
+
+            float modEnvVal = modEnvelope.getNextSample();
+            lastModEnv = modEnvVal;
+
             if (env <= 0.0f && !envelope.isActive())
             {
                 active = false;
@@ -629,7 +675,9 @@ public:
             float modOut = modulatorOsc.process();
             
             // FM depth
-            float energyModScale = 0.5f + (macroEnergyVal / 100.0f) * 1.5f;
+            float totalEnergy = macroEnergyVal + voiceModEnergy * 50.0f;
+            totalEnergy = juce::jlimit(0.0f, 100.0f, totalEnergy);
+            float energyModScale = 0.5f + (totalEnergy / 100.0f) * 1.5f;
             float fmDepth = freq * blendedPreset.modIndex * currentVelocity * energyModScale;
             float phaseModVal = modOut * fmDepth * (2.0f * juce::MathConstants<float>::pi / static_cast<float>(sampleRate));
 
@@ -702,6 +750,7 @@ private:
     PantheonOscillator subOsc;
     
     juce::ADSR envelope;
+    juce::ADSR modEnvelope;
     juce::IIRFilter filterLP;
     juce::IIRFilter filterHP;
     juce::IIRFilter filterBP;
@@ -725,6 +774,10 @@ private:
     // Hip-hop optimization additions (Phase 7 expansion)
     float vibratoPhase = 0.0f;
     float lastEnv = 0.0f;
+    float lastModEnv = 0.0f;
+    int modSources[4] = { 0 };
+    int modTargets[4] = { 0 };
+    float modAmounts[4] = { 0.0f };
 
     // Phase 8: Chthonic Sub accumulators
     double olympusPhase = 0.0;
@@ -1131,7 +1184,9 @@ public:
                     poseidonDriftAmt = driftAmount * vortexWeights[4] * poseidonLfo * 1500.0f;
                 }
                 
-                voice->process(synthBuffer, 0, numSamples, pitchBend, macroEnergy.load(std::memory_order_relaxed), driftAmount, poseidonDriftAmt);
+                voice->setModMatrixSlots(modSources, modTargets, modAmounts);
+                voice->process(synthBuffer, 0, numSamples, pitchBend, macroEnergy.load(std::memory_order_relaxed), driftAmount, poseidonDriftAmt,
+                               globalModCutoff, globalModDecay, globalModEnergy);
             }
         }
 
@@ -1217,9 +1272,51 @@ public:
         macroAge.store(age, std::memory_order_relaxed);
     }
 
-    void setCutoffModulation(float modVal)
+    void setModMatrixSlots(const int* sources, const int* targets, const float* amounts)
     {
-        cutoffModulation = modVal * 4000.0f; // Modulate up to ±4000Hz
+        for (int i = 0; i < 4; ++i)
+        {
+            modSources[i] = sources[i];
+            modTargets[i] = targets[i];
+            modAmounts[i] = amounts[i];
+        }
+    }
+
+    void setGlobalModulations(float decay, float cutoff, float warmth, float energy)
+    {
+        globalModDecay = decay;
+        globalModCutoff = cutoff;
+        globalModWarmth = warmth;
+        globalModEnergy = energy;
+    }
+
+    void setModEnvelopeParameters(float attack, float decay, float sustain, float release)
+    {
+        juce::ADSR::Parameters params;
+        params.attack = juce::jmax(0.001f, attack / 100.0f * 4.0f);
+        params.decay = juce::jmax(0.01f, decay / 100.0f * 5.0f);
+        params.sustain = sustain / 100.0f;
+        params.release = juce::jmax(0.01f, release / 100.0f * 8.0f);
+
+        for (auto& voice : voices)
+        {
+            voice->setModEnvelopeParameters(params);
+        }
+    }
+
+    float getAverageModEnvelopeValue() const
+    {
+        float sum = 0.0f;
+        int activeCount = 0;
+        for (const auto& voice : voices)
+        {
+            if (voice->isActive())
+            {
+                sum += voice->getLastModEnvValue();
+                activeCount++;
+            }
+        }
+        return activeCount > 0 ? (sum / static_cast<float>(activeCount)) : 0.0f;
     }
 
 private:
@@ -1229,7 +1326,15 @@ private:
     
     std::vector<std::unique_ptr<PantheonVoice>> voices;
     float pitchBend = 0.0f;
-    float cutoffModulation = 0.0f;
+    
+    int modSources[4] = { 0 };
+    int modTargets[4] = { 0 };
+    float modAmounts[4] = { 0.0f };
+
+    float globalModDecay = 0.0f;
+    float globalModCutoff = 0.0f;
+    float globalModWarmth = 0.0f;
+    float globalModEnergy = 0.0f;
 
     // Phase 7: Vortex Weight Morphing
     std::array<float, 8> vortexWeights;

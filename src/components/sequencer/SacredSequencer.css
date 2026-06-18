@@ -11,14 +11,21 @@
 .seq-container {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(170deg,
-    hsla(252, 40%, 12%, 0.95) 0%,
-    hsla(256, 45%, 9%, 0.98) 40%,
-    hsla(260, 50%, 6%, 1) 100%
-  );
+  background: 
+    linear-gradient(170deg,
+      hsla(252, 40%, 12%, 0.65) 0%,
+      hsla(256, 45%, 9%, 0.70) 40%,
+      hsla(260, 50%, 6%, 0.75) 100%
+    ),
+    url('/plugins/backgrounds/sequencer-comp.png'),
+    url('/plugins/textures/dark-matter.png');
+  background-size: cover, cover, auto;
+  background-position: center, center, top left;
+  background-blend-mode: normal, luminosity, multiply;
   border: 1px solid rgba(255, 215, 0, 0.08);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   font-family: 'Orbitron', sans-serif;
   position: relative;
   height: 100%;
@@ -1238,7 +1245,9 @@
 
 .step-detail {
   width: 260px;
-  background: rgba(12, 8, 4, 0.96);
+  background: 
+    linear-gradient(rgba(12, 8, 4, 0.65), rgba(12, 8, 4, 0.65)),
+    url('/plugins/backgrounds/sequencer.png') center/cover;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   backdrop-filter: blur(24px);

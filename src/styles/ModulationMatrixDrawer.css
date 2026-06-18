@@ -37,6 +37,26 @@
   backdrop-filter: var(--god-blur);
 }
 
+/* ─── Background Image Layer ─── */
+.mod-matrix-drawer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/mod-matrix.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ─── Content Layering ─── */
+.mod-matrix-drawer > * {
+  position: relative;
+  z-index: 1;
+}
+
 .mod-matrix-header {
   display: flex;
   justify-content: space-between;
@@ -146,6 +166,11 @@
   text-shadow: 0 0 6px rgba(255, 119, 0, 0.25);
 }
 
+.lfo-color-env2 {
+  color: #ec4899;
+  text-shadow: 0 0 6px rgba(236, 72, 153, 0.25);
+}
+
 .lfo-shape-buttons {
   display: flex;
   gap: 3px;
@@ -247,6 +272,11 @@
 .lfo-rate-slider.glow-red::-webkit-slider-thumb {
   background: #ff7700;
   box-shadow: 0 0 6px #ff7700;
+}
+
+.lfo-rate-slider.glow-pink::-webkit-slider-thumb {
+  background: #ec4899;
+  box-shadow: 0 0 6px #ec4899;
 }
 
 .lfo-rate-slider::-webkit-slider-thumb:hover {
@@ -429,3 +459,21 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* Mod Envelope ADSR alignment */
+.mod-env-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.env-slider-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+

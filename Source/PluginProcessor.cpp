@@ -37,7 +37,7 @@ public:
         #else
         json->setProperty ("platform", "windows");
         #endif
-        json->setProperty ("version", "v1.0.0-dev");
+        json->setProperty ("version", "v1.0.0");
         json->setProperty ("action", firstActivation ? "activate" : "verify");
 
         juce::var jsonVar (json.get());
@@ -309,12 +309,24 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     float modWarmth = 0.0f;
     float modEnergy = 0.0f;
 
+    // Get secondary envelope values from synth
+    float env2Val = pantheonSynth.getAverageModEnvelopeValue();
+
+    // Get the modulation slot values and sync them to synth
+    int modSources[4];
+    int modTargets[4];
+    float modAmounts[4];
+
     for (int slot = 0; slot < 4; ++slot)
     {
         juce::String idSuffix = juce::String(slot);
-        int source = static_cast<int>(*apvts.getRawParameterValue("modSource_" + idSuffix));
-        int target = static_cast<int>(*apvts.getRawParameterValue("modTarget_" + idSuffix));
-        float amount = *apvts.getRawParameterValue("modAmount_" + idSuffix);
+        modSources[slot] = static_cast<int>(*apvts.getRawParameterValue("modSource_" + idSuffix));
+        modTargets[slot] = static_cast<int>(*apvts.getRawParameterValue("modTarget_" + idSuffix));
+        modAmounts[slot] = *apvts.getRawParameterValue("modAmount_" + idSuffix);
+
+        int source = modSources[slot];
+        int target = modTargets[slot];
+        float amount = modAmounts[slot];
 
         if (source == 0 || target == 0 || amount == 0.0f)
             continue;
@@ -324,6 +336,7 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         else if (source == 2) sourceVal = lfo2Val;
         else if (source == 3) sourceVal = aftertouchVal;
         else if (source == 4) sourceVal = modwheelVal;
+        else if (source == 5) sourceVal = env2Val; // Env 2!
 
         float modContribution = sourceVal * amount;
 
@@ -333,12 +346,15 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         else if (target == 4) modEnergy += modContribution;
     }
 
+    // Pass the mod matrix slots and global modulations to synth
+    pantheonSynth.setModMatrixSlots(modSources, modTargets, modAmounts);
+    pantheonSynth.setGlobalModulations(modDecay, modCutoff, modWarmth, modEnergy);
+
     // Apply modulation values to engines
     for (int t = 0; t < 8; ++t)
     {
         sampler.setModulations(t, modDecay, modCutoff * 50.0f);
     }
-    pantheonSynth.setCutoffModulation(modCutoff);
 
     // ═══════════════════════════════════════════════════════════
     // MIDI 2.0 Note Event Capture & Routing
@@ -354,9 +370,31 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             midiAftertouch.store(static_cast<float>(msg.getChannelPressureValue()) / 127.0f, std::memory_order_relaxed);
         }
-        else if (msg.isController() && msg.getControllerNumber() == 1)
+        else if (msg.isController())
         {
-            midiModWheel.store(static_cast<float>(msg.getControllerValue()) / 127.0f, std::memory_order_relaxed);
+            int ccNum = msg.getControllerNumber();
+            int ccVal = msg.getControllerValue();
+            int channel = msg.getChannel() - 1; // 0-based channel
+            
+            if (ccNum == 1)
+            {
+                midiModWheel.store(static_cast<float>(ccVal) / 127.0f, std::memory_order_relaxed);
+            }
+            
+            // Queue CC event for custom MIDI learn/mapping in the webview
+            int ccWp = ccEventWritePos.load(std::memory_order_relaxed);
+            int nextCcWp = (ccWp + 1) % kMaxCCEvents;
+            if (nextCcWp != ccEventReadPos.load(std::memory_order_acquire))
+            {
+                auto& ccEvt = ccEventBuffer[ccWp];
+                ccEvt.ccNumber = ccNum;
+                ccEvt.ccValue = ccVal;
+                ccEvt.channel = channel;
+                ccEventWritePos.store(nextCcWp, std::memory_order_release);
+            }
+            
+            // Apply native Arturia KeyLab controller mappings
+            handleArturiaKeyLabCC(ccNum, ccVal);
         }
 
         if (activeTab == 8) // Electric Pantheon tab
@@ -741,6 +779,13 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     
     float subGain = *apvts.getRawParameterValue("pantheonSubGain");
     pantheonSynth.setSubGain(subGain);
+    
+    // Sync Mod Envelope (Env 2) parameters
+    float modEnvAttack = *apvts.getRawParameterValue("modEnvAttack");
+    float modEnvDecay = *apvts.getRawParameterValue("modEnvDecay");
+    float modEnvSustain = *apvts.getRawParameterValue("modEnvSustain");
+    float modEnvRelease = *apvts.getRawParameterValue("modEnvRelease");
+    pantheonSynth.setModEnvelopeParameters(modEnvAttack, modEnvDecay, modEnvSustain, modEnvRelease);
     
     float energy = *apvts.getRawParameterValue("pantheonMacro_energy");
     float modulatedEnergy = energy + modEnergy * 50.0f; // Scale modulation to fit 0-100 range
@@ -1138,6 +1183,126 @@ std::vector<Midi2NoteEvent> VSTGodTheGodRealmAudioProcessor::drainMidiEvents()
     return events;
 }
 
+std::vector<MidiCCEvent> VSTGodTheGodRealmAudioProcessor::drainCCEvents()
+{
+    std::vector<MidiCCEvent> events;
+    
+    int rp = ccEventReadPos.load(std::memory_order_acquire);
+    int wp = ccEventWritePos.load(std::memory_order_acquire);
+    
+    while (rp != wp)
+    {
+        events.push_back(ccEventBuffer[rp]);
+        rp = (rp + 1) % kMaxCCEvents;
+    }
+    
+    ccEventReadPos.store(rp, std::memory_order_release);
+    return events;
+}
+
+void VSTGodTheGodRealmAudioProcessor::updateParameterValue (const juce::String& paramID, float newValue)
+{
+    if (auto* param = apvts.getParameter(paramID))
+    {
+        float normVal = param->getNormalisableRange().convertTo0to1(newValue);
+        param->setValueNotifyingHost(normVal);
+    }
+}
+
+void VSTGodTheGodRealmAudioProcessor::handleArturiaKeyLabCC(int ccNum, int ccVal)
+{
+    int activeTab = static_cast<int>(*apvts.getRawParameterValue("activeTab"));
+    
+    // Global Master Volume fader (Fader 9 on Arturia KeyLab defaults to CC 85 or CC 7)
+    if (ccNum == 85 || ccNum == 7)
+    {
+        // masterVolume range: -60.0f to 6.0f
+        float vol = -60.0f + (static_cast<float>(ccVal) / 127.0f) * 66.0f;
+        updateParameterValue("masterVolume", vol);
+        return;
+    }
+
+    if (activeTab == 8) // Electric Pantheon tab
+    {
+        switch (ccNum)
+        {
+            // Knobs
+            case 74: updateParameterValue("pantheonMacro_energy", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 71: updateParameterValue("pantheonMacro_divinity", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 76: updateParameterValue("pantheonMacro_width", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 77: updateParameterValue("pantheonMacro_realm", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 93: updateParameterValue("pantheonMacro_aura", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 18: updateParameterValue("pantheonMacro_age", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 19: updateParameterValue("pantheonDriftAmount", static_cast<float>(ccVal) / 127.0f); break;
+            case 16: updateParameterValue("pantheonVortexX", static_cast<float>(ccVal) / 127.0f); break;
+            case 17: updateParameterValue("pantheonVortexY", static_cast<float>(ccVal) / 127.0f); break;
+            
+            // Faders
+            case 73: updateParameterValue("modEnvAttack", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 75: updateParameterValue("modEnvDecay", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 79: updateParameterValue("modEnvSustain", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 72: updateParameterValue("modEnvRelease", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 80: updateParameterValue("pantheonSubGain", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            default: break;
+        }
+    }
+    else if (activeTab == 5) // Mastering / Celestial Forge
+    {
+        switch (ccNum)
+        {
+            // Knobs
+            case 74: updateParameterValue("masterInputGain", -12.0f + (static_cast<float>(ccVal) / 127.0f) * 24.0f); break;
+            case 71: updateParameterValue("masterDrive", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 76: updateParameterValue("masterColorTilt", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 77: updateParameterValue("masterColdExtension", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 93: updateParameterValue("masterHeatBias", -1.0f + (static_cast<float>(ccVal) / 127.0f) * 2.0f); break;
+            case 18: updateParameterValue("masterHeatWarmth", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 19: updateParameterValue("masterHeatCrunch", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 16: updateParameterValue("masterWidth", (static_cast<float>(ccVal) / 127.0f) * 200.0f); break;
+            case 17: updateParameterValue("masterImager", -1.0f + (static_cast<float>(ccVal) / 127.0f) * 2.0f); break;
+            
+            // Faders
+            case 73: updateParameterValue("masterDynamicsThreshold", -60.0f + (static_cast<float>(ccVal) / 127.0f) * 60.0f); break;
+            case 75: updateParameterValue("masterDynamicsRatio", 1.0f + (static_cast<float>(ccVal) / 127.0f) * 9.0f); break;
+            case 79: updateParameterValue("masterAttack", 1.0f + (static_cast<float>(ccVal) / 127.0f) * 99.0f); break;
+            case 72: updateParameterValue("masterRelease", 10.0f + (static_cast<float>(ccVal) / 127.0f) * 990.0f); break;
+            case 80: updateParameterValue("masterCeiling", -12.0f + (static_cast<float>(ccVal) / 127.0f) * 24.0f); break;
+            default: break;
+        }
+    }
+    else // Sampler, Sequencer, Preset Vault, Multi-Realm, etc.
+    {
+        switch (ccNum)
+        {
+            // Knobs 1-6 (Pan)
+            case 74: updateParameterValue("slotPan_0", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 71: updateParameterValue("slotPan_1", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 76: updateParameterValue("slotPan_2", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 77: updateParameterValue("slotPan_3", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 93: updateParameterValue("slotPan_4", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 18: updateParameterValue("slotPan_5", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            
+            // Knobs 7-9 (Global Macros)
+            case 19: updateParameterValue("macro_energy", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 16: updateParameterValue("macro_divinity", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 17: updateParameterValue("macro_width", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            
+            // Faders 1-6 (Volumes)
+            case 73: updateParameterValue("slotVol_0", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 75: updateParameterValue("slotVol_1", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 79: updateParameterValue("slotVol_2", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 72: updateParameterValue("slotVol_3", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 80: updateParameterValue("slotVol_4", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            case 81: updateParameterValue("slotVol_5", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            
+            // Faders 7-8 (General/Global)
+            case 82: updateParameterValue("morphFactor", static_cast<float>(ccVal) / 127.0f); break;
+            case 83: updateParameterValue("macro_realm", (static_cast<float>(ccVal) / 127.0f) * 100.0f); break;
+            default: break;
+        }
+    }
+}
+
 std::unique_ptr<juce::XmlElement> VSTGodTheGodRealmAudioProcessor::serializeTracks()
 {
     const juce::ScopedLock sl(stepLock);
@@ -1158,7 +1323,12 @@ std::unique_ptr<juce::XmlElement> VSTGodTheGodRealmAudioProcessor::serializeTrac
             for (int s = 0; s < pattern.size(); ++s)
             {
                 auto& step = pattern[s];
-                if (step.enabled || step.velocity != 1.0f || step.pitch != 0.0f) 
+                bool hasNonDefaults = step.enabled || step.velocity != 1.0f || step.pitch != 0.0f
+                    || step.pan != 0.0f || step.decay != 0.5f || step.probability != 100.0f
+                    || step.microTiming != 0 || step.trigCondition != "always"
+                    || step.sliceIndex != 0 || step.retrigRate != 0 || step.reverse
+                    || step.start != 0.0f || step.end != 1.0f;
+                if (hasNonDefaults) 
                 {
                     auto* stepXml = patternXml->createNewChildElement("STEP");
                     stepXml->setAttribute("index", s);
@@ -1181,6 +1351,18 @@ std::unique_ptr<juce::XmlElement> VSTGodTheGodRealmAudioProcessor::serializeTrac
 
         serializePattern(tracks[t].patternA, "PATTERN_A");
         serializePattern(tracks[t].patternB, "PATTERN_B");
+
+        // Serialize slice boundaries
+        if (!tracks[t].slices.empty())
+        {
+            auto* slicesXml = trackXml->createNewChildElement("SLICES");
+            for (size_t s = 0; s < tracks[t].slices.size(); ++s)
+            {
+                auto* sliceXml = slicesXml->createNewChildElement("SLICE");
+                sliceXml->setAttribute("start", (double)tracks[t].slices[s].start);
+                sliceXml->setAttribute("end",   (double)tracks[t].slices[s].end);
+            }
+        }
     }
     
     return xml;
@@ -1239,6 +1421,22 @@ void VSTGodTheGodRealmAudioProcessor::deserializeTracks(juce::XmlElement* xml)
 
             deserializePattern(trackXml->getChildByName("PATTERN_A"), tracks[t].patternA);
             deserializePattern(trackXml->getChildByName("PATTERN_B"), tracks[t].patternB);
+
+            // Deserialize slice boundaries
+            tracks[t].slices.clear();
+            auto* slicesXml = trackXml->getChildByName("SLICES");
+            if (slicesXml != nullptr)
+            {
+                auto* sliceXml = slicesXml->getChildByName("SLICE");
+                while (sliceXml != nullptr)
+                {
+                    Slice slice;
+                    slice.start = (float)sliceXml->getDoubleAttribute("start", 0.0);
+                    slice.end   = (float)sliceXml->getDoubleAttribute("end", 1.0);
+                    tracks[t].slices.push_back(slice);
+                    sliceXml = sliceXml->getNextElementWithTagName("SLICE");
+                }
+            }
         }
         trackXml = trackXml->getNextElementWithTagName("TRACK");
     }
@@ -1393,10 +1591,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout VSTGodTheGodRealmAudioProces
     for (int i = 0; i < 4; ++i)
     {
         juce::String idSuffix = juce::String(i);
-        layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("modSource_" + idSuffix, 1), "Mod Source " + idSuffix, 0, 4, 0));
+        layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("modSource_" + idSuffix, 1), "Mod Source " + idSuffix, 0, 5, 0));
         layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("modTarget_" + idSuffix, 1), "Mod Target " + idSuffix, 0, 4, 0));
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("modAmount_" + idSuffix, 1), "Mod Amount " + idSuffix, -1.0f, 1.0f, 0.0f));
     }
+
+    // Secondary Envelope (Env 2) Parameters
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("modEnvAttack", 1), "Mod Envelope Attack", 0.0f, 100.0f, 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("modEnvDecay", 1), "Mod Envelope Decay", 0.0f, 100.0f, 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("modEnvSustain", 1), "Mod Envelope Sustain", 0.0f, 100.0f, 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("modEnvRelease", 1), "Mod Envelope Release", 0.0f, 100.0f, 35.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lfo1Rate", 1), "LFO 1 Rate", 0.1f, 50.0f, 1.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("lfo2Rate", 1), "LFO 2 Rate", 0.1f, 50.0f, 1.0f));

@@ -1252,11 +1252,10 @@
 
 /* ── Central Visualization ── */
 .vg-forge-viz-area {
-  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .vg-sun-disk-wrap {

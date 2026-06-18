@@ -241,6 +241,18 @@ class NeuralInputBus {
       });
     }
   }
+
+  public triggerMidiCC(cc: number, value: number, channel: number, deviceName: string = 'DAW MIDI') {
+    this.emit({
+      type: 'midi_cc',
+      target: cc,
+      velocity: Math.floor((value / 127) * 65535),
+      cc,
+      channel,
+      deviceName,
+      timestamp: performance.now()
+    });
+  }
 }
 
 export const neuralInputBus = new NeuralInputBus();

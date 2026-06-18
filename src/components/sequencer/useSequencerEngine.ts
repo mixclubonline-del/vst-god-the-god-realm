@@ -133,6 +133,16 @@ export function getAutomationValue(lane: AutomationLane, step: number): number |
   }
 }
 
+/* ═══ Insert FX Types ═══ */
+export type InsertEffectType = 'filter' | 'distortion' | 'bitcrusher' | 'compressor' | 'reverb' | 'delay' | 'chorus' | 'saturation';
+
+export interface InsertEffect {
+  id: string;
+  type: InsertEffectType;
+  enabled: boolean;
+  params: Record<string, number>;
+}
+
 export interface TrackState {
   id: string;
   name: string;
@@ -153,6 +163,7 @@ export interface TrackState {
   synthConfig?: SynthTrackConfig;
   busConfig?: BusTrackConfig;
   fxSends: FXSendState;
+  insertFx: InsertEffect[];
   sampleParams: {
     start: number;
     end: number;
@@ -325,6 +336,7 @@ function createDefaultTrack(
     synthConfig: sourceType === 'synth' ? createDefaultSynthConfig(info.godId || 'olympus', stepCount) : undefined,
     busConfig: sourceType === 'bus' ? { inputTrackIds: [] } : undefined,
     fxSends: createDefaultFXSends(),
+    insertFx: [],
     sampleParams: createDefaultSampleParams(),
     automationLanes: [],
     isFrozen: false,
@@ -419,6 +431,11 @@ type SeqAction =
   | { type: 'SET_SYNTH_MACRO'; trackIndex: number; macro: keyof SynthTrackConfig['macros']; value: number }
   | { type: 'SET_NOTE_MAP'; trackIndex: number; stepIndex: number; note: number }
   | { type: 'SET_FX_SEND'; trackIndex: number; fx: keyof FXSendState; value: number }
+  /* Insert FX */
+  | { type: 'ADD_INSERT_FX'; trackIndex: number; slotIndex: number; effectType: InsertEffectType }
+  | { type: 'REMOVE_INSERT_FX'; trackIndex: number; slotIndex: number }
+  | { type: 'SET_INSERT_FX_PARAM'; trackIndex: number; slotIndex: number; param: string; value: number }
+  | { type: 'TOGGLE_INSERT_FX'; trackIndex: number; slotIndex: number }
   | { type: 'RENAME_TRACK'; trackIndex: number; name: string }
   | { type: 'SET_TRACK_COLOR'; trackIndex: number; color: string }
   | { type: 'SET_PLAYBACK_MODE'; mode: 'pattern' | 'song' }
@@ -771,6 +788,76 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
           [action.fx]: Math.max(0, Math.min(100, action.value)),
         },
       };
+      return { ...state, tracks };
+    }
+    case 'ADD_INSERT_FX': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      const insertFx = [...(track.insertFx || [])];
+      // Provide default params based on type
+      let defaultParams: Record<string, number> = {};
+      switch (action.effectType) {
+        case 'filter': defaultParams = { cutoff: 100, resonance: 0, type: 0, drive: 0, lfoRate: 0, lfoDepth: 0, envAmount: 0 }; break;
+        case 'distortion': defaultParams = { drive: 50, tone: 50 }; break;
+        case 'bitcrusher': defaultParams = { bits: 8, downsample: 4 }; break;
+        case 'compressor': defaultParams = { threshold: -12, ratio: 4, attack: 10, release: 100 }; break;
+        case 'reverb': defaultParams = { size: 50, mix: 50 }; break;
+        case 'delay': defaultParams = { time: 250, feedback: 50, mix: 50 }; break;
+        case 'chorus': defaultParams = { rate: 50, depth: 50, mix: 50 }; break;
+        case 'saturation': defaultParams = { drive: 50, mix: 100 }; break;
+      }
+      // Fill up to the slot index if needed
+      while (insertFx.length <= action.slotIndex) {
+        insertFx.push({ id: `empty-${Date.now()}-${Math.random()}`, type: 'filter', enabled: false, params: {} });
+      }
+      insertFx[action.slotIndex] = {
+        id: `fx-${Date.now()}`,
+        type: action.effectType,
+        enabled: true,
+        params: defaultParams
+      };
+      track.insertFx = insertFx;
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+    case 'REMOVE_INSERT_FX': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      const insertFx = [...(track.insertFx || [])];
+      if (insertFx[action.slotIndex]) {
+        // Replace with empty disabled effect to preserve slot indices
+        insertFx[action.slotIndex] = { id: `empty-${Date.now()}`, type: 'filter', enabled: false, params: {} };
+      }
+      track.insertFx = insertFx;
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+    case 'SET_INSERT_FX_PARAM': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      const insertFx = [...(track.insertFx || [])];
+      if (insertFx[action.slotIndex]) {
+        insertFx[action.slotIndex] = {
+          ...insertFx[action.slotIndex],
+          params: { ...insertFx[action.slotIndex].params, [action.param]: action.value }
+        };
+      }
+      track.insertFx = insertFx;
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+    case 'TOGGLE_INSERT_FX': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      const insertFx = [...(track.insertFx || [])];
+      if (insertFx[action.slotIndex] && insertFx[action.slotIndex].params && Object.keys(insertFx[action.slotIndex].params).length > 0) {
+        insertFx[action.slotIndex] = {
+          ...insertFx[action.slotIndex],
+          enabled: !insertFx[action.slotIndex].enabled
+        };
+      }
+      track.insertFx = insertFx;
+      tracks[action.trackIndex] = track;
       return { ...state, tracks };
     }
     case 'RENAME_TRACK': {

@@ -55,6 +55,16 @@ struct Midi2NoteEvent
 };
 
 // ═══════════════════════════════════════════════════════════════
+// MIDI CC Event — for forwarding physical controller changes to UI
+// ═══════════════════════════════════════════════════════════════
+struct MidiCCEvent
+{
+    int ccNumber = 0;
+    int ccValue = 0;
+    int channel = 0;
+};
+
+// ═══════════════════════════════════════════════════════════════
 // Transport State — shared between audio thread & editor
 // ═══════════════════════════════════════════════════════════════
 struct TransportState
@@ -210,6 +220,9 @@ public:
     /** Drain recent MIDI 2.0 note events (clears the queue). */
     std::vector<Midi2NoteEvent> drainMidiEvents();
 
+    /** Drain recent MIDI CC events (clears the queue). */
+    std::vector<MidiCCEvent> drainCCEvents();
+
     // ─── Phase 4: FFT & Transient Analysis Accessors ───
     static constexpr int kFftSize = 1024;
     void pushToFftBuffer (const float* samples, int numSamples);
@@ -269,6 +282,15 @@ private:
     Midi2NoteEvent midiEventBuffer[kMaxMidiEvents];
     std::atomic<int> midiEventWritePos { 0 };
     std::atomic<int> midiEventReadPos { 0 };
+
+    // ─── MIDI CC Event Queue ───
+    static constexpr int kMaxCCEvents = 256;
+    MidiCCEvent ccEventBuffer[kMaxCCEvents];
+    std::atomic<int> ccEventWritePos { 0 };
+    std::atomic<int> ccEventReadPos { 0 };
+
+    void handleArturiaKeyLabCC (int ccNum, int ccVal);
+    void updateParameterValue (const juce::String& paramID, float newValue);
 
     // ─── Round Robin & Random Sample Playback ───
     std::atomic<int> currentRoundRobinSlot { 0 };

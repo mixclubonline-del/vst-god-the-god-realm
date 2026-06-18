@@ -18,7 +18,7 @@ import { SacredChopper } from '../GodRealmSampleChopper';
 import { ExportEngine } from '../../audio/ExportEngine';
 import { PantheonSynthEngine } from '../../audio/PantheonSynthEngine';
 import { FXRack } from '../../audio/FXRack';
-import { SacredMixerStrip } from './SacredMixerStrip';
+import { SacredMixerConsole } from './SacredMixerConsole';
 import { SacredFXRackPanel } from './SacredFXRackPanel';
 import { SacredSongTimeline } from './SacredSongTimeline';
 import { SelectionToolbar } from './SelectionToolbar';
@@ -51,6 +51,8 @@ import { AudioInputRecorder } from '../../audio/AudioInputRecorder';
 import type { RecordingState } from '../../audio/AudioInputRecorder';
 import { MasterAnalyzer } from '../../audio/MasterAnalyzer';
 import { SacredMasterMeter } from './SacredMasterMeter';
+import { AnunnakiPluginWindow } from '../plugins/AnunnakiPluginWindow';
+import { pluginRegistry } from '../plugins/pluginRegistry';
 import './SacredSequencer.css';
 
 interface SacredSequencerProps {
@@ -118,6 +120,23 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   const [scaleConfig, setScaleConfig] = useState<ScaleConfig>({ ...DEFAULT_SCALE_CONFIG });
   const [showSidechain, setShowSidechain] = useState(false);
   const [showOracle, setShowOracle] = useState(false);
+
+  // ─── Floating Plugin Windows ───
+  const [openPlugins, setOpenPlugins] = useState<Array<{ trackIndex: number; slotIndex: number; id: string }>>([]);
+
+  const handleOpenPlugin = useCallback((trackIndex: number, slotIndex: number) => {
+    const id = `plugin-${trackIndex}-${slotIndex}`;
+    // Toggle: close if already open
+    setOpenPlugins(prev => {
+      const exists = prev.find(p => p.id === id);
+      if (exists) return prev.filter(p => p.id !== id);
+      return [...prev, { trackIndex, slotIndex, id }];
+    });
+  }, []);
+
+  const handleClosePlugin = useCallback((id: string) => {
+    setOpenPlugins(prev => prev.filter(p => p.id !== id));
+  }, []);
   const [showMeter, setShowMeter] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -1315,7 +1334,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       />
 
       {/* Playhead Position Bar */}
-      <div className="seq-playhead-bar" style={{ gridTemplateColumns: `repeat(${state.stepCount}, 1fr)` }}>
+      {!showMixer && (
+        <>
+          <div className="seq-playhead-bar" style={{ gridTemplateColumns: `repeat(${state.stepCount}, 1fr)` }}>
         {state.isPlaying && state.currentStep >= 0 && (
           <div
             className="seq-playhead-beam"
@@ -1470,16 +1491,29 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           </div>
         )}
       </div>
+      </>)}
 
-      {/* Mixer Strip — FL Studio-style per-track mixer */}
+      {/* Mixer Console — God-tier premium mixing */}
       {showMixer && (
-        <SacredMixerStrip
+        <SacredMixerConsole
           tracks={state.tracks}
           selectedTrack={state.selectedTrack}
           levels={trackLevels}
+          master={state.master}
+          onSetMasterParam={(param, value) => {
+            dispatch({ type: 'SET_MASTER_PARAM', param, value });
+            // Let the velvet curve engine pick it up dynamically via its subscription/sync logic
+          }}
+          analyzer={analyzerRef.current}
+          isPlaying={state.isPlaying}
+          bpm={state.bpm}
           onSelectTrack={(idx) => dispatch({ type: 'SELECT_TRACK', index: idx })}
           parameterValues={parameterValues}
           update={update}
+          onAddInsertFx={(trackIndex, slotIndex, effectType) => dispatch({ type: 'ADD_INSERT_FX', trackIndex, slotIndex, effectType })}
+          onRemoveInsertFx={(trackIndex, slotIndex) => dispatch({ type: 'REMOVE_INSERT_FX', trackIndex, slotIndex })}
+          onSetInsertFxParam={(trackIndex, slotIndex, param, value) => dispatch({ type: 'SET_INSERT_FX_PARAM', trackIndex, slotIndex, param, value })}
+          onToggleInsertFx={(trackIndex, slotIndex) => dispatch({ type: 'TOGGLE_INSERT_FX', trackIndex, slotIndex })}
           onSetVolume={(trackIndex, volume) => {
             dispatch({ type: 'SET_TRACK_VOLUME', trackIndex, volume });
             recordAutomation(trackIndex, 'volume', Math.min(1, Math.max(0, volume / 1.5)));
@@ -1513,6 +1547,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           }}
           onToggleMute={(trackIndex) => dispatch({ type: 'TOGGLE_MUTE', trackIndex })}
           onToggleSolo={(trackIndex) => dispatch({ type: 'TOGGLE_SOLO', trackIndex })}
+          onOpenPlugin={handleOpenPlugin}
         />
       )}
 
@@ -1797,6 +1832,63 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         onExport={projectManager.exportProject}
         onImport={projectManager.importProject}
       />
+
+      {/* ═══ Floating Anunnaki Plugin Windows ═══ */}
+      {openPlugins.map(({ trackIndex, slotIndex, id }) => {
+        const track = state.tracks[trackIndex];
+        if (!track) return null;
+        const fx = track.insertFx?.[slotIndex];
+        if (!fx) {
+          // Effect was removed while window was open
+          return null;
+        }
+        const entry = pluginRegistry[fx.type];
+        if (!entry) return null;
+
+        const PluginComponent = entry.component;
+
+        return (
+          <AnunnakiPluginWindow
+            key={id}
+            id={id}
+            title={entry.displayName}
+            icon={entry.icon}
+            width={entry.defaultWidth}
+            height={entry.defaultHeight}
+            minWidth={entry.minWidth}
+            minHeight={entry.minHeight}
+            trackIndex={trackIndex}
+            slotIndex={slotIndex}
+            trackColor={track.color}
+            onClose={() => handleClosePlugin(id)}
+            onBypass={(bypassed) => dispatch({ type: 'TOGGLE_INSERT_FX', trackIndex, slotIndex })}
+            bypassed={!fx.enabled}
+          >
+            {PluginComponent ? (
+              <React.Suspense fallback={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(212,168,83,0.4)', fontSize: '11px', letterSpacing: '2px' }}>
+                  LOADING...
+                </div>
+              }>
+                <PluginComponent
+                  trackIndex={trackIndex}
+                  slotIndex={slotIndex}
+                  params={fx.params}
+                  onParamChange={(param, value) => dispatch({ type: 'SET_INSERT_FX_PARAM', trackIndex, slotIndex, param, value })}
+                  bypassed={!fx.enabled}
+                  trackColor={track.color}
+                />
+              </React.Suspense>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px', color: 'rgba(212,168,83,0.3)' }}>
+                <div style={{ fontSize: '32px' }}>{entry.icon}</div>
+                <div style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase' as const }}>{entry.displayName}</div>
+                <div style={{ fontSize: '9px', letterSpacing: '1px', opacity: 0.5 }}>COMING SOON</div>
+              </div>
+            )}
+          </AnunnakiPluginWindow>
+        );
+      })}
     </div>
   );
 };

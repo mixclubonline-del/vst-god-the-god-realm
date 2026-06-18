@@ -1,0 +1,623 @@
+/* THE GOD CONSOLE - Midnight Ember Aesthetic */
+
+.seq-mixconsole {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  background: #0a0a0c;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  box-sizing: border-box;
+  color: #f2f2f2;
+  font-family: 'Inter', sans-serif;
+  overflow-y: visible;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 10;
+}
+
+.seq-mixconsole__header {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.seq-mixconsole__header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #fff 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.seq-mixconsole__header-glow {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, #ef4444, transparent);
+  box-shadow: 0 0 15px #ef4444;
+}
+
+.seq-mixconsole__channels {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.seq-mixconsole__channels::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.seq-mixconsole__channels::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 4px;
+}
+
+.seq-mixconsole__channels::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+/* ═══ Channel Strip ═══ */
+
+.seq-mixconsole__strip {
+  display: flex;
+  flex-direction: column;
+  width: 110px;
+  min-width: 110px;
+  background: linear-gradient(180deg, #151518 0%, #0d0d10 100%);
+  border: 1px solid #222;
+  border-radius: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+  overflow: visible; /* Prevent clipping of popovers */
+}
+
+.seq-mixconsole__strip:hover {
+  border-color: #333;
+}
+
+.seq-mixconsole__strip--selected {
+  border-color: var(--strip-color);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.seq-mixconsole__strip--muted {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+}
+
+.seq-mixconsole__strip-glass {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.seq-mixconsole__strip-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #111;
+}
+
+.seq-mixconsole__color-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+
+.seq-mixconsole__track-index {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #666;
+  font-family: monospace;
+}
+
+.seq-mixconsole__route-select {
+  width: 100%;
+  background: #000;
+  border: 1px solid #222;
+  color: #888;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-top: 4px;
+  outline: none;
+}
+
+/* ═══ Sections ═══ */
+
+.seq-mixconsole__section {
+  padding: 12px 8px;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seq-mixconsole__section-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* ═══ Knobs ═══ */
+
+
+/* EQ & FX Grid */
+
+.seq-mixconsole__eq-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seq-mixconsole__eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seq-mixconsole__fx-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 6px;
+}
+
+.seq-mixconsole__knob-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Pan */
+
+.seq-mixconsole__pan-value {
+  font-size: 0.65rem;
+  color: #999;
+  font-family: monospace;
+  margin-top: 6px;
+}
+
+/* ═══ Fader Area ═══ */
+
+.seq-mixconsole__fader-area {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.seq-mixconsole__ms-buttons {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.seq-mixconsole__ms-btn {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #666;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 4px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.seq-mixconsole__ms-btn:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.seq-mixconsole__ms-btn--mute {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.seq-mixconsole__ms-btn--solo {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.seq-mixconsole__fader-wrap {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
+
+.seq-mixconsole__fader-slot {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.seq-mixconsole__fader-groove {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 6px;
+  background: #050505;
+  border-radius: 3px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.05);
+}
+
+.seq-mixconsole__fader-ticks {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fader-tick {
+  width: 4px;
+  height: 1px;
+  background: #333;
+}
+
+.fader-tick--0 { background: #888; width: 6px; }
+.fader-tick--12 { background: #555; width: 6px; }
+.fader-tick--24 { background: #555; width: 6px; }
+
+.seq-mixconsole__fader-input {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 100%;
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* WebKit */
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.seq-mixconsole__fader-cap {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 24px;
+  height: 40px;
+  background: linear-gradient(90deg, #111, #222, #111);
+  border: 1px solid #333;
+  border-radius: 4px;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.seq-mixconsole__fader-cap-line {
+  width: 16px;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.seq-mixconsole__fader-cap-base {
+  position: absolute;
+  bottom: -4px;
+  width: 20px;
+  height: 8px;
+  background: #0a0a0a;
+  border-radius: 2px;
+  z-index: -1;
+}
+
+/* Meters */
+
+.seq-mixconsole__meter {
+  width: 8px;
+  background: #050505;
+  border-radius: 4px;
+  margin: 10px 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.05);
+}
+
+.seq-mixconsole__meter-glass {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.seq-mixconsole__meter-rms {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transition: height 0.05s ease-out;
+}
+
+.seq-mixconsole__meter-peak {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #ef4444;
+  transition: bottom 0.1s ease-out;
+  box-shadow: 0 0 4px #ef4444;
+}
+
+/* Bottom Label */
+
+.seq-mixconsole__bottom-label {
+  padding: 8px;
+  background: #0a0a0c;
+  border-top: 1px solid #1a1a1a;
+  text-align: center;
+}
+
+.seq-mixconsole__vol-value {
+  font-size: 0.65rem;
+  color: #aaa;
+  font-family: monospace;
+  margin-bottom: 2px;
+}
+
+.seq-mixconsole__track-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Master Strip ═══ */
+
+.seq-mixconsole__strip--master {
+  width: 140px;
+  min-width: 140px;
+  background: linear-gradient(180deg, #181115 0%, #150808 100%);
+  border-color: #3f1616;
+  margin-left: auto; /* Push to right if there is space */
+}
+
+.seq-mixconsole__strip--master:hover {
+  border-color: #ef4444;
+}
+
+.seq-mixconsole__color-bar--master {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.seq-mixconsole__bottom-label--master {
+  border-top: 1px solid #3f1616;
+}
+
+.seq-mixconsole__fader-area--master {
+  flex-direction: row;
+  gap: 12px;
+}
+
+.seq-mixconsole__master-meter-container {
+  flex: 1;
+  position: relative;
+  background: #050505;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,1);
+}
+
+/* Force master meter component to fit nicely */
+.seq-mixconsole__master-meter-container .seq-master-meter {
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
+.seq-mixconsole__fader-wrap--master {
+  flex: 0 0 30px; /* Keep fader narrow so meter takes space */
+}
+
+/* ═══ Insert FX Slots ═══ */
+
+.seq-mixconsole__inserts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.seq-mixconsole__insert-slot {
+  position: relative;
+  width: 100%;
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+
+.seq-mixconsole__insert-slot:hover {
+  background: rgba(30, 30, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.seq-mixconsole__insert-slot.has-fx {
+  background: rgba(40, 40, 40, 0.6);
+  color: #eee;
+}
+
+.seq-mixconsole__insert-slot.expanded {
+  background: rgba(50, 20, 20, 0.3);
+  border-color: rgba(255, 60, 60, 0.3);
+  box-shadow: 0 0 10px rgba(255, 60, 60, 0.1);
+}
+
+.seq-mixconsole__insert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  height: 20px;
+}
+
+.seq-mixconsole__insert-empty {
+  width: 100%;
+  text-align: center;
+  font-weight: 900;
+  color: #444;
+}
+
+.seq-mixconsole__insert-slot:hover .seq-mixconsole__insert-empty {
+  color: #aaa;
+}
+
+.seq-mixconsole__insert-power {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #333;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.seq-mixconsole__insert-power.on {
+  background: #EF4444; /* Ember red */
+  box-shadow: 0 0 6px #EF4444;
+}
+
+.seq-mixconsole__insert-name {
+  flex: 1;
+  text-align: left;
+  margin-left: 6px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seq-mixconsole__insert-remove {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.seq-mixconsole__insert-remove:hover {
+  color: #EF4444;
+}
+
+/* ═══ FX Selector Popover ═══ */
+
+.seq-mixconsole__fx-selector {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100px;
+  background: rgba(15, 15, 15, 0.95);
+  border: 1px solid rgba(255, 60, 60, 0.4);
+  border-radius: 4px;
+  z-index: 100;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.8), 0 0 15px rgba(255, 60, 60, 0.1);
+  backdrop-filter: blur(8px);
+  padding: 4px;
+}
+
+.seq-mixconsole__fx-option {
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  border-radius: 2px;
+  color: #bbb;
+}
+
+.seq-mixconsole__fx-option:hover {
+  background: rgba(255, 60, 60, 0.2);
+  color: #fff;
+}
+
+/* ═══ Inline FX Params ═══ */
+
+.seq-mixconsole__fx-params {
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.seq-mixconsole__fx-param {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.seq-mixconsole__fx-param-label {
+  width: 25px;
+  font-size: 0.5rem;
+  color: #888;
+  text-align: right;
+}
+
+.seq-mixconsole__fx-param-slider {
+  flex: 1;
+  height: 2px;
+  -webkit-appearance: none;
+  background: #333;
+  border-radius: 1px;
+  outline: none;
+}
+
+.seq-mixconsole__fx-param-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EF4444; /* Ember red thumb */
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
+}

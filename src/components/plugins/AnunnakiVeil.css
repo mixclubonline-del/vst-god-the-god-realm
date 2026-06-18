@@ -1,0 +1,439 @@
+/**
+ * AnunnakiVeil.css — ANUNNAKI VEIL Filter Plugin · V2
+ * 
+ * Design: Sacred Obsidian × Celestial Gold
+ * Layout: Preset Bar → Filter Types → Curve (hero) → Controls → LFO → Footer
+ * 
+ * V2: Everything breathes properly, hero CUTOFF knob,
+ *     SVG filter type icons, sacred geometry accents
+ */
+
+/* ═══ Root ═══ */
+
+.anunnaki-veil {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #0d0b09 0%, #0a0a0f 30%, #080810 100%);
+  color: #c8b88a;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sacred geometry background texture */
+.anunnaki-veil::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      rgba(212, 168, 83, 0.008) 0px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(212, 168, 83, 0.005) 0px,
+      transparent 1px,
+      transparent 40px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.anunnaki-veil > * {
+  position: relative;
+  z-index: 1;
+}
+
+.anunnaki-veil--bypassed {
+  opacity: 0.35;
+  filter: saturate(0.2);
+  pointer-events: none;
+}
+
+/* ═══ Preset Bar (Top) ═══ */
+
+.anunnaki-veil__preset-bar {
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.06);
+}
+
+.anunnaki-veil__preset-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: rgba(15, 13, 10, 0.6);
+  border: none;
+  color: rgba(212, 168, 83, 0.5);
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.anunnaki-veil__preset-btn:hover {
+  background: rgba(212, 168, 83, 0.04);
+  color: #d4a853;
+}
+
+.anunnaki-veil__preset-icon {
+  font-size: 7px;
+  color: rgba(212, 168, 83, 0.3);
+}
+
+.anunnaki-veil__preset-name {
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.anunnaki-veil__preset-nav {
+  font-size: 8px;
+  opacity: 0.3;
+  cursor: pointer;
+  padding: 2px 3px;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.anunnaki-veil__preset-nav:hover {
+  opacity: 0.8;
+  background: rgba(212, 168, 83, 0.1);
+}
+
+.anunnaki-veil__preset-arrow {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.anunnaki-veil__preset-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 14, 0.98);
+  border: 1px solid rgba(212, 168, 83, 0.12);
+  border-top: none;
+  padding: 4px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  transform-origin: top center;
+}
+
+.anunnaki-veil__preset-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(212, 168, 83, 0.45);
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+}
+
+.anunnaki-veil__preset-option:hover {
+  background: rgba(212, 168, 83, 0.06);
+  color: #d4a853;
+}
+
+.anunnaki-veil__preset-option.active {
+  background: rgba(212, 168, 83, 0.08);
+  color: #d4a853;
+}
+
+.anunnaki-veil__preset-option.active::before {
+  content: '◆';
+  font-size: 6px;
+  margin-right: 8px;
+  color: #d4a853;
+}
+
+/* ═══ Filter Type Selector ═══ */
+
+.anunnaki-veil__type-selector {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(212, 168, 83, 0.04);
+}
+
+.anunnaki-veil__type-buttons {
+  display: flex;
+  gap: 3px;
+}
+
+.anunnaki-veil__type-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px 5px;
+  background: rgba(212, 168, 83, 0.02);
+  border: 1px solid rgba(212, 168, 83, 0.05);
+  border-radius: 5px;
+  color: rgba(212, 168, 83, 0.3);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anunnaki-veil__type-btn:hover {
+  background: rgba(212, 168, 83, 0.06);
+  color: rgba(212, 168, 83, 0.6);
+  border-color: rgba(212, 168, 83, 0.1);
+}
+
+.anunnaki-veil__type-btn.active {
+  background: rgba(212, 168, 83, 0.1);
+  color: #d4a853;
+  border-color: rgba(212, 168, 83, 0.25);
+  box-shadow: 
+    0 0 12px rgba(212, 168, 83, 0.08),
+    inset 0 1px 0 rgba(212, 168, 83, 0.06);
+}
+
+.anunnaki-veil__type-svg {
+  width: 20px;
+  height: 20px;
+}
+
+.anunnaki-veil__type-btn-name {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══ Filter Curve Canvas (Hero) ═══ */
+
+.anunnaki-veil__curve-container {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 140px;
+  margin: 6px 10px;
+  border: 1px solid rgba(212, 168, 83, 0.06);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.anunnaki-veil__curve-container--active,
+.anunnaki-veil__curve-container:hover {
+  border-color: rgba(212, 168, 83, 0.12);
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(212, 168, 83, 0.03);
+}
+
+.anunnaki-veil__curve-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  display: block;
+}
+
+.anunnaki-veil__curve-hint {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: rgba(212, 168, 83, 0.12);
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  transition: opacity 0.3s;
+}
+
+.anunnaki-veil__curve-container:hover .anunnaki-veil__curve-hint {
+  opacity: 0;
+}
+
+/* ═══ Main Controls Strip ═══ */
+
+.anunnaki-veil__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px 8px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(212, 168, 83, 0.04);
+}
+
+.anunnaki-veil__knob-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.anunnaki-veil__knob-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.anunnaki-veil__freq-readout {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #d4a853;
+  text-align: center;
+  margin-top: -2px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 12px rgba(212, 168, 83, 0.2);
+}
+
+.anunnaki-veil__freq-unit {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(212, 168, 83, 0.4);
+  letter-spacing: 1px;
+  margin-left: 1px;
+}
+
+/* ═══ LFO Modulation ═══ */
+
+.anunnaki-veil__modulation {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(212, 168, 83, 0.04);
+}
+
+.anunnaki-veil__section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(212, 168, 83, 0.3);
+  text-transform: uppercase;
+  padding: 6px 12px 2px;
+}
+
+.anunnaki-veil__section-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+.anunnaki-veil__mod-content {
+  display: flex;
+  gap: 10px;
+  padding: 4px 12px 8px;
+  align-items: center;
+}
+
+.anunnaki-veil__lfo-viz {
+  flex: 1;
+  height: 40px;
+  border: 1px solid rgba(59, 130, 246, 0.06);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.anunnaki-veil__lfo-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.anunnaki-veil__mod-knobs {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ═══ Footer ═══ */
+
+.anunnaki-veil__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(212, 168, 83, 0.04);
+  background: rgba(5, 5, 8, 0.4);
+}
+
+.anunnaki-veil__version {
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: rgba(212, 168, 83, 0.15);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.anunnaki-veil__io-meters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.anunnaki-veil__io-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.anunnaki-veil__io-label {
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  color: rgba(212, 168, 83, 0.2);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.anunnaki-veil__io-bar {
+  width: 40px;
+  height: 3px;
+  background: rgba(212, 168, 83, 0.04);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.anunnaki-veil__io-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.anunnaki-veil__io-fill--in {
+  width: 65%;
+  background: linear-gradient(90deg, #10b981, #d4a853);
+}
+
+.anunnaki-veil__io-fill--out {
+  width: 55%;
+  background: linear-gradient(90deg, #d4a853, #ef4444);
+}
+
+/* ═══ Scrollbar ═══ */
+
+.anunnaki-veil__preset-dropdown::-webkit-scrollbar { width: 3px; }
+.anunnaki-veil__preset-dropdown::-webkit-scrollbar-track { background: transparent; }
+.anunnaki-veil__preset-dropdown::-webkit-scrollbar-thumb { background: rgba(212, 168, 83, 0.15); border-radius: 2px; }

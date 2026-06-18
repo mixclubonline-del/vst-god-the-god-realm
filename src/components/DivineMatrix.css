@@ -1,0 +1,12 @@
+.matrix-glass-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, rgba(26, 11, 31, 0.6) 0%, rgba(5, 2, 8, 0.85) 100%);
+}
+
+.matrix-canvas {
+  /* Blend mode to make glowing threads pop */
+  mix-blend-mode: screen;
+}

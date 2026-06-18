@@ -14,6 +14,23 @@
   isolation: isolate;
 }
 
+.ep-container::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/electric-pantheon-comp.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.ep-container > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* ─── Macros Row ─── */
 .ep-macros {
   flex-shrink: 0;

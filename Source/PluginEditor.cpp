@@ -705,6 +705,20 @@ juce::String VSTGodTheGodRealmAudioProcessorEditor::buildMeteringJson()
     }
     json += "]";
 
+    // MIDI CC events (drain the queue)
+    auto ccEvents = audioProcessor.drainCCEvents();
+    json += ",\"midiCCs\":[";
+    for (int i = 0; i < (int)ccEvents.size(); ++i)
+    {
+        auto& evt = ccEvents[i];
+        json += "{\"cc\":" + juce::String(evt.ccNumber);
+        json += ",\"value\":" + juce::String(evt.ccValue);
+        json += ",\"channel\":" + juce::String(evt.channel);
+        json += "}";
+        if (i < (int)ccEvents.size() - 1) json += ",";
+    }
+    json += "]";
+
     json += "}";
     return json;
 }
@@ -863,7 +877,7 @@ void VSTGodTheGodRealmAudioProcessorEditor::pushSettingsToWebView()
         #else
         obj->setProperty("platform", "windows");
         #endif
-        obj->setProperty("pluginVersion", "v1.0.0-dev");
+        obj->setProperty("pluginVersion", "v1.0.0");
         obj->setProperty("licenseActivated", audioProcessor.licenseActivated.load(std::memory_order_relaxed));
         if (parsed.hasProperty("licenseKey"))
         {

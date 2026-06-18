@@ -22,7 +22,7 @@
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, hsl(20, 8%, 10%) 0%, hsl(15, 6%, 7%) 100%);
+  background: linear-gradient(165deg, hsla(20, 8%, 10%, 0.65) 0%, hsla(15, 6%, 7%, 0.65) 100%);
   border: 1px solid hsl(30, 60%, 25%);
   border-radius: 16px;
   box-shadow:
@@ -30,6 +30,24 @@
     0 24px 80px rgba(0, 0, 0, 0.6),
     0 0 40px rgba(255, 140, 0, 0.05);
   overflow: hidden;
+  position: relative;
+}
+
+.kkb-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/plugins/backgrounds/kit-browser.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.kkb-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Header ─── */
