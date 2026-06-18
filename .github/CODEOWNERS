@@ -1,0 +1,14 @@
+# VST God Code Owners configuration
+# GitHub will automatically request review from these owners when PRs are opened.
+
+# By default, request review from the main account/organization
+*       @mixclubonline-del
+
+# Critical DSP source code (C++)
+/Source/ @mixclubonline-del
+
+# React WebApp UI source code
+/src/    @mixclubonline-del
+
+# Supabase database configurations & migration scripts
+/website/supabase/ @mixclubonline-del
