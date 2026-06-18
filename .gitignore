@@ -10,3 +10,7 @@ yarn-error.log*
 .env.local
 .env.*.local
 build/
+*.mp4
+*.zip
+.vercel/
+god-console-vst/

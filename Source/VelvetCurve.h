@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "DivineHeatSaturator.h"
 
 /**
  * VelvetCurve — The God Realm proprietary mastering DSP chain.
@@ -32,6 +33,7 @@ public:
         filterChain.prepare(spec);
         compressor.prepare(spec);
         limiter.prepare(spec);
+        heatSaturator.prepare(spec);
         
         // Initial parameters
         updateEQ(0.0f, 0.0f, 0.0f);
@@ -51,28 +53,12 @@ public:
     {
         auto& buffer = context.getOutputBlock();
         
-        // 1. Input Gain & Saturation Stage
-        for (size_t channel = 0; channel < buffer.getNumChannels(); ++channel)
-        {
-            auto* samples = buffer.getChannelPointer(channel);
-            for (size_t i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                float x = samples[i] * inputGain;
-                
-                // --- Core Velvet Saturation ---
-                float driveScaled = drive * (1.0f + silk * 0.1f);
-                float y = (2.0f / juce::MathConstants<float>::pi) * std::atan(x * driveScaled);
-                
-                // --- Silk Stage (Even Harmonics) ---
-                if (silk > 0.0f)
-                {
-                    float silkHarmonic = silk * 0.08f * std::sin(juce::MathConstants<float>::pi * y * 0.5f);
-                    y += silkHarmonic * (1.0f - std::abs(y));
-                }
-                
-                samples[i] = y;
-            }
-        }
+        // Apply input gain
+        buffer.multiplyBy(inputGain);
+        
+        // 1. Oversampled Tape Saturation Stage (Divine Heat)
+        juce::dsp::AudioBlock<float> block(buffer);
+        heatSaturator.process(block);
 
         // 2. Four Anchors EQ Stage (Cold Extension + Body + Soul + Air)
         filterChain.process(context);
@@ -124,9 +110,12 @@ public:
         }
     }
 
-    void setInputGain(float gainDb) { inputGain = juce::Decibels::decibelsToGain(gainDb); }
-    void setDrive(float driveVal) { drive = 1.0f + (driveVal / 25.0f); } // Map 0-100 to 1-5 approx
-    void setSilk(float silkVal) { silk = silkVal / 100.0f; } // Map 0-100 to 0-1
+    void setHeatParameters(float driveVal, float bias, float warmth, float crunch)
+    {
+        // Map 0-100 masterDrive slider to -12dB to +24dB range
+        float driveDb = -12.0f + (driveVal / 100.0f) * 36.0f;
+        heatSaturator.setParameters(driveDb, bias, warmth, crunch);
+    }
     
     void updateEQ(float bodyGain, float soulGain, float airGain)
     {
@@ -167,12 +156,11 @@ public:
     void setImager(float imagerVal) { imagerShift = imagerVal * 0.25f; }        // -1..+1 → ±0.25
     
     void setOutputGain(float volumeDb) { outputGain = juce::Decibels::decibelsToGain(volumeDb); }
+    void setInputGain(float gainDb) { inputGain = juce::Decibels::decibelsToGain(gainDb); }
 
 private:
     double sampleRate = 44100.0;
     float inputGain = 1.0f;
-    float drive = 1.0f;
-    float silk = 0.5f;
     float outputGain = 1.0f;
     float widthFactor = 1.0f;   // 1.0 = no change (100%)
     float imagerShift = 0.0f;   // 0 = off, ±0.25 = subtle shift
@@ -196,4 +184,5 @@ private:
 
     juce::dsp::Compressor<float> compressor;  // Dynamics shaping (attack, ratio, threshold)
     juce::dsp::Limiter<float> limiter;        // Ceiling protector (safety net)
+    DivineHeatSaturator heatSaturator;
 };

@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { label: 'Gods', href: '#gods' },
   { label: 'Features', href: '#features' },
   { label: 'Sounds', href: '#sounds' },
+  { label: 'Pre-Order', href: '#pre-order' },
   { label: 'Download', href: '#download' },
 ] as const;
 
@@ -324,10 +325,10 @@ export default function Navigation() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         {/* CTA — Desktop */}
         <a
-          href="#download"
+          href="#pre-order"
           onClick={(e) => {
             e.preventDefault();
-            handleNavClick('#download');
+            handleNavClick('#pre-order');
           }}
           className="nav-cta-desktop"
           style={{
@@ -355,7 +356,7 @@ export default function Navigation() {
             e.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          Download
+          Pre-Order
         </a>
 
         {/* Mobile hamburger toggle */}
@@ -435,10 +436,10 @@ export default function Navigation() {
 
               {/* Mobile CTA */}
               <a
-                href="#download"
+                href="#pre-order"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleNavClick('#download');
+                  handleNavClick('#pre-order');
                 }}
                 style={{
                   marginTop: '12px',
@@ -456,7 +457,7 @@ export default function Navigation() {
                   boxShadow: '0 0 20px rgba(194, 150, 35, 0.3)',
                 }}
               >
-                Download Now
+                Pre-Order Now
               </a>
             </div>
           </motion.div>

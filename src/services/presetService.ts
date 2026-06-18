@@ -21,6 +21,15 @@ export interface PadAssignment {
   isFileDrop: boolean;
 }
 
+export interface SkinPresetState {
+  glowColor: string;
+  blurAmount: number;
+  opacity: number;
+  activeSkinProfile: string;
+  selectedAssetPath?: string;
+  selectedAssetName?: string;
+}
+
 export interface PresetState {
   params: Record<string, any>;
   padAssignments?: PadAssignment[];
@@ -28,6 +37,7 @@ export interface PresetState {
   midiMap?: Record<number, number>;
   pantheonGod?: string;
   pantheonMacros?: Record<string, number>;
+  skinSettings?: SkinPresetState;
 }
 
 export interface UnifiedPreset {

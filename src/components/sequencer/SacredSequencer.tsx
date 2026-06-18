@@ -41,6 +41,7 @@ import { SacredArpeggiator } from './SacredArpeggiator';
 import { SacredScaleChord } from './SacredScaleChord';
 import { SacredSidechain } from './SacredSidechain';
 import { useSidechain } from './useSidechain';
+import { DivineOraclePanel } from './DivineOraclePanel';
 import { DEFAULT_SCALE_CONFIG, isNoteInScale, snapToScale, detectChord } from '../../audio/MusicTheoryEngine';
 import type { ScaleConfig } from '../../audio/MusicTheoryEngine';
 import type { PianoRollNote } from './useSequencerEngine';
@@ -60,6 +61,8 @@ interface SacredSequencerProps {
   buffers: Record<number, AudioBuffer>;
   // Phase 6: God Engine ref for cross-engine voice routing
   godEngine?: React.RefObject<GodRealmSamplerEngine | null>;
+  showModMatrix?: boolean;
+  onToggleModMatrix?: () => void;
 }
 
 export const SacredSequencer: React.FC<SacredSequencerProps> = ({
@@ -68,6 +71,8 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   engine,
   buffers,
   godEngine,
+  showModMatrix,
+  onToggleModMatrix,
 }) => {
   const { state, dispatch, play, stop, togglePlay, setOnTrigger, setOnAutomation, audioCtx, masterChain, fxRack, undo, redo, canUndo, canRedo, clearHistory } = engine;
   const isLoadedRef = useRef(true);
@@ -112,6 +117,7 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
   const [showScaleChord, setShowScaleChord] = useState(false);
   const [scaleConfig, setScaleConfig] = useState<ScaleConfig>({ ...DEFAULT_SCALE_CONFIG });
   const [showSidechain, setShowSidechain] = useState(false);
+  const [showOracle, setShowOracle] = useState(false);
   const [showMeter, setShowMeter] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -405,7 +411,15 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
       // ═══ SAMPLE TRACK ROUTING ═══
       // Phase 6: Delegate to God Engine if available (uses per-slot DSP chain)
       if (godEngine?.current) {
-        godEngine.current.triggerPadAtTime(trackIndex, time, step.velocity, step.pitch, step.decay);
+        godEngine.current.triggerPadAtTime(
+          trackIndex, 
+          time, 
+          step.velocity, 
+          step.pitch, 
+          step.decay,
+          step.reverse,
+          step.sliceIndex
+        );
 
         // Phase 4: Forward step trigger to JUCE for native playback
         const stepBridgePayload: StepBridgePayload = {
@@ -602,7 +616,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             return;
           case 's':
             e.preventDefault();
-            if (projectManager.activeProject) {
+            if (e.altKey) {
+              dispatch({ type: 'SWAP_TRACK_WITH_CLIPBOARD' });
+            } else if (projectManager.activeProject) {
               projectManager.quickSave();
             } else {
               setShowProjectDrawer(true);
@@ -610,7 +626,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             return;
           case 'c':
             e.preventDefault();
-            if ((state.selectedSteps ?? []).length > 0) {
+            if (e.altKey) {
+              dispatch({ type: 'COPY_TRACK', trackIndex: state.selectedTrack });
+            } else if ((state.selectedSteps ?? []).length > 0) {
               dispatch({ type: 'COPY_SELECTED_STEPS' });
             } else {
               dispatch({ type: 'COPY_TRACK_PATTERN' });
@@ -618,7 +636,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             return;
           case 'v':
             e.preventDefault();
-            if (state.clipboardSteps && state.clipboardSteps.length > 0) {
+            if (e.altKey) {
+              dispatch({ type: 'PASTE_TRACK', trackIndex: state.selectedTrack });
+            } else if (state.clipboardSteps && state.clipboardSteps.length > 0) {
               const ss = state.selectedSteps ?? [];
               const startIdx = ss.length > 0
                 ? Math.min(...ss)
@@ -728,11 +748,25 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           break;
         case 'ArrowUp':
           e.preventDefault();
-          dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack - 1 + state.tracks.length) % state.tracks.length });
+          if (isMeta && e.altKey) {
+            const from = state.selectedTrack;
+            const to = (from - 1 + state.tracks.length) % state.tracks.length;
+            dispatch({ type: 'REORDER_TRACKS', fromIndex: from, toIndex: to });
+            dispatch({ type: 'SELECT_TRACK', index: to });
+          } else {
+            dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack - 1 + state.tracks.length) % state.tracks.length });
+          }
           break;
         case 'ArrowDown':
           e.preventDefault();
-          dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack + 1) % state.tracks.length });
+          if (isMeta && e.altKey) {
+            const from = state.selectedTrack;
+            const to = (from + 1) % state.tracks.length;
+            dispatch({ type: 'REORDER_TRACKS', fromIndex: from, toIndex: to });
+            dispatch({ type: 'SELECT_TRACK', index: to });
+          } else {
+            dispatch({ type: 'SELECT_TRACK', index: (state.selectedTrack + 1) % state.tracks.length });
+          }
           break;
         // Number keys 1-8 select tracks
         case 'Digit1': dispatch({ type: 'SELECT_TRACK', index: 0 }); break;
@@ -1255,11 +1289,29 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
         onToggleScalePanel={() => setShowScaleChord(prev => !prev)}
         showSidechain={showSidechain}
         sidechainEnabled={sidechain.config.enabled}
-        onToggleSidechain={() => setShowSidechain(prev => !prev)}
+        onToggleSidechain={() => {
+          setShowSidechain(prev => !prev);
+          if (!showSidechain) {
+            setShowOracle(false);
+            setShowScaleChord(false);
+            setShowArpeggiator(false);
+          }
+        }}
+        showOracle={showOracle}
+        onToggleOracle={() => {
+          setShowOracle(prev => !prev);
+          if (!showOracle) {
+            setShowScaleChord(false);
+            setShowArpeggiator(false);
+            setShowSidechain(false);
+          }
+        }}
         showMeter={showMeter}
         onToggleMeter={() => setShowMeter(prev => !prev)}
         isFullscreen={isFullscreen}
         onToggleFullscreen={() => setIsFullscreen(prev => !prev)}
+        showModMatrix={showModMatrix}
+        onToggleModMatrix={onToggleModMatrix}
       />
 
       {/* Playhead Position Bar */}
@@ -1360,6 +1412,12 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onSelectStep={(stepIndex, additive, range) =>
               dispatch({ type: 'SELECT_STEP', stepIndex, additive, range })
             }
+            onFillSteps={(interval) =>
+              dispatch({ type: 'FILL_STEPS', trackIndex: i, interval })
+            }
+            onShiftSteps={(direction) =>
+              dispatch({ type: 'ROTATE_TRACK_PATTERN', trackIndex: i, direction })
+            }
             /* Phase D: Waveform + Ghost Notes */
             buffer={buffers[i] || null}
             ghostSteps={state.tracks
@@ -1377,6 +1435,9 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             onSwapPatterns={() => dispatch({ type: 'SWAP_PATTERNS' })}
             onDuplicateTrackPattern={() => dispatch({ type: 'DUPLICATE_TRACK_PATTERN', trackIndex: i })}
             canPastePattern={state.clipboardPattern !== null}
+            onCopyTrack={(trackIndex) => dispatch({ type: 'COPY_TRACK', trackIndex })}
+            onPasteTrack={(trackIndex) => dispatch({ type: 'PASTE_TRACK', trackIndex })}
+            canPasteTrack={state.clipboardTrack !== null}
             /* Track Bounce/Freeze */
             onFreezeTrack={() => handleFreezeTrack(i)}
             onUnfreezeTrack={() => handleUnfreezeTrack(i)}
@@ -1417,6 +1478,8 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
           selectedTrack={state.selectedTrack}
           levels={trackLevels}
           onSelectTrack={(idx) => dispatch({ type: 'SELECT_TRACK', index: idx })}
+          parameterValues={parameterValues}
+          update={update}
           onSetVolume={(trackIndex, volume) => {
             dispatch({ type: 'SET_TRACK_VOLUME', trackIndex, volume });
             recordAutomation(trackIndex, 'volume', Math.min(1, Math.max(0, volume / 1.5)));
@@ -1610,6 +1673,16 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
             }
             if (!showPianoRoll) setShowPianoRoll(true);
           }}
+        />
+      )}
+
+      {/* Divine Oracle Generative Panel */}
+      {showOracle && (
+        <DivineOraclePanel
+          state={state}
+          scaleConfig={scaleConfig}
+          onClose={() => setShowOracle(false)}
+          dispatch={dispatch}
         />
       )}
 

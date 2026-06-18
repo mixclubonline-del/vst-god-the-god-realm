@@ -115,6 +115,12 @@ export const AstralThroneDetail: React.FC<AstralThroneDetailProps> = React.memo(
   const filterFreq = parameterValues[`slotFilterFreq_${id}`] ?? 100; // 0-100 knob range
   const filterQ = parameterValues[`slotFilterQ_${id}`] ?? 15;        // 0-100 knob range
 
+  // Glide
+  const glideEnabled = parameterValues[`slotGlideEnabled_${id}`] ?? false;
+  const glideTime = parameterValues[`slotGlideTimeMs_${id}`] ?? 100;
+  const glideCurve = parameterValues[`slotGlideCurveType_${id}`] ?? 1;
+  const legatoRetrig = parameterValues[`slotLegatoRetrig_${id}`] ?? false;
+
   // FX Sends
   const fxRev = parameterValues[`slotFxRev_${id}`] ?? 0;
   const fxChr = parameterValues[`slotFxChr_${id}`] ?? 0;
@@ -299,6 +305,54 @@ export const AstralThroneDetail: React.FC<AstralThroneDetailProps> = React.memo(
           min={0}
           max={100}
         />
+      </div>
+
+      {/* Legato Pitch Glide Section */}
+      <div className="astral-detail__filter-row mt-2 pr-6 flex items-center justify-between border-t border-white/5 pt-2">
+        <button
+          className={`px-3 py-1.5 text-[8px] font-bold rounded-lg border transition-all ${
+            glideEnabled 
+              ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30 shadow-[0_0_10px_rgba(255,215,0,0.2)]' 
+              : 'text-white/40 border-white/10 hover:text-white'
+          }`}
+          onClick={() => update(`slotGlideEnabled_${id}`, !glideEnabled)}
+        >
+          GLIDE
+        </button>
+
+        <DivineKnob
+          label="Time"
+          size="sm"
+          value={glideTime}
+          onChange={(v) => update(`slotGlideTimeMs_${id}`, v)}
+          color={domain.color}
+          min={0}
+          max={1000}
+          unit="ms"
+        />
+
+        <button
+          className="px-2 py-1.5 text-[8px] font-bold text-white/60 border border-white/10 rounded-lg hover:text-white"
+          onClick={() => {
+            const nextCurve = (glideCurve + 1) % 4;
+            update(`slotGlideCurveType_${id}`, nextCurve);
+          }}
+          title="Glide curve: click to cycle"
+        >
+          {glideCurve === 0 ? 'LIN' : glideCurve === 1 ? 'EXP' : glideCurve === 2 ? 'LOG' : 'SIG'}
+        </button>
+
+        <button
+          className={`px-2 py-1.5 text-[8px] font-bold rounded-lg border transition-all ${
+            legatoRetrig 
+              ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30' 
+              : 'text-white/40 border-white/10 hover:text-white'
+          }`}
+          onClick={() => update(`slotLegatoRetrig_${id}`, !legatoRetrig)}
+          title="Retrigger envelope on legato notes"
+        >
+          RETRIG
+        </button>
       </div>
 
       {/* FX Send Row — Pantheon God Sends */}

@@ -915,3 +915,14 @@
   }
 }
 
+/* BLOOM OVERRIDES */
+.vg-bloom-active .astral-dais {
+  padding: 4px;
+  align-items: stretch;
+}
+.vg-bloom-active .astral-dais__grid {
+  max-width: 100%;
+}
+.vg-bloom-active .astral-dais__header {
+  max-width: 100%;
+}

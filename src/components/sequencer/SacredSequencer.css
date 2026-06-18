@@ -480,13 +480,39 @@
   transform: translateY(-1px);
 }
 
+.seq-midi-drag-btn {
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: grab;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 1px;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.1);
+}
+
+.seq-midi-drag-btn:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.seq-midi-drag-btn:active {
+  cursor: grabbing;
+}
+
 /* ═══════════════════════════════════════════════════
    Playhead Bar + Laser Beam
    ═══════════════════════════════════════════════════ */
 
 .seq-playhead-bar {
   display: grid;
-  padding: 0 0 0 140px;
+  padding: 0 0 0 280px;
   gap: 1px;
   background: rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -605,8 +631,9 @@
 }
 
 .seq-lane__header {
-  width: 140px;
-  min-width: 140px;
+  width: 280px;
+  min-width: 280px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -685,7 +712,9 @@
   display: grid;
   gap: 1px;
   flex: 1;
+  min-width: 0;
   padding: 3px 0;
+  margin-left: 2px;
   position: relative;
 }
 
@@ -1017,7 +1046,7 @@
 
 .seq-graph__center-line {
   position: absolute;
-  left: 140px;
+  left: 280px;
   right: 0;
   top: 50%;
   height: 1px;
@@ -1194,11 +1223,11 @@
    ═══════════════════════════════════════════════════ */
 
 @media (max-width: 800px) {
-  .seq-lane__header { width: 80px; min-width: 80px; }
+  .seq-lane__header { width: 280px; min-width: 280px; }
   .seq-lane__name { font-size: 7px; }
-  .seq-playhead-bar { padding-left: 80px; }
-  .seq-graph__area { padding-left: 80px; }
-  .seq-graph__center-line { left: 80px; }
+  .seq-playhead-bar { padding-left: 280px; }
+  .seq-graph__area { padding-left: 280px; }
+  .seq-graph__center-line { left: 280px; }
   .seq-header { gap: 6px; }
   .seq-header__swing { display: none; }
 }
@@ -1217,6 +1246,10 @@
   overflow: hidden;
   animation: step-detail-enter 0.18s ease-out;
   font-family: inherit;
+  resize: both;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
 }
 
 @keyframes step-detail-enter {
@@ -1256,6 +1289,29 @@
   color: #fff;
   background: rgba(255,60,60,0.15);
   border-color: rgba(255,60,60,0.3);
+}
+
+.step-detail__body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+/* Scrollbar for body */
+.step-detail__body::-webkit-scrollbar {
+  width: 4px;
+}
+.step-detail__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.step-detail__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+.step-detail__body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Parameter Row */
@@ -1747,7 +1803,7 @@
   gap: 1px;
   position: absolute;
   bottom: 0;
-  left: 140px;
+  left: 280px;
   right: 0;
   pointer-events: none;
   z-index: 5;
@@ -2294,6 +2350,34 @@
   text-align: center;
 }
 
+/* ─── Route Select Dropdown ─── */
+.seq-mixer__route-select {
+  background: rgba(10, 8, 25, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.08);
+  border-radius: 4px;
+  color: var(--god-text, #ffffff);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  width: 90%;
+  text-align: center;
+  margin: 2px 0;
+  transition: all 0.2s ease;
+}
+
+.seq-mixer__route-select:hover {
+  border-color: rgba(255, 215, 0, 0.25);
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.1);
+}
+
+.seq-mixer__route-select option {
+  background: #100b2b;
+  color: #ffffff;
+}
+
 /* ─── Mute / Solo Buttons ─── */
 
 .seq-mixer__ms-buttons {
@@ -2365,12 +2449,17 @@
     0 0 20px rgba(255, 215, 0, 0.04);
   backdrop-filter: blur(20px);
   animation: fx-popover-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  resize: both;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .seq-options-popover__header {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
   margin-bottom: 8px;
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -2411,6 +2500,25 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-height: 100px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.seq-options-popover__menu::-webkit-scrollbar {
+  width: 6px;
+}
+.seq-options-popover__menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+.seq-options-popover__menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+.seq-options-popover__menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .seq-options-popover__item {
@@ -2629,7 +2737,7 @@
   .seq-lane__god-indicator { display: none; }
   .seq-lane__god-name { display: none; }
   .seq-lane__fx-indicator { display: none; }
-  .seq-lane__note-overlay { left: 80px; }
+  .seq-lane__note-overlay { left: 280px; }
   .seq-mixer { display: none; }
 }
 
@@ -3469,9 +3577,9 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    Phase 6 — Automation Lanes
-   ═══════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 
 /* Automation Toggle Button on Track Lane */
 .seq-lane__btn--auto {
@@ -3493,7 +3601,7 @@
 
 /* Automation Drawer — expandable container below step grid */
 .seq-lane__auto-drawer {
-  padding: 4px 0 4px 120px; /* align with step grid (past header width) */
+  padding: 4px 0 4px 280px; /* align with step grid (past header width) */
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid rgba(255, 255, 255, 0.04);
   animation: autoDrawerSlide 0.2s ease;
@@ -4965,3 +5073,8 @@
   height: 4px !important;
 }
 
+/* BLOOM OVERRIDES */
+.vg-bloom-active .seq-container {
+  border-radius: 0;
+  min-height: unset;
+}

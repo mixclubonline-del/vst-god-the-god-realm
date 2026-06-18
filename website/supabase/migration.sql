@@ -276,22 +276,62 @@ alter table community_presets enable row level security;
 alter table expansion_kits enable row level security;
 
 -- Policies for preset_backups
-create policy "Anyone can manage backups"
-  on preset_backups for all using (true) with check (true);
+create policy "Users can manage own backups"
+  on preset_backups for all using (
+    exists (
+      select 1 from license_keys 
+      where key = license_key and user_id = auth.uid()
+    ) or
+    exists (
+      select 1 from profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
 
 -- Policies for community_presets
 create policy "Anyone can view community presets"
   on community_presets for select using (true);
 
-create policy "Anyone can insert community presets"
-  on community_presets for insert with check (true);
+create policy "Users can insert own community presets"
+  on community_presets for insert with check (
+    exists (
+      select 1 from license_keys 
+      where key = license_key and user_id = auth.uid()
+    )
+  );
 
-create policy "Anyone can update community presets"
-  on community_presets for update using (true);
+create policy "Users can update own community presets"
+  on community_presets for update using (
+    exists (
+      select 1 from license_keys 
+      where key = license_key and user_id = auth.uid()
+    ) or
+    exists (
+      select 1 from profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+create policy "Users can delete own community presets"
+  on community_presets for delete using (
+    exists (
+      select 1 from license_keys 
+      where key = license_key and user_id = auth.uid()
+    ) or
+    exists (
+      select 1 from profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );
 
 -- Policies for expansion_kits
 create policy "Anyone can view expansion kits"
   on expansion_kits for select using (true);
 
-create policy "Anyone can update expansion kits"
-  on expansion_kits for update using (true);
+create policy "Admins can manage expansion kits"
+  on expansion_kits for all using (
+    exists (
+      select 1 from profiles 
+      where id = auth.uid() and role = 'admin'
+    )
+  );

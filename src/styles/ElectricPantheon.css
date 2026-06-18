@@ -199,10 +199,10 @@
 /* ─── Hero Panel ─── */
 .ep-hero {
   position: relative;
-  flex: 1;
+  height: 120px;
+  flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
-  min-height: 160px;
 }
 .ep-hero-bg {
   position: absolute;
@@ -234,23 +234,25 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 16px;
-  gap: 4px;
+  padding: 12px;
+  gap: 2px;
 }
 .ep-hero-icon-badge {
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: rgba(0,0,0,0.6);
   border: 1px solid var(--god-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
 }
-.ep-hero-icon { font-size: 18px; }
+.ep-hero-icon { font-size: 14px; }
 .ep-hero-name {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 900;
   color: white;
   letter-spacing: 0.08em;
@@ -258,7 +260,7 @@
   text-shadow: 0 2px 20px rgba(0,0,0,0.8);
 }
 .ep-hero-title {
-  font-size: 11px;
+  font-size: 9px;
   color: var(--god-primary);
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -739,7 +741,7 @@
   background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(5,2,15,0.6) 100%);
   border-radius: 0 0 10px 10px;
   border-top: 1px solid color-mix(in srgb, var(--god-primary) 15%, transparent);
-  height: 140px;
+  height: 190px;
   position: relative;
   overflow: hidden;
   animation: epKeyboardPulse 4s ease-in-out infinite;
@@ -1704,4 +1706,395 @@
                0 0 8px hsla(140, 70%, 45%, 0.1);
     transform: scale(1);
   }
+}
+
+/* ═══════════════════════════════════════════
+   PANTHEON VORTEX PAD STYLE (PHASE 7)
+   ═══════════════════════════════════════════ */
+
+.vortex-pad-container {
+  position: absolute;
+  inset: 8px;
+  background: rgba(12, 10, 18, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 
+              inset 0 0 20px rgba(248, 200, 90, 0.05);
+}
+
+.vortex-pad-header {
+  position: relative;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.vortex-pad-header h3 {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #f8c85a;
+  text-shadow: 0 0 12px rgba(248, 200, 90, 0.3);
+  margin: 0 0 2px 0;
+}
+
+.vortex-subtitle {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.vortex-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vortex-close-btn:hover {
+  background: rgba(248, 200, 90, 0.2);
+  border-color: #f8c85a;
+  color: white;
+}
+
+.vortex-pad-area {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.vortex-grid-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.vortex-outer-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.vortex-spoke-line {
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 1;
+}
+
+.vortex-inner-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.03);
+  stroke-width: 1;
+}
+
+.vortex-god-node {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(10, 8, 15, 0.85);
+  border: 1.5px solid var(--god-color);
+  transition: transform 0.1s ease-out, box-shadow 0.15s ease-out, opacity 0.15s;
+  cursor: pointer;
+}
+
+.vortex-node-icon {
+  font-size: 14px;
+}
+
+.vortex-node-label {
+  position: absolute;
+  top: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.vortex-node-name {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: white;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.vortex-node-weight {
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.vortex-cursor {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  margin-top: -8px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.vortex-cursor-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #f8c85a;
+  animation: vortex-pulse 1.8s infinite ease-out;
+  opacity: 0.8;
+}
+
+.vortex-cursor-center {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 12px #f8c85a, 0 0 24px #f8c85a;
+}
+
+@keyframes vortex-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.vortex-stats {
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.vortex-stats-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vortex-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.vortex-stat-item .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.vortex-stat-item .name {
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.vortex-stat-item .value {
+  color: white;
+}
+
+/* Chthonic Sub slider styling */
+.ep-chthonic-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.ep-chthonic-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--god-primary);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 6px var(--god-primary);
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.2s;
+}
+
+.ep-chthonic-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  background: #fff;
+  box-shadow: 0 0 10px var(--god-primary);
+}
+
+/* ─── Control Deck (Tabbed Layout) ─── */
+.ep-control-deck {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.ep-control-deck-tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 4px;
+}
+
+.ep-control-deck-tab {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Inter', sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  padding: 10px 16px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.ep-control-deck-tab:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ep-control-deck-tab.active {
+  color: var(--active-color, white);
+  text-shadow: 0 0 8px var(--active-color);
+}
+
+.ep-control-deck-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--active-color, white);
+  box-shadow: 0 0 8px var(--active-color);
+  border-radius: 2px 2px 0 0;
+}
+
+.ep-control-deck-content {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Ensure child layouts render properly inside the Control Deck tabs */
+.ep-control-deck-content .ep-macros {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.ep-control-deck-content .ep-macros-row {
+  gap: 20px;
+}
+
+.ep-control-deck-content .ep-realm-fx {
+  background: transparent;
+  padding: 0;
+}
+
+.ep-control-deck-content .ep-realm-fx-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.ep-control-deck-content .ep-realm-fx-emblem {
+  display: none;
+}
+
+/* Visuals side-by-side layout */
+.ep-visuals-deck {
+  display: flex;
+  gap: 12px;
+  height: 100%;
+  flex: 1;
+}
+
+.ep-visuals-deck .ep-als-vision,
+.ep-visuals-deck .ep-scope-container {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  min-width: 0;
+}
+
+/* Embedded Vortex Pad styles */
+.vortex-pad-container--embedded {
+  position: relative;
+  inset: auto;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-shadow: none;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+}
+
+.vortex-pad-container--embedded .vortex-pad-area {
+  flex: 1;
+  max-height: 200px;
+}
+
+.vortex-pad-container--embedded .vortex-stats {
+  margin-top: 8px;
+}
+
+/* BLOOM OVERRIDES */
+.vg-bloom-active .ep-container {
+  padding: 2px;
+  gap: 2px;
 }

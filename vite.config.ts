@@ -6,7 +6,7 @@ export default defineConfig({
   // Use relative paths so the build works inside JUCE's embedded WebView
   base: './',
   server: {
-    port: 3001,
+    port: 3005,
     host: '0.0.0.0',
   },
   build: {

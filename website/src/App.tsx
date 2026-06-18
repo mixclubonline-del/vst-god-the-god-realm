@@ -4,14 +4,19 @@ import HeroOverlay from './components/HeroOverlay'
 import FeatureShowcase from './components/FeatureShowcase'
 import GodRealmSection from './components/GodRealmSection'
 import PluginShowcase from './components/PluginShowcase'
+import PresetPreviewPlayer from './components/PresetPreviewPlayer'
 import KineticMarquee from './components/KineticMarquee'
 import StatsCounter from './components/StatsCounter'
 import CTASection from './components/CTASection'
+import PreOrderSection from './components/PreOrderSection'
+import FAQTimerSection from './components/FAQTimerSection'
 import Footer from './components/Footer'
 import LoadingScreen from './components/LoadingScreen'
 import CursorGlow from './components/CursorGlow'
 import ScrollProgress from './components/ScrollProgress'
 import GodNav from './components/GodNav'
+import FeatureComparisonMatrix from './components/FeatureComparisonMatrix'
+import PromoTrailerSection from './components/PromoTrailerSection'
 import { gods } from './data/godData'
 
 /**
@@ -21,7 +26,7 @@ import { gods } from './data/godData'
 function App() {
   return (
     <div className="app">
-      {/* Cinematic God Intro */}
+      {/* Global UI Layers */}
       <LoadingScreen />
 
       {/* Global UI Layers */}
@@ -39,6 +44,9 @@ function App() {
 
       {/* Marquee — God Names Ticker */}
       <KineticMarquee />
+
+      {/* Promo Trailer Section */}
+      <PromoTrailerSection />
 
       {/* Feature Showcase — The 4 Divine Controls */}
       <FeatureShowcase />
@@ -66,6 +74,18 @@ function App() {
 
       {/* Plugin Showcase — The Instruments of the Gods */}
       <PluginShowcase />
+
+      {/* Preset Preview Player — Showcase of the Divine Presets Expansion Pack */}
+      <PresetPreviewPlayer />
+
+      {/* Feature Comparison Matrix */}
+      <FeatureComparisonMatrix />
+
+      {/* Pre-Order Section */}
+      <PreOrderSection />
+
+      {/* FAQ & Countdown Timer Section */}
+      <FAQTimerSection />
 
       {/* CTA — Download + Email Signup */}
       <CTASection />

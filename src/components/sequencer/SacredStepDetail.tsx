@@ -5,6 +5,7 @@
  * micro-timing, probability, pitch, pan, decay.
  */
 import React, { useCallback, useRef, useEffect } from 'react';
+import { motion, useDragControls } from 'framer-motion';
 import type { StepState } from './useSequencerEngine';
 import { DivineSlider } from '../ui/DivineSlider';
 
@@ -39,25 +40,15 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
   step, stepIndex, trackIndex, trackName, trackColor, position, onClose, onSetProp,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
 
-  // Close on Escape or outside click
+  // Close on Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
     window.addEventListener('keydown', handleKey);
-    // Delay click listener to avoid immediate close
-    const timer = setTimeout(() => window.addEventListener('mousedown', handleClick), 50);
-    return () => {
-      window.removeEventListener('keydown', handleKey);
-      window.removeEventListener('mousedown', handleClick);
-      clearTimeout(timer);
-    };
+    return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
   // Clamp panel position to viewport
@@ -69,16 +60,29 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
   };
 
   return (
-    <div ref={panelRef} className="step-detail" style={style}>
+    <motion.div 
+      ref={panelRef} 
+      className="step-detail" 
+      style={style}
+      drag
+      dragControls={dragControls}
+      dragListener={false}
+      dragMomentum={false}
+    >
       {/* Header */}
-      <div className="step-detail__header" style={{ borderColor: trackColor }}>
+      <div 
+        className="step-detail__header" 
+        style={{ borderColor: trackColor, cursor: 'grab', touchAction: 'none' }}
+        onPointerDown={(e) => dragControls.start(e)}
+      >
         <span className="step-detail__title">
           STEP {stepIndex + 1} · {trackName}
         </span>
         <button className="step-detail__close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Velocity */}
+      <div className="step-detail__body">
+        {/* Velocity */}
       <ParamRow label="VELOCITY" value={step.velocity} suffix="" color={trackColor}>
         <div className="step-detail__slider-custom">
           <DivineSlider
@@ -199,6 +203,18 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
         <span className="step-detail__value">{step.sliceIndex === 0 ? 'ALL' : `S${step.sliceIndex}`}</span>
       </ParamRow>
 
+      {/* Reverse */}
+      <div className="step-detail__row step-detail__row--toggle">
+        <span className="step-detail__label" style={{ color: trackColor }}>REVERSE</span>
+        <button 
+          className={`step-detail__toggle ${step.reverse ? 'active' : ''}`}
+          onClick={() => onSetProp('reverse', !step.reverse)}
+          style={{ borderColor: step.reverse ? trackColor : 'transparent', color: step.reverse ? trackColor : '#888' }}
+        >
+          {step.reverse ? 'ON' : 'OFF'}
+        </button>
+      </div>
+
       {/* Divider */}
       <div className="step-detail__divider" />
 
@@ -255,7 +271,8 @@ export const SacredStepDetail: React.FC<SacredStepDetailProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </motion.div>
   );
 };
 

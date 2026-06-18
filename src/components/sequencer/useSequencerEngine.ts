@@ -11,6 +11,7 @@ import { useUndoableReducer } from './useUndoableReducer';
 import { MasterChain, MasterParams } from '../../audio/VelvetCurveEngine';
 import { FXRack } from '../../audio/FXRack';
 import type { ElectricPantheonGodId } from '../../data/electricPantheonGods';
+import { nativeAudio } from '../../native/bridge';
 
 /* ═══ Constants ═══ */
 export const MAX_TRACKS = 16;
@@ -32,15 +33,20 @@ export interface StepState {
   retrigRate: null | '1/2' | '1/4' | '1/8' | '1/16' | '1/32';
   retrigVelocityCurve: 'flat' | 'rampUp' | 'rampDown' | 'random';
   sliceIndex: number;     // Index of the slice to play (0 = full sample or slice 1)
+  reverse?: boolean;      // FL Quality: Play this specific step backwards
 }
 
-/** A single note in the piano roll */
 export interface PianoRollNote {
   id: string;
   note: number;         // MIDI note 0-127
   startStep: number;    // Fractional step position (e.g. 3.25)
   duration: number;     // Length in steps (min 0.25)
   velocity: number;     // 0-127
+  /* FL Quality: Per-note event properties */
+  pan?: number;         // -1 to 1
+  pitchBend?: number;   // -1 to 1 (fine tuning)
+  probability?: number; // 0-100%
+  microTiming?: number; // -50 to 50%
 }
 
 let _pianoNoteIdCounter = 0;
@@ -206,6 +212,7 @@ export interface SequencerState {
   songRepeatCount: number; // how many repeats of current block have played
   /* Clipboard */
   clipboardPattern: StepState[] | null;
+  clipboardTrack: TrackState | null;
   /* Multi-step selection */
   selectedSteps: number[];        // indices of selected steps on the active track
   selectionAnchor: number | null; // anchor point for shift-click range selection
@@ -287,6 +294,21 @@ function createDefaultTrack(
   stepCount: number
 ): TrackState {
   const sourceType = info.sourceType || 'sample';
+  const patternA = Array.from({ length: stepCount }, () => createDefaultStep());
+  
+  // Inject default trap beat
+  if (info.name === 'KICK') {
+    [0, 8, 11].forEach(i => { if (patternA[i]) patternA[i].enabled = true; });
+  } else if (info.name === 'SNARE') {
+    [4, 12].forEach(i => { if (patternA[i]) patternA[i].enabled = true; });
+  } else if (info.name === 'HI-HAT') {
+    [0, 2, 4, 6, 8, 10, 12, 14, 15].forEach(i => { if (patternA[i]) patternA[i].enabled = true; });
+  } else if (info.name === '808') {
+    [0, 8].forEach(i => { if (patternA[i]) patternA[i].enabled = true; });
+  } else if (info.name === 'PERC') {
+    [7, 13].forEach(i => { if (patternA[i]) patternA[i].enabled = true; });
+  }
+
   return {
     id: generateTrackId(),
     name: info.name, color: info.color, icon: info.icon,
@@ -297,7 +319,7 @@ function createDefaultTrack(
     eqMid: 0,
     eqHigh: 0,
     polymetricLength: stepCount,
-    patternA: Array.from({ length: stepCount }, () => createDefaultStep()),
+    patternA,
     patternB: Array.from({ length: stepCount }, () => createDefaultStep()),
     sourceType,
     synthConfig: sourceType === 'synth' ? createDefaultSynthConfig(info.godId || 'olympus', stepCount) : undefined,
@@ -348,6 +370,7 @@ function createInitialState(): SequencerState {
     songPosition: 0,
     songRepeatCount: 0,
     clipboardPattern: null,
+    clipboardTrack: null,
     selectedSteps: [],
     selectionAnchor: null,
     clipboardSteps: null,
@@ -400,6 +423,7 @@ type SeqAction =
   | { type: 'SET_TRACK_COLOR'; trackIndex: number; color: string }
   | { type: 'SET_PLAYBACK_MODE'; mode: 'pattern' | 'song' }
   | { type: 'LOAD_PRESET'; preset: Record<number, { steps: number[]; vel?: number[] }> }
+  | { type: 'LOAD_ORACLE_PATTERN'; trackIndex: number; steps: StepState[]; noteMap?: number[]; pianoNotes?: PianoRollNote[]; usePianoRoll?: boolean }
   /* Song Mode actions */
   | { type: 'ADD_SONG_BLOCK'; pattern: 'A' | 'B'; repeats?: number; label?: string }
   | { type: 'REMOVE_SONG_BLOCK'; index: number }
@@ -410,6 +434,11 @@ type SeqAction =
   | { type: 'COPY_TRACK_PATTERN' }
   | { type: 'PASTE_TRACK_PATTERN' }
   | { type: 'SWAP_PATTERNS' }
+  | { type: 'COPY_TRACK'; trackIndex: number }
+  | { type: 'PASTE_TRACK'; trackIndex: number }
+  | { type: 'SWAP_TRACKS'; trackIndexA: number; trackIndexB: number }
+  | { type: 'SWAP_TRACK_WITH_CLIPBOARD' }
+  | { type: 'FILL_STEPS'; trackIndex: number; interval: number }
   | { type: 'ROTATE_TRACK_PATTERN'; trackIndex: number; direction: 'left' | 'right' }
   | { type: 'DUPLICATE_TRACK_PATTERN'; trackIndex: number }
   /* Automation */
@@ -826,6 +855,34 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       return { ...state, tracks };
     }
 
+    case 'LOAD_ORACLE_PATTERN': {
+      const tracks = [...state.tracks];
+      const track = { ...tracks[action.trackIndex] };
+      
+      if (state.activePattern === 'A') {
+        track.patternA = action.steps;
+      } else {
+        track.patternB = action.steps;
+      }
+
+      if (track.sourceType === 'synth' && track.synthConfig) {
+        const synthConfig = { ...track.synthConfig };
+        if (action.noteMap) {
+          synthConfig.noteMap = [...action.noteMap];
+        }
+        if (action.pianoNotes) {
+          synthConfig.pianoRollNotes = [...action.pianoNotes];
+        }
+        if (action.usePianoRoll !== undefined) {
+          synthConfig.usePianoRoll = action.usePianoRoll;
+        }
+        track.synthConfig = synthConfig;
+      }
+      
+      tracks[action.trackIndex] = track;
+      return { ...state, tracks };
+    }
+
     /* ─── Clipboard Actions ─── */
     case 'COPY_TRACK_PATTERN': {
       const track = state.tracks[state.selectedTrack];
@@ -861,6 +918,57 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       );
       return { ...state, tracks };
     }
+    case 'COPY_TRACK': {
+      const track = state.tracks[action.trackIndex];
+      if (!track) return state;
+      return {
+        ...state,
+        clipboardTrack: JSON.parse(JSON.stringify(track)),
+      };
+    }
+    case 'PASTE_TRACK': {
+      if (!state.clipboardTrack) return state;
+      const tracks = state.tracks.map((t, idx) =>
+        idx === action.trackIndex
+          ? {
+              ...JSON.parse(JSON.stringify(state.clipboardTrack)),
+              id: t.id, // preserve destination track ID
+            }
+          : t
+      );
+      return { ...state, tracks };
+    }
+    case 'SWAP_TRACKS': {
+      const { trackIndexA, trackIndexB } = action;
+      if (
+        trackIndexA < 0 || trackIndexA >= state.tracks.length ||
+        trackIndexB < 0 || trackIndexB >= state.tracks.length
+      ) {
+        return state;
+      }
+      const tracks = [...state.tracks];
+      const temp = tracks[trackIndexA];
+      tracks[trackIndexA] = tracks[trackIndexB];
+      tracks[trackIndexB] = temp;
+      return { ...state, tracks };
+    }
+    case 'SWAP_TRACK_WITH_CLIPBOARD': {
+      if (!state.clipboardTrack) return state;
+      const currentTrack = state.tracks[state.selectedTrack];
+      const tracks = state.tracks.map((t, idx) =>
+        idx === state.selectedTrack
+          ? {
+              ...JSON.parse(JSON.stringify(state.clipboardTrack)),
+              id: t.id, // preserve destination track ID
+            }
+          : t
+      );
+      return {
+        ...state,
+        tracks,
+        clipboardTrack: JSON.parse(JSON.stringify(currentTrack)),
+      };
+    }
     case 'ROTATE_TRACK_PATTERN': {
       const { trackIndex, direction } = action;
       const track = state.tracks[trackIndex];
@@ -882,6 +990,20 @@ function sequencerReducer(state: SequencerState, action: SeqAction): SequencerSt
       const newPattern = [...activeSteps, ...remainingSteps];
       const tracks = state.tracks.map((t, idx) =>
         idx === trackIndex ? setActivePattern(t, state.activePattern, newPattern) : t
+      );
+      return { ...state, tracks };
+    }
+    case 'FILL_STEPS': {
+      const { trackIndex, interval } = action;
+      const track = state.tracks[trackIndex];
+      if (!track) return state;
+      const fullPattern = [...getActivePattern(track, state.activePattern)];
+      const len = track.polymetricLength || state.stepCount;
+      for (let i = 0; i < len; i++) {
+        fullPattern[i].enabled = (i % interval === 0);
+      }
+      const tracks = state.tracks.map((t, idx) =>
+        idx === trackIndex ? setActivePattern(t, state.activePattern, fullPattern) : t
       );
       return { ...state, tracks };
     }
@@ -1522,6 +1644,9 @@ export function useSequencerEngine(
   }, []);
 
   const initAudio = async () => {
+    if (nativeAudio.isInJuce()) {
+      return;
+    }
     if (!audioCtxRef.current) {
       // Phase 1: Use shared AudioContext if provided, otherwise create our own
       if (sharedAudioCtx?.current) {
@@ -1567,6 +1692,10 @@ export function useSequencerEngine(
   };
 
   const play = useCallback(async () => {
+    if (nativeAudio.isInJuce()) {
+      dispatch({ type: 'PLAY' });
+      return;
+    }
     await initAudio();
 
     currentStepRef.current = -1;
@@ -1583,6 +1712,10 @@ export function useSequencerEngine(
   }, [scheduleStep]);
 
   const stop = useCallback(() => {
+    if (nativeAudio.isInJuce()) {
+      dispatch({ type: 'STOP' });
+      return;
+    }
     if (schedulerIdRef.current) {
       clearInterval(schedulerIdRef.current);
       schedulerIdRef.current = null;

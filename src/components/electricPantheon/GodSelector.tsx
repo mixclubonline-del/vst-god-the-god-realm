@@ -12,6 +12,7 @@ interface GodSelectorProps {
   activeGodId: ElectricPantheonGodId;
   onSelectGod: (id: ElectricPantheonGodId) => void;
   onOpenMorph: () => void;
+  onOpenVortex: () => void;
 }
 
 export const GodSelector: React.FC<GodSelectorProps> = ({
@@ -19,6 +20,7 @@ export const GodSelector: React.FC<GodSelectorProps> = ({
   activeGodId,
   onSelectGod,
   onOpenMorph,
+  onOpenVortex,
 }) => {
   return (
     <div className="ep-god-selector">
@@ -69,16 +71,33 @@ export const GodSelector: React.FC<GodSelectorProps> = ({
         })}
       </div>
 
-      {/* Divine Morph Button */}
-      <motion.button
-        className="ep-morph-btn"
-        onClick={onOpenMorph}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
-      >
-        <span className="ep-morph-btn-icon">🌀</span>
-        <span className="ep-morph-btn-label">DIVINE MORPH</span>
-      </motion.button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: 'auto', flexShrink: 0 }}>
+        {/* Divine Morph Button */}
+        <motion.button
+          className="ep-morph-btn"
+          onClick={onOpenMorph}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <span className="ep-morph-btn-icon">🌀</span>
+          <span className="ep-morph-btn-label">DIVINE MORPH</span>
+        </motion.button>
+
+        {/* Vortex Morph Button */}
+        <motion.button
+          className="ep-morph-btn"
+          onClick={onOpenVortex}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(248,200,90,0.15), rgba(255,122,74,0.15))',
+            border: '1px solid rgba(248,200,90,0.3)',
+          }}
+        >
+          <span className="ep-morph-btn-icon">🌌</span>
+          <span className="ep-morph-btn-label">VORTEX PAD</span>
+        </motion.button>
+      </div>
     </div>
   );
 };

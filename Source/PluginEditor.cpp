@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "BinaryData.h"
+#include "RelicDeconstructor.h"
 #include <iostream>
 
 juce::WebBrowserComponent::Options VSTGodTheGodRealmAudioProcessorEditor::createWebBrowserOptions (VSTGodTheGodRealmAudioProcessorEditor* editor)
@@ -83,7 +84,7 @@ VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VS
     // Release: Embedded BinaryData served via resource provider (Phase 7)
     // ═══════════════════════════════════════════════════════════════
     #if JUCE_DEBUG
-    webComponent.goToURL ("http://localhost:3001");
+    webComponent.goToURL ("http://localhost:3005");
     #else
     webComponent.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
     #endif
@@ -190,30 +191,12 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         }
         else if (type == "GET_SETTINGS")
         {
-            auto settings = audioProcessor.loadSettingsFromDisk();
-            if (settings.isEmpty()) settings = "{}";
-            auto parsed = juce::JSON::parse(settings);
-            if (parsed.isUndefined() || parsed.isVoid() || !parsed.isObject())
-            {
-                parsed = juce::var(new juce::DynamicObject());
-            }
-            
-            if (auto* obj = parsed.getDynamicObject())
-            {
-                obj->setProperty("machineId", juce::SystemStats::getUniqueDeviceID());
-                #if JUCE_MAC
-                obj->setProperty("platform", "macos");
-                #else
-                obj->setProperty("platform", "windows");
-                #endif
-                obj->setProperty("pluginVersion", "v1.0.0-dev");
-                obj->setProperty("licenseActivated", audioProcessor.licenseActivated.load(std::memory_order_relaxed));
-            }
-            
-            auto serialized = juce::JSON::toString(parsed);
-            juce::MessageManager::callAsync([this, serialized]() {
-                webComponent.evaluateJavascript("if(window.__godRealmSettingsUpdate) window.__godRealmSettingsUpdate(" + serialized + ");");
-            });
+            pushSettingsToWebView();
+        }
+        else if (type == "ACTIVATE_LICENSE")
+        {
+            auto key = payload.getProperty("key", "").toString();
+            audioProcessor.startLicenseValidation(key, true);
         }
         else if (type == "GET_PARAMETERS")
         {
@@ -369,6 +352,85 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
             if (coldVal > 100.0f) coldVal = 100.0f;
             if (auto* param = audioProcessor.apvts.getParameter("masterColdExtension"))
                 param->setValueNotifyingHost(param->getNormalisableRange().convertTo0to1(coldVal));
+        }
+        else if (type == "DECONSTRUCT_RELIC")
+        {
+            juce::String filePath = payload.getProperty("filePath", "").toString();
+            
+            // Spin up a thread to avoid blocking the message thread/UI thread
+            juce::Thread::launch([this, filePath]()
+            {
+                juce::File libraryDir(audioProcessor.sampleLibraryPath);
+                if (!libraryDir.exists())
+                {
+                    libraryDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("VST_GOD");
+                }
+                
+                auto importedDir = libraryDir.getChildFile("Imported").getChildFile(juce::File(filePath).getFileNameWithoutExtension());
+                importedDir.createDirectory();
+
+                juce::var results = RelicDeconstructor::deconstruct(filePath, importedDir);
+                juce::String serialized = juce::JSON::toString(results);
+                
+                // Escape paths for Javascript execution
+                serialized = serialized.replace("\\", "\\\\").replace("'", "\\'");
+                
+                juce::MessageManager::callAsync([this, filePath, serialized]()
+                {
+                    webComponent.evaluateJavascript("if(window.__godRealmDeconstructResult) window.__godRealmDeconstructResult(true, '" + filePath.replace("\\", "\\\\").replace("'", "\\'") + "', " + serialized + ");");
+                });
+            });
+        }
+        else if (type == "HARVEST_GRAPHICS")
+        {
+            juce::String pluginPath = payload.getProperty("pluginPath", "").toString();
+            
+            juce::Thread::launch([this, pluginPath]()
+            {
+                juce::File libraryDir(audioProcessor.sampleLibraryPath);
+                if (!libraryDir.exists())
+                {
+                    libraryDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("VST_GOD");
+                }
+                
+                auto skinsDir = libraryDir.getChildFile("Skins").getChildFile(juce::File(pluginPath).getFileNameWithoutExtension());
+                skinsDir.createDirectory();
+
+                juce::var results = RelicDeconstructor::deconstruct(pluginPath, skinsDir);
+                juce::String serialized = juce::JSON::toString(results);
+                
+                serialized = serialized.replace("\\", "\\\\").replace("'", "\\'");
+                
+                juce::MessageManager::callAsync([this, pluginPath, serialized]()
+                {
+                    webComponent.evaluateJavascript("if(window.__godRealmHarvestResult) window.__godRealmHarvestResult(true, '" + pluginPath.replace("\\", "\\\\").replace("'", "\\'") + "', " + serialized + ");");
+                });
+            });
+        }
+        else if (type == "START_MIDI_DRAG")
+        {
+            juce::String filename = payload.getProperty("filename", "pattern.mid").toString();
+            juce::String base64Data = payload.getProperty("data", "").toString();
+            
+            if (base64Data.isNotEmpty())
+            {
+                juce::MemoryBlock decodedData;
+                juce::MemoryOutputStream outputStream(decodedData, false);
+                if (juce::Base64::convertFromBase64(outputStream, base64Data))
+                {
+                    auto tempFile = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile(filename);
+                    if (tempFile.replaceWithData(decodedData.getData(), decodedData.getSize()))
+                    {
+                        juce::StringArray files;
+                        files.add(tempFile.getFullPathName());
+                        
+                        juce::MessageManager::callAsync([this, files]()
+                        {
+                            juce::DragAndDropContainer::performExternalDragDropOfFiles(files, false, &webComponent);
+                        });
+                    }
+                }
+            }
         }
     }
     completion({});
@@ -780,6 +842,38 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleNeuralOrchestration (const juc
         {
             webComponent.evaluateJavascript ("if(window.__godRealmNeuralResponse) window.__godRealmNeuralResponse(" + serialized + ");");
         });
+    });
+}
+
+void VSTGodTheGodRealmAudioProcessorEditor::pushSettingsToWebView()
+{
+    auto settings = audioProcessor.loadSettingsFromDisk();
+    if (settings.isEmpty()) settings = "{}";
+    auto parsed = juce::JSON::parse(settings);
+    if (parsed.isUndefined() || parsed.isVoid() || !parsed.isObject())
+    {
+        parsed = juce::var(new juce::DynamicObject());
+    }
+    
+    if (auto* obj = parsed.getDynamicObject())
+    {
+        obj->setProperty("machineId", juce::SystemStats::getUniqueDeviceID());
+        #if JUCE_MAC
+        obj->setProperty("platform", "macos");
+        #else
+        obj->setProperty("platform", "windows");
+        #endif
+        obj->setProperty("pluginVersion", "v1.0.0-dev");
+        obj->setProperty("licenseActivated", audioProcessor.licenseActivated.load(std::memory_order_relaxed));
+        if (parsed.hasProperty("licenseKey"))
+        {
+            obj->setProperty("licenseKey", parsed.getProperty("licenseKey", ""));
+        }
+    }
+    
+    auto serialized = juce::JSON::toString(parsed);
+    juce::MessageManager::callAsync([this, serialized]() {
+        webComponent.evaluateJavascript("if(window.__godRealmSettingsUpdate) window.__godRealmSettingsUpdate(" + serialized + ");");
     });
 }
 

@@ -117,7 +117,7 @@
 /* ─── Plugin Window ─── */
 .vg-plugin {
   position: relative;
-  background: linear-gradient(180deg, rgba(26,18,69,0.85) 0%, rgba(22,16,58,0.8) 50%, rgba(18,14,48,0.85) 100%);
+  background: rgba(10, 10, 15, 0.4);
   border: 1px solid rgba(255,215,0,0.12);
   box-shadow:
     inset 0 0 120px rgba(26,18,69,0.3),
@@ -147,17 +147,17 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url('/plugins/backgrounds/godrealm-divine.png');
+  background-image: url('/plugins/backgrounds/vst-god-atmospheric.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.6;
+  opacity: 1.0;
   pointer-events: none;
   animation: vgDivineBgPulse 12s ease-in-out infinite;
 }
 @keyframes vgDivineBgPulse {
-  0%, 100% { opacity: 0.55; filter: brightness(1.05) saturate(1.3); }
-  50% { opacity: 0.7; filter: brightness(1.15) saturate(1.5); }
+  0%, 100% { filter: brightness(1.0) saturate(1.1); }
+  50% { filter: brightness(1.1) saturate(1.2); }
 }
 
 .vg-ambient-glow {
@@ -4363,3 +4363,450 @@
 }
 
 
+/* ==========================================================================
+   MIXXTECH BLOOM SYSTEM (FOCUS VIEWPORT OVERHAUL)
+   ========================================================================== */
+
+/* Active Bloom Mode Layout overrides */
+.vg-plugin.vg-bloom-active .vg-header,
+.vg-plugin.vg-bloom-active .celestial-tabs-container,
+.vg-plugin.vg-bloom-active .session-recall-bar,
+.vg-plugin.vg-bloom-active .vg-footer {
+  display: none !important;
+}
+
+.vg-plugin.vg-bloom-active .vg-main {
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  flex: 1 !important;
+}
+
+/* Floating Bloom Control Hub (Trigger + Close) */
+.vg-bloom-control-hub {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 9999; /* Float above the workspace */
+  pointer-events: auto;
+}
+
+.vg-bloom-hub-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  background: rgba(15, 12, 30, 0.7);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 215, 0, 0.05);
+}
+
+.vg-bloom-hub-btn:hover {
+  border-color: var(--god-primary);
+  color: var(--god-primary);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2), 0 0 20px rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.vg-bloom-hub-btn.active {
+  background: var(--god-primary);
+  color: #000;
+  border-color: var(--god-primary);
+  box-shadow: 0 0 25px var(--god-primary-glow);
+}
+
+.vg-bloom-hub-close {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.vg-bloom-hub-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #ff5555;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Classic Mode Bloom Toggle Button in Header */
+.vg-bloom-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--god-text-dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vg-bloom-toggle-btn:hover {
+  border-color: var(--god-primary);
+  color: var(--god-primary);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
+}
+
+.vg-bloom-toggle-btn.active {
+  border-color: var(--god-primary);
+  color: var(--god-primary);
+  background: rgba(255, 215, 0, 0.08);
+}
+
+/* Glassmorphic Bloom Deck Canopy */
+.vg-bloom-deck-overlay {
+  z-index: 10000;
+  width: 90%;
+  height: 90%;
+  max-width: 1200px;
+  max-height: 800px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 0 32px rgba(255, 215, 0, 0.05);
+  background: radial-gradient(circle at center, rgba(14, 8, 28, 0.95) 0%, rgba(8, 4, 18, 0.98) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  box-sizing: border-box;
+  color: var(--god-text);
+  overflow-y: auto;
+  cursor: grab;
+}
+.vg-bloom-deck-overlay:active {
+  cursor: grabbing;
+}
+
+.vg-bloom-deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.vg-bloom-deck-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vg-bloom-deck-logo-vst {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  color: var(--god-text);
+}
+
+.vg-bloom-deck-logo-god {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  color: var(--god-primary);
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.45);
+}
+
+.vg-bloom-deck-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: var(--god-text-dim);
+  text-transform: uppercase;
+  margin-left: 16px;
+}
+
+.vg-bloom-deck-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vg-bloom-exit-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #ff5555;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vg-bloom-exit-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+  transform: translateY(-1px);
+}
+
+.vg-bloom-deck-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.vg-bloom-deck-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* Layout Grid of Bloom Control center */
+.vg-bloom-deck-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 36px;
+  flex: 1;
+}
+
+.vg-bloom-deck-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.vg-bloom-deck-right {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding-left: 36px;
+}
+
+.vg-bloom-section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--god-primary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+/* Realms (Tabs) Select Grid */
+.vg-bloom-tabs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.vg-bloom-tab-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.vg-bloom-tab-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.vg-bloom-tab-card.active {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.06) 0%, rgba(255, 215, 0, 0.01) 100%);
+  border-color: var(--god-primary);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.12), inset 0 0 12px rgba(255, 215, 0, 0.04);
+}
+
+.vg-bloom-tab-card-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.vg-bloom-tab-card.active .vg-bloom-tab-card-icon {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.2);
+  color: var(--god-primary);
+}
+
+.vg-bloom-tab-card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vg-bloom-tab-card-label {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+
+.vg-bloom-tab-card-sub {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--god-text-muted);
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.vg-bloom-tab-card.active .vg-bloom-tab-card-label {
+  color: var(--god-primary);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.25);
+}
+
+/* Action Center buttons */
+.vg-bloom-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.vg-bloom-action-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vg-bloom-action-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.vg-bloom-action-card.active {
+  border-color: var(--god-primary);
+  background: rgba(255, 215, 0, 0.04);
+}
+
+.vg-bloom-action-card-icon {
+  font-size: 18px;
+}
+
+.vg-bloom-action-card-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--god-text-dim);
+}
+
+.vg-bloom-action-card.active .vg-bloom-action-card-label {
+  color: var(--god-primary);
+}
+
+/* Master sliders section */
+.vg-bloom-sliders-row {
+  display: flex;
+  gap: 24px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 24px;
+  border-radius: 12px;
+  justify-content: space-around;
+}
+
+.vg-bloom-slider-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  max-width: 140px;
+}
+
+/* Preset Picker in Bloom */
+.vg-bloom-preset-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Telemetry / Status Footer */
+.vg-bloom-telemetry-box {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--god-text-muted);
+}
+
+.vg-bloom-telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vg-bloom-telemetry-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+/* ============================================================
+   BLOOM MODULE OVERRIDES — PHASE 2
+   ============================================================ */
+.vg-bloom-active .vg-main {
+  padding: 0;
+}
+.vg-bloom-active .vg-panel {
+  padding: 0;
+}
+.vg-bloom-active .vg-panel.p-4 {
+  padding: 0 !important;
+}

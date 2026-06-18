@@ -202,6 +202,7 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
   return (
     <div 
       className={`divine-knob-container size-${size} variant-${variant} ${isDragging.current ? 'is-dragging' : ''} ${learning ? 'is-learning' : ''}`}
+      style={{ '--knob-accent': color } as React.CSSProperties}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -252,21 +253,24 @@ export const DivineKnob: React.FC<DivineKnobProps> = ({
           animate={{ rotate: rotation }}
           transition={{ type: "spring", stiffness: 400, damping: 40 }}
         >
+          <div className="divine-knob-bezel" />
           <div className="divine-knob-machined-texture" />
           
-          {/* Internal Heat Glow */}
-          <motion.div 
-            className="divine-knob-heat"
-            style={{ backgroundColor: color }}
-            animate={{ 
-              opacity: [0.1 * (displayValue/max), 0.3 * (displayValue/max), 0.1 * (displayValue/max)],
-              scale: [0.8, 1.1, 0.8]
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
+          <div className="divine-knob-inner-well">
+            {/* Internal Heat Glow */}
+            <motion.div 
+              className="divine-knob-heat"
+              style={{ backgroundColor: color }}
+              animate={{ 
+                opacity: [0.15 * (displayValue/max), 0.4 * (displayValue/max), 0.15 * (displayValue/max)],
+                scale: [0.8, 1.2, 0.8]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+            <div className="divine-knob-cap" />
+          </div>
 
-          <div className="divine-knob-cap" />
-          <div className="divine-knob-indicator-line" style={{ background: color }} />
+          <div className="divine-knob-indicator-notch" style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }} />
         </motion.div>
 
         {/* Centered Value (Optional / Secondary) */}

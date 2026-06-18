@@ -135,6 +135,8 @@ declare global {
     // Phase 4.4: Settings & Library Setup
     __godRealmSettingsUpdate?: (settings: any) => void;
     __godRealmLibraryPathSelected?: (path: string) => void;
+    __godRealmDeconstructResult?: (success: boolean, filePath: string, files: any[]) => void;
+    __godRealmHarvestResult?: (success: boolean, pluginPath: string, files: any[]) => void;
   }
 }
 
@@ -145,6 +147,8 @@ class NativeAudioBridge {
   private paramListeners: Set<(paramId: string, value: any) => void> = new Set();
   private paramsListListeners: Set<(params: Record<string, any>) => void> = new Set();
   private neuralListeners: Set<(response: { text: string; params?: Record<string, any> }) => void> = new Set();
+  private deconstructListeners: Set<(success: boolean, filePath: string, files: any[]) => void> = new Set();
+  private harvestListeners: Set<(success: boolean, pluginPath: string, files: any[]) => void> = new Set();
   
   // Current accumulated state
   private currentState: EngineState = {
@@ -236,6 +240,16 @@ class NativeAudioBridge {
         this.neuralListeners.forEach(l => l(response));
       };
 
+      window.__godRealmDeconstructResult = (success, filePath, files) => {
+        console.log('[NativeBridge] __godRealmDeconstructResult:', success, filePath, files ? files.length : 0, 'files');
+        this.deconstructListeners.forEach(l => l(success, filePath, files));
+      };
+
+      window.__godRealmHarvestResult = (success, pluginPath, files) => {
+        console.log('[NativeBridge] __godRealmHarvestResult:', success, pluginPath, files ? files.length : 0, 'files');
+        this.harvestListeners.forEach(l => l(success, pluginPath, files));
+      };
+
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
       window.addEventListener('message', (event) => {
         try {
@@ -251,13 +265,13 @@ class NativeAudioBridge {
       });
     }
 
-    // Start simulation loop for UI feedback when not inside JUCE
-    if (!this.isInJuce()) {
+    // Start simulation loop for UI feedback when not inside JUCE and in dev mode
+    if (!this.isInJuce() && import.meta.env.DEV) {
       this.startSimulation();
     }
   }
 
-  private isInJuce(): boolean {
+  public isInJuce(): boolean {
     return typeof window !== 'undefined' && 
            (!!window.__juce__ || !!window.sendToJuce);
   }
@@ -392,6 +406,24 @@ class NativeAudioBridge {
       else if (window.sendToJuce) window.sendToJuce(msg);
     } else {
       console.log('[NativeBridge Sim] Track slices updated:', { trackIdx, sliceCount: slices.length });
+    }
+  }
+
+  public startMidiDrag(filename: string, base64Data: string) {
+    const msg = {
+      type: 'START_MIDI_DRAG',
+      payload: { filename, data: base64Data }
+    };
+    
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] MIDI drag started (simulating download):', filename);
+      const link = document.createElement('a');
+      link.href = `data:audio/midi;base64,${base64Data}`;
+      link.download = filename;
+      link.click();
     }
   }
 
@@ -623,6 +655,74 @@ class NativeAudioBridge {
           window.__godRealmLibraryPathSelected(mockPath);
         }
       }, 500);
+    }
+  }
+
+  public activateLicense(key: string) {
+    const msg = { type: 'ACTIVATE_LICENSE', payload: { key } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      setTimeout(() => {
+        if ((window as any).__godRealmLicenseResult) {
+          if (key === 'VSTGOD-TEST-KEY-1234-5678') {
+            (window as any).__godRealmLicenseResult(true, 'License activated successfully (simulated).');
+          } else {
+            (window as any).__godRealmLicenseResult(false, 'Invalid license key (simulated).');
+          }
+        }
+      }, 1000);
+    }
+  }
+
+  public subscribeDeconstruct(callback: (success: boolean, filePath: string, files: any[]) => void) {
+    this.deconstructListeners.add(callback);
+    return () => this.deconstructListeners.delete(callback);
+  }
+
+  public subscribeHarvest(callback: (success: boolean, pluginPath: string, files: any[]) => void) {
+    this.harvestListeners.add(callback);
+    return () => this.harvestListeners.delete(callback);
+  }
+
+  public deconstructRelic(filePath: string) {
+    const msg = { type: 'DECONSTRUCT_RELIC', payload: { filePath } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Deconstructing relic:', filePath);
+      setTimeout(() => {
+        const mockFiles = [
+          { name: 'zeus_kick_0.wav', path: filePath.replace(/\.[^/.]+$/, "") + '_sample_0.wav', type: 'audio', size: 102450 },
+          { name: 'hades_synth_1.flac', path: filePath.replace(/\.[^/.]+$/, "") + '_sample_1.flac', type: 'audio', size: 204890 },
+          { name: 'apollo_snare_2.wav', path: filePath.replace(/\.[^/.]+$/, "") + '_sample_2.wav', type: 'audio', size: 94000 }
+        ];
+        if (window.__godRealmDeconstructResult) {
+          window.__godRealmDeconstructResult(true, filePath, mockFiles);
+        }
+      }, 1500);
+    }
+  }
+
+  public harvestGraphics(pluginPath: string) {
+    const msg = { type: 'HARVEST_GRAPHICS', payload: { pluginPath } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Harvesting graphics from:', pluginPath);
+      setTimeout(() => {
+        const mockGraphics = [
+          { name: 'gold_crown_knob.png', path: pluginPath.replace(/\.[^/.]+$/, "") + '_skin_0.png', type: 'graphic', size: 42000 },
+          { name: 'zeus_fader_handle.png', path: pluginPath.replace(/\.[^/.]+$/, "") + '_skin_1.png', type: 'graphic', size: 12000 },
+          { name: 'temple_bg.png', path: pluginPath.replace(/\.[^/.]+$/, "") + '_skin_2.png', type: 'graphic', size: 284000 }
+        ];
+        if (window.__godRealmHarvestResult) {
+          window.__godRealmHarvestResult(true, pluginPath, mockGraphics);
+        }
+      }, 1500);
     }
   }
 }

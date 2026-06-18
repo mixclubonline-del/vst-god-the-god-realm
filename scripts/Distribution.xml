@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <title>VST GOD - The God Realm</title>
+    <options customize="always" require-scripts="false"/>
+    
+    <!-- Installer Resources -->
+    <welcome file="welcome.html"/>
+    <license file="license.html"/>
+    <conclusion file="conclusion.html"/>
+    <background file="background.png" mime-type="image/png" alignment="bottomleft"/>
+    
+    <!-- Choices Definition -->
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.mixxtech.vstgod.standalone"/>
+            <line choice="com.mixxtech.vstgod.vst3"/>
+            <line choice="com.mixxtech.vstgod.au"/>
+            <line choice="com.mixxtech.vstgod.samples"/>
+        </line>
+    </choices-outline>
+    
+    <choice id="default" title="VST GOD Plugins" description="Installs VST GOD plugins and standalone instrument."/>
+    
+    <choice id="com.mixxtech.vstgod.standalone" visible="true" start_selected="true" title="Standalone App" description="Standalone desktop instrument application (installed in /Applications).">
+        <pkg-ref id="com.mixxtech.vstgod.standalone"/>
+    </choice>
+    
+    <choice id="com.mixxtech.vstgod.vst3" visible="true" start_selected="true" title="VST3 Plugin" description="VST3 audio plug-in for DAWs like Ableton Live, FL Studio (installed in /Library/Audio/Plug-Ins/VST3).">
+        <pkg-ref id="com.mixxtech.vstgod.vst3"/>
+    </choice>
+    
+    <choice id="com.mixxtech.vstgod.au" visible="true" start_selected="true" title="Audio Unit (AU) Plugin" description="Audio Unit (AU) plug-in for Apple Logic Pro, GarageBand (installed in /Library/Audio/Plug-Ins/Components).">
+        <pkg-ref id="com.mixxtech.vstgod.au"/>
+    </choice>
+    
+    <choice id="com.mixxtech.vstgod.samples" visible="true" start_selected="true" title="Sample Library" description="The factory multi-sampled instruments (~365MB, installed in /Library/Audio/Samples/VST GOD).">
+        <pkg-ref id="com.mixxtech.vstgod.samples"/>
+    </choice>
+    
+    <!-- Pkg Reference mapping to individual packages -->
+    <pkg-ref id="com.mixxtech.vstgod.standalone" version="1.0.0" onConclusion="none">standalone.pkg</pkg-ref>
+    <pkg-ref id="com.mixxtech.vstgod.vst3" version="1.0.0" onConclusion="none">vst3.pkg</pkg-ref>
+    <pkg-ref id="com.mixxtech.vstgod.au" version="1.0.0" onConclusion="none">au.pkg</pkg-ref>
+    <pkg-ref id="com.mixxtech.vstgod.samples" version="1.0.0" onConclusion="none">samples.pkg</pkg-ref>
+</installer-gui-script>

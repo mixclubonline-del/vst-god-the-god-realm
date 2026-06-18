@@ -23,6 +23,8 @@ interface SacredMixerStripProps {
   onSetEQ: (trackIndex: number, band: 'low' | 'mid' | 'high', value: number) => void;
   onToggleMute: (trackIndex: number) => void;
   onToggleSolo: (trackIndex: number) => void;
+  parameterValues?: Record<string, any>;
+  update?: (id: string, val: any) => void;
 }
 
 const FX_KNOBS: { id: keyof FXSendState; label: string; color: string }[] = [
@@ -48,6 +50,8 @@ export const SacredMixerStrip: React.FC<SacredMixerStripProps> = ({
   onSetEQ,
   onToggleMute,
   onToggleSolo,
+  parameterValues = {},
+  update,
 }) => {
   return (
     <div className="seq-mixer">
@@ -67,6 +71,8 @@ export const SacredMixerStrip: React.FC<SacredMixerStripProps> = ({
             onSetEQ={(band, val) => onSetEQ(idx, band, val)}
             onToggleMute={() => onToggleMute(idx)}
             onToggleSolo={() => onToggleSolo(idx)}
+            parameterValues={parameterValues}
+            update={update}
           />
         ))}
       </div>
@@ -88,6 +94,8 @@ interface MixerChannelProps {
   onToggleMute: () => void;
   onToggleSolo: () => void;
   onSetEQ?: (band: 'low' | 'mid' | 'high', value: number) => void;
+  parameterValues?: Record<string, any>;
+  update?: (id: string, val: any) => void;
 }
 
 const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
@@ -102,6 +110,8 @@ const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
   onToggleMute,
   onToggleSolo,
   onSetEQ,
+  parameterValues = {},
+  update,
 }) => {
   const channelClass = [
     'seq-mixer__strip',
@@ -295,6 +305,27 @@ const MixerChannel: React.FC<MixerChannelProps> = React.memo(({
       <div className="seq-mixer__vol-value">
         {Math.round(track.volume * 100)}%
       </div>
+
+      {/* Output Routing Dropdown */}
+      {update && (
+        <select
+          value={parameterValues[`slotOutputRoute_${trackIndex}`] ?? 0}
+          onChange={(e) => update(`slotOutputRoute_${trackIndex}`, parseInt(e.target.value, 10))}
+          className="seq-mixer__route-select"
+          title="Output Route"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <option value={0}>Main Out</option>
+          <option value={1}>Out 1-2</option>
+          <option value={2}>Out 3-4</option>
+          <option value={3}>Out 5-6</option>
+          <option value={4}>Out 7-8</option>
+          <option value={5}>Out 9-10</option>
+          <option value={6}>Out 11-12</option>
+          <option value={7}>Out 13-14</option>
+          <option value={8}>Out 15-16</option>
+        </select>
+      )}
 
       {/* Mute / Solo */}
       <div className="seq-mixer__ms-buttons">

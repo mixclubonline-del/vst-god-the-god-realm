@@ -16,6 +16,9 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    void pushSettingsToWebView();
+    void evaluateJavaScript (const juce::String& script) { webComponent.evaluateJavascript (script); }
 
 private:
     void timerCallback() override;

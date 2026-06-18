@@ -6,9 +6,9 @@
 
 /* ─── Settings Overlay Backdrop ─── */
 .divine-settings-backdrop {
-  position: absolute;
+  position: absolute !important;
   inset: 0;
-  z-index: 500;
+  z-index: 500 !important;
   background: rgba(10, 8, 32, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -30,13 +30,13 @@
 
 /* ─── Settings Panel — Slide from Right ─── */
 .divine-settings {
-  position: absolute;
+  position: absolute !important;
   top: 0;
   right: 0;
   bottom: 0;
   width: 420px;
   max-width: 90%;
-  z-index: 510;
+  z-index: 510 !important;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, rgba(22, 16, 58, 0.95) 0%, rgba(14, 10, 36, 0.98) 100%);

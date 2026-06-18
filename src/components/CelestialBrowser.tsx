@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Search, Play, Plus, Heart, Square, Library, Sparkles, ScrollText,
   LayoutGrid, List, Volume2, Shield, Flame, Waves, Archive, Eye,
-  Sword, Skull, Sun, CircleDot, Landmark, Zap, Music2, Hammer, Origami, Leaf, Star, BookOpen
+  Sword, Skull, Sun, CircleDot, Landmark, Zap, Music2, Hammer, Origami, Leaf, Star, BookOpen,
+  Download, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,6 +17,9 @@ import {
   roomImage
 } from '@/archive/divineArchive';
 import { THRONE_DOMAINS } from '../data/throneDomains';
+import { nativeAudio } from '@/native/bridge';
+import { CarverSpectralFeedback } from './CarverSpectralFeedback';
+
 
 /* Sacred Realm Sigils — unique icon per room */
 const REALM_SIGILS: Record<string, React.FC<{ size?: number }>> = {
@@ -346,6 +350,89 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const [dragOverFile, setDragOverFile] = useState(false);
+  const [deconstructing, setDeconstructing] = useState(false);
+  const [showNotice, setShowNotice] = useState(false);
+  const [pendingImportPath, setPendingImportPath] = useState<string | null>(null);
+
+  // Subscribe to deconstruction results from JUCE backend
+  useEffect(() => {
+    const unsubscribe = nativeAudio.subscribeDeconstruct((success, filePath, files) => {
+      setDeconstructing(false);
+      if (success && files && files.length > 0) {
+        // Create new relics from the carved files
+        const newRelics: DivineRelic[] = files.map((file: any) => {
+          const format = file.name.split('.').pop() || 'wav';
+          return {
+            id: `carved-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            path: file.path,
+            format: format,
+            sourceCategory: 'Carved',
+            room: 'forge',
+            roomName: 'Celestial Forge',
+            tags: ['Carved', 'Imported', format.toUpperCase()],
+            tone: 'Forensically carved relic sound',
+            weight: 0.6,
+            energy: 0.8,
+            spectralCentroid: 0.65,
+            decayTime: 1.5,
+            similarRelicIds: []
+          };
+        });
+
+        setManifest((prev) => {
+          if (!prev) return null;
+          const updatedRelics = [...newRelics, ...prev.relics];
+          return {
+            ...prev,
+            totalRelics: updatedRelics.length,
+            relics: updatedRelics
+          };
+        });
+      } else {
+        alert('❌ Failed to deconstruct and carve samples from the file.');
+      }
+    });
+    return () => { unsubscribe(); };
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setDragOverFile(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFile(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFile(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      const path = (file as any).path || file.name;
+      setPendingImportPath(path);
+      setShowNotice(true);
+    }
+  }, []);
+
+  const confirmDeconstruct = useCallback(() => {
+    setShowNotice(false);
+    if (pendingImportPath) {
+      setDeconstructing(true);
+      nativeAudio.deconstructRelic(pendingImportPath);
+      setPendingImportPath(null);
+    }
+  }, [pendingImportPath]);
+
   useEffect(() => {
     let mounted = true;
     fetch('/divine_archive_manifest.json')
@@ -370,6 +457,7 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
       mounted = false;
     };
   }, []);
+
 
   const [selectedRoom, setSelectedRoom] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -507,7 +595,81 @@ export const CelestialBrowser: React.FC<CelestialBrowserProps> = ({
   }
 
   return (
-    <div className="da-hall-shell">
+    <div 
+      className="da-hall-shell"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* OS File Drag and Drop Overlay */}
+      <AnimatePresence>
+        {dragOverFile && (
+          <motion.div 
+            className="da-drop-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="da-drop-icon"><Archive size={48} /></div>
+            <h4>DROP RELIC BANK TO DECONSTRUCT</h4>
+            <p>Accepts .mse, .hr1, .ch1, .dat, or .zip container files</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Deconstructing Loader Overlay */}
+      <AnimatePresence>
+        {deconstructing && (
+          <motion.div 
+            className="da-deconstruct-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <CarverSpectralFeedback active={deconstructing} />
+            <h3>DECONSTRUCTING RELIC BANK...</h3>
+            <p>Carving raw PCM waves & audio relics forensically...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Disclaimer Consent Notice Modal */}
+      <AnimatePresence>
+        {showNotice && (
+          <motion.div 
+            className="da-notice-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="da-notice-modal"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+            >
+              <div className="da-notice-header">
+                <ShieldAlert size={28} />
+                <h3>SOLEMN OATH OF SYNTHESIS</h3>
+              </div>
+              <p className="da-notice-text">
+                You are about to forensically deconstruct and carve samples from a packed relic container. 
+                Ensure that you possess the license, rights, or authorization to use the harvested assets. 
+                MixxTech & Zeus reserve all rights of ultimate synthesis. Do you swear to forge only the most godly sounds?
+              </p>
+              <div className="da-notice-buttons">
+                <button onClick={confirmDeconstruct} className="da-notice-btn-confirm">
+                  I SWEAR & PROCEED
+                </button>
+                <button onClick={() => setShowNotice(false)} className="da-notice-btn-cancel">
+                  ABORT
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="sync">
         <motion.div
           key={`bg-${selectedRoom}`}

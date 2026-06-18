@@ -31,6 +31,9 @@ export interface MacroBehaviorContext {
 /** The four face macros that the library defines behavior for */
 const FACE_MACROS: PantheonMacroId[] = ['energy', 'divinity', 'width', 'realm'];
 
+/** All macros to sync to the DSP engine */
+const SYNCED_MACROS: PantheonMacroId[] = ['energy', 'divinity', 'width', 'realm', 'aura', 'age'];
+
 /**
  * Default behavior descriptions when no preset-specific data is available.
  * These map to the base PantheonSynthEngine.setMacro() routing.
@@ -60,6 +63,18 @@ const DEFAULT_BEHAVIORS: Record<string, { label: string; description: string; pr
     primaryTarget: 'oscillator.fmIndex',
     affectedParams: ['oscillator.fmIndex', 'fx.wetMix', 'saturation.character'],
   },
+  aura: {
+    label: 'AURA',
+    description: 'Atmosphere + Reverb + Space',
+    primaryTarget: 'reverb.send',
+    affectedParams: ['reverb.send', 'delay.feedback'],
+  },
+  age: {
+    label: 'AGE',
+    description: 'Vintage + Instability + Wear',
+    primaryTarget: 'wowFlutter.amount',
+    affectedParams: ['wowFlutter.amount', 'noise.level', 'pitch.drift'],
+  },
 };
 
 /**
@@ -82,7 +97,7 @@ export function useMacroDSPBridge(
     const synth = synthRef.current;
     if (!synth) return;
 
-    for (const macroId of FACE_MACROS) {
+    for (const macroId of SYNCED_MACROS) {
       const value = macroValues[macroId] ?? 50;
       const lastVal = lastApplied.current[macroId] ?? -1;
 

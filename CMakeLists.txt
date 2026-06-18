@@ -34,6 +34,9 @@ target_compile_definitions(VSTGodTheGodRealm
 # Gather all WebUI build files in dist/
 file(GLOB_RECURSE webui_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "dist/*")
 
+# Exclude large kits/ directory from binary data (loaded dynamically from disk at runtime)
+list(FILTER webui_files EXCLUDE REGEX "^dist/kits/")
+
 # Create BinaryData target
 juce_add_binary_data(VSTGodTheGodRealm_BinaryData
     SOURCES

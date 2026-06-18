@@ -1,0 +1,11 @@
+# Exclude local build output and cache
+dist
+dist-ssr
+.vercel
+node_modules
+
+# Exclude local configs and environment files
+.env
+.env.*
+*.log
+upload_trailer.js

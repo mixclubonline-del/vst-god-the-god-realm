@@ -1,0 +1,18 @@
+{
+  "name": "VST God - The God Realm",
+  "version": "1.0.0",
+  "vendor": "MixxTech",
+  "category": "Instrument",
+  "description": "Premium keys plugin with React WebView UI and godly hip-hop aesthetic.",
+  "formats": ["VST3", "AU", "Standalone"],
+  "identifiers": {
+    "vst3": "com.mixxtech.vstgod.vst3",
+    "au": "com.mixxtech.vstgod.au",
+    "standalone": "com.mixxtech.vstgod.standalone"
+  },
+  "requirements": {
+    "os": "macOS 11.0+",
+    "cpu": "Intel/Apple Silicon",
+    "diskSpace": "500MB"
+  }
+}

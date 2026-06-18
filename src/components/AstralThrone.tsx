@@ -7,7 +7,7 @@
  *  - Selected: glowing border, detail panel active
  *  - Ignited: 100ms trigger flash on sequencer/MIDI hit
  */
-import React, { useCallback, useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { ThroneDomain } from '../data/throneDomains';
 
 interface AstralThroneProps {
@@ -40,8 +40,6 @@ export const AstralThrone: React.FC<AstralThroneProps> = React.memo(({
   onRelicDrop,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didTrigger = useRef(false);
 
   // Build class list
   const stateClass = isLoaded ? 'astral-throne--claimed' : 'astral-throne--sealed';
@@ -49,35 +47,19 @@ export const AstralThrone: React.FC<AstralThroneProps> = React.memo(({
   const ignitedClass = isTriggered ? 'astral-throne--ignited' : '';
   const dragClass = isDragOver ? 'astral-throne--drag-over' : '';
 
-  // Click = select, hold = trigger/audition
+  // MPC style: instant trigger and select on press
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only handle left click (button 0) or touch (pointerType === 'touch')
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    
     e.preventDefault();
-    didTrigger.current = false;
-    holdTimer.current = setTimeout(() => {
-      didTrigger.current = true;
-      onTrigger();
-    }, 200);
-  }, [onTrigger]);
+    onSelect();
+    onTrigger();
+  }, [onSelect, onTrigger]);
 
-  const handlePointerUp = useCallback(() => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-    if (!didTrigger.current) {
-      onSelect();
-    }
-  }, [onSelect]);
-
-  const handlePointerLeave = useCallback(() => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-  }, []);
-
-  // Double-click = file picker
-  const handleDoubleClick = useCallback(() => {
+  // Right-click = file picker
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*,.wav,.mp3,.ogg,.flac,.aif,.aiff';
@@ -121,21 +103,12 @@ export const AstralThrone: React.FC<AstralThroneProps> = React.memo(({
     if (audio) onFileDrop(audio);
   }, [onFileDrop, onRelicDrop]);
 
-  // Cleanup hold timer
-  useEffect(() => {
-    return () => {
-      if (holdTimer.current) clearTimeout(holdTimer.current);
-    };
-  }, []);
-
   return (
     <div
       className={`astral-throne ${stateClass} ${selectedClass} ${ignitedClass} ${dragClass}`}
       style={{ '--throne-color': domain.color } as React.CSSProperties}
       onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
-      onDoubleClick={handleDoubleClick}
+      onContextMenu={handleContextMenu}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

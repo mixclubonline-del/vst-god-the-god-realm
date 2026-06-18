@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { nativeAudio } from '../native/bridge';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
@@ -26,6 +27,23 @@ export async function activateLicense(
   platform: string,
   version: string
 ): Promise<ActivationResult> {
+  // If running in JUCE, delegate to C++ native code for secure network activation
+  if (nativeAudio.isInJuce()) {
+    console.info('[VST God] Delegating license activation to C++ host.');
+    return new Promise<ActivationResult>((resolve) => {
+      // Define a one-time global callback that C++ will call when activation finishes
+      (window as any).__godRealmLicenseResult = (success: boolean, message: string) => {
+        resolve({ success, message });
+        try {
+          delete (window as any).__godRealmLicenseResult;
+        } catch (e) {}
+      };
+
+      // Call C++ activation trigger via bridge
+      nativeAudio.activateLicense(key);
+    });
+  }
+
   if (!isSupabaseConfigured) {
     console.info('[VST God] Supabase not configured. Simulating activation.');
     if (key === 'VSTGOD-TEST-KEY-1234-5678') {

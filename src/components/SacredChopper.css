@@ -620,3 +620,8 @@
 .sacred-chopper__spread-label {
   font-size: 9px;
 }
+
+/* BLOOM OVERRIDES */
+.vg-bloom-active .sacred-chopper__header {
+  padding: 6px 10px;
+}

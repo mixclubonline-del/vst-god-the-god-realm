@@ -5,6 +5,8 @@
 #include "SacredSampler.h"
 #include "PantheonSynth.h"
 
+class LicenseValidatorThread;
+
 struct Step
 {
     bool enabled = false;
@@ -63,6 +65,80 @@ struct TransportState
     std::atomic<int> currentStep { 0 };
 };
 
+// ═══════════════════════════════════════════════════════════════
+// Divine LFO — dynamic modulation oscillator
+// ═══════════════════════════════════════════════════════════════
+class DivineLFO
+{
+public:
+    DivineLFO() {}
+
+    void prepare (double sr)
+    {
+        sampleRate = sr;
+        if (phase >= 1.0)
+            phase = 0.0;
+    }
+
+    void setRate (float rateHz)
+    {
+        rate = rateHz;
+    }
+
+    void setShape (int shapeIndex)
+    {
+        shape = shapeIndex; // 0: Sine, 1: Triangle, 2: Saw, 3: Square, 4: S&H
+    }
+
+    float getNextSample()
+    {
+        if (sampleRate <= 0.0) return 0.0f;
+
+        float output = 0.0f;
+        switch (shape)
+        {
+            case 0: // Sine
+                output = std::sin (phase * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case 1: // Triangle
+                output = 1.0f - 4.0f * std::abs (static_cast<float> (phase - 0.5));
+                break;
+            case 2: // Saw
+                output = 2.0f * static_cast<float> (phase) - 1.0f;
+                break;
+            case 3: // Square
+                output = phase < 0.5 ? 1.0f : -1.0f;
+                break;
+            case 4: // S&H (Sample & Hold)
+                output = shValue;
+                break;
+            default:
+                output = 0.0f;
+                break;
+        }
+
+        // Advance phase
+        double phaseIncrement = rate / sampleRate;
+        phase += phaseIncrement;
+        if (phase >= 1.0)
+        {
+            phase -= 1.0;
+            if (shape == 4) // S&H
+                shValue = random.nextFloat() * 2.0f - 1.0f;
+        }
+
+        return output;
+    }
+
+private:
+    double sampleRate = 44100.0;
+    double phase = 0.0;
+    float rate = 1.0f;
+    int shape = 0;
+    float shValue = 0.0f;
+    juce::Random random;
+};
+
 class VSTGodTheGodRealmAudioProcessor : public juce::AudioProcessor
 {
 public:
@@ -109,8 +185,10 @@ public:
     juce::String loadSettingsFromDisk();
     void saveSettingsToDisk (const juce::String& settingsJson);
     juce::File getConfigFile();
+    juce::String sampleLibraryPath;
 
     juce::CriticalSection stepLock;
+    juce::CriticalSection settingsLock;
 
     // ═══════════════════════════════════════════════════════════════
     // Metering & Transport — thread-safe accessors for the Editor
@@ -167,7 +245,6 @@ private:
     PantheonSynthEngine pantheonSynth;
     
     std::vector<Track> tracks;
-    juce::String sampleLibraryPath;
     
     double lastSixteenthNote = -1.0;
     int sequencerCycleCount = 0;
@@ -196,13 +273,33 @@ private:
     // ─── Round Robin & Random Sample Playback ───
     std::atomic<int> currentRoundRobinSlot { 0 };
     juce::Random randomGen;
+    juce::uint32 lastRRTriggerTimeMs { 0 };
+    juce::uint32 lastRandomTriggerTimeMs { 0 };
+    int lastRandomSlot { 0 };
+    
+    // ─── Phase 6: LFOs & Modulation Matrix ───
+    DivineLFO lfo1;
+    DivineLFO lfo2;
+    std::atomic<float> lfo1Value { 0.0f };
+    std::atomic<float> lfo2Value { 0.0f };
+    std::atomic<float> midiAftertouch { 0.0f };
+    std::atomic<float> midiModWheel { 0.0f };
+
+    // ─── Phase 7: Vortex Morph Weight System ───
+    std::array<float, 8> vortexWeights;
+    void updateVortexWeights(float x, float y);
+    float poseidonLfoPhase = 0.0f;
 
     // ─── License Verification & Demo Watermark ───
 public:
     std::atomic<bool> licenseActivated { false };
+    juce::String activeLicenseKey;
+    void startLicenseValidation (const juce::String& key, bool isFirstActivation);
+    void handleValidationResult (bool success, const juce::String& message, const juce::String& key, bool isFirstActivation);
 private:
     int watermarkSampleCounter = 0;
     float currentWatermarkGain = 1.0f;
+    std::unique_ptr<LicenseValidatorThread> validatorThread;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VSTGodTheGodRealmAudioProcessor)
 };

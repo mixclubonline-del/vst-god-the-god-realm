@@ -20,7 +20,17 @@ export interface ProjectMeta {
 
 export interface SavedProject {
   meta: ProjectMeta;
-  state: Omit<SequencerState, 'isPlaying' | 'currentStep' | 'cycleCount' | 'clipboardPattern'>;
+  state: Omit<
+    SequencerState,
+    | 'isPlaying'
+    | 'currentStep'
+    | 'cycleCount'
+    | 'clipboardPattern'
+    | 'clipboardTrack'
+    | 'selectedSteps'
+    | 'selectionAnchor'
+    | 'clipboardSteps'
+  >;
 }
 
 interface ProjectStore {
@@ -48,7 +58,17 @@ function saveProjectStore(store: ProjectStore): void {
 }
 
 function stripTransientState(state: SequencerState): SavedProject['state'] {
-  const { isPlaying, currentStep, cycleCount, clipboardPattern, ...persistable } = state;
+  const {
+    isPlaying,
+    currentStep,
+    cycleCount,
+    clipboardPattern,
+    clipboardTrack,
+    selectedSteps,
+    selectionAnchor,
+    clipboardSteps,
+    ...persistable
+  } = state;
   return persistable;
 }
 

@@ -88,6 +88,10 @@ export const SacredPianoRoll: React.FC<SacredPianoRollProps> = ({
   const [hoverInfo, setHoverInfo] = useState<{ note: number; step: number } | null>(null);
   const [showGhostNotes, setShowGhostNotes] = useState(true);
 
+  /* FL Quality: Event Editor */
+  const [showEventEditor, setShowEventEditor] = useState(false);
+  const [activeEventParam, setActiveEventParam] = useState<'velocity' | 'pan' | 'pitchBend' | 'probability' | 'microTiming'>('velocity');
+
   // Zoom
   const [stepWidth, setStepWidth] = useState(40);
   const GRID_WIDTH = stepCount * stepWidth;
@@ -288,6 +292,56 @@ export const SacredPianoRoll: React.FC<SacredPianoRollProps> = ({
     }
   }, [pixelToGrid, findNoteAt, onRemoveNote, selectedNoteId]);
 
+  /* FL Quality: Advanced Tools */
+  const handleStrum = useCallback(() => {
+    // Group notes by startStep to identify chords
+    const stepGroups: Record<number, PianoRollNote[]> = {};
+    notes.forEach(n => {
+      if (!stepGroups[n.startStep]) stepGroups[n.startStep] = [];
+      stepGroups[n.startStep].push(n);
+    });
+
+    Object.values(stepGroups).forEach(group => {
+      if (group.length > 1) {
+        // Sort from lowest note to highest
+        group.sort((a, b) => a.note - b.note);
+        group.forEach((n, i) => {
+          if (i > 0) {
+            // Apply micro-timing stagger (strum effect)
+            const staggerAmount = i * 15; // 15% micro-timing shift per note
+            onUpdateNote(n.id, { microTiming: staggerAmount });
+          }
+        });
+      }
+    });
+  }, [notes, onUpdateNote]);
+
+  const handleChop = useCallback(() => {
+    if (!selectedNoteId) return;
+    const targetNote = notes.find(n => n.id === selectedNoteId);
+    if (!targetNote) return;
+
+    // Chop note into 1/16ths (duration 0.25)
+    const chopDuration = 0.25;
+    const numChops = Math.floor(targetNote.duration / chopDuration);
+    
+    if (numChops > 1) {
+      // Remove original note
+      onRemoveNote(targetNote.id);
+      setSelectedNoteId(null);
+      // Create chopped notes
+      for (let i = 0; i < numChops; i++) {
+        const newNote: PianoRollNote = {
+          ...targetNote,
+          id: generatePianoNoteId(),
+          startStep: targetNote.startStep + (i * chopDuration),
+          duration: chopDuration,
+        };
+        onAddNote(newNote);
+      }
+    }
+  }, [selectedNoteId, notes, onRemoveNote, onAddNote]);
+
   // Zoom controls
   const handleZoomIn = useCallback(() => setStepWidth(w => Math.min(100, w + 10)), []);
   const handleZoomOut = useCallback(() => setStepWidth(w => Math.max(15, w - 10)), []);
@@ -324,10 +378,19 @@ export const SacredPianoRoll: React.FC<SacredPianoRollProps> = ({
             </span>
           )}
         </div>
+        {/* Toolbar */}
+        <div className="piano-roll__toolbar">
+          <div className="piano-roll__tools-left">
+            <button className="piano-roll__tool-btn" onClick={handleZoomIn} title="Zoom In (Z)">🔍+</button>
+            <button className="piano-roll__tool-btn" onClick={handleZoomOut} title="Zoom Out (X)">🔍-</button>
+            <button className="piano-roll__tool-btn" onClick={() => setShowGhostNotes(s => !s)} title="Toggle Ghost Notes">👻</button>
+          </div>
+          <div className="piano-roll__tools-right">
+            <button className="piano-roll__tool-btn" onClick={handleStrum} title="Strum Chords (Alt+S)">🎸 Strum</button>
+            <button className="piano-roll__tool-btn" onClick={handleChop} disabled={!selectedNoteId} title="Chop Selected Note (Alt+U)">🔪 Chop</button>
+          </div>
+        </div>
         <div className="piano-roll__toolbar-actions">
-          <button className="piano-roll__zoom-btn" onClick={handleZoomOut} title="Zoom Out">−</button>
-          <span className="piano-roll__zoom-level">{Math.round(stepWidth / 40 * 100)}%</span>
-          <button className="piano-roll__zoom-btn" onClick={handleZoomIn} title="Zoom In">+</button>
           <span className="piano-roll__note-count">{notes.length} notes</span>
           {ghostNotes.length > 0 && (
             <button
@@ -462,6 +525,63 @@ export const SacredPianoRoll: React.FC<SacredPianoRollProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      {/* FL Quality: Bottom Event Editor Pane */}
+      <div className={`piano-roll__event-editor ${showEventEditor ? 'piano-roll__event-editor--open' : ''}`}>
+        <div className="piano-roll__event-editor-header">
+          <button className="piano-roll__event-editor-toggle" onClick={() => setShowEventEditor(!showEventEditor)}>
+            {showEventEditor ? '▼' : '▲'} Event Editor
+          </button>
+          {showEventEditor && (
+            <div className="piano-roll__event-editor-tabs">
+              <button className={activeEventParam === 'velocity' ? 'active' : ''} onClick={() => setActiveEventParam('velocity')}>Velocity</button>
+              <button className={activeEventParam === 'pan' ? 'active' : ''} onClick={() => setActiveEventParam('pan')}>Pan</button>
+              <button className={activeEventParam === 'pitchBend' ? 'active' : ''} onClick={() => setActiveEventParam('pitchBend')}>Pitch</button>
+              <button className={activeEventParam === 'probability' ? 'active' : ''} onClick={() => setActiveEventParam('probability')}>Prob</button>
+              <button className={activeEventParam === 'microTiming' ? 'active' : ''} onClick={() => setActiveEventParam('microTiming')}>Shift</button>
+            </div>
+          )}
+        </div>
+        {showEventEditor && (
+          <div className="piano-roll__event-editor-graph">
+            {notes.map(n => {
+              const isSelected = n.id === selectedNoteId;
+              let val = 0;
+              let min = 0, max = 1;
+              if (activeEventParam === 'velocity') { val = n.velocity || 100; min = 0; max = 127; }
+              if (activeEventParam === 'pan') { val = n.pan || 0; min = -1; max = 1; }
+              if (activeEventParam === 'pitchBend') { val = n.pitchBend || 0; min = -1; max = 1; }
+              if (activeEventParam === 'probability') { val = n.probability !== undefined ? n.probability : 100; min = 0; max = 100; }
+              if (activeEventParam === 'microTiming') { val = n.microTiming || 0; min = -50; max = 50; }
+              
+              const normalized = (val - min) / (max - min);
+              const heightPct = Math.max(5, normalized * 100);
+              
+              return (
+                <div
+                  key={`event-${n.id}`}
+                  className={`piano-roll__event-bar ${isSelected ? 'selected' : ''}`}
+                  style={{
+                    left: n.startStep * stepWidth,
+                    width: Math.max(4, (n.duration * stepWidth) - 2),
+                  }}
+                >
+                  <div className="piano-roll__event-bar-fill" style={{ height: `${heightPct}%`, backgroundColor: isSelected ? '#fff' : trackColor }} />
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={activeEventParam === 'pan' || activeEventParam === 'pitchBend' ? 0.01 : 1}
+                    value={val}
+                    onChange={(e) => onUpdateNote(n.id, { [activeEventParam]: Number(e.target.value) })}
+                    className="piano-roll__event-slider"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -245,6 +245,19 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
     [update]
   );
 
+  // Phase 3: X/Y Vortex maps to AURA and AGE
+  const lastAuraAge = useRef({ aura: 50, age: 50 });
+  useEffect(() => {
+    const newAura = Math.round(xVal * 100);
+    const newAge = Math.round(yVal * 100);
+    
+    if (lastAuraAge.current.aura !== newAura || lastAuraAge.current.age !== newAge) {
+      lastAuraAge.current = { aura: newAura, age: newAge };
+      handleMacroChange('aura', newAura);
+      handleMacroChange('age', newAge);
+    }
+  }, [xVal, yVal, handleMacroChange]);
+
   const handleFxChange = useCallback(
     (index: number, value: number) => {
       setFxValues((prev) => {

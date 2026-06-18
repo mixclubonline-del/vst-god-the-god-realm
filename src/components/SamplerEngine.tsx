@@ -77,7 +77,7 @@ export const SamplerEngine: React.FC<SamplerEngineProps> = ({
               <span className="text-[8px] font-bold text-white/30 uppercase mb-1">Play Mode</span>
               <div className="flex bg-black/40 p-0.5 rounded-md border border-white/5 gap-0.5">
                 {['Layer', 'RR', 'Rnd'].map((mode, idx) => {
-                  const active = (parameterValues.slotPlayMode || 0) === idx;
+                  const active = (parameterValues.slotPlayMode !== undefined ? parameterValues.slotPlayMode : 1) === idx;
                   return (
                     <button
                       key={mode}

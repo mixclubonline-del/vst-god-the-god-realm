@@ -1,6 +1,6 @@
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useRef, useState, type FormEvent } from 'react';
-import { Mail, Check, Download, ExternalLink, Globe, Music2, Sparkles, AlertCircle } from 'lucide-react';
+import { Mail, Check, Download, Sparkles, AlertCircle } from 'lucide-react';
 import { submitBetaSignup, APP_URL, type BetaSignupResult } from '../lib/supabase';
 
 /* ── Design tokens ─────────────────────────────────────────────── */
@@ -27,13 +27,6 @@ const stats = [
   { number: '8', label: 'God Identities' },
   { number: '4', label: 'Divine Controls' },
   { number: '32', label: 'Realm FX' },
-];
-
-/* ── Social links ──────────────────────────────────────────────── */
-const socials = [
-  { icon: ExternalLink, label: 'Twitter', href: '#twitter' },
-  { icon: Globe, label: 'Instagram', href: '#instagram' },
-  { icon: Music2, label: 'YouTube', href: '#youtube' },
 ];
 
 /* ── Animated checkmark ────────────────────────────────────────── */
@@ -407,7 +400,7 @@ export default function CTASection() {
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 16,
             maxWidth: 600,
-            margin: '0 auto 64px',
+            margin: '0 auto',
           }}
         >
           {stats.map((stat, i) => (
@@ -454,84 +447,6 @@ export default function CTASection() {
               </div>
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* ── Social & Branding Footer ────────────── */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.8, delay: 0.7 }}
-          style={{
-            borderTop: `1px solid ${COLORS.ether}`,
-            paddingTop: 32,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "'Inter', system-ui, sans-serif",
-              fontSize: 13,
-              color: COLORS.textDim,
-              letterSpacing: '0.08em',
-              marginBottom: 20,
-            }}
-          >
-            Built by{' '}
-            <span style={{ color: COLORS.textMuted, fontWeight: 600 }}>MixxTech</span>
-          </p>
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 16,
-              marginBottom: 20,
-            }}
-          >
-            {socials.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                aria-label={social.label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  background: 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${COLORS.ether}`,
-                  color: COLORS.textMuted,
-                  transition: 'background 0.3s ease, color 0.3s ease, border-color 0.3s ease',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(194,150,35,0.12)';
-                  e.currentTarget.style.color = COLORS.goldLight;
-                  e.currentTarget.style.borderColor = 'rgba(194,150,35,0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = COLORS.textMuted;
-                  e.currentTarget.style.borderColor = COLORS.ether;
-                }}
-              >
-                <social.icon size={18} />
-              </a>
-            ))}
-          </div>
-
-          <p
-            style={{
-              fontFamily: "'Inter', system-ui, sans-serif",
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.2)',
-              letterSpacing: '0.04em',
-              margin: 0,
-            }}
-          >
-            © 2025 MixxTech. All rights reserved.
-          </p>
         </motion.div>
       </div>
     </section>

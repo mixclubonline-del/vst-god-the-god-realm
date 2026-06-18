@@ -4,6 +4,8 @@
  */
 import React, { useCallback, useRef, useState } from 'react';
 import type { SequencerState } from './useSequencerEngine';
+import { generateMidiBase64 } from '../../utils/midiWriter';
+import { nativeAudio } from '../../native/bridge';
 
 interface SacredSequencerHeaderProps {
   state: SequencerState;
@@ -69,6 +71,12 @@ interface SacredSequencerHeaderProps {
   /* Fullscreen */
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  /* Phase 6: Modulation Matrix */
+  showModMatrix?: boolean;
+  onToggleModMatrix?: () => void;
+  /* Phase 7: Divine Oracle */
+  showOracle?: boolean;
+  onToggleOracle?: () => void;
 }
 
 const SWING_PRESETS: { id: SequencerState['swingPreset']; label: string }[] = [
@@ -132,6 +140,10 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
   onToggleMeter,
   isFullscreen,
   onToggleFullscreen,
+  showModMatrix,
+  onToggleModMatrix,
+  showOracle,
+  onToggleOracle,
 }) => {
   const [isEditingBpm, setIsEditingBpm] = useState(false);
   const bpmInputRef = useRef<HTMLInputElement>(null);
@@ -380,6 +392,25 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         EXPORT
       </button>
 
+      {/* MIDI Drag & Drop */}
+      <button
+        className="seq-midi-drag-btn"
+        draggable={true}
+        onDragStart={(e) => {
+          e.preventDefault();
+          try {
+            const base64Data = generateMidiBase64(state.tracks, state.activePattern, state.bpm);
+            nativeAudio.startMidiDrag(`vstgod_pattern_${state.activePattern}.mid`, base64Data);
+          } catch (err) {
+            console.error('Failed to generate MIDI file:', err);
+          }
+        }}
+        title="Drag MIDI pattern directly to DAW timeline"
+      >
+        <span style={{ fontSize: '10px', marginRight: '4px' }}>🎹</span>
+        <span>DRAG MIDI</span>
+      </button>
+
       {/* Stem Export */}
       {onExportStems && (
         <button
@@ -469,6 +500,17 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         </button>
       )}
 
+      {/* Divine Oracle Toggle */}
+      {onToggleOracle && (
+        <button
+          className={`seq-header__btn seq-oracle-btn ${showOracle ? 'seq-oracle-btn--open' : ''}`}
+          onClick={onToggleOracle}
+          title={showOracle ? 'Hide Divine Oracle' : 'Show Divine Oracle'}
+        >
+          👁️ ORACLE
+        </button>
+      )}
+
       {/* Mixer Toggle */}
       <button
         className={`seq-mixer-toggle ${showMixer ? 'seq-mixer-toggle--active' : ''}`}
@@ -493,6 +535,19 @@ export const SacredSequencerHeader: React.FC<SacredSequencerHeaderProps> = ({
         <span style={{ fontSize: '12px' }}>✨</span>
         <span>FX</span>
       </button>
+
+      {/* Modulation Matrix Drawer Toggle */}
+      {onToggleModMatrix && (
+        <button
+          className={`seq-mixer-toggle ${showModMatrix ? 'seq-mixer-toggle--active' : ''}`}
+          onClick={onToggleModMatrix}
+          title={showModMatrix ? 'Hide Modulation Matrix' : 'Show Modulation Matrix'}
+          style={{ color: showModMatrix ? '#ffb000' : undefined }}
+        >
+          <span style={{ fontSize: '12px' }}>🎛️</span>
+          <span>MODULATION</span>
+        </button>
+      )}
 
       {/* Master Meter Toggle */}
       {onToggleMeter && (

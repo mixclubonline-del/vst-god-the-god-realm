@@ -411,6 +411,11 @@ export class GodRealmSamplerEngine {
   private modulationMatrix: Map<string, AudioParam[]> = new Map();
 
   private currentRoundRobinSlot = 0;
+  private lastRoundRobinTime = 0;
+  private readonly roundRobinTimeWindow = 30; // 30ms
+  private currentRandomSlot = 0;
+  private lastRandomTime = 0;
+  private readonly randomTimeWindow = 30; // 30ms
 
   private _detuneCents = 0;
   private _masterVolume = 0.8;
@@ -885,22 +890,35 @@ export class GodRealmSamplerEngine {
     if (activeSlots.length === 0) return;
 
     // 2. Select slot(s) to play based on slotPlayMode
-    const playMode = this.lastParams.slotPlayMode || 0; // 0 = Layer, 1 = RR, 2 = Random
+    const playMode = this.lastParams.slotPlayMode !== undefined ? this.lastParams.slotPlayMode : 1; // 0 = Layer, 1 = RR, 2 = Random
     let slotsToPlay: number[] = [];
 
     if (playMode === 0) {
       // Layer Mode: Play all active slots
       slotsToPlay = activeSlots;
     } else if (playMode === 1) {
-      // Round Robin: Cycle through active slots
-      const rrIdx = this.currentRoundRobinSlot;
-      const slot = activeSlots[rrIdx % activeSlots.length];
+      // Round Robin: Cycle through active slots, grouped within 30ms window
+      const now = performance.now();
+      if (now - this.lastRoundRobinTime > this.roundRobinTimeWindow) {
+        if (this.lastRoundRobinTime > 0) {
+          this.currentRoundRobinSlot = (this.currentRoundRobinSlot + 1) % activeSlots.length;
+        }
+        this.lastRoundRobinTime = now;
+      }
+      const slot = activeSlots[this.currentRoundRobinSlot % activeSlots.length];
       slotsToPlay = [slot];
-      this.currentRoundRobinSlot = (rrIdx + 1) % activeSlots.length;
     } else {
-      // Random: Pick one active slot at random
-      const randIdx = Math.floor(Math.random() * activeSlots.length);
-      slotsToPlay = [activeSlots[randIdx]];
+      // Random: Pick one active slot at random, grouped within 30ms window
+      const now = performance.now();
+      if (now - this.lastRandomTime > this.randomTimeWindow) {
+        this.currentRandomSlot = activeSlots[Math.floor(Math.random() * activeSlots.length)];
+        this.lastRandomTime = now;
+      }
+      // Safeguard in case activeSlots changed and currentRandomSlot is no longer valid
+      if (this.currentRandomSlot === undefined || !activeSlots.includes(this.currentRandomSlot)) {
+        this.currentRandomSlot = activeSlots[Math.floor(Math.random() * activeSlots.length)];
+      }
+      slotsToPlay = [this.currentRandomSlot];
     }
 
     // 3. Trigger each selected slot at the pitch of the MIDI note
@@ -2291,13 +2309,22 @@ export class GodRealmSamplerEngine {
    * @param velocity - 0-127 velocity
    * @param pitch    - Semitone offset (-24 to +24, default 0)
    * @param decay    - Decay factor (0-1, default 0.5)
+  /**
+   * Triggers a pad immediately (used by UI buttons and MPC-style clicks).
    */
+  public triggerPad(padIndex: number): void {
+    if (!this.ctx) return;
+    this.triggerPadAtTime(padIndex, this.ctx.currentTime);
+  }
+
   triggerPadAtTime(
     padIndex: number,
     time: number,
     velocity: number = 127,
     pitch: number = 0,
     decay: number = 0.5,
+    reverse: boolean = false,
+    sliceIndex: number = 0
   ): void {
     if (!this.ctx || !this.buffers[padIndex]) return;
 
@@ -2319,10 +2346,30 @@ export class GodRealmSamplerEngine {
     // Decay duration
     const decayDuration = 0.05 + decay * 2.0;
 
+    // Ensure we have a reversed buffer if requested
+    if (reverse && !this.reversedBuffers[padIndex] && this.buffers[padIndex]) {
+      this.reversedBuffers[padIndex] = this.reverseAudioBuffer(this.buffers[padIndex]!);
+    }
+
+    const bufferToUse = reverse && this.reversedBuffers[padIndex] 
+      ? this.reversedBuffers[padIndex]! 
+      : this.buffers[padIndex]!;
+
+    // Basic slicing calculation (assuming 16 equal slices if not using full slice data)
+    let offset = 0;
+    if (sliceIndex > 0) {
+      const sliceLength = bufferToUse.duration / 16;
+      offset = (sliceIndex - 1) * sliceLength;
+      // If reversed, the start point needs to be flipped relative to the buffer end
+      if (reverse) {
+        offset = bufferToUse.duration - offset - sliceLength;
+      }
+    }
+
     voice.trigger(
-      this.buffers[padIndex]!,
+      bufferToUse,
       time,
-      0,
+      offset,
       decayDuration,
       pitchRate,
       { ...adsr, sustain: adsr.sustain * velGain },

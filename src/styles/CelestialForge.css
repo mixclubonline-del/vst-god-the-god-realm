@@ -688,3 +688,36 @@
   width: 400px;
   height: 400px;
 }
+
+/* Custom slider styles for Aether controls */
+.vg-aether-section input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 3px;
+    border-radius: 2px;
+    outline: none;
+}
+.vg-aether-section input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--god-primary);
+    box-shadow: 0 0 8px var(--god-primary);
+    cursor: pointer;
+    transition: transform 0.1s ease, background-color 0.1s ease;
+}
+.vg-aether-section input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    background: #fff;
+}
+
+/* BLOOM OVERRIDES */
+.vg-bloom-active .vg-forge-main {
+  padding: 12px;
+}
+.vg-bloom-active .vg-celestial-forge {
+  padding: 0;
+}
