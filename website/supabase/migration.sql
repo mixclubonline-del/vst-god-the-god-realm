@@ -59,7 +59,7 @@ create table if not exists license_keys (
   id uuid default gen_random_uuid() primary key,
   key text unique not null,
   user_id uuid references profiles(id) on delete set null,
-  type text not null check (type in ('beta', 'purchase', 'promo')),
+  type text not null check (type in ('beta', 'purchase', 'promo', 'trial', 'complimentary')),
   status text default 'active' check (status in ('active', 'revoked', 'expired')),
   max_activations int default 2,
   current_activations int default 0,
@@ -228,6 +228,69 @@ $$ language plpgsql;
 
 -- Example: SELECT generate_license_key();
 -- Returns: VSTGOD-A1B2-C3D4-E5F6-G7H8
+
+-- ============================================================
+-- Helper: Activate license
+-- ============================================================
+create or replace function activate_license(
+  p_key text,
+  p_machine_id text,
+  p_platform text,
+  p_version text default 'v1.0.0'
+)
+returns json as $$
+declare
+  v_license_id uuid;
+  v_current_activations int;
+  v_max_activations int;
+  v_status text;
+  v_user_id uuid;
+  v_type text;
+begin
+  -- 1. Find the license key
+  select id, current_activations, max_activations, status, user_id, type
+  into v_license_id, v_current_activations, v_max_activations, v_status, v_user_id, v_type
+  from public.license_keys
+  where key = p_key;
+
+  if v_license_id is null then
+    return json_build_object('success', false, 'message', 'Invalid license key.');
+  end if;
+
+  if v_status != 'active' then
+    return json_build_object('success', false, 'message', 'This license key is ' || v_status || '.');
+  end if;
+
+  -- 2. Check if this machine is already activated
+  if exists (
+    select 1 from public.license_activations
+    where license_id = v_license_id and machine_id = p_machine_id
+  ) then
+    -- Update last seen
+    update public.license_activations
+    set last_seen_at = now(), plugin_version = p_version
+    where license_id = v_license_id and machine_id = p_machine_id;
+
+    return json_build_object('success', true, 'message', 'Machine already activated.', 'license_type', v_type);
+  end if;
+
+  -- 3. Check activation limit
+  if v_current_activations >= v_max_activations then
+    return json_build_object('success', false, 'message', 'Activation limit reached (' || v_max_activations || ' machines max).');
+  end if;
+
+  -- 4. Perform activation
+  insert into public.license_activations (license_id, machine_id, platform, plugin_version)
+  values (v_license_id, p_machine_id, p_platform, p_version);
+
+  -- 5. Increment current activations count
+  update public.license_keys
+  set current_activations = current_activations + 1
+  where id = v_license_id;
+
+  return json_build_object('success', true, 'message', 'Activation successful.', 'license_type', v_type);
+end;
+$$ language plpgsql security definer;
 
 -- ============================================================
 -- Ethereal Cloud Sync & Preset Sharing System

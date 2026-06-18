@@ -68,8 +68,8 @@ The frontend is compiled by Vite into `dist/`, which is embedded as JUCE BinaryD
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/mixclubonline-del/god-console-vst.git
-cd god-console-vst
+git clone https://github.com/mixclubonline-del/vst-god-the-god-realm.git
+cd vst-god-the-god-realm
 
 # 2. Install frontend dependencies
 npm install
@@ -100,12 +100,23 @@ build/VSTGodTheGodRealm_artefacts/Release/
 
 > ⚠️ **IMPORTANT**: You MUST run these commands from the **"Developer Command Prompt for VS 2022"** or **"x64 Native Tools Command Prompt for VS 2022"** (NOT regular cmd.exe or PowerShell). This ensures the MSVC compiler is on your PATH.
 
+### Windows Developer & Agent Pick-up Guide
+
+> [!IMPORTANT]
+> **Windows Agent/Developer Guidelines:**
+> 1. **Plugin Build**: To compile the C++ source and bundle React assets on Windows, run `scripts\build-windows.bat` inside the root folder. The compiler output will be placed in `build\VSTGodTheGodRealm_artefacts\Release\`.
+> 2. **Admin Console (Lovable Console)**: The folder `god-console-vst/` is ignored by the main repository and sits in a separate repo. Clone it separately: `git clone https://github.com/mixclubonline-del/god-console-vst.git`. Run it locally using `cd god-console-vst && npm install && npm run dev` (runs on http://localhost:8083/).
+> 3. **License system update**: 
+>    - The database check constraints for `license_keys.type` have been expanded to allow `beta`, `purchase`, `promo`, `trial`, and `complimentary`.
+>    - The critical `activate_license` function is fully implemented in the live Supabase project `coegagqdkgvayzuviqxw`.
+>    - The admin portal `/admin/licenses` now features batch key generation, advanced search filters, status cards, and individual key settings (e.g. expiry date configuration).
+
 ### Step-by-Step
 
 ```batch
 :: 1. Clone the repo
-git clone https://github.com/mixclubonline-del/god-console-vst.git
-cd god-console-vst
+git clone https://github.com/mixclubonline-del/vst-god-the-god-realm.git
+cd vst-god-the-god-realm
 
 :: 2. Install frontend dependencies
 npm install
