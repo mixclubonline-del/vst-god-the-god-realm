@@ -1,0 +1,559 @@
+/* GodVault.css — Preset Vault styles */
+
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+.god-vault {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #0e0714 0%, #0b0b1a 60%, #0d0d0d 100%);
+  color: #e0d0ff;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  overflow: hidden;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+.god-vault__header {
+  flex-shrink: 0;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(10, 5, 20, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.god-vault__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.god-vault__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #a855f7;
+  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+}
+
+.god-vault__count {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(160, 130, 200, 0.5);
+}
+
+.god-vault__toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.god-vault__search {
+  flex: 1;
+  min-width: 140px;
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 4px;
+  color: #e0d0ff;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 5px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.god-vault__search:focus { border-color: rgba(168, 85, 247, 0.6); }
+.god-vault__search::placeholder { color: rgba(160,130,200,0.35); }
+
+.god-vault__actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ─── Chips ──────────────────────────────────────────────────────────────────── */
+.god-vault__chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.god-vault__chip {
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 3px;
+  color: rgba(200,170,240,0.7);
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.god-vault__chip:hover { border-color: rgba(168, 85, 247, 0.5); color: #c084fc; }
+.god-vault__chip--active {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.65);
+  color: #c084fc;
+}
+.god-vault__chip--dragover {
+  border-color: rgba(245, 158, 11, 0.8);
+  background: rgba(245, 158, 11, 0.12);
+  transform: scale(1.05);
+}
+
+/* ─── Body ────────────────────────────────────────────────────────────────────── */
+.god-vault__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── List ────────────────────────────────────────────────────────────────────── */
+.god-vault__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168,85,247,0.3) transparent;
+}
+.god-vault__list::-webkit-scrollbar { width: 4px; }
+.god-vault__list::-webkit-scrollbar-track { background: transparent; }
+.god-vault__list::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 2px; }
+
+/* Empty state */
+.god-vault__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+}
+.god-vault__empty-icon {
+  font-size: 36px;
+  opacity: 0.2;
+  color: #a855f7;
+}
+.god-vault__empty-title {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: rgba(168,85,247,0.6);
+}
+.god-vault__empty-sub {
+  font-size: 11px;
+  color: rgba(160,130,200,0.45);
+  line-height: 1.6;
+}
+.god-vault__empty-sub strong { color: rgba(168,85,247,0.8); }
+
+/* List item */
+.god-vault__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 3px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.god-vault__item:hover {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+.god-vault__item--selected {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+.god-vault__item--dragover {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.18);
+}
+
+.god-vault__item-type-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #6b21a8;
+}
+.god-vault__item-type-dot[data-type="Bass"]      { background: #ff4444; }
+.god-vault__item-type-dot[data-type="Lead"]      { background: #ff9900; }
+.god-vault__item-type-dot[data-type="Pad"]       { background: #4488ff; }
+.god-vault__item-type-dot[data-type="Pluck"]     { background: #44ffaa; }
+.god-vault__item-type-dot[data-type="Keys"]      { background: #ffee44; }
+.god-vault__item-type-dot[data-type="Arp"]       { background: #ff44ff; }
+.god-vault__item-type-dot[data-type="FX"]        { background: #ff6600; }
+.god-vault__item-type-dot[data-type="Textures"]  { background: #44ccff; }
+.god-vault__item-type-dot[data-type="Drum"]      { background: #ff2222; }
+.god-vault__item-type-dot[data-type="Oneshot"]   { background: #88ff44; }
+.god-vault__item-type-dot[data-type="Multi-Realm"]{ background: #a855f7; }
+
+.god-vault__item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.god-vault__item-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ddd0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.god-vault__item-meta {
+  font-size: 9px;
+  color: rgba(160,130,200,0.5);
+  letter-spacing: 0.5px;
+}
+
+.god-vault__item-actions {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.god-vault__item:hover .god-vault__item-actions,
+.god-vault__item--selected .god-vault__item-actions {
+  opacity: 1;
+}
+
+.god-vault__fav {
+  background: none;
+  border: none;
+  color: rgba(160,130,200,0.35);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.god-vault__fav:hover  { color: #fbbf24; }
+.god-vault__fav--on    { color: #fbbf24; }
+
+.god-vault__load-btn {
+  background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.4);
+  border-radius: 3px;
+  color: #c084fc;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.god-vault__load-btn:hover {
+  background: rgba(168,85,247,0.3);
+  border-color: rgba(168,85,247,0.7);
+}
+
+.god-vault__del-btn {
+  background: none;
+  border: none;
+  color: rgba(220, 80, 80, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.god-vault__del-btn:hover { color: #f87171; }
+
+/* ─── Detail panel ─────────────────────────────────────────────────────────── */
+.god-vault__detail {
+  width: 220px;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(168, 85, 247, 0.15);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.god-vault__detail-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(160,130,200,0.25);
+  text-align: center;
+}
+
+.god-vault__detail-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0d0ff;
+  word-break: break-word;
+}
+.god-vault__detail-type {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #a855f7;
+}
+.god-vault__detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.god-vault__tag {
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: 2px;
+  font-size: 9px;
+  padding: 2px 6px;
+  color: rgba(192,160,230,0.8);
+}
+.god-vault__detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 9px;
+  color: rgba(160,130,200,0.5);
+}
+.god-vault__detail-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────────── */
+.god-vault__btn {
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 4px;
+  color: #c084fc;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.god-vault__btn:hover { background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.6); }
+
+.god-vault__btn--save {
+  background: rgba(168,85,247,0.15);
+  border-color: rgba(168,85,247,0.5);
+  color: #d8b4fe;
+  font-weight: 600;
+}
+.god-vault__btn--save:hover { background: rgba(168,85,247,0.28); }
+
+.god-vault__btn--load {
+  background: rgba(34,197,94,0.12);
+  border-color: rgba(34,197,94,0.35);
+  color: #86efac;
+}
+.god-vault__btn--load:hover { background: rgba(34,197,94,0.22); }
+
+.god-vault__btn--overwrite {
+  background: rgba(234,179,8,0.1);
+  border-color: rgba(234,179,8,0.3);
+  color: #fde68a;
+}
+.god-vault__btn--overwrite:hover { background: rgba(234,179,8,0.2); }
+
+.god-vault__btn--delete {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.25);
+  color: #fca5a5;
+}
+.god-vault__btn--delete:hover { background: rgba(239,68,68,0.18); }
+
+.god-vault__btn--cancel {
+  background: transparent;
+  border-color: rgba(160,130,200,0.25);
+  color: rgba(160,130,200,0.6);
+}
+.god-vault__btn--cancel:hover { border-color: rgba(160,130,200,0.5); color: rgba(160,130,200,0.9); }
+
+.god-vault__btn--sm {
+  font-size: 9px;
+  padding: 5px 10px;
+}
+
+/* ─── Modal ─────────────────────────────────────────────────────────────────── */
+.god-vault__modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.god-vault__modal {
+  background: linear-gradient(145deg, #140c22, #0e0e1c);
+  border: 1px solid rgba(168,85,247,0.4);
+  border-radius: 8px;
+  padding: 24px;
+  width: 340px;
+  max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(168,85,247,0.15);
+}
+.god-vault__modal-title {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #a855f7;
+  font-weight: 700;
+}
+.god-vault__label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(160,130,200,0.6);
+  margin-bottom: -6px;
+}
+.god-vault__input,
+.god-vault__select {
+  background: rgba(255, 255, 255, 0.27);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 4px;
+  color: #e0d0ff;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.god-vault__input:focus,
+.god-vault__select:focus { border-color: rgba(168,85,247,0.65); }
+.god-vault__select option { background: #140c22; }
+.god-vault__modal-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.god-vault__modal-btns .god-vault__btn { flex: 1; }
+
+/* ─── Piano Keyboard ─────────────────────────────────────────────────────────── */
+.god-vault__piano {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(5, 2, 12, 0.8);
+  padding: 6px 12px 8px;
+  user-select: none;
+}
+
+.god-vault__piano-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(168, 85, 247, 0.55);
+  text-align: center;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.god-vault__piano-keys {
+  display: flex;
+  height: 56px;
+  justify-content: center;
+  gap: 0;
+  overflow: hidden;
+}
+
+.god-vault__piano-white-group {
+  position: relative;
+  display: flex;
+}
+
+.god-vault__piano-key {
+  cursor: pointer;
+  border-radius: 0 0 3px 3px;
+  transition: background 0.05s;
+}
+
+.god-vault__piano-key--white {
+  width: 18px;
+  height: 56px;
+  background: rgba(230, 220, 255, 0.92);
+  border: 1px solid rgba(100, 80, 140, 0.5);
+  border-top: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 3px;
+  position: relative;
+  z-index: 1;
+}
+.god-vault__piano-key--white:hover { background: rgba(200, 180, 255, 0.9); }
+.god-vault__piano-key--white.god-vault__piano-key--pressed {
+  background: rgba(168, 85, 247, 0.85);
+}
+
+.god-vault__piano-key--black {
+  width: 11px;
+  height: 35px;
+  background: rgba(10, 5, 20, 0.95);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-top: none;
+  position: absolute;
+  right: -6px;
+  top: 0;
+  z-index: 2;
+  border-radius: 0 0 2px 2px;
+}
+.god-vault__piano-key--black:hover { background: rgba(80, 40, 120, 0.9); }
+.god-vault__piano-key--black.god-vault__piano-key--pressed {
+  background: rgba(168, 85, 247, 0.9);
+}
+
+.god-vault__piano-note-label {
+  font-size: 7px;
+  color: rgba(80, 60, 120, 0.7);
+  pointer-events: none;
+}
+
+.god-vault__drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(168,85,247,0.12);
+  border: 2px dashed rgba(168,85,247,0.7);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+.god-vault__drop-message {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c084fc;
+  text-shadow: 0 0 20px rgba(168,85,247,0.8);
+}
+.god-vault__drop-message span {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: rgba(192,160,230,0.7);
+  margin-top: 6px;
+}

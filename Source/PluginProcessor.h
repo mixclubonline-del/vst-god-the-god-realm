@@ -4,6 +4,7 @@
 #include "VelvetCurve.h"
 #include "SacredSampler.h"
 #include "PantheonSynth.h"
+#include "PedalFxChain.h"
 
 class LicenseValidatorThread;
 
@@ -186,10 +187,18 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
     void loadSampleForTrack(int trackIdx, const juce::String& path);
+    // Load a native-sampler track from in-memory audio bytes (wav/ogg/flac/...).
+    // Used when the web UI has the audio but not an OS file path (FS Access API).
+    void loadSampleFromBytes(int trackIdx, const juce::MemoryBlock& data);
     void updateStep(int trackIdx, const juce::String& patternName, int stepIdx, const juce::var& stepData);
     void updateTrackSlices(int trackIdx, const juce::var& sliceData);
     void triggerStep(int trackIdx, float velocity, float pitch, float pan, float decay, float startNorm, float endNorm, bool reverse, int sliceIndex);
     void updateTransportState(bool isPlaying, double bpm);
+    
+    // Pedal Realm native control setters
+    void setPedalMasterActive(bool active);
+    void setPedalEnabled(int pedalIdx, bool enabled);
+    void setPedalParam(int pedalIdx, const juce::String& key, float value);
 
     // Settings I/O
     juce::String loadSettingsFromDisk();
@@ -223,6 +232,28 @@ public:
     /** Drain recent MIDI CC events (clears the queue). */
     std::vector<MidiCCEvent> drainCCEvents();
 
+    /** True when running as a standalone application (not inside a DAW). */
+    static bool isStandaloneApp() { return juce::JUCEApplicationBase::isStandaloneApp(); }
+
+    /** Called from the editor message thread to push decoded PCM into the FIFO. */
+    void pushWebAudio (const float* left, const float* right, int numSamples, double sourceSampleRate);
+
+    /** Thread-safe: queue a UI-triggered note (piano click) into the audio thread. */
+    void triggerUiNoteOn  (int note, int velocity);
+    void triggerUiNoteOff (int note);
+
+    /** Get the current DAW sample rate (for web UI sync). */
+    double getDawSampleRate() const { return spec.sampleRate; }
+
+    juce::MidiMessageCollector uiMidiCollector;
+
+    // ─── Web UI state persistence (per-project, via get/setStateInformation) ──
+    // The web UI has many parameters that are not backed by APVTS. We store the
+    // latest full snapshot here so it can be saved into the host project and
+    // pushed back to the UI when the project is reopened.
+    juce::String webUiStateJson;       // latest snapshot received from the web UI
+    juce::String pendingRestoreJson;   // snapshot restored from project, to push to UI
+
     // ─── Phase 4: FFT & Transient Analysis Accessors ───
     static constexpr int kFftSize = 1024;
     void pushToFftBuffer (const float* samples, int numSamples);
@@ -254,6 +285,7 @@ private:
     void deserializeTracks(juce::XmlElement* xml);
 
     VelvetCurve velvetChain;
+    PedalFxChain pedalFxChain;
     SacredSamplerEngine sampler;
     PantheonSynthEngine pantheonSynth;
     
@@ -289,6 +321,40 @@ private:
     std::atomic<int> ccEventWritePos { 0 };
     std::atomic<int> ccEventReadPos { 0 };
 
+    // ─── Web Audio Bridge Ring Buffer ───────────────────────────────────────
+    // Receives decoded PCM from the WebView ScriptProcessor and outputs it in
+    // processBlock so all Web-Audio instruments route through the DAW bus.
+    static constexpr int kWebAudioFifoSize = 96000; // 2 s at 48 kHz
+    juce::AbstractFifo webAudioFifo { kWebAudioFifoSize };
+    float webAudioBufL[kWebAudioFifoSize] {};
+    float webAudioBufR[kWebAudioFifoSize] {};
+    std::atomic<bool> webAudioActive { false };
+    // Liveness: millisecond timestamp of the last web-audio block received. The
+    // web engine only delivers audio while the editor UI is open/active. We use
+    // this to suppress the C++ sampler on tabs where the web engine is also the
+    // sound source (tabs 0 & 2) — otherwise both play the same note ~50ms apart,
+    // which is the phasing/doubling the user hears. When the UI is closed (DAW
+    // bounce/playback), web goes quiet and the C++ sampler takes over.
+    std::atomic<juce::uint32> webAudioLastMs { 0 };
+    // Resamplers: convert the incoming web-audio stream (its own context rate)
+    // to the DAW rate so the FIFO never drifts (the cause of escalating buzz).
+    juce::LagrangeInterpolator webResamplerL, webResamplerR;
+    // Priming: the consumer (processBlock) refuses to read until the FIFO has
+    // buffered a target amount (~120 ms). This guarantees we never read a
+    // partial/empty block, which is what produced the click at the start of
+    // every note, and gives enough headroom to ride out main-thread (React)
+    // stalls without starving. Audio-thread only; no atomics needed.
+    bool webAudioPrimed { false };
+    // Smooth, click-free transitions. The bridge is a streaming buffer between
+    // two free-running clocks; any hard start/stop of the read splices the
+    // waveform = a click ("static"). We ramp this gain toward 1 while we have a
+    // full block of data and toward 0 the moment we starve, so under-runs fade
+    // out and recoveries fade in instead of clicking. Audio-thread only.
+    float webAudioFadeGain { 0.0f };
+    // Consecutive starved blocks; only force a full re-prime after a sustained
+    // dropout (a brief jitter gap should NOT trigger a 120 ms re-prime stall).
+    int  webAudioStarveBlocks { 0 };
+
     void handleArturiaKeyLabCC (int ccNum, int ccVal);
     void updateParameterValue (const juce::String& paramID, float newValue);
 
@@ -306,6 +372,8 @@ private:
     std::atomic<float> lfo2Value { 0.0f };
     std::atomic<float> midiAftertouch { 0.0f };
     std::atomic<float> midiModWheel { 0.0f };
+    std::atomic<float> midiExpression { 1.0f };  // CC11 expression pedal (0-1)
+    std::atomic<bool>  midiSustainHeld { false }; // CC64 sustain pedal
 
     // ─── Phase 7: Vortex Morph Weight System ───
     std::array<float, 8> vortexWeights;

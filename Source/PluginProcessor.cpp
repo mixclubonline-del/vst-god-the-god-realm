@@ -146,6 +146,12 @@ VSTGodTheGodRealmAudioProcessor::VSTGodTheGodRealmAudioProcessor()
         }
     }
 
+    // Set default sample library path if none was saved
+    if (sampleLibraryPath.isEmpty())
+        sampleLibraryPath = juce::File::getSpecialLocation(juce::File::commonApplicationDataDirectory)
+            .getChildFile("MixxTech").getChildFile("VST God").getChildFile("Samples")
+            .getFullPathName();
+
     if (activeLicenseKey.isNotEmpty())
     {
         startLicenseValidation (activeLicenseKey, false);
@@ -225,8 +231,16 @@ void VSTGodTheGodRealmAudioProcessor::prepareToPlay (double sampleRate, int samp
     spec.numChannels = getTotalNumOutputChannels();
 
     velvetChain.prepare(spec);
+    pedalFxChain.prepare(sampleRate, samplesPerBlock);
     sampler.prepare(sampleRate);
     pantheonSynth.prepare(sampleRate);
+    uiMidiCollector.reset(sampleRate);
+    webResamplerL.reset();
+    webResamplerR.reset();
+    webAudioFifo.reset();
+    webAudioPrimed = false;
+    webAudioFadeGain = 0.0f;
+    webAudioStarveBlocks = 0;
     lfo1.prepare(sampleRate);
     lfo2.prepare(sampleRate);
     
@@ -279,9 +293,107 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // Clear main stereo output before sampler/synth add their signal.
+    // Without this, any uncleared host buffer or oversampler state produces white noise.
+    getBusBuffer(buffer, false, 0).clear();
+
     // Clear all auxiliary outputs at the start of each block
     for (int b = 1; b < getBusCount(false); ++b)
         getBusBuffer(buffer, false, b).clear();
+
+    // ─── Merge UI-triggered MIDI (piano clicks) into this block ────────────
+    {
+        juce::MidiBuffer uiMidi;
+        uiMidiCollector.removeNextBlockOfMessages (uiMidi, buffer.getNumSamples());
+        for (const auto& meta : uiMidi)
+            midiMessages.addEvent (meta.getMessage(), meta.samplePosition);
+    }
+
+    // ─── Web Audio Bridge ────────────────────────────────────────────────────
+    // JS synthesisers (SoundRealm, GodVault, MultiRealm) capture audio via
+    // ScriptProcessor and send it here so it routes through the DAW bus.
+    if (webAudioActive.load (std::memory_order_relaxed))
+    {
+        const int n = buffer.getNumSamples();
+
+        // Target ~50 ms of buffered audio. Deep enough to absorb React render
+        // stalls (typically 20–40 ms) without underrunning; shallow enough that
+        // first-note audio reaches the DAW output in ~50 ms rather than ~120 ms.
+        // The adaptive fade in the consumer handles any short underrun gracefully.
+        const int primeTarget = juce::jmax (2048, (int) (spec.sampleRate * 0.05)); // ~50 ms
+
+        int ready = webAudioFifo.getNumReady();
+
+        // Safety ceiling: only if the buffer grossly overflows (e.g. transport
+        // glitch / the UI bursts a backlog after a stall) do we drop down to the
+        // target. Adaptive resampling normally prevents this.
+        const int ceiling = juce::jmax (primeTarget * 6, (int) (spec.sampleRate * 0.5));
+        if (ready > ceiling)
+        {
+            int drop = ready - primeTarget;
+            int ds1, dn1, ds2, dn2;
+            webAudioFifo.prepareToRead (drop, ds1, dn1, ds2, dn2);
+            webAudioFifo.finishedRead (dn1 + dn2);
+            ready = webAudioFifo.getNumReady();
+        }
+
+        // Priming: don't start reading until we have the full target buffered.
+        // Reading a partial/empty FIFO is what clicked at the start of notes.
+        if (! webAudioPrimed && ready >= primeTarget)
+            webAudioPrimed = true;
+
+        if (webAudioPrimed)
+        {
+            auto* outL = buffer.getWritePointer (0);
+            auto* outR = buffer.getNumChannels() > 1 ? buffer.getWritePointer (1) : outL;
+
+            // Read whatever we have, up to a full block. If it's short we're
+            // starving — fade the gain to 0 across the block so the audio we DO
+            // have tails out smoothly instead of stopping dead (a click). When a
+            // full block is available again, fade back up. ~4 ms ramp.
+            const int   avail    = juce::jmin (ready, n);
+            const float fadeStep = 1.0f / juce::jmax (1.0f, (float) (spec.sampleRate * 0.004));
+            const float target   = (avail >= n) ? 1.0f : 0.0f;
+
+            int s1, n1, s2, n2;
+            webAudioFifo.prepareToRead (avail, s1, n1, s2, n2);
+
+            int idx = 0;
+            for (int i = 0; i < n1; ++i, ++idx)
+            {
+                webAudioFadeGain += juce::jlimit (-fadeStep, fadeStep, target - webAudioFadeGain);
+                outL[idx] += webAudioBufL[s1 + i] * webAudioFadeGain;
+                outR[idx] += webAudioBufR[s1 + i] * webAudioFadeGain;
+            }
+            for (int i = 0; i < n2; ++i, ++idx)
+            {
+                webAudioFadeGain += juce::jlimit (-fadeStep, fadeStep, target - webAudioFadeGain);
+                outL[idx] += webAudioBufL[s2 + i] * webAudioFadeGain;
+                outR[idx] += webAudioBufR[s2 + i] * webAudioFadeGain;
+            }
+            webAudioFifo.finishedRead (n1 + n2);
+
+            // Remaining samples (under-run): no data to add, keep ramping the
+            // gain toward 0 so the next recovery fades in from silence.
+            for (; idx < n; ++idx)
+                webAudioFadeGain += juce::jlimit (-fadeStep, fadeStep, target - webAudioFadeGain);
+
+            if (avail < n)
+            {
+                // Only force a full re-prime after a sustained dropout, so a
+                // momentary jitter gap doesn't cost a 120 ms re-buffer stall.
+                if (++webAudioStarveBlocks > 8)
+                {
+                    webAudioPrimed = false;
+                    webAudioStarveBlocks = 0;
+                }
+            }
+            else
+            {
+                webAudioStarveBlocks = 0;
+            }
+        }
+    }
 
     // ─── LFO phase increment and values calculation ───
     lfo1.setRate(*apvts.getRawParameterValue("lfo1Rate"));
@@ -380,6 +492,22 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
             {
                 midiModWheel.store(static_cast<float>(ccVal) / 127.0f, std::memory_order_relaxed);
             }
+            else if (ccNum == 11) // Expression pedal
+            {
+                midiExpression.store(static_cast<float>(ccVal) / 127.0f, std::memory_order_relaxed);
+            }
+            else if (ccNum == 64) // Sustain pedal
+            {
+                bool sustainOn = ccVal >= 64;
+                bool wasSustained = midiSustainHeld.exchange(sustainOn, std::memory_order_relaxed);
+                // On pedal release in Pantheon tab, trigger deferred note-offs
+                if (wasSustained && !sustainOn && activeTab == 8)
+                {
+                    // Release all Pantheon voices that were held by sustain
+                    for (int n = 0; n < 128; ++n)
+                        pantheonSynth.noteOff(n, 0);
+                }
+            }
             
             // Queue CC event for custom MIDI learn/mapping in the webview
             int ccWp = ccEventWritePos.load(std::memory_order_relaxed);
@@ -424,7 +552,25 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
             }
             else if (msg.isNoteOff())
             {
-                pantheonSynth.noteOff(msg.getNoteNumber(), ch);
+                // Honour sustain pedal — defer note-off until pedal is released
+                if (!midiSustainHeld.load(std::memory_order_relaxed))
+                {
+                    pantheonSynth.noteOff(msg.getNoteNumber(), ch);
+                    // Queue noteOff for the web UI (velocity16=0 = noteOff convention)
+                    int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                    int nextWp = (wp + 1) % kMaxMidiEvents;
+                    if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                    {
+                        auto& evt = midiEventBuffer[wp];
+                        evt.noteNumber = msg.getNoteNumber();
+                        evt.channel = msg.getChannel() - 1;
+                        evt.velocity16 = 0; // 0 = note-off
+                        evt.pitchBend = 0.0f;
+                        evt.pressure = 0.0f;
+                        evt.timestampSamples = metadata.samplePosition;
+                        midiEventWritePos.store(nextWp, std::memory_order_release);
+                    }
+                }
             }
             else if (msg.isPitchWheel())
             {
@@ -457,6 +603,74 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
         {
             if (msg.isNoteOn())
             {
+                // ─── Sample Chopper Tab (tab 2): MIDI note → slice playback ───
+                // C4 (note 60) = slice 0, C#4 = slice 1, etc.
+                // Each note plays the corresponding chop of the currently loaded chopper sample.
+                if (activeTab == 2)
+                {
+                    int chopperTrack = 0; // Chopper always operates on track 0 as its primary slot
+                    if (sampler.hasSample(chopperTrack))
+                    {
+                        int sliceIdx = msg.getNoteNumber() - 60; // C4 = slice 0
+                        float velocity = static_cast<float>(msg.getVelocity()) / 127.0f;
+                        float finalPitch = 0.0f; // Chops play at natural pitch (no transpose)
+                        float finalPan = 0.0f;
+
+                        float start = 0.0f;
+                        float end = 1.0f;
+                        bool validSlice = false;
+                        {
+                            const juce::ScopedLock sl(stepLock);
+                            auto& slices = tracks[chopperTrack].slices;
+                            if (sliceIdx >= 0 && sliceIdx < static_cast<int>(slices.size()))
+                            {
+                                start = slices[sliceIdx].start;
+                                end = slices[sliceIdx].end;
+                                validSlice = true;
+                            }
+                        }
+
+                        // Only play if we have a valid slice — don't fall through to full sample
+                        if (validSlice)
+                        {
+                            bool snapToZeroVal = true;
+                            if (auto* param = apvts.getRawParameterValue("snapToZero"))
+                                snapToZeroVal = param->load() >= 0.5f;
+
+                            bool snapToTransientVal = true;
+                            if (auto* param = apvts.getRawParameterValue("snapToTransient"))
+                                snapToTransientVal = param->load() >= 0.5f;
+
+                            std::vector<float> transients;
+                            {
+                                const juce::ScopedLock sl(analysisLock);
+                                transients = trackAnalysis[chopperTrack].transients;
+                            }
+
+                            sampler.trigger(chopperTrack, velocity, finalPitch, finalPan, 0.5f,
+                                            start, end, false, snapToZeroVal, snapToTransientVal, transients);
+
+                            // Queue noteOn for the web UI so bridge.ts forwards it via neuralInputBus
+                            {
+                                int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                                int nextWp = (wp + 1) % kMaxMidiEvents;
+                                if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                                {
+                                    auto& evt = midiEventBuffer[wp];
+                                    evt.noteNumber = msg.getNoteNumber();
+                                    evt.channel = 15; // channel 15 = Chopper DAW MIDI marker
+                                    evt.velocity16 = static_cast<uint32_t>(msg.getVelocity()) * 516;
+                                    evt.pitchBend = 0.0f; evt.pressure = 0.0f;
+                                    evt.timestampSamples = metadata.samplePosition;
+                                    midiEventWritePos.store(nextWp, std::memory_order_release);
+                                }
+                            }
+                        }
+                        // If sliceIdx < 0 or beyond slice list: play nothing (key outside mapped range)
+                    }
+                }
+                else
+                {
                 // 1. Gather active slots (loaded and powered)
                 std::vector<int> activeSlots;
                 for (int i = 0; i < 6; ++i)
@@ -585,8 +799,53 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
                         sampler.trigger(slotIdx, finalVelocity, finalPitch, finalPan, 0.5f, 0.0f, 1.0f, false,
                                         snapToZeroVal, snapToTransientVal, transients);
                     }
-                }
 
+                    // Queue noteOn for web UI — bridge.ts forwards to neuralInputBus → web audio plays
+                    {
+                        int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                        int nextWp = (wp + 1) % kMaxMidiEvents;
+                        if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                        {
+                            auto& evt = midiEventBuffer[wp];
+                            evt.noteNumber = msg.getNoteNumber();
+                            evt.channel = 0; // channel 0 = Multi-Realm
+                            evt.velocity16 = static_cast<uint32_t>(msg.getVelocity()) * 516;
+                            evt.pitchBend = 0.0f; evt.pressure = 0.0f;
+                            evt.timestampSamples = metadata.samplePosition;
+                            midiEventWritePos.store(nextWp, std::memory_order_release);
+                        }
+                    }
+                }
+                else
+                {
+                    // ─── No sampler slots active: fall through to Pantheon synth ───
+                    // Allows melody recording in FL Studio even without samples loaded.
+                    float vel = static_cast<float>(msg.getVelocity()) / 127.0f;
+                    pantheonSynth.noteOn(msg.getNoteNumber(), vel, 0);
+                }
+                } // end non-chopper tab
+            }
+            else if (msg.isNoteOff())
+            {
+                // Release fallback synth voices triggered when no sampler slots were active
+                pantheonSynth.noteOff(msg.getNoteNumber(), 0);
+                // Queue noteOff for the web UI (velocity16=0 = noteOff convention)
+                int wp = midiEventWritePos.load(std::memory_order_relaxed);
+                int nextWp = (wp + 1) % kMaxMidiEvents;
+                if (nextWp != midiEventReadPos.load(std::memory_order_acquire))
+                {
+                    auto& evt = midiEventBuffer[wp];
+                    evt.noteNumber = msg.getNoteNumber();
+                    evt.channel = msg.getChannel() - 1;
+                    evt.velocity16 = 0; // 0 = note-off
+                    evt.pitchBend = 0.0f;
+                    evt.pressure = 0.0f;
+                    evt.timestampSamples = metadata.samplePosition;
+                    midiEventWritePos.store(nextWp, std::memory_order_release);
+                }
+            }
+            if (msg.isNoteOn())
+            {
                 int wp = midiEventWritePos.load(std::memory_order_relaxed);
                 int nextWp = (wp + 1) % kMaxMidiEvents;
                 
@@ -615,6 +874,17 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     if (playHead != nullptr)
     {
         auto position = playHead->getPosition();
+        
+        // Always try to get BPM from the host first — this ensures the plugin
+        // stays in sync with the DAW regardless of whether the transport is playing.
+        {
+            auto tempo = position->getBpm();
+            if (tempo.hasValue() && *tempo > 0.0)
+                transport.bpm.store(*tempo, std::memory_order_relaxed);
+            else
+                transport.bpm.store(static_cast<double>(apvts.getRawParameterValue("globalBpm")->load()), std::memory_order_relaxed);
+        }
+
         if (position.hasValue() && position->getIsPlaying())
         {
             transport.isPlaying.store(true, std::memory_order_relaxed);
@@ -629,8 +899,9 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
                 {
                     int activePatternIdx = static_cast<int>(*apvts.getRawParameterValue("activePattern"));
                     bool isFillMode = *apvts.getRawParameterValue("isFillMode") > 0.5f;
-                    float bpm = *apvts.getRawParameterValue("globalBpm");
-                    transport.bpm.store(static_cast<double>(bpm), std::memory_order_relaxed);
+                    // Use the already-resolved transport.bpm (which prefers host tempo above)
+                    double resolvedBpm = transport.bpm.load(std::memory_order_relaxed);
+                    float bpm = static_cast<float>(resolvedBpm > 0.0 ? resolvedBpm : static_cast<double>(apvts.getRawParameterValue("globalBpm")->load()));
                     int samplesPer16th = static_cast<int>((60.0 / bpm / 4.0) * getSampleRate());
                     
                     // Increment cycle counter every 16 steps (wrap at 65536 to prevent overflow)
@@ -705,11 +976,7 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
                     lastSixteenthNote = currentSixteenth;
                 }
             }
-            
-            // Also try to get BPM from host tempo
-            auto tempo = position->getBpm();
-            if (tempo.hasValue())
-                transport.bpm.store(*tempo, std::memory_order_relaxed);
+            // transport.bpm already set at the top of this playHead block
         }
         else
         {
@@ -734,24 +1001,46 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     // ═══════════════════════════════════════════════════════════
     // Sampler Processing (Multi-Output Routing)
+    // Only render the JUCE sampler for Chopper (tab 2, track 0).
     // ═══════════════════════════════════════════════════════════
-    for (int t = 0; t < 8; ++t)
+    // JUCE sampler rendering:
+    //   Tab 2 (Chopper)     — sample slices triggered by MIDI notes (C4=slice 0)
+    //   Tab 0 (Multi-Realm) — sample slots triggered by MIDI; enables DAW MIDI playback.
+    //                         Web audio handles OSC slots; JUCE handles sample slots.
+    // ═══════════════════════════════════════════════════════════
+    // Suppress the C++ sampler while the web engine is live (editor open and
+    // streaming): on tabs 0 & 2 the web instruments produce the sound, so
+    // rendering the sampler too would double the note ~50ms apart = phasing.
+    // When the web goes quiet (UI closed, DAW bounce/playback), the sampler
+    // takes over so notes still sound.
+    // 3-second window: wider than the worklet idle-gate tail (~1 s) so a normal
+    // rest between notes never lets the C++ sampler re-enter. The sampler only
+    // takes over after 3 s of complete silence (editor closed / offline bounce).
+    const bool webLive = (juce::Time::getMillisecondCounter()
+                          - webAudioLastMs.load (std::memory_order_relaxed)) < 3000;
+
+    // Tabs: 0=Multi-Realm, 2=Sample Chopper, 7=Preset Vault, 9=Pedal Realm
+    // Render native sampler on any instrument tab.
+    if (activeTab == 0 || activeTab == 2 || activeTab == 7)
     {
-        int route = static_cast<int>(*apvts.getRawParameterValue("slotOutputRoute_" + juce::String(t)));
-        bool routedToAux = false;
-        if (route > 0 && route < getBusCount(false))
+        for (int t = 0; t < 8; ++t)
         {
-            auto& auxBus = *getBus(false, route);
-            if (auxBus.isEnabled())
+            int route = static_cast<int>(*apvts.getRawParameterValue("slotOutputRoute_" + juce::String(t)));
+            bool routedToAux = false;
+            if (route > 0 && route < getBusCount(false))
             {
-                auto auxBuffer = getBusBuffer(buffer, false, route);
-                sampler.processTrack(t, auxBuffer);
-                routedToAux = true;
+                auto& auxBus = *getBus(false, route);
+                if (auxBus.isEnabled())
+                {
+                    auto auxBuffer = getBusBuffer(buffer, false, route);
+                    sampler.processTrack(t, auxBuffer);
+                    routedToAux = true;
+                }
             }
-        }
-        if (!routedToAux)
-        {
-            sampler.processTrack(t, buffer);
+            if (!routedToAux)
+            {
+                sampler.processTrack(t, buffer);
+            }
         }
     }
 
@@ -799,21 +1088,39 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     pantheonSynth.setMacros(modulatedEnergy, divinity, width, realm, aura, age);
     
-    int synthRoute = static_cast<int>(*apvts.getRawParameterValue("synthOutputRoute"));
-    bool synthRoutedToAux = false;
-    if (synthRoute > 0 && synthRoute < getBusCount(false))
+    // Electric Pantheon synth rendering:
+    //   Tab 8 (Electric Pantheon): always render — this is its primary tab.
+    //   All other non-sampler tabs (!= 0, 2) when !webLive: render as a DAW-MIDI
+    //   fallback. noteOn is already routed to pantheonSynth on these tabs when no
+    //   sampler slots are active (see the fallback at the MIDI loop above). Without
+    //   this render condition those notes trigger voices that never get processed,
+    //   producing complete silence. We exclude tabs 0 and 2 because the JUCE sampler
+    //   handles those; when webLive the JS bridge handles all tabs and the double-path
+    //   phasing risk goes away naturally.
+    // Electric Pantheon is now a WEB instrument routed through the capture bridge
+    // (see ElectricPantheon.tsx → audioEngine.masterBus), exactly like every other
+    // tab. The native pantheonSynth is therefore only a safety net for tab 8 when
+    // the web bridge is momentarily quiet (editor closed / offline bounce). It must
+    // NOT render as a universal fallback on every tab — doing that played one native
+    // "default sound" on all tabs and masked the real per-tab web audio.
+    if (activeTab == 8)
     {
-        auto& auxBus = *getBus(false, synthRoute);
-        if (auxBus.isEnabled())
+        int synthRoute = static_cast<int>(*apvts.getRawParameterValue("synthOutputRoute"));
+        bool synthRoutedToAux = false;
+        if (synthRoute > 0 && synthRoute < getBusCount(false))
         {
-            auto auxBuffer = getBusBuffer(buffer, false, synthRoute);
-            pantheonSynth.process(auxBuffer);
-            synthRoutedToAux = true;
+            auto& auxBus = *getBus(false, synthRoute);
+            if (auxBus.isEnabled())
+            {
+                auto auxBuffer = getBusBuffer(buffer, false, synthRoute);
+                pantheonSynth.process(auxBuffer);
+                synthRoutedToAux = true;
+            }
         }
-    }
-    if (!synthRoutedToAux)
-    {
-        pantheonSynth.process(buffer);
+        if (!synthRoutedToAux)
+        {
+            pantheonSynth.process(buffer);
+        }
     }
 
     // ─── Per-Track Peak Metering (post-sampler, pre-master) ───
@@ -884,10 +1191,27 @@ void VSTGodTheGodRealmAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
 
     // ═══════════════════════════════════════════════════════════
     // Mastering DSP Processing
+    // Skip the mastering chain when the buffer is silent — the 4x polyphase
+    // IIR oversampler in DivineHeatSaturator can produce ring artifacts on
+    // init even for zero input, which the DAW then outputs as a tone.
     // ═══════════════════════════════════════════════════════════
-    juce::dsp::AudioBlock<float> block(buffer);
-    juce::dsp::ProcessContextReplacing<float> context(block);
-    velvetChain.process(context);
+    pedalFxChain.process (buffer);
+    {
+        bool hasSignal = false;
+        const int numSamplesM = buffer.getNumSamples();
+        for (int ch = 0; ch < buffer.getNumChannels() && !hasSignal; ++ch)
+        {
+            const float* data = buffer.getReadPointer (ch);
+            for (int i = 0; i < numSamplesM && !hasSignal; ++i)
+                if (data[i] * data[i] > 1e-12f) hasSignal = true;
+        }
+        if (hasSignal)
+        {
+            juce::dsp::AudioBlock<float> block (buffer);
+            juce::dsp::ProcessContextReplacing<float> context (block);
+            velvetChain.process (context);
+        }
+    }
 
     // ═══════════════════════════════════════════════════════════
     // Demo Watermark (Periodic Volume Dip)
@@ -1011,6 +1335,28 @@ bool VSTGodTheGodRealmAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* VSTGodTheGodRealmAudioProcessor::createEditor()
 {
+    // Reset bridge state so stale FIFO data from a previous editor session
+    // can't prime the output before the new WebView sends clean audio.
+    // The worklet also discards its first ~1.5 s (warmup window), so both
+    // sides agree that nothing should play until the graph has settled.
+    webAudioActive.store (false, std::memory_order_relaxed);
+    webAudioPrimed = false;
+    webAudioStarveBlocks = 0;
+    webAudioFadeGain = 0.0f;
+    {
+        int s1, n1, s2, n2;
+        const int toClear = webAudioFifo.getNumReady();
+        if (toClear > 0)
+        {
+            webAudioFifo.prepareToRead (toClear, s1, n1, s2, n2);
+            webAudioFifo.finishedRead (n1 + n2);
+        }
+    }
+    // Prime webAudioLastMs so the webLive gate suppresses the C++ sampler
+    // during the JS worklet warmup (~430 ms, 10 chunks @ 48 kHz).
+    // Subtract 2400 from now so the 3000 ms gate expires after ~600 ms,
+    // just after the first web audio chunks arrive and take over.
+    webAudioLastMs.store (juce::Time::getMillisecondCounter() - 2400, std::memory_order_relaxed);
     return new VSTGodTheGodRealmAudioProcessorEditor (*this);
 }
 
@@ -1022,7 +1368,15 @@ void VSTGodTheGodRealmAudioProcessor::getStateInformation (juce::MemoryBlock& de
     // Add sequencer data
     auto* tracksXml = serializeTracks().release();
     xml->addChildElement(tracksXml);
-    
+
+    // Add the full web-UI parameter snapshot (params not backed by APVTS).
+    if (webUiStateJson.isNotEmpty())
+    {
+        auto* webXml = new juce::XmlElement("WEBUI_STATE");
+        webXml->addTextElement(webUiStateJson);
+        xml->addChildElement(webXml);
+    }
+
     copyXmlToBinary (*xml, destData);
 }
 
@@ -1037,6 +1391,11 @@ void VSTGodTheGodRealmAudioProcessor::setStateInformation (const void* data, int
         // Load sequencer data
         if (auto* tracksXml = xmlState->getChildByName("SEQUENCER_STATE"))
             deserializeTracks(tracksXml);
+
+        // Stash the web-UI snapshot; the editor pushes it back to the web UI
+        // once it loads and requests parameters (see GET_PARAMETERS handler).
+        if (auto* webXml = xmlState->getChildByName("WEBUI_STATE"))
+            pendingRestoreJson = webXml->getAllSubText();
     }
 }
 
@@ -1055,12 +1414,32 @@ void VSTGodTheGodRealmAudioProcessor::loadSampleForTrack(int trackIdx, const juc
             
             sampler.setSample(trackIdx, buffer, reader->sampleRate);
             tracks[trackIdx].samplePath = path;
-            
+
             analyzeSample(trackIdx, *buffer, reader->sampleRate);
-            
+
             delete reader;
         }
     }
+}
+
+void VSTGodTheGodRealmAudioProcessor::loadSampleFromBytes(int trackIdx, const juce::MemoryBlock& data)
+{
+    if (trackIdx < 0 || trackIdx >= 8 || data.getSize() == 0) return;
+
+    // createReaderFor takes ownership of the stream; it sniffs the format
+    // (wav/ogg/flac/aiff) from the bytes, so no extension is needed.
+    auto stream = std::make_unique<juce::MemoryInputStream>(data.getData(), data.getSize(), false);
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(std::move(stream)));
+    if (reader == nullptr) return;
+
+    auto buffer = std::make_shared<juce::AudioBuffer<float>>(
+        static_cast<int>(reader->numChannels),
+        static_cast<int>(reader->lengthInSamples));
+    reader->read(buffer.get(), 0, static_cast<int>(reader->lengthInSamples), 0, true, true);
+
+    sampler.setSample(trackIdx, buffer, reader->sampleRate);
+    tracks[trackIdx].samplePath = "mem://" + juce::String(trackIdx);
+    analyzeSample(trackIdx, *buffer, reader->sampleRate);
 }
 
 void VSTGodTheGodRealmAudioProcessor::updateStep(int trackIdx, const juce::String& patternName, int stepIdx, const juce::var& stepData)
@@ -1198,6 +1577,64 @@ std::vector<MidiCCEvent> VSTGodTheGodRealmAudioProcessor::drainCCEvents()
     
     ccEventReadPos.store(rp, std::memory_order_release);
     return events;
+}
+
+void VSTGodTheGodRealmAudioProcessor::pushWebAudio (const float* left, const float* right, int numSamples, double sourceSampleRate)
+{
+    if (numSamples <= 0) return;
+
+    const double dawRate = spec.sampleRate > 0.0 ? spec.sampleRate : 48000.0;
+    const double srcRate = sourceSampleRate > 0.0 ? sourceSampleRate : dawRate;
+
+    // Base ratio: input samples consumed per output sample, converting the
+    // web-audio context rate to the DAW rate.
+    const double nominalRatio = srcRate / dawRate;
+
+    // ─── Adaptive drift correction ───────────────────────────────────────────
+    // The web-audio clock and the DAW clock are independent and drift apart over
+    // time. Instead of hard-dropping samples on overflow (which splices the
+    // waveform and clicks), we gently nudge the resample ratio so the FIFO stays
+    // near a target fill. The pitch variation is capped at ±0.4%, well below the
+    // threshold of audibility, and it eliminates both overflow and underflow.
+    const int    target = juce::jmax (2048, (int) (dawRate * 0.05)); // ~50ms — matches consumer prime target
+    const int    ready  = webAudioFifo.getNumReady();
+    const double err    = (double) (ready - target) / (double) juce::jmax (1, target);
+    const double correction = 1.0 + juce::jlimit (-0.004, 0.004, err * 0.02);
+    const double speedRatio = nominalRatio * correction;
+
+    const int numOut = (int) std::floor (numSamples / speedRatio);
+    if (numOut <= 0) return;
+
+    juce::HeapBlock<float> outL ((size_t) numOut), outR ((size_t) numOut);
+    webResamplerL.process (speedRatio, left,  outL.get(), numOut);
+    webResamplerR.process (speedRatio, right, outR.get(), numOut);
+
+    const int space = webAudioFifo.getFreeSpace();
+    const int toWrite = juce::jmin (numOut, space);
+    if (toWrite <= 0) return;
+
+    int s1, n1, s2, n2;
+    webAudioFifo.prepareToWrite (toWrite, s1, n1, s2, n2);
+
+    if (n1 > 0) { memcpy (webAudioBufL + s1, outL.get(),       n1 * sizeof (float)); memcpy (webAudioBufR + s1, outR.get(),       n1 * sizeof (float)); }
+    if (n2 > 0) { memcpy (webAudioBufL + s2, outL.get() + n1,  n2 * sizeof (float)); memcpy (webAudioBufR + s2, outR.get() + n1,  n2 * sizeof (float)); }
+
+    webAudioFifo.finishedWrite (n1 + n2);
+    webAudioActive.store (true, std::memory_order_relaxed);
+    webAudioLastMs.store (juce::Time::getMillisecondCounter(), std::memory_order_relaxed);
+}
+
+void VSTGodTheGodRealmAudioProcessor::triggerUiNoteOn (int note, int velocity)
+{
+    // Called from the UI/message thread — queues a note for the audio thread via MidiMessageCollector
+    uiMidiCollector.addMessageToQueue (
+        juce::MidiMessage::noteOn (1, note, static_cast<juce::uint8> (juce::jlimit (1, 127, velocity))));
+}
+
+void VSTGodTheGodRealmAudioProcessor::triggerUiNoteOff (int note)
+{
+    uiMidiCollector.addMessageToQueue (
+        juce::MidiMessage::noteOff (1, note, static_cast<juce::uint8> (0)));
 }
 
 void VSTGodTheGodRealmAudioProcessor::updateParameterValue (const juce::String& paramID, float newValue)
@@ -1468,7 +1905,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout VSTGodTheGodRealmAudioProces
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("masterHeatCrunch", 1), "Heat Crunch", 0.0f, 100.0f, 10.0f));
 
     // --- Navigation & State ---
-    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activeTab", 1), "Active Tab", 0, 8, 0));
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activeTab", 1), "Active Tab", 0, 9, 7)); // 7=Preset Vault, 9=Pedal Realm
     layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("selectedPreset", 1), "Selected Preset", 0, 511, 0));
     layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID("activePattern", 1), "Active Pattern", 0, 1, 0));
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("isFillMode", 1), "Fill Mode", false));
@@ -1884,6 +2321,21 @@ void VSTGodTheGodRealmAudioProcessor::updateVortexWeights(float x, float y)
             vortexWeights[i] = (i == 0) ? 1.0f : 0.0f;
         }
     }
+}
+
+void VSTGodTheGodRealmAudioProcessor::setPedalMasterActive(bool active)
+{
+    pedalFxChain.setActive(active);
+}
+
+void VSTGodTheGodRealmAudioProcessor::setPedalEnabled(int pedalIdx, bool enabled)
+{
+    pedalFxChain.setPedalEnabled(pedalIdx, enabled);
+}
+
+void VSTGodTheGodRealmAudioProcessor::setPedalParam(int pedalIdx, const juce::String& key, float value)
+{
+    pedalFxChain.setPedalParam(pedalIdx, key, value);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

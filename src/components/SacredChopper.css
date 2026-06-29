@@ -14,6 +14,107 @@
   box-shadow: 0 8px 32px rgba(255, 30, 0, 0.1), inset 0 1px 0 rgba(255, 100, 100, 0.1);
   overflow: hidden;
   position: relative;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* ─── Drag-over highlight ring ─── */
+.sacred-chopper--drag-over {
+  border-color: rgba(168, 85, 247, 0.9);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4), 0 8px 32px rgba(168, 85, 247, 0.3);
+}
+
+/* ─── Full-panel drop overlay ─── */
+.sacred-chopper__drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 2, 20, 0.82);
+  backdrop-filter: blur(6px);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.sacred-chopper__drop-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 48px;
+  border: 2px dashed rgba(168, 85, 247, 0.8);
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.06);
+  animation: chopper-drop-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes chopper-drop-pulse {
+  0%, 100% { border-color: rgba(168, 85, 247, 0.8); box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
+  50%       { border-color: rgba(217, 70, 239, 1.0); box-shadow: 0 0 36px rgba(217, 70, 239, 0.4); }
+}
+
+.sacred-chopper__drop-icon {
+  font-size: 36px;
+  line-height: 1;
+  color: #a855f7;
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.8);
+  animation: chopper-bounce 0.9s ease-in-out infinite;
+}
+
+@keyframes chopper-bounce {
+  0%, 100% { transform: translateY(0);   }
+  50%       { transform: translateY(6px); }
+}
+
+.sacred-chopper__drop-label {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(224, 214, 255, 0.95);
+  text-transform: uppercase;
+}
+
+.sacred-chopper__drop-sub {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(168, 85, 247, 0.7);
+  text-transform: uppercase;
+}
+
+/* ─── Toast notifications ─── */
+.sacred-chopper__toast {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: chopper-toast-in 0.2s ease-out forwards;
+}
+
+@keyframes chopper-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);   }
+}
+
+.sacred-chopper__toast--loading {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  color: #c084fc;
+}
+
+.sacred-chopper__toast--error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
 }
 
 .sacred-chopper::before {

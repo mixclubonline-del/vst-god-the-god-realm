@@ -25,35 +25,35 @@
   background: linear-gradient(135deg, rgba(10, 10, 15, 0.75) 0%, rgba(5, 5, 8, 0.9) 100%);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.32);
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
   border-bottom: 1px solid rgba(0, 0, 0, 0.5);
   box-shadow:
     0 12px 40px 0 rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.27),
     inset 0 -1px 0 rgba(0, 0, 0, 0.4);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  border-left: 1px solid rgba(255, 255, 255, 0.04);
-  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.29);
+  border-left: 1px solid rgba(255, 255, 255, 0.26);
+  border-right: 1px solid rgba(255, 255, 255, 0.24);
   border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-top-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.27);
+  border-top-color: rgba(255, 255, 255, 0.36);
   transform: translateY(-4px) scale(1.01);
   box-shadow:
     0 20px 60px 0 rgba(0, 0, 0, 0.5),
     0 0 20px rgba(255, 215, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .ember-glow {
@@ -237,7 +237,7 @@
 
 /* Skeleton Loader */
 .da-skeleton {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 215, 0, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.24) 25%, rgba(255, 215, 0, 0.06) 50%, rgba(255, 255, 255, 0.24) 75%);
   background-size: 200% 100%;
   animation: da-shimmer 1.5s infinite ease-in-out;
   border-radius: 8px;
@@ -280,16 +280,16 @@
   text-transform: uppercase;
   padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  color: rgba(255, 255, 255, 0.47);
 }
 
 /* Favorite Heart */
 .da-fav-btn {
   opacity: 0;
   transition: all 0.2s;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.42);
   cursor: pointer;
   background: none;
   border: none;
@@ -354,7 +354,7 @@
 
 /* Row alternating */
 .da-row-alt:nth-child(even) {
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(255, 255, 255, 0.23);
 }
 
 /* Hall of Records shell */
@@ -415,7 +415,7 @@
 
 .da-hall-state p {
   max-width: 360px;
-  color: rgba(248, 221, 210, 0.48);
+  color: rgba(248, 221, 210, 0.70);
   font-size: 12px;
 }
 
@@ -438,7 +438,7 @@
 .da-inspector {
   background:
     linear-gradient(180deg, rgba(19, 15, 14, 0.95), rgba(5, 5, 6, 0.97)),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 9px);
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0 1px, transparent 1px 9px);
   border-color: rgba(255, 215, 0, 0.13);
 }
 
@@ -503,8 +503,8 @@
   position: relative;
   min-height: 54px;
   padding: 12px 38px 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.24);
   color: rgba(248, 221, 210, 0.72);
   text-align: left;
   border-radius: 8px;
@@ -601,7 +601,7 @@
 
 .da-room-tone {
   margin-top: 3px;
-  color: rgba(248, 221, 210, 0.34);
+  color: rgba(248, 221, 210, 0.56);
   font-size: 9px;
   line-height: 1.2;
 }
@@ -646,7 +646,7 @@
 }
 
 .da-records-header p {
-  color: rgba(248, 221, 210, 0.34);
+  color: rgba(248, 221, 210, 0.56);
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
 }
@@ -664,10 +664,10 @@
   align-items: center;
   gap: 8px;
   padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.29);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.34);
-  color: rgba(248, 221, 210, 0.42);
+  color: rgba(248, 221, 210, 0.64);
 }
 
 .da-search input {
@@ -681,7 +681,7 @@
 }
 
 .da-search input::placeholder {
-  color: rgba(248, 221, 210, 0.22);
+  color: rgba(248, 221, 210, 0.44);
 }
 
 .da-search-tools > button {
@@ -690,10 +690,10 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.29);
   border-radius: 7px;
-  color: rgba(248, 221, 210, 0.42);
-  background: rgba(255, 255, 255, 0.035);
+  color: rgba(248, 221, 210, 0.64);
+  background: rgba(255, 255, 255, 0.26);
 }
 
 .da-search-tools > button.is-active {
@@ -733,10 +733,10 @@
   grid-template-columns: 34px minmax(0, 1fr);
   gap: 10px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 8px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.22)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.27), rgba(0, 0, 0, 0.22)),
     radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--room-accent) 10%, transparent), transparent 42%);
   color: rgba(248, 221, 210, 0.78);
   text-align: left;
@@ -833,7 +833,7 @@
 .da-relic-copy small {
   margin-top: 4px;
   overflow: hidden;
-  color: rgba(248, 221, 210, 0.36);
+  color: rgba(248, 221, 210, 0.58);
   font-size: 9px;
   letter-spacing: 0.08em;
   text-overflow: ellipsis;
@@ -860,10 +860,10 @@
 .da-tag-cloud span {
   max-width: 120px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.29);
   border-radius: 999px;
   padding: 2px 6px;
-  color: rgba(248, 221, 210, 0.42);
+  color: rgba(248, 221, 210, 0.64);
   font-size: 8px;
   font-style: normal;
   letter-spacing: 0.08em;
@@ -887,7 +887,7 @@
 }
 
 .da-relic-actions b {
-  color: rgba(248, 221, 210, 0.32);
+  color: rgba(248, 221, 210, 0.54);
   font-size: 8px;
 }
 
@@ -899,7 +899,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: rgba(248, 221, 210, 0.2);
+  color: rgba(248, 221, 210, 0.42);
   text-align: center;
 }
 
@@ -912,7 +912,7 @@
 }
 
 .da-empty-records p {
-  color: rgba(248, 221, 210, 0.36);
+  color: rgba(248, 221, 210, 0.58);
   font-size: 11px;
 }
 
@@ -931,7 +931,7 @@
   display: flex;
   flex-direction: column;
   gap: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.30);
   border-radius: 12px;
   background: rgba(10, 10, 12, 0.8);
   backdrop-filter: blur(10px);
@@ -990,7 +990,7 @@
 .da-inspector-card.is-playing {
   border-color: color-mix(in srgb, var(--room-accent) 30%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.29),
     inset 0 -1px 0 rgba(0,0,0,0.5),
     inset 0 0 30px color-mix(in srgb, var(--room-accent) 3%, transparent),
     0 12px 40px rgba(0,0,0,0.6),
@@ -1034,7 +1034,7 @@
 }
 
 .da-inspector-card p {
-  color: rgba(248, 221, 210, 0.44);
+  color: rgba(248, 221, 210, 0.66);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -1061,11 +1061,11 @@
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .da-inspector-card dt {
-  color: rgba(248, 221, 210, 0.34);
+  color: rgba(248, 221, 210, 0.56);
   font-size: 9px;
   text-transform: uppercase;
 }
@@ -1139,7 +1139,7 @@
   display: grid;
   place-items: center;
   gap: 8px;
-  color: rgba(248, 221, 210, 0.22);
+  color: rgba(248, 221, 210, 0.44);
   text-align: center;
 }
 
@@ -1177,13 +1177,13 @@
   max-width: 140px;
   overflow: hidden;
   padding: 6px 9px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.26);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .da-recall-strip small {
-  color: rgba(248, 221, 210, 0.28);
+  color: rgba(248, 221, 210, 0.50);
   font-size: 10px;
 }
 
@@ -1216,7 +1216,7 @@
   font-size: 8px;
   font-weight: 900;
   letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.47);
   text-transform: uppercase;
 }
 
@@ -1231,8 +1231,8 @@
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.27);
   border-radius: 6px;
   color: rgba(248, 221, 210, 0.72);
   text-align: left;
@@ -1242,8 +1242,8 @@
 }
 
 .da-similar-btn:hover {
-  background: color-mix(in srgb, var(--room-accent) 6%, rgba(255, 255, 255, 0.04));
-  border-color: color-mix(in srgb, var(--room-accent) 25%, rgba(255, 255, 255, 0.1));
+  background: color-mix(in srgb, var(--room-accent) 6%, rgba(255, 255, 255, 0.26));
+  border-color: color-mix(in srgb, var(--room-accent) 25%, rgba(255, 255, 255, 0.32));
   color: #fff;
 }
 

@@ -10,14 +10,54 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(juce)
 
+# Patch JUCE's WebView2 initialization so AudioContext.resume() is allowed
+# without a user gesture. WebView2 uses Chromium's autoplay policy by default,
+# which blocks programmatic resume() from evaluateJavascript() (no user-
+# activation status). --autoplay-policy=no-user-gesture-required disables that.
+if(WIN32)
+    set(_juce_webview2_cpp
+        "${juce_SOURCE_DIR}/modules/juce_gui_extra/native/juce_WebBrowserComponent_windows.cpp")
+    if(EXISTS "${_juce_webview2_cpp}")
+        file(READ "${_juce_webview2_cpp}" _juce_wv2_content)
+        string(FIND "${_juce_wv2_content}" "autoplay-policy=no-user-gesture-required" _already_patched)
+        if(_already_patched EQUAL -1)
+            string(REPLACE
+                "auto webViewOptions = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();"
+                "auto webViewOptions = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();\n        webViewOptions->put_AdditionalBrowserArguments(L\"--autoplay-policy=no-user-gesture-required\");"
+                _juce_wv2_patched "${_juce_wv2_content}")
+            file(WRITE "${_juce_webview2_cpp}" "${_juce_wv2_patched}")
+            message(STATUS "Applied WebView2 autoplay patch to JUCE")
+        endif()
+    endif()
+endif()
+
+# Platform-conditional plugin formats (AU is macOS-only).
+# Standalone is built too: in the standalone wrapper the app reports
+# isStandalone=true, so the web instruments play straight through the system
+# output (every tab is audible) instead of routing through the host bridge.
+if(WIN32)
+    set(_PLUGIN_FORMATS VST3 Standalone)
+else()
+    set(_PLUGIN_FORMATS VST3 AU Standalone)
+endif()
+
 # Create the Audio Plugin
 juce_add_plugin(VSTGodTheGodRealm
     COMPANY_NAME "MixxTech"
     PLUGIN_MANUFACTURER_CODE "Mixt"
     PLUGIN_CODE "Vgod"
-    FORMATS VST3 AU Standalone
+    FORMATS ${_PLUGIN_FORMATS}
     PRODUCT_NAME "VST God - The God Realm"
     BUNDLE_ID "com.mixxtech.vstgod.thegodrealm"
+    IS_SYNTH TRUE
+    # Auto-install the freshly built .vst3 into the system VST3 folder after every
+    # build, so the DAW always loads the latest binary. Without this, the build
+    # output sat in build/ and a stale hand-copied plugin kept loading instead.
+    COPY_PLUGIN_AFTER_BUILD TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    VST3_CATEGORIES "Instrument|Synth"
     NEEDS_WEB_BROWSER TRUE
     NEEDS_CURL TRUE
 )
@@ -61,3 +101,18 @@ target_link_libraries(VSTGodTheGodRealm
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+# ─── Windows: WebView2 SDK for embedded React UI ───
+# Run scripts/setup-webview2-sdk.bat ONCE before building to download the SDK.
+if(WIN32)
+    set(WEBVIEW2_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/_webview2_sdk")
+
+    if(EXISTS "${WEBVIEW2_SDK_DIR}/build/native/include/WebView2.h")
+        message(STATUS "WebView2 SDK found at ${WEBVIEW2_SDK_DIR}")
+        target_include_directories(VSTGodTheGodRealm PRIVATE "${WEBVIEW2_SDK_DIR}/build/native/include")
+        target_compile_definitions(VSTGodTheGodRealm PUBLIC JUCE_USE_WIN_WEBVIEW2=1)
+        target_link_libraries(VSTGodTheGodRealm PRIVATE "${WEBVIEW2_SDK_DIR}/build/native/x64/WebView2Loader.dll.lib")
+    else()
+        message(WARNING "WebView2 SDK not found. Run scripts/setup-webview2-sdk.bat first, then reconfigure. Building without WebView2 (UI will be blank in VST mode).")
+    endif()
+endif()

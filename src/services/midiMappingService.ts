@@ -46,10 +46,108 @@ class MidiMappingService {
 
   private unsubBus: (() => void) | null = null;
 
+  // ═══ Built-in device CC presets ═══
+  // Each entry mirrors the JUCE handleArturiaKeyLabCC / generic CC convention
+  private static readonly DEVICE_PRESETS: Record<string, Array<{ cc: number; channel: number; targetId: string; targetLabel: string }>> = {
+    'arturia-keylab': [
+      // Global (all tabs)
+      { cc: 7,  channel: 0, targetId: 'masterVolume',       targetLabel: 'Master Volume' },
+      { cc: 85, channel: 0, targetId: 'masterVolume',       targetLabel: 'Master Volume (Fader 9)' },
+      // Knobs 1-9 (sampler tab defaults — match JUCE handleArturiaKeyLabCC)
+      { cc: 74, channel: 0, targetId: 'slotPan_0',          targetLabel: 'Pan — Slot 1' },
+      { cc: 71, channel: 0, targetId: 'slotPan_1',          targetLabel: 'Pan — Slot 2' },
+      { cc: 76, channel: 0, targetId: 'slotPan_2',          targetLabel: 'Pan — Slot 3' },
+      { cc: 77, channel: 0, targetId: 'slotPan_3',          targetLabel: 'Pan — Slot 4' },
+      { cc: 93, channel: 0, targetId: 'slotPan_4',          targetLabel: 'Pan — Slot 5' },
+      { cc: 18, channel: 0, targetId: 'slotPan_5',          targetLabel: 'Pan — Slot 6' },
+      { cc: 19, channel: 0, targetId: 'macro_energy',       targetLabel: 'Macro: Energy' },
+      { cc: 16, channel: 0, targetId: 'macro_divinity',     targetLabel: 'Macro: Divinity' },
+      { cc: 17, channel: 0, targetId: 'macro_width',        targetLabel: 'Macro: Width' },
+      // Faders 1-9
+      { cc: 73, channel: 0, targetId: 'slotVol_0',          targetLabel: 'Volume — Slot 1' },
+      { cc: 75, channel: 0, targetId: 'slotVol_1',          targetLabel: 'Volume — Slot 2' },
+      { cc: 79, channel: 0, targetId: 'slotVol_2',          targetLabel: 'Volume — Slot 3' },
+      { cc: 72, channel: 0, targetId: 'slotVol_3',          targetLabel: 'Volume — Slot 4' },
+      { cc: 80, channel: 0, targetId: 'slotVol_4',          targetLabel: 'Volume — Slot 5' },
+      { cc: 81, channel: 0, targetId: 'slotVol_5',          targetLabel: 'Volume — Slot 6' },
+      { cc: 82, channel: 0, targetId: 'morphFactor',        targetLabel: 'Morph Blend' },
+      { cc: 83, channel: 0, targetId: 'macro_realm',        targetLabel: 'Macro: Realm' },
+      // Universal expression / mod
+      { cc: 1,  channel: 0, targetId: 'modWheel',           targetLabel: 'Mod Wheel' },
+      { cc: 11, channel: 0, targetId: 'masterVolume',       targetLabel: 'Expression' },
+    ],
+    'generic': [
+      { cc: 1,  channel: 0, targetId: 'modWheel',           targetLabel: 'Mod Wheel' },
+      { cc: 7,  channel: 0, targetId: 'masterVolume',       targetLabel: 'Master Volume' },
+      { cc: 11, channel: 0, targetId: 'masterVolume',       targetLabel: 'Expression' },
+      { cc: 74, channel: 0, targetId: 'macro_energy',       targetLabel: 'Macro: Energy' },
+      { cc: 71, channel: 0, targetId: 'macro_divinity',     targetLabel: 'Macro: Divinity' },
+      { cc: 76, channel: 0, targetId: 'macro_width',        targetLabel: 'Macro: Width' },
+      { cc: 77, channel: 0, targetId: 'macro_realm',        targetLabel: 'Macro: Realm' },
+    ],
+    'akai-mpk': [
+      { cc: 1,  channel: 0, targetId: 'modWheel',           targetLabel: 'Mod Wheel' },
+      { cc: 7,  channel: 0, targetId: 'masterVolume',       targetLabel: 'Master Volume' },
+      { cc: 70, channel: 0, targetId: 'macro_energy',       targetLabel: 'Knob 1 — Energy' },
+      { cc: 71, channel: 0, targetId: 'macro_divinity',     targetLabel: 'Knob 2 — Divinity' },
+      { cc: 72, channel: 0, targetId: 'macro_width',        targetLabel: 'Knob 3 — Width' },
+      { cc: 73, channel: 0, targetId: 'macro_realm',        targetLabel: 'Knob 4 — Realm' },
+    ],
+    'novation-launchkey': [
+      { cc: 1,  channel: 0, targetId: 'modWheel',           targetLabel: 'Mod Wheel' },
+      { cc: 7,  channel: 0, targetId: 'masterVolume',       targetLabel: 'Master Volume' },
+      { cc: 21, channel: 0, targetId: 'macro_energy',       targetLabel: 'Knob 1 — Energy' },
+      { cc: 22, channel: 0, targetId: 'macro_divinity',     targetLabel: 'Knob 2 — Divinity' },
+      { cc: 23, channel: 0, targetId: 'macro_width',        targetLabel: 'Knob 3 — Width' },
+      { cc: 24, channel: 0, targetId: 'macro_realm',        targetLabel: 'Knob 4 — Realm' },
+    ],
+  };
+
   constructor() {
     this.loadFromStorage();
     // Subscribe to NeuralInputBus CC events
     this.unsubBus = neuralInputBus.addListener(this.handleInputEvent.bind(this));
+
+    // Listen for device connections broadcast by neuralInputBus
+    if (typeof window !== 'undefined') {
+      window.addEventListener('midi-device-connected', (e: Event) => {
+        const { profileId } = (e as CustomEvent<{ deviceName: string; profileId: string }>).detail;
+        this.loadPresetForDevice(profileId);
+      });
+    }
+  }
+
+  /**
+   * Load a built-in CC preset for a given profile ID.
+   * Only seeds mappings that aren't already user-defined, so
+   * manual MIDI Learn assignments are never overwritten.
+   */
+  loadPresetForDevice(profileId: string): void {
+    const entries = MidiMappingService.DEVICE_PRESETS[profileId]
+      ?? MidiMappingService.DEVICE_PRESETS['generic'];
+
+    let added = 0;
+    for (const entry of entries) {
+      const ccKey: MidiCCKey = `${entry.channel}:${entry.cc}`;
+      // Don't overwrite existing user mappings
+      if (!this.mappings.has(ccKey)) {
+        this.mappings.set(ccKey, {
+          ccKey,
+          cc: entry.cc,
+          channel: entry.channel,
+          targetId: entry.targetId,
+          targetLabel: entry.targetLabel,
+          deviceName: profileId,
+        });
+        added++;
+      }
+    }
+
+    if (added > 0) {
+      this.saveToStorage();
+      this.emitChange();
+      console.log(`[MidiMapping] Loaded preset "${profileId}" — ${added} mapping(s) added`);
+    }
   }
 
   // ═══ Target Registration ═══

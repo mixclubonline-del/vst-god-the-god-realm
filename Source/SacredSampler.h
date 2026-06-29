@@ -346,26 +346,36 @@ public:
             }
 
             int idx = static_cast<int>(currentIndex);
-            if (idx < 0 || idx >= originalBuffer->getNumSamples() || (currentReverse && idx < startSample) || (!currentReverse && idx > endSample))
+            bool isOscillator = originalBuffer->getNumSamples() <= 4096;
+            
+            if (!isOscillator && (idx < 0 || idx >= originalBuffer->getNumSamples() - 1))
             {
-                // If retrig is active, we might wait for the next retrig instead of deactivating
                 if (retrigInterval == 0)
                 {
                     active = false;
                     break;
                 }
-                // Otherwise just output silence until next retrig
             }
             else
             {
+                // Ensure idx wraps correctly before reading
+                if (isOscillator) {
+                    if (idx >= endSample) idx -= (endSample - startSample);
+                    if (idx < startSample) idx += (endSample - startSample);
+                }
                 // Simple linear interpolation
                 int nextIdx = currentReverse ? idx - 1 : idx + 1;
+                if (isOscillator) {
+                    if (nextIdx >= endSample) nextIdx -= (endSample - startSample);
+                    if (nextIdx < startSample) nextIdx += (endSample - startSample);
+                }
+                
                 float fraction = static_cast<float>(currentIndex - idx);
                 
                 float sL = leftIn[idx];
                 float sR = rightIn != nullptr ? rightIn[idx] : sL;
 
-                if (nextIdx >= 0 && nextIdx < originalBuffer->getNumSamples())
+                if (isOscillator || (nextIdx >= 0 && nextIdx < originalBuffer->getNumSamples()))
                 {
                     float nL = leftIn[nextIdx];
                     float nR = rightIn != nullptr ? rightIn[nextIdx] : nL;
@@ -402,6 +412,14 @@ public:
                 currentIndex -= playbackRate;
             else
                 currentIndex += playbackRate;
+
+            if (isOscillator)
+            {
+                if (currentIndex >= endSample)
+                    currentIndex -= (endSample - startSample);
+                else if (currentIndex < startSample)
+                    currentIndex += (endSample - startSample);
+            }
 
             samplesProcessed++;
             

@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react';
 import { vstGodPresets } from '@/data/vstGodElectricPantheonLibrary';
+import { presetVaultFS } from './presetVaultFS';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -226,12 +227,14 @@ class PresetService {
   save(preset: UnifiedPreset): void {
     if (preset.source === 'pantheon') return; // Can't modify pantheon presets
     const idx = this.presets.findIndex(p => p.id === preset.id);
+    const saved = { ...preset, lastModified: new Date().toISOString() };
     if (idx >= 0) {
-      this.presets[idx] = { ...preset, lastModified: new Date().toISOString() };
+      this.presets[idx] = saved;
     } else {
-      this.presets.push({ ...preset, lastModified: new Date().toISOString() });
+      this.presets.push(saved);
     }
     this.saveToStorage();
+    void presetVaultFS.writePreset(saved);
     this.notify();
   }
 
@@ -240,6 +243,7 @@ class PresetService {
     if (!preset || preset.source === 'pantheon') return;
     this.presets = this.presets.filter(p => p.id !== id);
     this.saveToStorage();
+    void presetVaultFS.deletePreset(id);
     this.notify();
   }
 
@@ -256,6 +260,7 @@ class PresetService {
     };
     this.presets.push(copy);
     this.saveToStorage();
+    void presetVaultFS.writePreset(copy);
     this.notify();
     return copy;
   }
@@ -266,6 +271,7 @@ class PresetService {
     if (vaultPreset) {
       vaultPreset.fav = !vaultPreset.fav;
       this.saveToStorage();
+      void presetVaultFS.writePreset(vaultPreset);
       this.notify();
       return;
     }
@@ -282,6 +288,7 @@ class PresetService {
     if (preset) {
       preset.rating = Math.max(1, Math.min(5, rating));
       this.saveToStorage();
+      void presetVaultFS.writePreset(preset);
       this.notify();
     }
   }
@@ -333,12 +340,46 @@ class PresetService {
       };
       this.presets.push(preset);
       this.saveToStorage();
+      void presetVaultFS.writePreset(preset);
       this.notify();
       return preset;
     } catch {
       console.error('[PresetService] Failed to import preset');
       return null;
     }
+  }
+
+  /**
+   * Create and immediately persist a new user preset from raw data.
+   * Used by the Sound Forge and oneshot import to save without going through
+   * the full preset-select → save-as workflow.
+   */
+  saveAs(data: {
+    name: string;
+    type: string;
+    tags?: string[];
+    state?: import('./presetService').PresetState | null;
+    author?: string;
+    rating?: number;
+  }): UnifiedPreset {
+    const preset: UnifiedPreset = {
+      id: generateId(),
+      name: data.name,
+      type: data.type,
+      author: data.author ?? 'User',
+      rating: data.rating ?? 3,
+      fav: false,
+      tags: data.tags ?? [],
+      lastModified: new Date().toISOString(),
+      energyLevel: 40 + Math.random() * 60,
+      source: 'user',
+      state: data.state ?? null,
+    };
+    this.presets.push(preset);
+    this.saveToStorage();
+    void presetVaultFS.writePreset(preset);
+    this.notify();
+    return preset;
   }
 
   importVault(json: string): UnifiedPreset[] | null {
@@ -364,6 +405,33 @@ class PresetService {
       console.error('[PresetService] Failed to import vault');
       return null;
     }
+  }
+
+  // ── Disk sync (File System Access API, via presetVaultFS) ──
+
+  /**
+   * Merge presets stored on disk into the in-memory set. Disk is the source of
+   * truth for matching ids (so edits made on another machine win). Call after a
+   * folder is located/restored. Returns the number of presets pulled in.
+   */
+  async hydrateFromDisk(): Promise<number> {
+    const fromDisk = await presetVaultFS.readAll();
+    if (!fromDisk.length) return 0;
+    const byId = new Map(this.presets.map(p => [p.id, p]));
+    for (const p of fromDisk) {
+      // Never let disk override read-only pantheon presets.
+      if (p.source === 'pantheon') continue;
+      byId.set(p.id, { ...p, source: p.source || 'user' });
+    }
+    this.presets = [...byId.values()];
+    this.saveToStorage();
+    this.notify();
+    return fromDisk.length;
+  }
+
+  /** Push every current vault/user preset out to the chosen disk folder. */
+  async syncAllToDisk(): Promise<void> {
+    await presetVaultFS.writeAll(this.presets);
   }
 
   // ── Persistence ──

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { neuralInputBus } from '@/services/neuralInputBus';
+import { audioEngine } from '@/services/audioEngine';
 // When running inside JUCE (standalone/VST3), the engine pushes
 // real-time state via window.__godRealmStateUpdate(). In dev mode
 // (browser), a simulation loop generates fake data for UI parity.
@@ -190,6 +191,17 @@ class NativeAudioBridge {
         if (state.ppq !== undefined) this.currentState.ppq = state.ppq;
         if (state.midiNotes) this.currentState.midiNotes = state.midiNotes;
 
+        // Forward JUCE MIDI note events → neuralInputBus so web engine + pad flashes work in VST3 mode
+        if (state.midiNotes && Array.isArray(state.midiNotes)) {
+          state.midiNotes.forEach((evt: any) => {
+            if (evt.velocity16 > 0) {
+              neuralInputBus.triggerMidiNoteOn(evt.note, evt.velocity16, evt.channel ?? 0, 'DAW MIDI');
+            } else {
+              neuralInputBus.triggerMidiNoteOff(evt.note, evt.channel ?? 0, 'DAW MIDI');
+            }
+          });
+        }
+
         if (state.midiCCs && Array.isArray(state.midiCCs)) {
           state.midiCCs.forEach((evt: any) => {
             neuralInputBus.triggerMidiCC(evt.cc, evt.value, evt.channel, evt.deviceName || 'DAW MIDI');
@@ -199,14 +211,31 @@ class NativeAudioBridge {
         this.notifyListeners(this.currentState);
       };
 
-      // ─── Telemetry callback (10Hz from JUCE) ───
+      // ─── Metering update (JUCE calls __godRealmMeteringUpdate every frame) ───
+      // Payload includes midiNotes, isStandalone, bpm, isPlaying — forward to state handler.
+      window.__godRealmMeteringUpdate = (state: any) => {
+        window.__godRealmStateUpdate?.(state);
+
+        // This callback is ONLY invoked by JUCE (the standalone exe or the
+        // plugin). In BOTH cases the audio device is managed by JUCE, so route
+        // every web instrument through the capture bridge to JUCE's processBlock
+        // — the exact path the native Electric Pantheon uses, so every tab comes
+        // out of the same output. (Mutes the WebView2 local output, which in a
+        // JUCE standalone app does not reliably reach the user's device.)
+        audioEngine.setIsPlugin(true);
+
+        // Resume the AudioContext as soon as JUCE sends its first frame.
+        audioEngine.resume();
+      };
+
+      // ─── Telemetry callback (10Hz from JUCE via __godRealmTelemetryUpdate) ───
       window.__godRealmTelemetry = (telemetry: any) => {
         if (telemetry.cpuUsage !== undefined) this.currentState.cpuUsage = telemetry.cpuUsage;
         if (telemetry.sampleRate !== undefined) this.currentState.sampleRate = telemetry.sampleRate;
         if (telemetry.bufferSize !== undefined) this.currentState.bufferSize = telemetry.bufferSize;
-        
-        // Telemetry is lower priority, don't trigger a full re-render
       };
+      // JUCE actually calls __godRealmTelemetryUpdate (not __godRealmTelemetry)
+      window.__godRealmTelemetryUpdate = window.__godRealmTelemetry;
 
       // ─── Phase 4: Waveform analysis callback (on-demand from JUCE) ───
       window.__godRealmWaveformAnalysis = (data: WaveformAnalysisState) => {
@@ -257,6 +286,30 @@ class NativeAudioBridge {
         console.log('[NativeBridge] __godRealmHarvestResult:', success, pluginPath, files ? files.length : 0, 'files');
         this.harvestListeners.forEach(l => l(success, pluginPath, files));
       };
+
+      // ─── Forward UI piano clicks to JUCE native synth ───────────────────
+      // When a note fires from the plugin UI (not from DAW MIDI playback), send it
+      // to JUCE via UI_NOTE_ON so the audio comes out the DAW channel natively.
+      neuralInputBus.addListener((event) => {
+        if (!(window as any).chrome?.webview) return; // only in plugin/WebView2 context
+        if (event.deviceName === 'DAW MIDI') return;  // don't loop DAW events back to JUCE
+        if (event.type === 'midi_note_on') {
+          const vel = Math.round(Math.min(event.velocity / 327, 127));
+          try {
+            (window as any).chrome.webview.postMessage(JSON.stringify({
+              type: 'UI_NOTE_ON',
+              payload: { note: event.note, velocity: Math.max(1, vel) },
+            }));
+          } catch {}
+        } else if (event.type === 'midi_note_off') {
+          try {
+            (window as any).chrome.webview.postMessage(JSON.stringify({
+              type: 'UI_NOTE_OFF',
+              payload: { note: event.note },
+            }));
+          } catch {}
+        }
+      });
 
       // ─── Incoming message listener from JUCE (legacy postMessage path) ───
       window.addEventListener('message', (event) => {
@@ -377,6 +430,98 @@ class NativeAudioBridge {
     } else {
       console.log('[NativeBridge Sim] Parameter changed:', paramId, value);
     }
+  }
+
+  /** True when running inside the JUCE WebView2 (plugin or standalone exe). */
+  public get isNative(): boolean { return !!(window as any).chrome?.webview; }
+
+  /**
+   * Feed raw audio bytes into a native SacredSampler track so the audio is
+   * produced natively (device-direct, like Electric Pantheon) instead of through
+   * the web audio bridge. No-op outside JUCE. trackIdx is the slot/track index.
+   */
+  public loadSampleBytes(trackIdx: number, bytes: ArrayBuffer) {
+    if (!this.isNative) return;
+    try {
+      const u8 = new Uint8Array(bytes);
+      let bin = '';
+      const STEP = 0x8000;
+      for (let i = 0; i < u8.length; i += STEP) {
+        bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, Math.min(i + STEP, u8.length))) as any);
+      }
+      const b64 = btoa(bin);
+      const msg = { type: 'LOAD_SAMPLE_BYTES', payload: { trackIdx, bytes: b64 } };
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+      else (window as any).chrome?.webview?.postMessage(JSON.stringify(msg));
+    } catch { /* ignore */ }
+  }
+
+  /**
+   * Build a single-cycle waveform table and upload it as a looping "sample"
+   * to a native SacredSampler slot. The sampler's <= 4096 sample looping
+   * logic will keep it cycling as long as the note is held.
+   *
+   * @param trackIdx  Slot index (0-based)
+   * @param waveform  'sine' | 'sawtooth' | 'square' | 'triangle'
+   */
+  public loadOscWaveform(trackIdx: number, waveform: 'sine' | 'sawtooth' | 'square' | 'triangle'): void {
+    if (!this.isNative) return;
+    try {
+      const N = 2048; // single-cycle table size
+      const pcm = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        const phase = i / N; // 0..1
+        switch (waveform) {
+          case 'sine':
+            pcm[i] = Math.sin(2 * Math.PI * phase);
+            break;
+          case 'sawtooth':
+            pcm[i] = 2 * phase - 1;
+            break;
+          case 'square':
+            pcm[i] = phase < 0.5 ? 1 : -1;
+            break;
+          case 'triangle':
+            pcm[i] = phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase;
+            break;
+        }
+      }
+
+      // Convert to 16-bit PCM WAV in-memory so JUCE can decode it
+      const numChannels = 1;
+      const sampleRate = 44100;
+      const bitsPerSample = 16;
+      const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+      const blockAlign = numChannels * bitsPerSample / 8;
+      const dataSize = N * numChannels * bitsPerSample / 8;
+      const headerSize = 44;
+      const wavBuf = new ArrayBuffer(headerSize + dataSize);
+      const view = new DataView(wavBuf);
+
+      const writeStr = (off: number, str: string) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+      writeStr(0, 'RIFF');
+      view.setUint32(4,  36 + dataSize, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);          // chunk size
+      view.setUint16(20, 1, true);           // PCM
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeStr(36, 'data');
+      view.setUint32(40, dataSize, true);
+
+      // Write samples
+      for (let i = 0; i < N; i++) {
+        const s = Math.max(-1, Math.min(1, pcm[i]));
+        view.setInt16(headerSize + i * 2, Math.round(s * 32767), true);
+      }
+
+      this.loadSampleBytes(trackIdx, wavBuf);
+    } catch { /* ignore */ }
   }
 
   public updateSequencerStep(trackIdx: number, patternName: 'A' | 'B', stepIdx: number, stepData: any) {
@@ -732,6 +877,36 @@ class NativeAudioBridge {
           window.__godRealmHarvestResult(true, pluginPath, mockGraphics);
         }
       }, 1500);
+    }
+  }
+
+  public setPedalMasterActive(active: boolean) {
+    const msg = { type: 'PEDAL_MASTER_ACTIVE', payload: { active } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Pedal Master Active:', active);
+    }
+  }
+
+  public setPedalEnabled(pedalIdx: number, enabled: boolean) {
+    const msg = { type: 'PEDAL_ENABLED', payload: { pedalIdx, enabled } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Pedal Enabled:', pedalIdx, enabled);
+    }
+  }
+
+  public setPedalParam(pedalIdx: number, key: string, value: number) {
+    const msg = { type: 'PEDAL_PARAM', payload: { pedalIdx, key, value } };
+    if (this.isInJuce()) {
+      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
+      else if (window.sendToJuce) window.sendToJuce(msg);
+    } else {
+      console.log('[NativeBridge Sim] Pedal Param:', pedalIdx, key, value);
     }
   }
 }

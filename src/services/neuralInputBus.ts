@@ -37,6 +37,14 @@ class NeuralInputBus {
 
   private midiAccess: MIDIAccess | null = null;
 
+  // ═══ Configurable MIDI note → pad map (default: C1-D#2, notes 36-51) ═══
+  private _midiMap: number[] = Array.from({ length: 16 }, (_, i) => 36 + i);
+
+  /** Update the note→pad map at runtime (called from VstgodthegodrealmPlugin when midiMap changes). */
+  public updateMidiMap(map: number[]): void {
+    this._midiMap = map;
+  }
+
   // ═══ Device tracking ═══
   private _connectedDevices: Map<string, string> = new Map(); // id → name
   private deviceChangeListeners: (() => void)[] = [];
@@ -163,8 +171,51 @@ class NeuralInputBus {
         const deviceName = input.name || `MIDI Input ${id}`;
         this._connectedDevices.set(id, deviceName);
         input.onmidimessage = (msg) => this.handleMidiMessage(msg, deviceName);
+
+        // Auto-load CC profile for this device
+        this.applyDeviceProfile(deviceName);
       }
     });
+  }
+
+  /**
+   * Apply a CC profile preset based on device name.
+   * Emits a custom DOM event so midiMappingService can load the right preset.
+   */
+  private applyDeviceProfile(deviceName: string): void {
+    const lower = deviceName.toLowerCase();
+    let profileId = 'generic';
+    if (lower.includes('arturia') || lower.includes('keylab')) {
+      profileId = 'arturia-keylab';
+    } else if (lower.includes('akai') || lower.includes('mpk')) {
+      profileId = 'akai-mpk';
+    } else if (lower.includes('novation') || lower.includes('launchkey')) {
+      profileId = 'novation-launchkey';
+    }
+    // Broadcast to the rest of the app so midiMappingService can respond
+    window.dispatchEvent(new CustomEvent('midi-device-connected', {
+      detail: { deviceName, profileId }
+    }));
+    console.log(`[NeuralBus] Device connected: "${deviceName}" → profile: ${profileId}`);
+  }
+
+  /**
+   * Trigger a note-on event from JUCE bridge (VST3 mode, no Web MIDI).
+   * Routes note to correct pad via midiMap and also emits full-range note-on.
+   */
+  public triggerMidiNoteOn(note: number, velocity16: number, channel: number = 0, deviceName: string = 'DAW MIDI'): void {
+    const padIndex = this._midiMap.indexOf(note);
+    if (padIndex >= 0) {
+      this.emit({ type: 'midi', target: padIndex, velocity: velocity16, note, channel, deviceName, timestamp: performance.now() });
+    }
+    this.emit({ type: 'midi_note_on', target: note, velocity: velocity16, note, channel, deviceName, timestamp: performance.now() });
+  }
+
+  /**
+   * Trigger a note-off event from JUCE bridge.
+   */
+  public triggerMidiNoteOff(note: number, channel: number = 0, deviceName: string = 'DAW MIDI'): void {
+    this.emit({ type: 'midi_note_off', target: note, velocity: 0, note, channel, deviceName, timestamp: performance.now() });
   }
 
   private handleMidiMessage(message: MIDIMessageEvent, deviceName: string) {
@@ -175,9 +226,9 @@ class NeuralInputBus {
 
     // Note On (velocity > 0)
     if (type === 0x90 && data2 > 0) {
-      // Pad trigger (legacy: notes 36-51 → pad 0-15)
-      const padIndex = data1 - 36;
-      if (padIndex >= 0 && padIndex < 16) {
+      // Look up which pad this note is assigned to
+      const padIndex = this._midiMap.indexOf(data1);
+      if (padIndex >= 0) {
         this.emit({
           type: 'midi',
           target: padIndex,

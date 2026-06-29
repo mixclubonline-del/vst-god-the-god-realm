@@ -34,12 +34,12 @@ import { GodProfile } from './GodProfile';
 import { PantheonMacros } from './PantheonMacros';
 import { RealmFXPanel } from './RealmFXPanel';
 import { ALSVision } from './ALSVision';
-import { PantheonKeyboard } from './PantheonKeyboard';
 import { WaveformScope } from './WaveformScope';
 import { DivineMorphOverlay } from './DivineMorphOverlay';
 import { usePantheonAnalysis } from '@/hooks/usePantheonAnalysis';
 import { usePantheonQwerty } from '@/hooks/usePantheonQwerty';
 import { nativeAudio } from '@/native/bridge';
+import { audioEngine } from '@/services/audioEngine';
 import { PantheonVortexPad } from './PantheonVortexPad';
 import '@/styles/ElectricPantheon.css';
 
@@ -165,30 +165,28 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
    * Returns the AudioContext.
    */
   const ensureAudioReady = useCallback(() => {
-    if (nativeAudio.isInJuce()) {
-      return null;
-    }
-    // 1. Get or create AudioContext
-    let ctx = sequencerEngine?.audioCtx?.current ?? null;
-    if (!ctx) {
-      ctx = new AudioContext();
-      // Share it back to the sequencer so both systems use the same context
-      if (sequencerEngine?.audioCtx) {
-        sequencerEngine.audioCtx.current = ctx;
-      }
-      console.log('[Electric Pantheon] Created shared AudioContext');
+    // Always use the shared audioEngine context + masterBus. This is what the
+    // JUCE capture worklet records, so Electric Pantheon reaches the DAW in
+    // plugin mode and the system speakers in standalone — exactly like the
+    // other web instruments. (Previously this bailed out entirely in JUCE mode,
+    // so tab 8 had no audio, and in standalone it used a separate AudioContext
+    // that the bridge never captured.)
+    const ctx = audioEngine.ctx;
+    audioEngine.resume();
+
+    // Keep the sequencer on the same context so pantheon playback stays in sync.
+    if (sequencerEngine?.audioCtx && sequencerEngine.audioCtx.current !== ctx) {
+      sequencerEngine.audioCtx.current = ctx;
     }
 
-    // 2. Resume if suspended (browser autoplay policy)
-    if (ctx.state === 'suspended') ctx.resume();
-
-    // 3. Init synth engine if not yet created
+    // Init synth engine if not yet created — route it into masterBus so the
+    // capture bridge picks it up.
     if (!synthRef.current) {
       const synth = new PantheonSynthEngine();
-      synth.init(ctx);
+      synth.init(ctx, audioEngine.masterBus);
       synth.setGod(activeGodId);
       synthRef.current = synth;
-      console.log('[Electric Pantheon] Synth Engine initialized');
+      console.log('[Electric Pantheon] Synth Engine initialized on shared bus');
     }
 
     return ctx;
@@ -485,21 +483,22 @@ export const ElectricPantheon: React.FC<ElectricPantheonProps> = ({
         />
       </div>
 
-      {/* ═══ BOTTOM: KEYBOARD ═══ */}
-      <PantheonKeyboard
-        god={activeGod}
-        pitchBend={pitchBend}
-        modWheel={modWheel}
-        onPitchBendChange={handlePitchBendChange}
-        onModWheelChange={handleModWheelChange}
-        onNoteOn={handleNoteOn}
-        onNoteOff={handleNoteOff}
-        onVoiceModeChange={handleVoiceModeChange}
-        qwertyActiveNotes={activeQwertyNotes}
-        currentOctave={octave}
-        onOctaveUp={octaveUp}
-        onOctaveDown={octaveDown}
-      />
+      {/* ═══ BOTTOM: VOICE MODE (keyboard removed — play via the global keyboard) ═══ */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '10px 0 12px' }}>
+        <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' }}>Voice</span>
+        <div style={{ display: 'flex', gap: 3, padding: 3, background: 'rgba(0,0,0,0.4)', borderRadius: 9, border: '1px solid rgba(255,255,255,0.09)' }}>
+          {(['POLY', 'MONO', 'LEGATO'] as const).map(mode => {
+            const active = (parameterValues.pantheonVoiceMode || 'POLY') === mode;
+            return (
+              <button key={mode} onClick={() => handleVoiceModeChange(mode)}
+                style={{ padding: '5px 16px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+                  background: active ? (activeGod?.color || '#f59e0b') : 'transparent', color: active ? '#000' : 'rgba(255,255,255,0.5)', transition: 'all .15s' }}>
+                {mode}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ═══ FLOATING: DIVINE MORPH ═══ */}
       <DivineMorphOverlay

@@ -58,6 +58,39 @@ const App: React.FC = () => {
     }
   }, [isInJuce, pluginId, setPluginParameter]);
 
+  // ── Per-project web-UI persistence ──────────────────────────────────────
+  // The web UI has many parameters not backed by the C++ APVTS, so they are
+  // not saved by the host on their own. We snapshot the full parameter set to
+  // JUCE (stored in the project) and restore it when the project reopens.
+  useEffect(() => {
+    if (!isInJuce || !pluginId) return;
+    const w = window as any;
+    // JUCE calls this on project load with the saved snapshot.
+    w.__godRealmRestoreState = (state: any) => {
+      try {
+        const params = state && state.params ? state.params : null;
+        if (params) {
+          Object.entries(params).forEach(([pId, val]) => {
+            setPluginParameter(pluginId, pId, val as any);
+          });
+        }
+      } catch (e) { console.error('[restore-state]', e); }
+    };
+    return () => { delete w.__godRealmRestoreState; };
+  }, [isInJuce, pluginId, setPluginParameter]);
+
+  // Debounced snapshot whenever the parameter set changes.
+  useEffect(() => {
+    if (!isInJuce || !godPlugin) return;
+    const w = window as any;
+    const handle = setTimeout(() => {
+      const msg = { type: 'PERSIST_WEBUI_STATE', payload: { params: godPlugin.parameterValues } };
+      if (typeof w.sendToJuce === 'function') w.sendToJuce(msg);
+      else if (w.__juce__) w.__juce__.postMessage(JSON.stringify(msg));
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [isInJuce, godPlugin?.parameterValues]);
+
   if (isInJuce) {
     if (!godPlugin) {
       return (

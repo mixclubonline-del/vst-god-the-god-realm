@@ -928,17 +928,24 @@ public:
         float outL = 0.0f;
         float outR = 0.0f;
         
-        // Parallel comb filters
-        float g = 0.7f + decay * 0.15f;
+        // Parallel comb filters.
+        // Use the T60 formula: g = 10^(-3 * delayTime / RT60) = 0.001^(dt/decay).
+        // This maps the decay parameter (seconds) to the correct per-filter
+        // feedback coefficient and is always < 1.0, guaranteeing stability.
+        // The old formula (0.7 + decay*0.15) exceeded 1.0 for most presets
+        // (e.g. Olympus reverbDecay=2.5 → g=1.075), causing exponential growth.
+        static const float kDelayTimes[4] = { 0.030f, 0.042f, 0.054f, 0.066f };
+        const float safeDecay = juce::jmax(0.1f, decay);
         for (int i = 0; i < 4; ++i)
         {
+            float g = std::pow(0.001f, kDelayTimes[i] / safeDecay);
             int size = combFilters[i].getNumSamples();
             int rdIdx = combWriteIndexes[i] - (size - 10);
             if (rdIdx < 0) rdIdx += size;
-            
+
             float dL = combFilters[i].getSample(0, rdIdx);
             float dR = combFilters[i].getSample(1, rdIdx);
-            
+
             combFilters[i].setSample(0, combWriteIndexes[i], inL + dL * g);
             combFilters[i].setSample(1, combWriteIndexes[i], inR + dR * g);
             

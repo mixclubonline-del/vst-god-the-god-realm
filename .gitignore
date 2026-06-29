@@ -17,3 +17,4 @@ god-console-vst/
 
 # Build artifacts - staging packages
 scripts/staging/
+god-realm-vst/

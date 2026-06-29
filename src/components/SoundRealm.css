@@ -1,0 +1,428 @@
+/* ─── Sound Realm ─────────────────────────────────────────────────────────── */
+
+.sound-realm {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0d0a1a;
+  color: #e0d8f8;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.sound-realm__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(168, 85, 247, 0.1);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+  flex-shrink: 0;
+}
+
+.sound-realm__title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #c084fc;
+  text-transform: uppercase;
+}
+
+.sound-realm__subtitle {
+  font-size: 11px;
+  color: rgba(224, 216, 248, 0.4);
+  letter-spacing: 0.06em;
+}
+
+.sound-realm__reset-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 4px;
+  color: #a855f7;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sound-realm__reset-btn:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
+/* ── Control Surface ── */
+.sound-realm__surface {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sound-realm__row {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Panels ── */
+.sound-realm__panel {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: opacity 0.2s;
+  min-width: 0;
+}
+
+.sound-realm__panel--off {
+  opacity: 0.4;
+}
+
+.sound-realm__panel--wide {
+  flex: 1.4;
+}
+
+/* Panel header */
+.sound-realm__panel-hdr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sound-realm__panel-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(224, 216, 248, 0.55);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* Toggle (OSC2 on/off) */
+.sound-realm__toggle {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(168, 85, 247, 0.08);
+  color: rgba(224, 216, 248, 0.35);
+  transition: all 0.15s;
+}
+.sound-realm__toggle--on {
+  background: rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #c084fc;
+}
+
+/* Segmented buttons */
+.sr-seg-btns {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.sr-seg-btn {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(224, 216, 248, 0.4);
+  transition: all 0.12s;
+}
+.sr-seg-btn--active {
+  background: rgba(168, 85, 247, 0.28);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #c084fc;
+}
+
+/* Knob row */
+.sound-realm__knobs {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* FX section */
+.sound-realm__fx-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sound-realm__fx-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sound-realm__fx-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: rgba(224, 216, 248, 0.35);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+/* ── Knob ── */
+.sr-knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: ns-resize;
+  user-select: none;
+  width: 46px;
+  flex-shrink: 0;
+}
+
+.sr-knob__ring {
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+.sr-knob__arc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.sr-knob__inner {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: #100823;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sr-knob__pointer {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  left: 50%;
+  top: 7px;
+  margin-left: -1px;
+  border-radius: 1px;
+  transform-origin: 50% 11px;
+  z-index: 1;
+}
+
+.sr-knob__label {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: rgba(224, 216, 248, 0.45);
+  text-align: center;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.sr-knob__value {
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 44px;
+  white-space: nowrap;
+}
+
+/* ── Wave selector ── */
+.sr-wave-row {
+  display: flex;
+  gap: 3px;
+}
+
+.sr-wave-btn {
+  flex: 1;
+  padding: 4px 2px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(224, 216, 248, 0.35);
+  transition: all 0.12s;
+}
+.sr-wave-btn:hover { background: rgba(168, 85, 247, 0.12); color: rgba(224,216,248,0.7); }
+.sr-wave-btn--active {
+  background: rgba(168, 85, 247, 0.28);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #c084fc;
+}
+
+/* ── Piano Keyboard ── */
+.sound-realm__piano {
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid rgba(168, 85, 247, 0.2);
+  padding: 6px 8px 8px;
+  flex-shrink: 0;
+}
+
+.sound-realm__piano-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(168, 85, 247, 0.6);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.sound-realm__piano-keys {
+  display: flex;
+  height: 64px;
+}
+
+.sound-realm__key-group {
+  position: relative;
+  flex: 1;
+}
+
+.sound-realm__white-key {
+  position: absolute;
+  inset: 0;
+  background: rgba(228, 215, 248, 0.92);
+  border: 1px solid rgba(120, 80, 200, 0.3);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 3px;
+  transition: background 0.04s;
+  box-sizing: border-box;
+}
+.sound-realm__white-key:hover { background: rgba(210, 185, 255, 0.98); }
+.sound-realm__white-key--on   { background: #a855f7 !important; }
+
+.sound-realm__key-label {
+  font-size: 7px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
+.sound-realm__black-key {
+  position: absolute;
+  top: 0;
+  right: -28%;
+  width: 56%;
+  height: 60%;
+  background: #1a0d2e;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.04s;
+}
+.sound-realm__black-key:hover { background: #2d1b52; }
+.sound-realm__black-key--on   { background: #7c3aed !important; }
+
+/* ── Full-width panel ─── */
+.sound-realm__panel--full-width {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+/* ── Limiter badge ── */
+.sound-realm__limiter-badge {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #34d399;
+  text-align: center;
+  margin-top: 6px;
+  padding: 2px 6px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 4px;
+}
+
+/* ── God FX Section ── */
+.sound-realm__god-fx {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.sound-realm__god-fx-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+
+.sound-realm__god-fx-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sound-realm__god-fx-hint {
+  font-size: 8px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+}
+
+/* ── FX Toggle ── */
+.sr-fx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.35);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sr-fx-toggle__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.sr-fx-toggle--on {
+  background: rgba(var(--fx-color-rgb, 255,255,255), 0.12);
+  border-color: color-mix(in srgb, var(--fx-color, white) 50%, transparent);
+  color: var(--fx-color, white);
+}
+
+.sr-fx-toggle--on .sr-fx-toggle__dot {
+  background: var(--fx-color, white);
+  box-shadow: 0 0 6px var(--fx-color, white);
+}

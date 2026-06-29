@@ -223,24 +223,29 @@ interface DivineLoadingScreenProps {
   currentStage: string;
   onTransitionComplete?: () => void;
   isReady?: boolean;
+  /** When true, skip the intro video entirely (already seen / disabled). */
+  skipVideo?: boolean;
 }
 
 export const DivineLoadingScreen: React.FC<DivineLoadingScreenProps> = ({
   currentStage,
   onTransitionComplete,
   isReady = false,
+  skipVideo = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const animFrameRef = useRef<number>(0);
   const [exiting, setExiting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [videoEnded, setVideoEnded] = useState(false);
-  const [showVideo, setShowVideo] = useState(true);
+  // If we're skipping the video, treat it as already ended and don't show it.
+  const [videoEnded, setVideoEnded] = useState(skipVideo);
+  const [showVideo, setShowVideo] = useState(!skipVideo);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
 
   // Load video via Blob URL to bypass WKWebView custom scheme range request limitation
   useEffect(() => {
+    if (skipVideo) return; // don't fetch/decode the intro if we're skipping it
     let active = true;
     let objectUrl: string | null = null;
 

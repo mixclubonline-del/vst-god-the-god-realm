@@ -6,70 +6,81 @@
 
 juce::WebBrowserComponent::Options VSTGodTheGodRealmAudioProcessorEditor::createWebBrowserOptions (VSTGodTheGodRealmAudioProcessorEditor* editor)
 {
-    auto options = juce::WebBrowserComponent::Options()
-        .withBackend(juce::WebBrowserComponent::Options::Backend::webview2)
-        .withNativeIntegrationEnabled(true)
-        .withNativeFunction("sendToJuce", [editor](const juce::Array<juce::var>& args, juce::WebBrowserComponent::NativeFunctionCompletion completion)
-        {
-            editor->handleWebViewMessage(args, completion);
-        })
-        .withUserScript(
-            "(function() {\n"
-            "    window.juceMessageQueue = [];\n"
-            "    window.sendToJuce = function(msg) {\n"
-            "        if (window.__JUCE__ && window.__JUCE__.backend && window.__JUCE__.backend.emitEvent) {\n"
-            "            window.__JUCE__.backend.emitEvent(\"__juce__invoke\", {\n"
-            "                name: \"sendToJuce\",\n"
-            "                params: [msg],\n"
-            "                resultId: 0\n"
-            "            });\n"
-            "        } else {\n"
-            "            window.juceMessageQueue.push(msg);\n"
-            "        }\n"
-            "    };\n"
-            "    var flushInterval = setInterval(function() {\n"
-            "        if (window.__JUCE__ && window.__JUCE__.backend && window.__JUCE__.backend.emitEvent) {\n"
-            "            clearInterval(flushInterval);\n"
-            "            while (window.juceMessageQueue.length > 0) {\n"
-            "                var msg = window.juceMessageQueue.shift();\n"
-            "                window.sendToJuce(msg);\n"
-            "            }\n"
-            "        }\n"
-            "    }, 30);\n"
-            "    var originalLog = console.log;\n"
-            "    var originalError = console.error;\n"
-            "    console.log = function() {\n"
-            "        var msg = Array.prototype.slice.call(arguments).join(\" \");\n"
-            "        originalLog.apply(console, arguments);\n"
-            "        window.sendToJuce({ type: \"CONSOLE_LOG\", payload: msg });\n"
-            "    };\n"
-            "    console.error = function() {\n"
-            "        var msg = Array.prototype.slice.call(arguments).join(\" \");\n"
-            "        originalError.apply(console, arguments);\n"
-            "        window.sendToJuce({ type: \"CONSOLE_ERROR\", payload: msg });\n"
-            "    };\n"
-            "    window.onerror = function(message, source, lineno, colno, error) {\n"
-            "        var msg = \"Unhandled error: \" + message + \" at \" + source + \":\" + lineno + \":\" + colno;\n"
-            "        window.sendToJuce({ type: \"CONSOLE_ERROR\", payload: msg });\n"
-            "        return false;\n"
-            "    };\n"
-            "})();"
-        );
+    auto userDataDir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+                           .getChildFile ("MixxTech")
+                           .getChildFile ("VST God - The God Realm")
+                           .getChildFile ("WebView2_v2");
 
+    auto options = juce::WebBrowserComponent::Options()
+#if JUCE_USE_WIN_WEBVIEW2
+        .withBackend (juce::WebBrowserComponent::Options::Backend::webview2)
+        .withWinWebView2Options (juce::WebBrowserComponent::Options::WinWebView2{}
+                                     .withUserDataFolder (userDataDir))
+        .withNativeIntegrationEnabled (true)
+        .withNativeFunction ("sendToJuce",
+            [editor] (const juce::Array<juce::var>& args,
+                      juce::WebBrowserComponent::NativeFunctionCompletion completion)
+            {
+                editor->handleWebViewMessage (args, std::move (completion));
+            })
+        .withUserScript (
+            // Polyfill sendToJuce + aggressively resume AudioContext on every
+            // possible event so standalone works without a manual click.
+            "(function(){"
+            "if(window.sendToJuce) return;"
+            "window.sendToJuce=function(msg){"
+            "try{"
+            "if(window.__JUCE__ && window.__JUCE__.backend && window.__JUCE__.backend.emitEvent){"
+            "window.__JUCE__.backend.emitEvent('__juce__invoke',{name:'sendToJuce',params:[msg],resultId:0});"
+            "}"
+            "}catch(e){console.error(e);}"
+            "};"
+            // Resume any existing AudioContext and patch the constructor so
+            // every future AudioContext also resumes immediately.
+            "function tryResumeAll(){"
+            "if(window.__audioCtx){try{window.__audioCtx.resume();}catch(e){}}"
+            "if(window.audioEngineContext){try{window.audioEngineContext.resume();}catch(e){}}"
+            "}"
+            "var _origAC=window.AudioContext||window.webkitAudioContext;"
+            "if(_origAC){"
+            "var _patchAC=function(){"
+            "var ctx=new _origAC(...arguments);"
+            "window.__audioCtx=ctx;"
+            "try{ctx.resume();}catch(e){}"
+            "return ctx;"
+            "};"
+            "_patchAC.prototype=_origAC.prototype;"
+            "window.AudioContext=_patchAC;"
+            "window.webkitAudioContext=_patchAC;"
+            "}"
+            // Poll every 200 ms for the first 10 s to catch contexts created after this script.
+            "var _ri=0;"
+            "var _rt=setInterval(function(){tryResumeAll();if(++_ri>50)clearInterval(_rt);},200);"
+            "['pointerdown','mousedown','keydown','touchstart'].forEach(function(e){"
+            "document.addEventListener(e,tryResumeAll,{capture:true,once:false});"
+            "});"
+            "})();"
+        )
+#endif
+        ;
+
+#if JUCE_WEB_BROWSER_RESOURCE_PROVIDER_AVAILABLE
     options = options.withResourceProvider([editor](const juce::String& url) -> std::optional<juce::WebBrowserComponent::Resource>
     {
         return editor->getEmbeddedUIResource(url);
     });
+#endif
 
     return options;
 }
 
 VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VSTGodTheGodRealmAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p), webComponent(createWebBrowserOptions (this))
+    : AudioProcessorEditor (&p), audioProcessor (p), webComponent (createWebBrowserOptions (this))
 {
     fft = std::make_unique<juce::dsp::FFT>(10);
-    addAndMakeVisible(webComponent);
     setSize (1200, 800);
+    setResizable (true, true);
+    setResizeLimits (800, 550, 3840, 2160);
 
     // ═══════════════════════════════════════════════════════════════
     // Register parameter listeners
@@ -78,15 +89,12 @@ VSTGodTheGodRealmAudioProcessorEditor::VSTGodTheGodRealmAudioProcessorEditor (VS
         if (auto* paramWithID = dynamic_cast<juce::AudioProcessorParameterWithID*> (param))
             audioProcessor.apvts.addParameterListener (paramWithID->paramID, this);
 
-    // ═══════════════════════════════════════════════════════════════
-    // Load the React UI into the WebView
-    // Dev: Vite dev server on port 3001
-    // Release: Embedded BinaryData served via resource provider (Phase 7)
-    // ═══════════════════════════════════════════════════════════════
-    #if JUCE_DEBUG
-    webComponent.goToURL ("http://localhost:3005");
+    addAndMakeVisible (webComponent);
+
+    #if JUCE_WEB_BROWSER_RESOURCE_PROVIDER_AVAILABLE
+        webComponent.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
     #else
-    webComponent.goToURL (juce::WebBrowserComponent::getResourceProviderRoot());
+        webComponent.goToURL ("about:blank");
     #endif
 
     // ═══════════════════════════════════════════════════════════════
@@ -129,6 +137,10 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 else if (valStr == "Export") value = 6.0f;
                 else if (valStr == "Preset Vault") value = 7.0f;
                 else if (valStr == "Electric Pantheon") value = 8.0f;
+                // Web-audio-only tabs that don't have a dedicated JUCE index
+                // map to 7 (Preset Vault) so pantheonSynth/sampler stay silent
+                else if (valStr == "Sound Realm") value = 7.0f;
+                else if (valStr == "Pedal Realm") value = 9.0f;
                 else value = (float)valVar;
             }
             else if (id == "pantheonGod")
@@ -175,6 +187,21 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 audioProcessor.loadSampleForTrack(tIdx, path);
             }
         }
+        else if (type == "LOAD_SAMPLE_BYTES")
+        {
+            // Web UI feeds raw audio bytes (base64) into a native sampler track.
+            int tIdx = (int)payload.getProperty("trackIdx", -1);
+            juce::String b64 = payload.getProperty("bytes", "").toString();
+            if (tIdx >= 0 && tIdx < 8 && b64.isNotEmpty())
+            {
+                juce::MemoryOutputStream out;
+                if (juce::Base64::convertFromBase64(out, b64))
+                {
+                    juce::MemoryBlock mb(out.getData(), out.getDataSize());
+                    audioProcessor.loadSampleFromBytes(tIdx, mb);
+                }
+            }
+        }
         else if (type == "UPDATE_TRACK_SLICES")
         {
             int tIdx = (int)payload.getProperty("trackIdx", -1);
@@ -188,6 +215,30 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         {
             auto chain = payload.getProperty("chain", juce::var());
             DBG("[PluginEditor] Routing chain update received: " + juce::String(chain.size()) + " modules");
+        }
+        else if (type == "PEDAL_MASTER_ACTIVE")
+        {
+            bool active = (bool)payload.getProperty("active", false);
+            audioProcessor.setPedalMasterActive(active);
+        }
+        else if (type == "PEDAL_ENABLED")
+        {
+            int pedalIdx = (int)payload.getProperty("pedalIdx", -1);
+            bool enabled = (bool)payload.getProperty("enabled", false);
+            if (pedalIdx >= 0 && pedalIdx < 8)
+            {
+                audioProcessor.setPedalEnabled(pedalIdx, enabled);
+            }
+        }
+        else if (type == "PEDAL_PARAM")
+        {
+            int pedalIdx = (int)payload.getProperty("pedalIdx", -1);
+            juce::String key = payload.getProperty("key", "").toString();
+            float value = (float)payload.getProperty("value", 0.0f);
+            if (pedalIdx >= 0 && pedalIdx < 8 && key.isNotEmpty())
+            {
+                audioProcessor.setPedalParam(pedalIdx, key, value);
+            }
         }
         else if (type == "GET_SETTINGS")
         {
@@ -247,6 +298,10 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                     }
                 }
             }
+            // Include the actual DAW sample rate so web instruments can calculate
+            // their parameters correctly (filters, LFOs, etc.) instead of assuming 48k.
+            obj->setProperty("dawSampleRate", audioProcessor.getDawSampleRate());
+
             juce::var paramVar (obj);
             juce::String serialized = juce::JSON::toString (paramVar);
             juce::MessageManager::callAsync ([this, serialized]()
@@ -254,6 +309,24 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 std::cerr << "[PluginEditor] Evaluating window.__godRealmParametersUpdate with " << serialized.length() << " chars" << std::endl;
                 webComponent.evaluateJavascript ("if(window.__godRealmParametersUpdate) window.__godRealmParametersUpdate(" + serialized + ");");
             });
+
+            // The web UI requests parameters once it has mounted, so this is a
+            // reliable moment to push back any web-UI state restored from the
+            // host project (params not backed by APVTS).
+            if (audioProcessor.pendingRestoreJson.isNotEmpty())
+            {
+                juce::String restore = audioProcessor.pendingRestoreJson;
+                juce::MessageManager::callAsync ([this, restore]()
+                {
+                    webComponent.evaluateJavascript ("if(window.__godRealmRestoreState) window.__godRealmRestoreState(" + restore + ");");
+                });
+            }
+        }
+        else if (type == "PERSIST_WEBUI_STATE")
+        {
+            // Full web-UI parameter snapshot; stored so getStateInformation can
+            // save it into the host project for per-instance persistence.
+            audioProcessor.webUiStateJson = juce::JSON::toString (payload);
         }
         else if (type == "SAVE_SETTINGS")
         {
@@ -363,7 +436,7 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 juce::File libraryDir(audioProcessor.sampleLibraryPath);
                 if (!libraryDir.exists())
                 {
-                    libraryDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("VST_GOD");
+                    libraryDir = juce::File("I:\\kits\\new kits\\2024-2025\\VSTGOD- God Of Oneshots");
                 }
                 
                 auto importedDir = libraryDir.getChildFile("Imported").getChildFile(juce::File(filePath).getFileNameWithoutExtension());
@@ -390,7 +463,7 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 juce::File libraryDir(audioProcessor.sampleLibraryPath);
                 if (!libraryDir.exists())
                 {
-                    libraryDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("VST_GOD");
+                    libraryDir = juce::File("I:\\kits\\new kits\\2024-2025\\VSTGOD- God Of Oneshots");
                 }
                 
                 auto skinsDir = libraryDir.getChildFile("Skins").getChildFile(juce::File(pluginPath).getFileNameWithoutExtension());
@@ -404,6 +477,119 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
                 juce::MessageManager::callAsync([this, pluginPath, serialized]()
                 {
                     webComponent.evaluateJavascript("if(window.__godRealmHarvestResult) window.__godRealmHarvestResult(true, '" + pluginPath.replace("\\", "\\\\").replace("'", "\\'") + "', " + serialized + ");");
+                });
+            });
+        }
+        else if (type == "UI_NOTE_ON")
+        {
+            // Piano click in the plugin UI — trigger JUCE native synth directly
+            int note = (int)payload.getProperty("note", 60);
+            int vel  = (int)payload.getProperty("velocity", 80);
+            audioProcessor.triggerUiNoteOn(note, juce::jlimit(1, 127, vel));
+        }
+        else if (type == "UI_NOTE_OFF")
+        {
+            int note = (int)payload.getProperty("note", 60);
+            audioProcessor.triggerUiNoteOff(note);
+        }
+        else if (type == "AUDIO_DATA")
+        {
+            // AUDIO_DATA is now ignored — audio is synthesised natively by JUCE.
+            // Keeping this branch so old messages don't hit the unhandled log.
+            auto& src = payload.isObject() ? payload : msg;
+            juce::String leftB64  = src.getProperty("l", "").toString();
+            juce::String rightB64 = src.getProperty("r", "").toString();
+            int numSamples        = (int) src.getProperty("n", 0);
+            double srcRate        = (double) src.getProperty("sr", 48000.0);
+
+            if (leftB64.isNotEmpty() && numSamples > 0)
+            {
+                juce::MemoryBlock leftBytes, rightBytes;
+                juce::MemoryOutputStream leftOut (leftBytes, false), rightOut (rightBytes, false);
+                juce::Base64::convertFromBase64 (leftOut,  leftB64);
+                juce::Base64::convertFromBase64 (rightOut, rightB64.isEmpty() ? leftB64 : rightB64);
+
+                const int actualSamples = (int)(leftBytes.getSize() / sizeof(float));
+                if (actualSamples > 0)
+                {
+                    audioProcessor.pushWebAudio (
+                        reinterpret_cast<const float*>(leftBytes.getData()),
+                        reinterpret_cast<const float*>(rightBytes.getData()),
+                        actualSamples,
+                        srcRate
+                    );
+                }
+            }
+        }
+        else if (type == "OPEN_FOLDER_BROWSER")
+        {
+            fileChooser = std::make_unique<juce::FileChooser>(
+                "Locate VSTGOD Core Library Folder",
+                juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+                "", true  // native OS dialog — appears in front of plugin window
+            );
+            fileChooser->launchAsync (
+                juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories,
+                [this](const juce::FileChooser& fc)
+                {
+                    auto result = fc.getResult();
+                    if (result.exists())
+                    {
+                        juce::String p = result.getFullPathName();
+                        juce::String safe = p.replace("\\","\\\\").replace("\"","\\\"");
+                        juce::MessageManager::callAsync([this, safe]()
+                        {
+                            webComponent.evaluateJavascript (
+                                "if(window.__godRealmLibraryLocated)window.__godRealmLibraryLocated(\"" + safe + "\");"
+                            );
+                        });
+                    }
+                }
+            );
+        }
+        else if (type == "OPEN_FILE_BROWSER")
+        {
+            fileChooser = std::make_unique<juce::FileChooser>(
+                "Open Audio File",
+                juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+                "*.wav;*.aif;*.aiff;*.mp3;*.flac;*.ogg", true
+            );
+            fileChooser->launchAsync (
+                juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                [this](const juce::FileChooser& fc)
+                {
+                    auto result = fc.getResult();
+                    if (result.existsAsFile())
+                    {
+                        juce::String p = result.getFullPathName();
+                        juce::String safe = p.replace("\\","\\\\").replace("\"","\\\"");
+                        webComponent.evaluateJavascript (
+                            "if(window.__godRealmFileSelected)window.__godRealmFileSelected(\"" + safe + "\");"
+                        );
+                    }
+                }
+            );
+        }
+        else if (type == "LOAD_FILE_PATH")
+        {
+            juce::String filePath = payload.getProperty("path", "").toString();
+            juce::String reqId    = payload.getProperty("id",   "").toString();
+            juce::Thread::launch([this, filePath, reqId]()
+            {
+                juce::File f(filePath);
+                if (!f.existsAsFile()) return;
+                juce::MemoryBlock data;
+                f.loadFileAsData(data);
+                juce::MemoryOutputStream b64Out;
+                juce::Base64::convertToBase64(b64Out, data.getData(), data.getSize());
+                juce::String b64 = b64Out.toString();
+                juce::String safeId = reqId.replace("\"","\\\"");
+                juce::MessageManager::callAsync([this, safeId, b64]()
+                {
+                    webComponent.evaluateJavascript(
+                        "if(window.__godRealmFileLoaded)window.__godRealmFileLoaded(\""
+                        + safeId + "\",\"" + b64 + "\");"
+                    );
                 });
             });
         }
@@ -449,24 +635,28 @@ std::optional<juce::WebBrowserComponent::Resource> VSTGodTheGodRealmAudioProcess
     if (path.isEmpty())
         path = "index.html";
 
-    // Extract the basename of the requested file
+    // Match both full relative path and basename to improve lookup reliability.
     int lastSlash = path.lastIndexOfChar ('/');
     juce::String basename = (lastSlash >= 0) ? path.substring (lastSlash + 1) : path;
+    juce::String fullPath = path;
+    juce::String prefixedPath = "dist/" + path;
 
     const char* dataPtr = nullptr;
     int dataSize = 0;
 
-    // Search for the basename in BinaryData::originalFilenames
+    // Search for full path first, then basename as fallback.
     for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
     {
-        if (basename.equalsIgnoreCase (juce::String (BinaryData::originalFilenames[i])))
+        auto original = juce::String (BinaryData::originalFilenames[i]).replaceCharacter ('\\', '/');
+
+        if (original.equalsIgnoreCase (fullPath)
+            || original.equalsIgnoreCase (prefixedPath)
+            || original.equalsIgnoreCase (basename))
         {
             dataPtr = BinaryData::getNamedResource (BinaryData::namedResourceList[i], dataSize);
             break;
         }
     }
-
-    std::cerr << "[ResourceProvider] Req: " << url.toRawUTF8() << " | Path: " << path.toRawUTF8() << " | Base: " << basename.toRawUTF8() << " | Found: " << (dataPtr != nullptr ? "YES" : "NO") << " | Size: " << dataSize << std::endl;
 
     if (dataPtr != nullptr && dataSize > 0)
     {
@@ -504,12 +694,34 @@ VSTGodTheGodRealmAudioProcessorEditor::~VSTGodTheGodRealmAudioProcessorEditor()
 
 void VSTGodTheGodRealmAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colours::black);
+    auto bounds = getLocalBounds().toFloat();
+    juce::ColourGradient gradient (
+        juce::Colour::fromRGB (10, 14, 22), bounds.getTopLeft(),
+        juce::Colour::fromRGB (26, 35, 54), bounds.getBottomRight(), false);
+    g.setGradientFill (gradient);
+    g.fillAll();
+
+    g.setColour (juce::Colours::white.withAlpha (0.92f));
+    g.setFont (juce::FontOptions (28.0f, juce::Font::bold));
+    g.drawFittedText ("VST God - The God Realm", getLocalBounds().removeFromTop (120),
+                      juce::Justification::centred, 1);
+
+    g.setColour (juce::Colours::white.withAlpha (0.78f));
+    g.setFont (juce::FontOptions (16.0f));
+    g.drawFittedText ("If this message remains visible, the embedded WebView did not initialize.",
+                      getLocalBounds().reduced (40).withTrimmedTop (180),
+                      juce::Justification::centredTop, 2);
+
+    g.setColour (juce::Colours::white.withAlpha (0.65f));
+    g.setFont (juce::FontOptions (14.0f));
+    g.drawFittedText ("Instrument mode is enabled in this build. Rescan plugins in FL Studio after reinstalling.",
+                      getLocalBounds().reduced (40).withTrimmedTop (250),
+                      juce::Justification::centredTop, 3);
 }
 
 void VSTGodTheGodRealmAudioProcessorEditor::resized()
 {
-    webComponent.setBounds(getLocalBounds());
+    webComponent.setBounds (getLocalBounds());
 }
 
 void VSTGodTheGodRealmAudioProcessorEditor::parameterChanged (const juce::String& parameterID, float newValue)
@@ -548,117 +760,29 @@ void VSTGodTheGodRealmAudioProcessorEditor::parameterChanged (const juce::String
         {
             valVar = newValue;
         }
-        
-        juce::String jsonMsg = "{\"id\":\"" + parameterID + "\",\"value\":";
-        if (valVar.isString())
-            jsonMsg += "\"" + valVar.toString() + "\"}";
-        else if (valVar.isBool())
-            jsonMsg += (static_cast<bool> (valVar) ? juce::String ("true") : juce::String ("false")) + "}";
-        else
-            jsonMsg += juce::String (static_cast<double> (valVar)) + "}";
-            
+
+        juce::String idEscaped = parameterID.replace("\\", "\\\\").replace("\"", "\\\"");
+        juce::String valueJson = juce::JSON::toString (valVar);
+        juce::String jsonMsg = "{\"id\":\"" + idEscaped + "\",\"value\":" + valueJson + "}";
         webComponent.evaluateJavascript ("if(window.__godRealmParameterUpdate) window.__godRealmParameterUpdate(" + jsonMsg + ");");
     });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Timer Callback — Push engine state to the WebView UI
-// ═══════════════════════════════════════════════════════════════
 void VSTGodTheGodRealmAudioProcessorEditor::timerCallback()
 {
     frameCounter++;
 
-    // Every frame: metering + transport (30Hz)
-    juce::String meteringJson = buildMeteringJson();
-    webComponent.evaluateJavascript("if(window.__godRealmStateUpdate) window.__godRealmStateUpdate(" + meteringJson + ");");
+    auto meteringJson = buildMeteringJson();
+    webComponent.evaluateJavascript ("if(window.__godRealmMeteringUpdate) window.__godRealmMeteringUpdate(" + meteringJson + ");");
 
-    // Every 3rd frame: full telemetry (~10Hz)
-    if (frameCounter % 3 == 0)
+    if ((frameCounter % 15) == 0)
     {
-        juce::String telemetryJson = buildTelemetryJson();
-        webComponent.evaluateJavascript("if(window.__godRealmTelemetry) window.__godRealmTelemetry(" + telemetryJson + ");");
+        auto telemetryJson = buildTelemetryJson();
+        webComponent.evaluateJavascript ("if(window.__godRealmTelemetryUpdate) window.__godRealmTelemetryUpdate(" + telemetryJson + ");");
     }
 
-    // ─── Phase 4: FFT Spectrum Analysis ───
-    if (fft != nullptr)
-    {
-        float fftData[2048] = { 0.0f };
-        float fftWindowed[1024] = { 0.0f };
-        audioProcessor.getLatestFftSamples (fftWindowed);
-        
-        juce::dsp::WindowingFunction<float> window (1024, juce::dsp::WindowingFunction<float>::hann);
-        window.multiplyWithWindowingTable (fftWindowed, 1024);
-        
-        juce::FloatVectorOperations::copy (fftData, fftWindowed, 1024);
-        fft->performFrequencyOnlyForwardTransform (fftData);
-        
-        uint8_t fftBins[64] = { 0 };
-        float minFreq = 20.0f;
-        float maxFreq = 20000.0f;
-        double sampleRate = audioProcessor.getSampleRate();
-        if (sampleRate <= 0.0) sampleRate = 44100.0;
-        
-        for (int binIdx = 0; binIdx < 64; ++binIdx)
-        {
-            float fStart = minFreq * std::pow (maxFreq / minFreq, static_cast<float>(binIdx) / 64.0f);
-            float fEnd = minFreq * std::pow (maxFreq / minFreq, static_cast<float>(binIdx + 1) / 64.0f);
-            
-            int idxStart = std::max (0, static_cast<int>(fStart * 1024.0f / sampleRate));
-            int idxEnd = std::min (511, static_cast<int>(fEnd * 1024.0f / sampleRate));
-            if (idxEnd < idxStart) idxEnd = idxStart;
-            
-            float maxMag = 0.0f;
-            for (int i = idxStart; i <= idxEnd; ++i)
-                maxMag = std::max (maxMag, fftData[i]);
-            
-            float db = juce::Decibels::gainToDecibels (maxMag);
-            float normalized = (db + 60.0f) / 60.0f;
-            normalized = std::max (0.0f, std::min (normalized, 1.0f));
-            fftBins[binIdx] = static_cast<uint8_t>(normalized * 255.0f);
-        }
-        
-        juce::String spectralJson = "{\"fftBins\":[";
-        for (int i = 0; i < 64; ++i)
-        {
-            spectralJson += juce::String(static_cast<int>(fftBins[i]));
-            if (i < 63) spectralJson += ",";
-        }
-        spectralJson += "],\"rms\":" + juce::String((audioProcessor.getMasterPeakL() + audioProcessor.getMasterPeakR()) * 0.5f, 4);
-        spectralJson += ",\"peakFrequency\":0.0}";
-        
-        webComponent.evaluateJavascript ("if(window.__godRealmSpectralData) window.__godRealmSpectralData(" + spectralJson + ");");
-    }
-
-    // ─── Phase 4: Native Waveform Analysis ───
-    for (int t = 0; t < 16; ++t)
-    {
-        auto analysis = audioProcessor.getTrackAnalysis (t);
-        if (analysis.pendingUpdate)
-        {
-            audioProcessor.clearTrackAnalysisPending (t);
-            
-            juce::String json = "{";
-            json += "\"padIndex\":" + juce::String (t) + ",";
-            
-            json += "\"transients\":[";
-            for (size_t i = 0; i < analysis.transients.size(); ++i)
-            {
-                json += juce::String (analysis.transients[i], 4);
-                if (i < analysis.transients.size() - 1) json += ",";
-            }
-            json += "],";
-            
-            json += "\"rmsEnvelope\":[";
-            for (size_t i = 0; i < analysis.rmsEnvelope.size(); ++i)
-            {
-                json += juce::String (analysis.rmsEnvelope[i], 4);
-                if (i < analysis.rmsEnvelope.size() - 1) json += ",";
-            }
-            json += "]}";
-            
-            webComponent.evaluateJavascript ("if(window.__godRealmWaveformAnalysis) window.__godRealmWaveformAnalysis(" + json + ");");
-        }
-    }
+    if (frameCounter == 2)
+        pushSettingsToWebView();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -687,6 +811,10 @@ juce::String VSTGodTheGodRealmAudioProcessorEditor::buildMeteringJson()
     json += "\"currentStep\":" + juce::String(transport.currentStep.load(std::memory_order_relaxed)) + ",";
     json += "\"isPlaying\":" + juce::String(transport.isPlaying.load(std::memory_order_relaxed) ? "true" : "false") + ",";
     json += "\"bpm\":" + juce::String(transport.bpm.load(std::memory_order_relaxed), 2) + ",";
+    // wrapperType is set by JUCE at load time and is reliable in all hosts.
+    // JUCEApplicationBase::isStandaloneApp() can falsely return true inside FL Studio.
+    bool isStandaloneWrap = (audioProcessor.wrapperType == juce::AudioProcessor::wrapperType_Standalone);
+    json += "\"isStandalone\":" + juce::String(isStandaloneWrap ? "true" : "false") + ",";
     json += "\"ppq\":" + juce::String(transport.ppqPosition.load(std::memory_order_relaxed), 4) + ",";
 
     // MIDI 2.0 note events (drain the queue)
@@ -741,16 +869,23 @@ juce::String VSTGodTheGodRealmAudioProcessorEditor::buildTelemetryJson()
 void VSTGodTheGodRealmAudioProcessorEditor::browseForLibraryPath()
 {
     fileChooser = std::make_unique<juce::FileChooser>(
-        "Select VST GOD Sample Library...",
-        juce::File::getSpecialLocation(juce::File::userHomeDirectory), "*");
-    
+        "Select VSTGOD Sample Library Folder...",
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory), "", true);
+
     fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories,
         [this](const juce::FileChooser& chooser) {
             auto result = chooser.getResult();
             if (result.exists())
             {
-                auto path = result.getFullPathName().replaceCharacter('\\', '/');
-                webComponent.evaluateJavascript("if(window.__godRealmLibraryPathSelected) window.__godRealmLibraryPathSelected('" + path + "');");
+                juce::String p = result.getFullPathName();
+                juce::String safe = p.replace("\\","\\\\").replace("\"","\\\"");
+                juce::MessageManager::callAsync([this, safe]()
+                {
+                    webComponent.evaluateJavascript(
+                        "if(window.__godRealmLibraryLocated)window.__godRealmLibraryLocated(\"" + safe + "\");"
+                        "if(window.__godRealmLibraryPathSelected)window.__godRealmLibraryPathSelected(\"" + safe + "\");"
+                    );
+                });
             }
         });
 }
@@ -883,6 +1018,8 @@ void VSTGodTheGodRealmAudioProcessorEditor::pushSettingsToWebView()
         {
             obj->setProperty("licenseKey", parsed.getProperty("licenseKey", ""));
         }
+        // Always send the current library path so the frontend can find samples
+        obj->setProperty("sampleLibraryPath", audioProcessor.sampleLibraryPath);
     }
     
     auto serialized = juce::JSON::toString(parsed);

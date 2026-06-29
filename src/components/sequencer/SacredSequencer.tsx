@@ -1798,6 +1798,13 @@ export const SacredSequencer: React.FC<SacredSequencerProps> = ({
               ✕
             </button>
             <SacredChopper
+              onFileDropped={(file, buffer) => {
+                // Mutate the shared buffers map so playback picks up the new audio
+                buffers[chopperTrackIndex] = buffer;
+                const baseName = file.name.replace(/\.[^.]+$/, '');
+                dispatch({ type: 'RENAME_TRACK', trackIndex: chopperTrackIndex, name: baseName });
+                dispatch({ type: 'SET_TRACK_SOURCE', trackIndex: chopperTrackIndex, sourceType: 'sample' });
+              }}
               trackIndex={chopperTrackIndex}
               trackName={state.tracks[chopperTrackIndex]?.name || 'TRACK'}
               trackColor={state.tracks[chopperTrackIndex]?.color || '#FFD700'}
