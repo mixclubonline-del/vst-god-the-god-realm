@@ -42,6 +42,17 @@ const VaultPianoKeyboard: React.FC = () => {
     return () => window.removeEventListener('mouseup', up);
   }, [releaseAll]);
 
+  useEffect(() => {
+    const removeListener = neuralInputBus.addListener(ev => {
+      if (ev.type === 'midi_note_on' && ev.note !== undefined) {
+        setPressedKeys(prev => { const s = new Set(prev); s.add(ev.note!); return s; });
+      } else if (ev.type === 'midi_note_off' && ev.note !== undefined) {
+        setPressedKeys(prev => { const s = new Set(prev); s.delete(ev.note!); return s; });
+      }
+    });
+    return removeListener;
+  }, []);
+
   return (
     <div className="god-vault__piano">
       <div className="god-vault__piano-label">KEYBOARD · C3 – B6</div>

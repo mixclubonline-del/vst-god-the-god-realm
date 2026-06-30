@@ -429,6 +429,9 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         else if (type == "DECONSTRUCT_RELIC")
         {
             juce::String filePath = payload.getProperty("filePath", "").toString();
+            #if JUCE_MAC
+            filePath = filePath.replaceCharacter ('\\', '/');
+            #endif
             
             // Spin up a thread to avoid blocking the message thread/UI thread
             juce::Thread::launch([this, filePath]()
@@ -457,9 +460,13 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
         else if (type == "HARVEST_GRAPHICS")
         {
             juce::String pluginPath = payload.getProperty("pluginPath", "").toString();
+            #if JUCE_MAC
+            pluginPath = pluginPath.replaceCharacter ('\\', '/');
+            #endif
             
             juce::Thread::launch([this, pluginPath]()
             {
+
                 juce::File libraryDir(audioProcessor.sampleLibraryPath);
                 if (!libraryDir.exists())
                 {
@@ -576,7 +583,12 @@ void VSTGodTheGodRealmAudioProcessorEditor::handleWebViewMessage (const juce::Ar
             juce::String reqId    = payload.getProperty("id",   "").toString();
             juce::Thread::launch([this, filePath, reqId]()
             {
-                juce::File f(filePath);
+                juce::String normalizedPath = filePath;
+                #if JUCE_MAC
+                normalizedPath = normalizedPath.replaceCharacter ('\\', '/');
+                #endif
+                juce::File f(normalizedPath);
+
                 if (!f.existsAsFile()) return;
                 juce::MemoryBlock data;
                 f.loadFileAsData(data);

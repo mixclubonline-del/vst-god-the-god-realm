@@ -1403,7 +1403,12 @@ void VSTGodTheGodRealmAudioProcessor::loadSampleForTrack(int trackIdx, const juc
 {
     if (trackIdx < 0 || trackIdx >= 8) return;
     
-    juce::File file(path);
+    juce::String normalizedPath = path;
+    #if JUCE_MAC
+    normalizedPath = normalizedPath.replaceCharacter ('\\', '/');
+    #endif
+    
+    juce::File file(normalizedPath);
     if (file.existsAsFile())
     {
         auto* reader = formatManager.createReaderFor(file);

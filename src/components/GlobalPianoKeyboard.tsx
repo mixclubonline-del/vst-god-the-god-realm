@@ -47,6 +47,17 @@ const GlobalPianoKeyboard: React.FC<Props> = ({ activeTab }) => {
     return () => window.removeEventListener('mouseup', up);
   }, [releaseAll]);
 
+  useEffect(() => {
+    const removeListener = neuralInputBus.addListener(ev => {
+      if (ev.type === 'midi_note_on' && ev.note !== undefined) {
+        setPressed(prev => { const s = new Set(prev); s.add(ev.note!); return s; });
+      } else if (ev.type === 'midi_note_off' && ev.note !== undefined) {
+        setPressed(prev => { const s = new Set(prev); s.delete(ev.note!); return s; });
+      }
+    });
+    return removeListener;
+  }, []);
+
   // Accent color per tab
   const accentColor: Record<string, string> = {
     'Multi-Realm': '#a855f7',
