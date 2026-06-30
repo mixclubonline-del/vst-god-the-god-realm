@@ -11,7 +11,13 @@ export const CORE_LIBRARY_ROOTS = [
   CORE_LIBRARY_ROOT,
   'C:\\Users\\USER\\Documents\\VSTGOD- God Of Oneshots\\VSTGOD- God Of Oneshots',
   'I:\\kits\\new kits\\2024-2025\\VSTGOD- God Of Oneshots\\VSTGOD- God Of Oneshots',
+  '/Volumes/PRIME APP SSD/VSTGOD- God Of Oneshots/VSTGOD- God Of Oneshots',
+  '/Library/Application Support/MixxTech/VST God/Samples',
+  '/Users/mixxclub/Library/Application Support/MixxTech/VST God/Samples',
+  '/Users/mixxclub/Documents/VSTGOD- God Of Oneshots/VSTGOD- God Of Oneshots',
+  '/Users/mixxclub/Documents/Core Library',
 ];
+
 
 export interface CoreSample { name: string; file: string; }
 

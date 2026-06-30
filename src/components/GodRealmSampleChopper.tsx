@@ -338,7 +338,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
     (window as any).__godRealmFileSelected = async (path: string) => {
       const id = `chopper_open_${Date.now()}`;
       try {
-        (window as any).chrome?.webview?.postMessage(JSON.stringify({ type: 'LOAD_FILE_PATH', payload: { id, path } }));
+        nativeAudio.dispatch({ type: 'LOAD_FILE_PATH', payload: { id, path } });
       } catch {}
       const handler = (e: MessageEvent) => {
         try {
@@ -363,7 +363,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
               onUpdateParam('samplePath', filePath);
               try { localStorage.setItem('chopper_autosave_path', filePath); } catch {}
               try {
-                (window as any).chrome?.webview?.postMessage(JSON.stringify({
+                nativeAudio.dispatch({
                   type: 'LOAD_SAMPLE',
                   payload: { trackIdx: 0, filePath: path },
                 }));
@@ -385,7 +385,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
     // Try to reload via JUCE (WebView2 env)
     const id = `chopper_restore_${Date.now()}`;
     try {
-      (window as any).chrome?.webview?.postMessage(JSON.stringify({ type: 'LOAD_FILE_PATH', payload: { id, path: savedPath } }));
+      nativeAudio.dispatch({ type: 'LOAD_FILE_PATH', payload: { id, path: savedPath } });
     } catch {}
     // Listen for the decoded audio from JUCE
     const handler = (e: MessageEvent) => {
@@ -552,7 +552,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
       // WebView2 on Windows exposes file.path for files dragged from Explorer.
       if ((audioFile as any).path) {
         try {
-          (window as any).chrome?.webview?.postMessage(JSON.stringify({
+          nativeAudio.dispatch({
             type: 'LOAD_SAMPLE',
             payload: { trackIdx: 0, filePath: (audioFile as any).path },
           }));
@@ -1412,7 +1412,7 @@ export const SacredChopper: React.FC<SacredChopperProps> = ({
         <button
           onClick={() => {
             try {
-              (window as any).chrome?.webview?.postMessage(JSON.stringify({ type: 'OPEN_FILE_BROWSER' }));
+              nativeAudio.dispatch({ type: 'OPEN_FILE_BROWSER' });
             } catch {}
           }}
           title="Browse for an audio file"

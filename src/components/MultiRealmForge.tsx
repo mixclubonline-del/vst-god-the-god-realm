@@ -16,7 +16,7 @@ import {
   Copy, Save, Music, Zap, Package, Search,
 } from 'lucide-react';
 import { presetService, type UnifiedPreset } from '../services/presetService';
-import { CORE_LIBRARY } from '../services/coreLibraryData';
+import { CORE_LIBRARY, CORE_LIBRARY_ROOTS } from '../services/coreLibraryData';
 import { coreLibraryFS } from '../services/coreLibraryFS';
 import { nativeAudio } from '../native/bridge';
 import { cacheAudioBuffer, retrieveAudioBuffer, deleteCachedBuffer } from '../services/audioBufferCache';
@@ -644,39 +644,126 @@ export const MultiRealmForge: React.FC<MultiRealmForgeProps> = ({
       const filePath = (file as any).path as string | undefined;
       if (filePath) {
         try {
-          (window as any).chrome?.webview?.postMessage(JSON.stringify({
+          nativeAudio.dispatch({
             type: 'LOAD_SAMPLE',
             payload: { trackIdx: juceSlotIdx, filePath },
-          }));
+          });
         } catch {}
       }
     } catch { showMessage?.('Could not decode audio file'); }
   }, [ensureCtx, patchSlot, patchSample, showMessage, slots]);
 
-  // ── Load a Core Library sample into a slot (via the located folder) ─────────
+  const loadFileFromPath = useCallback(async (slotId: string, filePath: string, filename: string, slotIdxN: number): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      const id = `mrf-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      
+      const done = (success: boolean) => {
+        clearTimeout(timer);
+        if ((window as any).__godRealmPendingFiles) {
+          delete (window as any).__godRealmPendingFiles[id];
+        }
+        resolve(success);
+      };
+
+      const timer = setTimeout(() => {
+        if ((window as any).__godRealmPendingFiles) {
+          delete (window as any).__godRealmPendingFiles[id];
+        }
+        const url = 'file:///' + filePath.replace(/\\/g, '/');
+        fetch(url).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+          .then(async (arr) => {
+            const ctx = ensureCtx();
+            nativeAudio.loadSampleBytes(slotIdxN, arr.slice(0));
+            const buf = await ctx.decodeAudioData(arr);
+            const cacheKey = `mrf_audio_${slotId}`;
+            await cacheAudioBuffer(cacheKey, filename, buf);
+            patchSample(slotId, 'file', null);
+            patchSample(slotId, 'buffer', buf);
+            patchSample(slotId, 'fileName', filename);
+            patchSlot(slotId, 'kind', 'sample');
+            patchSlot(slotId, 'label', filename.replace(/\.[^.]+$/, '').slice(0, 22) as any);
+            done(true);
+          })
+          .catch(() => done(false));
+      }, 3000);
+
+      if (!(window as any).__godRealmPendingFiles) (window as any).__godRealmPendingFiles = {};
+      (window as any).__godRealmPendingFiles[id] = async (b64: string) => {
+        try {
+          const bin = atob(b64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          const ctx = ensureCtx();
+          nativeAudio.loadSampleBytes(slotIdxN, bytes.buffer.slice(0));
+          const buf = await ctx.decodeAudioData(bytes.buffer);
+          const cacheKey = `mrf_audio_${slotId}`;
+          await cacheAudioBuffer(cacheKey, filename, buf);
+          patchSample(slotId, 'file', null);
+          patchSample(slotId, 'buffer', buf);
+          patchSample(slotId, 'fileName', filename);
+          patchSlot(slotId, 'kind', 'sample');
+          patchSlot(slotId, 'label', filename.replace(/\.[^.]+$/, '').slice(0, 22) as any);
+          done(true);
+        } catch { done(false); }
+      };
+
+      try {
+        nativeAudio.dispatch({ type: 'LOAD_FILE_PATH', payload: { path: filePath, id } });
+      } catch {
+        done(false);
+      }
+    });
+  }, [ensureCtx, patchSlot, patchSample]);
+
+  // ── Load a Core Library sample into a slot ─────────────────────────────────
   const loadCoreLibSound = useCallback(async (slotId: string, category: string, sample: { name: string; file: string }) => {
-    if (!coreLibraryFS.isLocated) {
-      showMessage?.('Locate the Core Library first (Preset Vault → Core Library → LOCATE)');
-      return;
+    const slotIdxN = slots.findIndex(s => s.id === slotId);
+    const targetIdx = slotIdxN >= 0 ? Math.min(slotIdxN, 7) : 0;
+
+    let ok = false;
+    if (coreLibraryFS.isLocated) {
+      try {
+        const bytes = await coreLibraryFS.getFileBuffer(category, sample.file);
+        if (bytes) {
+          const ctx = ensureCtx();
+          nativeAudio.loadSampleBytes(targetIdx, bytes.slice(0));
+          const buf = await ctx.decodeAudioData(bytes.slice(0));
+          const cacheKey = `mrf_audio_${slotId}`;
+          await cacheAudioBuffer(cacheKey, sample.file, buf);
+          patchSample(slotId, 'file', null);
+          patchSample(slotId, 'buffer', buf);
+          patchSample(slotId, 'fileName', sample.file);
+          patchSlot(slotId, 'kind', 'sample');
+          patchSlot(slotId, 'label', sample.name.slice(0, 22) as any);
+          showMessage?.(`LOADED: ${sample.name} → ${slotId}`);
+          ok = true;
+        }
+      } catch {}
     }
-    try {
-      const bytes = await coreLibraryFS.getFileBuffer(category, sample.file);
-      if (!bytes) { showMessage?.(`Could not read "${sample.name}"`); return; }
-      const ctx = ensureCtx();
-      // Feed the native sampler with the same bytes (device-direct playback).
-      const slotIdxN = slots.findIndex(s => s.id === slotId);
-      nativeAudio.loadSampleBytes(slotIdxN >= 0 ? Math.min(slotIdxN, 7) : 0, bytes.slice(0));
-      const buf = await ctx.decodeAudioData(bytes.slice(0));
-      const cacheKey = `mrf_audio_${slotId}`;
-      await cacheAudioBuffer(cacheKey, sample.file, buf);
-      patchSample(slotId, 'file', null);
-      patchSample(slotId, 'buffer', buf);
-      patchSample(slotId, 'fileName', sample.file);
-      patchSlot(slotId, 'kind', 'sample');
-      patchSlot(slotId, 'label', sample.name.slice(0, 22) as unknown as RealmSlot['label']);
-      showMessage?.(`LOADED: ${sample.name} → ${slotId}`);
-    } catch { showMessage?.('Could not decode that sample'); }
-  }, [ensureCtx, patchSlot, patchSample, showMessage, slots]);
+
+    if (!ok) {
+      const customLibraryRoot = (() => {
+        try { return localStorage.getItem('vst-god-library-root') || null; } catch { return null; }
+      })();
+      const roots = customLibraryRoot
+        ? [customLibraryRoot, ...CORE_LIBRARY_ROOTS.filter(r => r !== customLibraryRoot)]
+        : CORE_LIBRARY_ROOTS;
+
+      for (const root of roots) {
+        const filePath = `${root}\\${category}\\${sample.file}`;
+        ok = await loadFileFromPath(slotId, filePath, sample.file, targetIdx);
+        if (ok) {
+          showMessage?.(`LOADED: ${sample.name} → ${slotId}`);
+          break;
+        }
+      }
+    }
+
+    if (!ok) {
+      showMessage?.(`Could not load "${sample.file}" — locate the Core Library or drag-drop the file`);
+    }
+  }, [ensureCtx, patchSlot, patchSample, showMessage, slots, loadFileFromPath]);
+
 
   const handleDrop = useCallback((slotId: string, e: React.DragEvent) => {
     e.preventDefault(); dragCounters.current[slotId] = 0; setDraggingSlot(null);

@@ -822,7 +822,16 @@ class LibrarySampler {
       };
 
       try {
-        (window as any).chrome?.webview?.postMessage(JSON.stringify({ type: 'LOAD_FILE_PATH', payload: { path, id } }));
+        const msg = { type: 'LOAD_FILE_PATH', payload: { path, id } };
+        if ((window as any).__juce__) {
+          (window as any).__juce__.postMessage(JSON.stringify(msg));
+        } else if ((window as any).sendToJuce) {
+          (window as any).sendToJuce(msg);
+        } else if ((window as any).chrome?.webview) {
+          (window as any).chrome.webview.postMessage(JSON.stringify(msg));
+        } else {
+          done(false);
+        }
       } catch {
         done(false);
       }
@@ -1243,9 +1252,7 @@ export const GodVault: React.FC<GodVaultProps> = ({
       return;
     }
     // Fallback for non-Chromium hosts: ask JUCE to open a native folder browser.
-    try {
-      (window as any).chrome?.webview?.postMessage(JSON.stringify({ type: 'OPEN_FOLDER_BROWSER' }));
-    } catch {}
+    nativeAudio.browseLibraryPath();
   }, [showMessage]);
 
   // ── Vault FX state ────────────────────────────────────────────────────────

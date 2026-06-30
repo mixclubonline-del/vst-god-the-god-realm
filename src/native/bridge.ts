@@ -422,18 +422,28 @@ class NativeAudioBridge {
     };
     
     if (this.isInJuce()) {
-      if (window.__juce__) {
-        window.__juce__.postMessage(JSON.stringify(msg));
-      } else if (window.sendToJuce) {
-        window.sendToJuce(msg);
-      }
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Parameter changed:', paramId, value);
     }
   }
 
-  /** True when running inside the JUCE WebView2 (plugin or standalone exe). */
-  public get isNative(): boolean { return !!(window as any).chrome?.webview; }
+  public dispatch(msg: any) {
+    if (this.isInJuce()) {
+      if (window.__juce__) {
+        window.__juce__.postMessage(JSON.stringify(msg));
+      } else if (window.sendToJuce) {
+        window.sendToJuce(msg);
+      } else if ((window as any).chrome?.webview) {
+        (window as any).chrome.webview.postMessage(JSON.stringify(msg));
+      }
+    } else {
+      console.log('[NativeBridge Sim] Dispatched:', msg);
+    }
+  }
+
+  /** True when running inside any native wrapper (JUCE or WebView2). */
+  public get isNative(): boolean { return this.isInJuce() || !!(window as any).chrome?.webview; }
 
   /**
    * Feed raw audio bytes into a native SacredSampler track so the audio is
@@ -451,9 +461,7 @@ class NativeAudioBridge {
       }
       const b64 = btoa(bin);
       const msg = { type: 'LOAD_SAMPLE_BYTES', payload: { trackIdx, bytes: b64 } };
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
-      else (window as any).chrome?.webview?.postMessage(JSON.stringify(msg));
+      this.dispatch(msg);
     } catch { /* ignore */ }
   }
 
@@ -531,8 +539,7 @@ class NativeAudioBridge {
     };
     
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Step updated:', { trackIdx, patternName, stepIdx });
     }
@@ -545,8 +552,7 @@ class NativeAudioBridge {
     };
     
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Load sample:', { trackIdx, filePath });
     }
@@ -767,8 +773,7 @@ class NativeAudioBridge {
     console.log('[NativeBridge] getSettings() called');
     const msg = { type: 'GET_SETTINGS' };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       setTimeout(() => {
         try {
@@ -788,8 +793,7 @@ class NativeAudioBridge {
   public saveSettings(settings: any) {
     const msg = { type: 'SAVE_SETTINGS', payload: settings };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       try {
         localStorage.setItem('godRealmSettings', JSON.stringify(settings));
@@ -801,10 +805,9 @@ class NativeAudioBridge {
   }
 
   public browseLibraryPath() {
-    const msg = { type: 'BROWSE_LIBRARY_PATH' };
+    const msg = { type: 'OPEN_FOLDER_BROWSER' };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       setTimeout(() => {
         const mockPath = '/Users/mockuser/Library/Audio/Samples/VST GOD';
@@ -818,8 +821,7 @@ class NativeAudioBridge {
   public activateLicense(key: string) {
     const msg = { type: 'ACTIVATE_LICENSE', payload: { key } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       // Browser simulation — license activation requires JUCE host
       setTimeout(() => {
@@ -843,8 +845,7 @@ class NativeAudioBridge {
   public deconstructRelic(filePath: string) {
     const msg = { type: 'DECONSTRUCT_RELIC', payload: { filePath } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Deconstructing relic:', filePath);
       setTimeout(() => {
@@ -863,8 +864,7 @@ class NativeAudioBridge {
   public harvestGraphics(pluginPath: string) {
     const msg = { type: 'HARVEST_GRAPHICS', payload: { pluginPath } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Harvesting graphics from:', pluginPath);
       setTimeout(() => {
@@ -883,8 +883,7 @@ class NativeAudioBridge {
   public setPedalMasterActive(active: boolean) {
     const msg = { type: 'PEDAL_MASTER_ACTIVE', payload: { active } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Pedal Master Active:', active);
     }
@@ -893,8 +892,7 @@ class NativeAudioBridge {
   public setPedalEnabled(pedalIdx: number, enabled: boolean) {
     const msg = { type: 'PEDAL_ENABLED', payload: { pedalIdx, enabled } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Pedal Enabled:', pedalIdx, enabled);
     }
@@ -903,8 +901,7 @@ class NativeAudioBridge {
   public setPedalParam(pedalIdx: number, key: string, value: number) {
     const msg = { type: 'PEDAL_PARAM', payload: { pedalIdx, key, value } };
     if (this.isInJuce()) {
-      if (window.__juce__) window.__juce__.postMessage(JSON.stringify(msg));
-      else if (window.sendToJuce) window.sendToJuce(msg);
+      this.dispatch(msg);
     } else {
       console.log('[NativeBridge Sim] Pedal Param:', pedalIdx, key, value);
     }
