@@ -330,7 +330,7 @@ export default function FAQTimerSection() {
                 </span>
               </div>
               <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-0.01em' }}>
-                Sacred Price Hold: $49
+                Sacred Price Hold: $199
               </h3>
             </div>
 
@@ -379,7 +379,7 @@ export default function FAQTimerSection() {
                   STANDARD VALUATION
                 </span>
                 <span style={{ fontSize: 20, color: COLORS.textSecondary, textDecoration: 'line-through', fontWeight: 600 }}>
-                  $149.00 USD
+                  $299.00 USD
                 </span>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -387,7 +387,7 @@ export default function FAQTimerSection() {
                   PRE-ORDER SPECIAL
                 </span>
                 <span style={{ fontSize: 32, color: '#fff', fontWeight: 900, textShadow: '0 0 16px rgba(255,255,255,0.1)' }}>
-                  $49.00
+                  $199.00
                 </span>
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function FAQTimerSection() {
                 e.currentTarget.style.boxShadow = `0 8px 24px rgba(255, 102, 0, 0.15)`;
               }}
             >
-              CLAIM $49 LICENSE NOW
+              CLAIM $199 LICENSE NOW
             </button>
 
             {/* Trust disclaimer */}
@@ -552,7 +552,7 @@ export default function FAQTimerSection() {
       <PreOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        price={49}
+        price={199}
       />
     </section>
   );

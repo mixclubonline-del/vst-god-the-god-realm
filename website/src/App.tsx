@@ -116,7 +116,7 @@ function App() {
           setIsSuccessModalOpen(false);
           setSuccessSessionId(null);
         }}
-        price={180}
+        price={199}
         checkoutSessionId={successSessionId || undefined}
       />
     </div>

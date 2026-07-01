@@ -19,6 +19,7 @@ const GOLDEN_GRADIENT = `linear-gradient(135deg, ${COLORS.goldHex} 0%, ${COLORS.
 
 export default function PreOrderSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPrice, setSelectedPrice] = useState(199);
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.15 });
 
@@ -26,24 +27,29 @@ export default function PreOrderSection() {
     {
       icon: ShieldCheck,
       title: 'Lifetime Plugin License',
-      desc: 'Activate VST GOD: Electric Pantheon on up to 2 machines (macOS/Windows) with a single key.',
+      desc: 'Permanent authorization key for your machines (macOS and Windows formats).',
     },
     {
       icon: Zap,
       title: 'Early Adopter Beta Access',
-      desc: 'Gain instant access to current beta builds and participate in the development process.',
+      desc: 'Gain instant access to current beta builds and participate in shaping development.',
     },
     {
       icon: Gift,
-      title: 'Exclusive "Divine Presets" Kit',
-      desc: 'Receive a limited-edition expansion pack containing 50 alchemical presets designed by top sound designers.',
+      title: 'Exclusive "Divine Presets"',
+      desc: 'Receive alchemical preset kits designed by industry-leading sound designers.',
     },
     {
       icon: Layers,
-      title: 'All Future v1.x Updates',
-      desc: 'Free access to all feature additions, performance optimizations, and expansions in the v1 cycle.',
+      title: 'Continuous Updates',
+      desc: 'Free performance optimization patches, expansions, and platform support updates.',
     },
   ];
+
+  const handlePreOrderClick = (price: number) => {
+    setSelectedPrice(price);
+    setIsModalOpen(true);
+  };
 
   return (
     <section
@@ -141,84 +147,137 @@ export default function PreOrderSection() {
           </motion.div>
         </div>
 
-        {/* Layout Grid */}
+        {/* Pricing Cards Grid */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: 48,
-            alignItems: 'center',
+            gap: 32,
+            alignItems: 'stretch',
+            marginBottom: 64,
           }}
         >
-          {/* Left Side: Offer breakdown */}
+          {/* Card 1: Gold Edition */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
-            style={{ display: 'flex', flexDirection: 'column', gap: 32 }}
-          >
-            {preOrderFeatures.map((feat, i) => (
-              <div key={i} style={{ display: 'flex', gap: 16 }}>
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    background: 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${COLORS.ether}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: COLORS.goldLight,
-                  }}
-                >
-                  <feat.icon size={22} />
-                </div>
-                <div>
-                  <h3
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: '#fff',
-                      margin: '0 0 6px',
-                      letterSpacing: '0.01em',
-                    }}
-                  >
-                    {feat.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 14,
-                      color: COLORS.textMuted,
-                      margin: 0,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {feat.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* Right Side: Pricing Card */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.3 }}
             style={{
-              background: 'linear-gradient(135deg, rgba(13,13,16,0.85) 0%, rgba(20,20,27,0.85) 100%)',
+              background: 'linear-gradient(180deg, rgba(13,13,16,0.85) 0%, rgba(20,20,27,0.85) 100%)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: `1px solid ${COLORS.goldHex}44`,
+              border: `1px solid rgba(255, 255, 255, 0.08)`,
               borderRadius: 24,
               padding: '48px 40px',
               textAlign: 'center',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(194,150,35,0.03)',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
               position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+                GOLD EDITION
+              </h3>
+              <span style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Standard Pre-Order
+              </span>
+
+              {/* Price section */}
+              <div style={{ margin: '32px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 24, color: COLORS.textDim, textDecoration: 'line-through', fontWeight: 500 }}>
+                    $299.00
+                  </span>
+                  <span style={{ fontSize: 64, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
+                    $199
+                  </span>
+                  <span style={{ fontSize: 16, color: COLORS.textMuted, fontWeight: 600 }}>
+                    USD
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: COLORS.textDim, marginTop: 8, letterSpacing: '0.02em' }}>
+                  One-time payment. Lifetime engine license.
+                </p>
+              </div>
+
+              {/* Features bullets */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'left', marginBottom: 40, borderTop: `1px solid ${COLORS.ether}`, paddingTop: 24 }}>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>2-Machine Lifetime License Keys</span>
+                </div>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>Unlocked DSP Engine (Unlimited voices)</span>
+                </div>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>50 Exclusive Divine Presets</span>
+                </div>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>All Future v1.x Updates Included</span>
+                </div>
+                <div style={{ fontSize: 13, color: COLORS.textMuted, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>Standard Support Queue</span>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={() => handlePreOrderClick(199)}
+              style={{
+                width: '100%',
+                padding: '18px 24px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 14,
+                color: '#fff',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 15,
+                fontWeight: 800,
+                letterSpacing: '0.05em',
+                cursor: 'pointer',
+                transition: 'all 0.25s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+            >
+              UNLOCK GOLD ACCESS
+            </button>
+          </motion.div>
+
+          {/* Card 2: Deity Edition */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(13,13,16,0.95) 0%, rgba(25,25,32,0.95) 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: `1px solid ${COLORS.goldHex}`,
+              borderRadius: 24,
+              padding: '48px 40px',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px rgba(194, 150, 35, 0.08), inset 0 0 30px rgba(194,150,35,0.03)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
             }}
           >
             {/* Glowing Accent Border */}
@@ -228,40 +287,90 @@ export default function PreOrderSection() {
                 top: 0,
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '60%',
+                width: '80%',
                 height: 1,
                 background: `linear-gradient(90deg, transparent, ${COLORS.goldLight}, transparent)`,
               }}
             />
 
-            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
-              ELECTRIC PANTHEON
-            </h3>
-            <span style={{ fontSize: 12, color: COLORS.goldLight, fontWeight: 700, letterSpacing: '0.1em' }}>
-              GOLD EDITION PRE-ORDER
-            </span>
+            {/* Most Popular/Ultimate Tag */}
+            <div
+              style={{
+                position: 'absolute',
+                top: -14,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: GOLDEN_GRADIENT,
+                padding: '4px 14px',
+                borderRadius: 20,
+                fontSize: 10,
+                fontWeight: 900,
+                color: '#000',
+                letterSpacing: '0.08em',
+                boxShadow: '0 4px 12px rgba(194, 150, 35, 0.3)',
+              }}
+            >
+              ULTIMATE DEITY TIER
+            </div>
 
-            {/* Price section */}
-            <div style={{ margin: '40px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontSize: 24, color: COLORS.textDim, textDecoration: 'line-through', fontWeight: 500 }}>
-                  $149.00
-                </span>
-                <span style={{ fontSize: 64, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif" }}>
-                  $49
-                </span>
-                <span style={{ fontSize: 16, color: COLORS.textMuted, fontWeight: 600 }}>
-                  USD
-                </span>
+            <div>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+                DEITY CREATOR
+              </h3>
+              <span style={{ fontSize: 12, color: COLORS.goldLight, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Premium Pre-Order
+              </span>
+
+              {/* Price section */}
+              <div style={{ margin: '32px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 24, color: COLORS.textDim, textDecoration: 'line-through', fontWeight: 500 }}>
+                    $599.00
+                  </span>
+                  <span style={{ fontSize: 64, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif", textShadow: '0 0 20px rgba(194,150,35,0.15)' }}>
+                    $399
+                  </span>
+                  <span style={{ fontSize: 16, color: COLORS.textMuted, fontWeight: 600 }}>
+                    USD
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: COLORS.goldLight, marginTop: 8, letterSpacing: '0.02em', fontWeight: 600 }}>
+                  One-time payment. Maximum power & upgrades.
+                </p>
               </div>
-              <p style={{ fontSize: 12, color: COLORS.textDim, marginTop: 8, letterSpacing: '0.02em' }}>
-                One-time payment. Lifetime access.
-              </p>
+
+              {/* Features bullets */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'left', marginBottom: 40, borderTop: `1px solid ${COLORS.goldHex}33`, paddingTop: 24 }}>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>Up to 5-Machine Lifetime License Keys</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600 }}>DSP Engine + 3D Spatial Audio Module</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>50 Patches + All Future expansion vaults</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600 }}>Lifetime Updates (v1.x & v2.x Upgrades)</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>Exclusive UI theme creator skin switcher</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#fff', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <CheckCircle2 size={16} color={COLORS.goldLight} style={{ flexShrink: 0 }} />
+                  <span>24/7 Priority Support (12-hour response SLA)</span>
+                </div>
+              </div>
             </div>
 
             {/* CTA Button */}
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => handlePreOrderClick(399)}
               style={{
                 width: '100%',
                 padding: '18px 24px',
@@ -270,7 +379,7 @@ export default function PreOrderSection() {
                 borderRadius: 14,
                 color: '#000',
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 800,
                 letterSpacing: '0.05em',
                 cursor: 'pointer',
@@ -288,19 +397,48 @@ export default function PreOrderSection() {
             >
               UNLOCK DEITY ACCESS
             </button>
+          </motion.div>
+        </div>
 
-            {/* Guarantee / trust items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 40, borderTop: `1px solid ${COLORS.ether}`, paddingTop: 32 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: COLORS.textMuted }}>
-                <CheckCircle2 size={16} color={COLORS.goldLight} />
-                <span>Instant License Key Delivery</span>
+        {/* Features Row Underlying */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 24,
+            borderTop: `1px solid ${COLORS.ether}`,
+            paddingTop: 48,
+            marginTop: 32,
+          }}
+        >
+          {preOrderFeatures.map((feat, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  background: 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${COLORS.ether}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: COLORS.goldLight,
+                }}
+              >
+                <feat.icon size={18} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, color: COLORS.textMuted }}>
-                <CheckCircle2 size={16} color={COLORS.goldLight} />
-                <span>Simulated Secure Sandbox Payment</span>
+              <div>
+                <h4 style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 4px', fontFamily: "'Inter', sans-serif" }}>
+                  {feat.title}
+                </h4>
+                <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0, lineHeight: 1.4, fontFamily: "'Inter', sans-serif" }}>
+                  {feat.desc}
+                </p>
               </div>
             </div>
-          </motion.div>
+          ))}
         </div>
       </div>
 
@@ -308,7 +446,7 @@ export default function PreOrderSection() {
       <PreOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        price={49}
+        price={selectedPrice}
       />
     </section>
   );

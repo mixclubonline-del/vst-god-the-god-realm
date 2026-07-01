@@ -37,8 +37,8 @@ serve(async (req) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: price === 380 ? 'Electric Pantheon - Deity Creator Pre-Order' : 'Electric Pantheon - Gold Edition Pre-Order',
-              description: price === 380 
+              name: price === 399 ? 'Electric Pantheon - Deity Creator Pre-Order' : 'Electric Pantheon - Gold Edition Pre-Order',
+              description: price === 399 
                 ? '5 activations, 3D spatial module, all future expansions, theme skin customizer, 24/7 priority support.' 
                 : '2 activations, unlocked DSP engine, 50 exclusive divine presets, lifetime v1.x updates.',
             },

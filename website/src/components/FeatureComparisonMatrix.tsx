@@ -9,7 +9,9 @@ interface FeatureItem {
   freeVal: string;
   freeStatus: 'limited' | 'none' | 'basic';
   goldVal: string;
-  goldStatus: 'premium' | 'complete';
+  goldStatus: 'premium' | 'complete' | 'none';
+  deityVal: string;
+  deityStatus: 'premium' | 'complete' | 'special';
 }
 
 const comparisonFeatures: FeatureItem[] = [
@@ -18,8 +20,10 @@ const comparisonFeatures: FeatureItem[] = [
     description: 'The core digital signal processing synthesis and wavefolding system.',
     freeVal: 'Basic Trial (Limited polyphony, standard oscillators)',
     freeStatus: 'limited',
-    goldVal: 'Unlocked DSP (Unlimited voices, alchemical wavefolder, 3D audio space)',
-    goldStatus: 'premium',
+    goldVal: 'Unlocked DSP (Unlimited voices, alchemical wavefolder)',
+    goldStatus: 'complete',
+    deityVal: 'Unlocked DSP + 3D Spatial positioning audio module',
+    deityStatus: 'premium',
   },
   {
     name: 'Activations',
@@ -28,38 +32,48 @@ const comparisonFeatures: FeatureItem[] = [
     freeStatus: 'none',
     goldVal: 'Up to 2 machines (macOS/Windows, lifetime license key)',
     goldStatus: 'complete',
+    deityVal: 'Up to 5 machines (macOS/Windows, lifetime license key)',
+    deityStatus: 'premium',
   },
   {
     name: 'Updates',
     description: 'Software version updates, performance patches, and compatibility.',
     freeVal: 'Trial version updates only (Access locks post-beta)',
     freeStatus: 'none',
-    goldVal: 'Lifetime v1.x Updates (All feature additions & optimizations)',
+    goldVal: 'Lifetime v1.x Updates (All feature additions & patches)',
     goldStatus: 'complete',
+    deityVal: 'Lifetime Updates (v1.x + all future v2.x major upgrades)',
+    deityStatus: 'premium',
   },
   {
     name: 'Divine Presets Expansion',
     description: 'Exclusive patches crafted by industry sound designers.',
     freeVal: '15 stock presets (standard patches)',
     freeStatus: 'basic',
-    goldVal: '50 exclusive Divine presets + all future expansion vaults in v1',
-    goldStatus: 'premium',
+    goldVal: '50 exclusive Divine presets',
+    goldStatus: 'complete',
+    deityVal: '50 exclusive presets + all future expansion vaults',
+    deityStatus: 'premium',
   },
   {
-    name: 'Custom Gold UI Skin',
+    name: 'UI Customization',
     description: 'Visual skin customization panel within the plugin shell.',
     freeVal: 'Classic Obsidian skin only',
     freeStatus: 'none',
-    goldVal: 'Exclusive "Celestial Gold-Ember" premium skin + theme switcher',
-    goldStatus: 'premium',
+    goldVal: 'Exclusive "Celestial Gold-Ember" premium skin',
+    goldStatus: 'complete',
+    deityVal: 'Celestial Gold-Ember skin + theme skin editor',
+    deityStatus: 'premium',
   },
   {
     name: 'Priority Support',
     description: 'Support ticket queue and direct developer support access.',
     freeVal: 'Community-based Discord channel',
     freeStatus: 'basic',
-    goldVal: '24/7 Priority developer ticket queue (12-hour response guarantee)',
-    goldStatus: 'premium',
+    goldVal: 'Standard developer email support queue',
+    goldStatus: 'complete',
+    deityVal: '24/7 Priority developer queue (12-hour response SLA)',
+    deityStatus: 'premium',
   },
 ];
 
@@ -83,6 +97,7 @@ const GOLDEN_GRADIENT = `linear-gradient(135deg, ${COLORS.goldHex} 0%, ${COLORS.
 
 export default function FeatureComparisonMatrix() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPrice, setSelectedPrice] = useState(199);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const renderFreeValue = (item: FeatureItem) => {
@@ -119,11 +134,36 @@ export default function FeatureComparisonMatrix() {
           <span className="fcm-highlight-text">{item.goldVal}</span>
         </span>
       );
+    } else if (item.goldStatus === 'none') {
+      return (
+        <span className="fcm-val-gold fcm-val-muted-text">
+          <X className="fcm-icon-cross" size={16} />
+          <span>{item.goldVal}</span>
+        </span>
+      );
     } else {
       return (
         <span className="fcm-val-gold">
           <Check className="fcm-icon-check-gold" size={16} />
           <span>{item.goldVal}</span>
+        </span>
+      );
+    }
+  };
+
+  const renderDeityValue = (item: FeatureItem) => {
+    if (item.deityStatus === 'premium') {
+      return (
+        <span className="fcm-val-gold fcm-val-gold-premium">
+          <Sparkles className="fcm-icon-sparkle" size={16} />
+          <span className="fcm-highlight-text" style={{ color: '#ffffff', textShadow: '0 0 12px rgba(255, 255, 255, 0.3)' }}>{item.deityVal}</span>
+        </span>
+      );
+    } else {
+      return (
+        <span className="fcm-val-gold">
+          <Check className="fcm-icon-check-gold" size={16} style={{ color: '#ffffff' }} />
+          <span>{item.deityVal}</span>
         </span>
       );
     }
@@ -237,7 +277,7 @@ export default function FeatureComparisonMatrix() {
 
         .fcm-table-header {
           display: grid;
-          grid-template-columns: 1.3fr 1fr 1.1fr;
+          grid-template-columns: 1.2fr 0.8fr 1fr 1fr;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           background: rgba(0, 0, 0, 0.25);
         }
@@ -317,7 +357,7 @@ export default function FeatureComparisonMatrix() {
         /* Rows */
         .fcm-row {
           display: grid;
-          grid-template-columns: 1.3fr 1fr 1.1fr;
+          grid-template-columns: 1.2fr 0.8fr 1fr 1fr;
           border-bottom: 1px solid rgba(255, 255, 255, 0.04);
           transition: background-color 0.2s ease, border-color 0.2s ease;
         }
@@ -436,7 +476,7 @@ export default function FeatureComparisonMatrix() {
         /* Footer Row */
         .fcm-table-footer {
           display: grid;
-          grid-template-columns: 1.3fr 1fr 1.1fr;
+          grid-template-columns: 1.2fr 0.8fr 1fr 1fr;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
           background: rgba(0, 0, 0, 0.15);
         }
@@ -649,12 +689,23 @@ export default function FeatureComparisonMatrix() {
             {/* Gold Tier Header Cell */}
             <div className="fcm-header-cell fcm-header-gold">
               <span className="fcm-tier-label-gold">
-                <Sparkles size={12} />
                 Gold Pre-Order
               </span>
               <div className="fcm-price-gold">
-                <span className="fcm-price-slash">$149</span>
-                <span>$49</span>
+                <span className="fcm-price-slash">$299</span>
+                <span>$199</span>
+                <span className="fcm-price-currency">USD</span>
+              </div>
+            </div>
+            {/* Deity Tier Header Cell */}
+            <div className="fcm-header-cell fcm-header-gold" style={{ borderLeft: '1px solid rgba(194, 150, 35, 0.2)' }}>
+              <span className="fcm-tier-label-gold" style={{ color: COLORS.goldLight, fontWeight: 900 }}>
+                <Sparkles size={12} color={COLORS.goldLight} style={{ filter: 'drop-shadow(0 0 3px rgba(232, 197, 71, 0.4))' }} />
+                Deity Creator
+              </span>
+              <div className="fcm-price-gold">
+                <span className="fcm-price-slash">$599</span>
+                <span style={{ color: '#ffffff', textShadow: '0 0 10px rgba(255,255,255,0.2)' }}>$399</span>
                 <span className="fcm-price-currency">USD</span>
               </div>
             </div>
@@ -682,6 +733,10 @@ export default function FeatureComparisonMatrix() {
                 <div className="fcm-cell fcm-cell-gold">
                   {renderGoldValue(item)}
                 </div>
+                {/* Deity Value Column */}
+                <div className="fcm-cell fcm-cell-gold" style={{ borderLeft: '1px solid rgba(194, 150, 35, 0.12)' }}>
+                  {renderDeityValue(item)}
+                </div>
               </div>
             ))}
           </div>
@@ -701,9 +756,24 @@ export default function FeatureComparisonMatrix() {
             <div className="fcm-footer-cell fcm-footer-gold">
               <button
                 className="fcm-btn-gold"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setSelectedPrice(199);
+                  setIsModalOpen(true);
+                }}
               >
-                Claim Gold Access
+                Claim Gold ($199)
+              </button>
+            </div>
+            <div className="fcm-footer-cell fcm-footer-gold" style={{ borderLeft: '1px solid rgba(194, 150, 35, 0.15)' }}>
+              <button
+                className="fcm-btn-gold"
+                style={{ background: `linear-gradient(135deg, ${COLORS.goldHex} 0%, #fff 50%, ${COLORS.goldHex} 100%)`, color: '#000' }}
+                onClick={() => {
+                  setSelectedPrice(399);
+                  setIsModalOpen(true);
+                }}
+              >
+                Claim Deity ($399)
               </button>
             </div>
           </div>
@@ -743,12 +813,12 @@ export default function FeatureComparisonMatrix() {
           <div className="fcm-mobile-card fcm-mobile-gold-card">
             <div className="fcm-mobile-card-header">
               <span className="fcm-mobile-card-title-gold">
-                <Sparkles size={12} /> Recommended Tier
+                Popular Edition
               </span>
               <h3 style={{ fontSize: 24, fontWeight: 900, margin: 0, color: '#ffffff' }}>Gold Pre-Order</h3>
               <div className="fcm-mobile-card-price" style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
-                <span className="fcm-price-slash" style={{ fontSize: 14 }}>$149</span>
-                <span style={{ fontSize: 28, fontWeight: 900, color: '#ffffff' }}>$49</span>
+                <span className="fcm-price-slash" style={{ fontSize: 14 }}>$299</span>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#ffffff' }}>$199</span>
                 <span className="fcm-price-currency" style={{ fontSize: 12 }}>USD</span>
               </div>
             </div>
@@ -769,9 +839,52 @@ export default function FeatureComparisonMatrix() {
             <button
               className="fcm-btn-gold"
               style={{ width: '100%' }}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setSelectedPrice(199);
+                setIsModalOpen(true);
+              }}
             >
-              Unlock Deity Access
+              Get Gold ($199)
+            </button>
+          </div>
+
+          {/* Deity Tier Card */}
+          <div className="fcm-mobile-card fcm-mobile-gold-card" style={{ border: '1px solid rgba(255, 255, 255, 0.4)', boxShadow: '0 20px 50px rgba(255, 255, 255, 0.05)' }}>
+            <div className="fcm-mobile-gold-card::after" style={{ content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${COLORS.goldHex}, #ffffff, ${COLORS.goldHex})`, borderRadius: '20px 20px 0 0' }} />
+            <div className="fcm-mobile-card-header" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.15)' }}>
+              <span className="fcm-mobile-card-title-gold" style={{ color: '#ffffff' }}>
+                <Sparkles size={12} color="#ffffff" style={{ display: 'inline', marginRight: 4 }} /> Ultimate Creator Tier
+              </span>
+              <h3 style={{ fontSize: 24, fontWeight: 900, margin: 0, color: '#ffffff' }}>Deity Pre-Order</h3>
+              <div className="fcm-mobile-card-price" style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 6, marginTop: 4 }}>
+                <span className="fcm-price-slash" style={{ fontSize: 14 }}>$599</span>
+                <span style={{ fontSize: 28, fontWeight: 900, color: '#ffffff' }}>$399</span>
+                <span className="fcm-price-currency" style={{ fontSize: 12 }}>USD</span>
+              </div>
+            </div>
+
+            <div className="fcm-mobile-feature-list">
+              {comparisonFeatures.map((item, idx) => (
+                <div key={idx} className="fcm-mobile-feature-item">
+                  <div className="fcm-mobile-feature-header">
+                    <span className="fcm-mobile-feature-name" style={{ color: '#ffffff' }}>{item.name}</span>
+                  </div>
+                  <div className="fcm-mobile-feature-value">
+                    {renderDeityValue(item)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="fcm-btn-gold"
+              style={{ width: '100%', background: `linear-gradient(135deg, ${COLORS.goldHex} 0%, #fff 50%, ${COLORS.goldHex} 100%)`, color: '#000' }}
+              onClick={() => {
+                setSelectedPrice(399);
+                setIsModalOpen(true);
+              }}
+            >
+              Get Deity ($399)
             </button>
           </div>
         </div>
@@ -781,7 +894,7 @@ export default function FeatureComparisonMatrix() {
       <PreOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        price={49}
+        price={selectedPrice}
       />
     </section>
   );
