@@ -117,7 +117,7 @@ export default function Footer() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 12,
             flexShrink: 0,
           }}
         >
@@ -125,29 +125,38 @@ export default function Footer() {
             <a
               key={social.label}
               href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label={social.label}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                color: COLORS.textDim,
-                transition: 'color 0.3s ease, background 0.3s ease',
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                color: COLORS.textMuted,
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                 textDecoration: 'none',
-                background: 'transparent',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = COLORS.goldLight;
-                e.currentTarget.style.background = 'rgba(194,150,35,0.1)';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.borderColor = COLORS.goldLight;
+                e.currentTarget.style.background = 'rgba(194, 150, 35, 0.08)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(194, 150, 35, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = COLORS.textDim;
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = COLORS.textMuted;
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <social.icon size={16} />
+              <social.icon size={20} />
             </a>
           ))}
         </div>
