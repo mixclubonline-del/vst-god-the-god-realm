@@ -19,12 +19,12 @@ interface StatItem {
 }
 
 const STATS: StatItem[] = [
-  { value: 8,   suffix: '',  label: 'God Identities',   color: '#c29623' },
-  { value: 100, suffix: '+', label: 'Divine Presets',    color: '#f0d668' },
-  { value: 4,   suffix: '',  label: 'Macro Controls',   color: '#ff9f2f' },
-  { value: 32,  suffix: '+', label: 'Realm FX',         color: '#4ecbff' },
-  { value: 9,   suffix: '',  label: 'Instruments',      color: '#9d65ff' },
-  { value: 20,  suffix: '+', label: 'Sound Categories', color: '#7cff9d' },
+  { value: 8,    suffix: '',  label: 'God Identities',   color: '#c29623' },
+  { value: 5600, suffix: '+', label: 'Core Presets',     color: '#f0d668' },
+  { value: 4,    suffix: '',  label: 'Macro Controls',   color: '#ff9f2f' },
+  { value: 32,   suffix: '+', label: 'Realm FX',         color: '#4ecbff' },
+  { value: 9,    suffix: '',  label: 'Instruments',      color: '#9d65ff' },
+  { value: 20,   suffix: '+', label: 'Sound Categories', color: '#7cff9d' },
 ];
 
 function AnimatedNumber({ value, suffix, isInView }: { value: number; suffix: string; isInView: boolean }) {
