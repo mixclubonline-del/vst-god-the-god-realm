@@ -142,40 +142,19 @@ export default function FAQTimerSection() {
   const containerRef = useRef<HTMLElement>(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.15 });
 
-  // Handle the persistent rolling 24-hour cycle timer
+  // Handle the fixed target countdown timer (July 21, 2026 23:59:59 EDT)
   useEffect(() => {
-    const getTargetTime = () => {
-      if (typeof window === 'undefined') return Date.now() + 24 * 60 * 60 * 1000;
-      const STORAGE_KEY = 'vst_god_preorder_expiry';
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const now = Date.now();
-
-      if (stored) {
-        const expiry = parseInt(stored, 10);
-        if (expiry > now) {
-          return expiry;
-        }
-      }
-
-      // If no stored value or expired, start a fresh 24h cycle
-      const newExpiry = now + 24 * 60 * 60 * 1000;
-      localStorage.setItem(STORAGE_KEY, newExpiry.toString());
-      return newExpiry;
-    };
-
-    const targetTime = getTargetTime();
+    const startDate = new Date('2026-07-01T00:00:00-04:00').getTime();
+    const targetDate = new Date('2026-07-21T23:59:59-04:00').getTime();
 
     const updateTimer = () => {
       const now = Date.now();
-      let difference = targetTime - now;
+      const difference = targetDate - now;
 
       if (difference <= 0) {
-        // Rolling cycle rollover
-        const newExpiry = now + 24 * 60 * 60 * 1000;
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('vst_god_preorder_expiry', newExpiry.toString());
-        }
-        difference = newExpiry - now;
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setProgressPercent(0);
+        return;
       }
 
       // Calculate units
@@ -186,10 +165,10 @@ export default function FAQTimerSection() {
 
       setTimeLeft({ days: d, hours: h, minutes: m, seconds: s });
 
-      // Progress bar percentage (out of a 24h window)
-      const totalSecondsLeft = (d * 24 * 3600) + (h * 3600) + (m * 60) + s;
-      const pct = (totalSecondsLeft / (24 * 3600)) * 100;
-      setProgressPercent(pct);
+      // Progress bar percentage (from launch July 1st to July 21st)
+      const totalDuration = targetDate - startDate;
+      const pct = (difference / totalDuration) * 100;
+      setProgressPercent(Math.max(0, Math.min(100, pct)));
     };
 
     updateTimer();
@@ -367,8 +346,8 @@ export default function FAQTimerSection() {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: COLORS.textDim, fontWeight: 500 }}>
-                <span>ROLLING 24H RESET CYCLE</span>
-                <span>URGENT ASCENSION LOCK</span>
+                <span>OFFER ENDS JULY 21ST</span>
+                <span>LIMITED TIME PRICE BIND</span>
               </div>
             </div>
 
