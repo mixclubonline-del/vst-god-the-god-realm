@@ -18,12 +18,28 @@ import GodNav from './components/GodNav'
 import FeatureComparisonMatrix from './components/FeatureComparisonMatrix'
 import PromoTrailerSection from './components/PromoTrailerSection'
 import { gods } from './data/godData'
+import PreOrderModal from './components/PreOrderModal'
+import { useState, useEffect } from 'react'
 
 /**
  * VST GOD — The God Realm
  * Premium 3D marketing website for the Electric Pantheon VST plugin.
  */
 function App() {
+  const [successSessionId, setSuccessSessionId] = useState<string | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    if (sessionId) {
+      setSuccessSessionId(sessionId);
+      setIsSuccessModalOpen(true);
+      // Clean query params so refresh doesn't trigger it again
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   return (
     <div className="app">
       {/* Global UI Layers */}
@@ -92,6 +108,17 @@ function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Success Checkout Modal */}
+      <PreOrderModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => {
+          setIsSuccessModalOpen(false);
+          setSuccessSessionId(null);
+        }}
+        price={180}
+        checkoutSessionId={successSessionId || undefined}
+      />
     </div>
   )
 }

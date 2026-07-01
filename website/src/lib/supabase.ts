@@ -187,3 +187,89 @@ export async function createPreOrder(
   }
 }
 
+/**
+ * Create a Stripe Checkout session by calling the Edge Function.
+ */
+export async function createStripeCheckoutSession(
+  email: string,
+  price: number
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  if (!isSupabaseConfigured) {
+    // Dev mock checkout session redirect
+    console.info('[VST God] Supabase not configured. Mocking Stripe checkout redirect for:', email, price);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Redirect back after 1 sec with mock session id
+    const mockSessionId = 'cs_mock_' + Math.random().toString(36).substring(2, 12);
+    return {
+      success: true,
+      url: `${window.location.origin}/?session_id=${mockSessionId}`,
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke('create-stripe-session', {
+      body: {
+        email,
+        price,
+        origin: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error('[VST God] Edge function error creating Stripe session:', error);
+      return { success: false, error: error.message || 'Failed to create checkout session.' };
+    }
+
+    return {
+      success: true,
+      url: data.url,
+    };
+  } catch (err: any) {
+    console.error('[VST God] Stripe checkout exception:', err);
+    return { success: false, error: err.message || 'Connection error. Please try again.' };
+  }
+}
+
+/**
+ * Retrieve the license key generated for a Stripe checkout session.
+ */
+export async function getLicenseKeyByCheckoutSession(
+  sessionId: string
+): Promise<{ success: boolean; licenseKey?: string; email?: string; error?: string }> {
+  if (!isSupabaseConfigured || sessionId.startsWith('cs_mock_')) {
+    // Dev mock key retrieval
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const mockKey = 'VSTGOD-' + Array.from({ length: 4 }, () =>
+      Math.random().toString(36).substring(2, 6).toUpperCase()
+    ).join('-');
+    return {
+      success: true,
+      licenseKey: mockKey,
+      email: 'mock-user@test.com',
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('get_license_key_by_checkout_session', {
+      p_session_id: sessionId,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const result = data as { success: boolean; license_key?: string; email?: string; error?: string };
+    if (!result.success) {
+      return { success: false, error: result.error || 'Pending key generation...' };
+    }
+
+    return {
+      success: true,
+      licenseKey: result.license_key,
+      email: result.email,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Connection error.' };
+  }
+}
+
